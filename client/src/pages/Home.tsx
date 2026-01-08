@@ -13,7 +13,7 @@ import type { Product } from "@shared/schema";
 
 export default function Home() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { featured: true }],
+    queryKey: ["/api/products"],
   });
 
   const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
