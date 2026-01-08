@@ -28,7 +28,7 @@ const testimonials = [
     id: 3,
     name: "Chidinma Nwachukwu",
     location: "Port Harcourt",
-    content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you GlowHair!",
+    content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you NORAHAIRLINE!",
     rating: 5,
     image: customerImg3,
     productPurchased: "Bone Straight 18\"",
@@ -59,7 +59,7 @@ export function Testimonials() {
             What Our Customers Say
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Join over 5,000 satisfied customers who trust GlowHair for their beauty needs
+            Join over 5,000 satisfied customers who trust NORAHAIRLINE for their beauty needs
           </p>
         </div>
 

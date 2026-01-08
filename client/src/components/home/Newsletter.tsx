@@ -17,7 +17,7 @@ export function Newsletter() {
     
     setIsSubscribed(true);
     toast({
-      title: "Welcome to GlowHair!",
+      title: "Welcome to NORAHAIRLINE!",
       description: "You've been subscribed to our newsletter. Check your email for 10% off!",
     });
     setEmail("");

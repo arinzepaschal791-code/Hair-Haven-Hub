@@ -1,7 +1,7 @@
-# GlowHair Nigeria - Premium E-commerce
+# NORAHAIRLINE - Premium E-commerce
 
 ## Overview
-GlowHair Nigeria is a premium e-commerce website for selling wigs, bone straight hair, and hair care products. Built for Nigerian customers with luxury design, flexible payment options, and WhatsApp integration.
+NORAHAIRLINE is a premium e-commerce website for selling wigs, bone straight hair, and hair care products. Built for Nigerian customers with luxury design, flexible payment options, and WhatsApp integration.
 
 ## Key Features
 - **Product Catalog**: Bone straight hair, wigs, and hair care products

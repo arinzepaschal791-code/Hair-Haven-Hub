@@ -9,7 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <h3 className="font-serif text-2xl font-bold mb-4">
-              Glow<span className="text-primary">Hair</span>
+              NORA<span className="text-primary">HAIRLINE</span>
             </h3>
             <p className="text-muted-foreground text-sm mb-4">
               Premium imported bone straight hair and luxury wigs for the modern Nigerian woman. Quality you can trust.
@@ -123,7 +123,7 @@ export function Footer() {
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary shrink-0" />
                 <span className="text-muted-foreground text-sm">
-                  hello@glowhair.ng
+                  hello@norahairline.ng
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -138,7 +138,7 @@ export function Footer() {
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm text-center md:text-left">
-            2024 GlowHair Nigeria. All rights reserved.
+            2024 NORAHAIRLINE. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <span className="text-muted-foreground text-sm">

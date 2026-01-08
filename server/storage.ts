@@ -204,7 +204,7 @@ export class MemStorage implements IStorage {
       {
         customerName: "Chidinma Nwachukwu",
         location: "Port Harcourt",
-        content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you GlowHair!",
+        content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you NORAHAIRLINE!",
         rating: 5,
         productPurchased: "Bone Straight 18\"",
       },

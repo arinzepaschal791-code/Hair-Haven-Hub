@@ -20,7 +20,7 @@ export function OrderConfirmation({ order, customerEmail }: OrderConfirmationPro
   const bankDetails = {
     bankName: "GTBank",
     accountNumber: "0123456789",
-    accountName: "GlowHair Nigeria Ltd",
+    accountName: "NORAHAIRLINE Ltd",
   };
 
   const copyAccountNumber = () => {

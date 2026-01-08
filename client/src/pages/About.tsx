@@ -13,10 +13,10 @@ export default function About() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-                About <span className="text-primary">GlowHair</span>
+                About <span className="text-primary">NORAHAIRLINE</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                GlowHair Nigeria is your trusted destination for premium imported hair products. 
+                NORAHAIRLINE is your trusted destination for premium imported hair products. 
                 Founded with a passion for beauty and excellence, we bring you authentic, 
                 high-quality bone straight hair, luxury wigs, and professional hair care products 
                 directly from top international suppliers.
@@ -35,7 +35,7 @@ export default function About() {
             <div className="relative">
               <img
                 src={aboutImage}
-                alt="GlowHair products"
+                alt="NORAHAIRLINE products"
                 className="rounded-md shadow-lg"
               />
             </div>
