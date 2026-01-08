@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Truck, Shield, CreditCard } from "lucide-react";
+import { Truck, Shield, CreditCard, Sparkles } from "lucide-react";
 import { useCart } from "@/lib/cart";
 
 interface CartSummaryProps {
@@ -24,11 +24,11 @@ export function CartSummary({ showInstallmentOption = true, paymentPlan = "full"
       <CardContent className="space-y-4">
         <div className="space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
+            <div key={item.id} className="flex justify-between gap-2 text-sm">
+              <span className="text-muted-foreground truncate flex-1">
                 {item.product.name} x {item.quantity}
               </span>
-              <span>N{(item.product.price * item.quantity).toLocaleString()}</span>
+              <span className="shrink-0">N{(item.product.price * item.quantity).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -73,6 +73,18 @@ export function CartSummary({ showInstallmentOption = true, paymentPlan = "full"
               <span>Pay within 30 days</span>
               <span>N{(finalTotal - firstPayment).toLocaleString()}</span>
             </div>
+          </div>
+        )}
+
+        {showInstallmentOption && paymentPlan !== "installment" && (
+          <div className="bg-muted/50 rounded-md p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-medium">Installment available at checkout</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pay N{firstPayment.toLocaleString()} today, rest in 30 days
+            </p>
           </div>
         )}
 

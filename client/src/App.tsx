@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme";
 import { CartProvider } from "@/lib/cart";
+import { WishlistProvider } from "@/lib/wishlist";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PromoBar } from "@/components/layout/PromoBar";
@@ -17,6 +18,7 @@ import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import Admin from "@/pages/Admin";
 import About from "@/pages/About";
+import Wishlist from "@/pages/Wishlist";
 import CategoryPage from "@/pages/CategoryPage";
 import NotFound from "@/pages/not-found";
 
@@ -42,6 +44,7 @@ function Router() {
       </Route>
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/wishlist" component={Wishlist} />
       <Route path="/admin" component={Admin} />
       <Route path="/about" component={About} />
       <Route component={NotFound} />
@@ -54,19 +57,21 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CartProvider>
-          <TooltipProvider>
-            <div className="min-h-screen flex flex-col bg-background">
-              <PromoBar />
-              <Header />
-              <div className="flex-1">
-                <Router />
+          <WishlistProvider>
+            <TooltipProvider>
+              <div className="min-h-screen flex flex-col bg-background">
+                <PromoBar />
+                <Header />
+                <div className="flex-1">
+                  <Router />
+                </div>
+                <Footer />
+                <WhatsAppFAB />
+                <SocialProof />
               </div>
-              <Footer />
-              <WhatsAppFAB />
-              <SocialProof />
-            </div>
-            <Toaster />
-          </TooltipProvider>
+              <Toaster />
+            </TooltipProvider>
+          </WishlistProvider>
         </CartProvider>
       </ThemeProvider>
     </QueryClientProvider>

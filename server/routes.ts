@@ -45,7 +45,11 @@ export async function registerRoutes(
 
   app.patch("/api/products/:id", async (req, res) => {
     try {
-      const product = await storage.updateProduct(req.params.id, req.body);
+      const parsed = insertProductSchema.partial().safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid product data", details: parsed.error });
+      }
+      const product = await storage.updateProduct(req.params.id, parsed.data);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }

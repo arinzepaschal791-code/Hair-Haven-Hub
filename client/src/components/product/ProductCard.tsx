@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Eye, Heart } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@shared/schema";
 import { Link } from "wouter";
@@ -15,8 +15,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addItem } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const { toast } = useToast();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const isWishlisted = isInWishlist(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,7 +38,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    toggleWishlist(product);
+    toast({
+      title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
+      description: isWishlisted
+        ? `${product.name} has been removed from your wishlist.`
+        : `${product.name} has been added to your wishlist.`,
+    });
   };
 
   const installmentAmount = Math.round(product.price / 2);
@@ -78,7 +85,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 onClick={handleWishlist}
                 data-testid={`button-wishlist-${product.id}`}
               >
-                <Heart className={`h-4 w-4 ${isWishlisted ? "fill-primary text-primary" : ""}`} />
+                <Heart className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </Button>
               {onQuickView && (
                 <Button
@@ -109,7 +116,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
           <div className="p-4">
             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">
-              {product.category}
+              {product.category.replace("-", " ")}
             </p>
             <h3 className="font-medium mb-2 line-clamp-2">{product.name}</h3>
             

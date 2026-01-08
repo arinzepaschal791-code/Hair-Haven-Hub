@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { InstallmentCalculator } from "@/components/product/InstallmentCalculator";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/hooks/use-toast";
 import {
   ShoppingCart,
@@ -18,6 +19,7 @@ import {
   RefreshCw,
   ChevronLeft,
   Star,
+  Heart,
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -27,6 +29,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const { toast } = useToast();
 
   const { data: product, isLoading } = useQuery<Product>({
@@ -42,12 +45,25 @@ export default function ProductDetail() {
     .filter((p) => p.id !== productId && p.category === product?.category)
     .slice(0, 4);
 
+  const isWishlisted = product ? isInWishlist(product.id) : false;
+
   const handleAddToCart = () => {
     if (!product) return;
     addItem(product, quantity);
     toast({
       title: "Added to cart",
       description: `${quantity}x ${product.name} has been added to your cart.`,
+    });
+  };
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleWishlist(product);
+    toast({
+      title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
+      description: isWishlisted
+        ? `${product.name} has been removed from your wishlist.`
+        : `${product.name} has been added to your wishlist.`,
     });
   };
 
@@ -89,12 +105,21 @@ export default function ProductDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-md bg-muted">
+          <div className="aspect-square overflow-hidden rounded-md bg-muted relative">
             <img
               src={product.images[selectedImage] || "/placeholder.jpg"}
               alt={product.name}
               className="w-full h-full object-cover"
             />
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute top-4 right-4 bg-background/80 backdrop-blur"
+              onClick={handleToggleWishlist}
+              data-testid="button-wishlist"
+            >
+              <Heart className={`h-5 w-5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+            </Button>
           </div>
           {product.images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -123,7 +148,7 @@ export default function ProductDetail() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm text-muted-foreground uppercase tracking-wide">
-              {product.category}
+              {product.category.replace("-", " ")}
             </span>
             {product.badge && (
               <Badge variant={product.badge === "Sale" ? "destructive" : "default"}>
@@ -152,6 +177,9 @@ export default function ProductDetail() {
             <span className="font-bold text-3xl">
               N{product.price.toLocaleString()}
             </span>
+            <p className="text-sm text-primary font-medium mt-1">
+              or N{Math.round(product.price / 2).toLocaleString()} x 2 installments
+            </p>
           </div>
 
           {product.length && (
@@ -243,7 +271,7 @@ export default function ProductDetail() {
           </TabsContent>
           <TabsContent value="specs" className="mt-4">
             <div className="space-y-2">
-              <p><span className="font-medium">Category:</span> {product.category}</p>
+              <p><span className="font-medium">Category:</span> {product.category.replace("-", " ")}</p>
               {product.length && <p><span className="font-medium">Length:</span> {product.length}</p>}
               {product.texture && <p><span className="font-medium">Texture:</span> {product.texture}</p>}
               <p><span className="font-medium">Material:</span> 100% Human Hair</p>

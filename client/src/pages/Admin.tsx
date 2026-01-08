@@ -13,14 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, ShoppingCart, Users, TrendingUp, Trash2, Edit } from "lucide-react";
+import { Package, ShoppingCart, Users, TrendingUp, Trash2, Edit, Plus, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, Order } from "@shared/schema";
+import type { Product, Order, OrderItem } from "@shared/schema";
 
 export default function Admin() {
   const { toast } = useToast();
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("products");
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -46,10 +56,39 @@ export default function Admin() {
         title: "Product added",
         description: "The product has been added successfully.",
       });
+      setActiveTab("products");
     },
     onError: () => {
       toast({
         title: "Failed to add product",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ProductFormData }) => {
+      const productData = {
+        ...data,
+        images: data.images.split("\n").filter((url) => url.trim()),
+        inStock: data.stockCount > 0,
+      };
+      const response = await apiRequest("PATCH", `/api/products/${id}`, productData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product updated",
+        description: "The product has been updated successfully.",
+      });
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+    },
+    onError: () => {
+      toast({
+        title: "Failed to update product",
         description: "Please try again.",
         variant: "destructive",
       });
@@ -69,8 +108,42 @@ export default function Admin() {
     },
   });
 
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/orders/${id}/status`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Order updated",
+        description: "Order status has been updated.",
+      });
+    },
+  });
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = (data: ProductFormData) => {
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data });
+    }
+  };
+
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const pendingOrders = orders.filter((o) => o.orderStatus === "pending").length;
+  const installmentOrders = orders.filter((o) => o.paymentPlan === "installment").length;
+
+  const getOrderItems = (order: Order): OrderItem[] => {
+    try {
+      return JSON.parse(order.items);
+    } catch {
+      return [];
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
@@ -137,17 +210,29 @@ export default function Admin() {
         </Card>
       </div>
 
-      <Tabs defaultValue="products" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="products" data-testid="tab-products">Products</TabsTrigger>
-          <TabsTrigger value="add-product" data-testid="tab-add-product">Add Product</TabsTrigger>
-          <TabsTrigger value="orders" data-testid="tab-orders">Orders</TabsTrigger>
+          <TabsTrigger value="add-product" data-testid="tab-add-product">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Product
+          </TabsTrigger>
+          <TabsTrigger value="orders" data-testid="tab-orders">
+            Orders
+            {pendingOrders > 0 && (
+              <Badge variant="destructive" className="ml-2">{pendingOrders}</Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>All Products</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle>All Products ({products.length})</CardTitle>
+              <Button onClick={() => setActiveTab("add-product")} data-testid="button-add-new">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New
+              </Button>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
@@ -157,9 +242,16 @@ export default function Admin() {
                   ))}
                 </div>
               ) : products.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">
-                  No products yet. Add your first product!
-                </p>
+                <div className="text-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    No products yet. Add your first product!
+                  </p>
+                  <Button onClick={() => setActiveTab("add-product")}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -182,10 +274,15 @@ export default function Admin() {
                               alt={product.name}
                               className="w-10 h-10 rounded object-cover"
                             />
-                            <span className="truncate max-w-[200px]">{product.name}</span>
+                            <div>
+                              <span className="truncate max-w-[200px] block">{product.name}</span>
+                              {product.featured && (
+                                <Badge variant="secondary" className="text-xs mt-1">Featured</Badge>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>{product.category}</TableCell>
+                        <TableCell className="capitalize">{product.category.replace("-", " ")}</TableCell>
                         <TableCell>N{product.price.toLocaleString()}</TableCell>
                         <TableCell>{product.stockCount}</TableCell>
                         <TableCell>
@@ -194,15 +291,25 @@ export default function Admin() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-destructive"
-                            onClick={() => deleteProductMutation.mutate(product.id)}
-                            data-testid={`button-delete-${product.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEditProduct(product)}
+                              data-testid={`button-edit-${product.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-destructive"
+                              onClick={() => deleteProductMutation.mutate(product.id)}
+                              data-testid={`button-delete-${product.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -218,6 +325,7 @@ export default function Admin() {
             <ProductForm
               onSubmit={(data) => addProductMutation.mutate(data)}
               isLoading={addProductMutation.isPending}
+              mode="add"
             />
           </div>
         </TabsContent>
@@ -225,7 +333,13 @@ export default function Admin() {
         <TabsContent value="orders" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>All Orders</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                All Orders
+                <Badge variant="outline">{orders.length} total</Badge>
+                {installmentOrders > 0 && (
+                  <Badge variant="secondary">{installmentOrders} installment</Badge>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {ordersLoading ? (
@@ -235,42 +349,77 @@ export default function Admin() {
                   ))}
                 </div>
               ) : orders.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">
-                  No orders yet.
-                </p>
+                <div className="text-center py-12">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No orders yet.</p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Order ID</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Items</TableHead>
                       <TableHead>Total</TableHead>
-                      <TableHead>Payment Plan</TableHead>
+                      <TableHead>Payment</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
-                        <TableCell className="font-mono">
-                          {order.id.slice(0, 8).toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(order.orderDate).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>N{order.totalAmount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={order.paymentPlan === "installment" ? "default" : "secondary"}>
-                            {order.paymentPlan === "installment" ? "Installment" : "Full"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {order.orderStatus}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {orders.map((order) => {
+                      const orderItems = getOrderItems(order);
+                      return (
+                        <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
+                          <TableCell className="font-mono font-medium">
+                            {order.id.slice(0, 8).toUpperCase()}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(order.orderDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {orderItems.length} item{orderItems.length !== 1 ? "s" : ""}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            N{order.totalAmount.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={order.paymentPlan === "installment" ? "default" : "secondary"}>
+                              {order.paymentPlan === "installment" ? "Installment" : "Full"}
+                            </Badge>
+                            {order.paymentPlan === "installment" && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                1st: N{order.firstPayment?.toLocaleString()}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                order.orderStatus === "delivered" ? "default" :
+                                order.orderStatus === "shipped" ? "secondary" :
+                                "outline"
+                              } 
+                              className="capitalize"
+                            >
+                              {order.orderStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setViewingOrder(order)}
+                                data-testid={`button-view-${order.id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -278,6 +427,99 @@ export default function Admin() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <ProductForm
+              onSubmit={handleUpdateProduct}
+              isLoading={updateProductMutation.isPending}
+              mode="edit"
+              defaultValues={{
+                name: editingProduct.name,
+                description: editingProduct.description,
+                price: editingProduct.price,
+                category: editingProduct.category,
+                length: editingProduct.length || "",
+                texture: editingProduct.texture || "",
+                images: editingProduct.images.join("\n"),
+                stockCount: editingProduct.stockCount || 0,
+                featured: editingProduct.featured || false,
+                badge: editingProduct.badge || "",
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+          </DialogHeader>
+          {viewingOrder && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Order ID:</span>
+                <span className="font-mono font-bold">{viewingOrder.id.slice(0, 8).toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Date:</span>
+                <span>{new Date(viewingOrder.orderDate).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Payment Plan:</span>
+                <Badge>{viewingOrder.paymentPlan}</Badge>
+              </div>
+              {viewingOrder.paymentPlan === "installment" && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">First Payment:</span>
+                    <span>N{viewingOrder.firstPayment?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Second Payment:</span>
+                    <span>N{viewingOrder.secondPayment?.toLocaleString()}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total:</span>
+                <span className="font-bold text-lg">N{viewingOrder.totalAmount.toLocaleString()}</span>
+              </div>
+              <div className="border-t pt-4 space-y-2">
+                <p className="font-medium">Items:</p>
+                {getOrderItems(viewingOrder).map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span>{item.quantity}x {item.productName}</span>
+                    <span>N{(item.price * item.quantity).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground mb-2">Update Status:</p>
+                <div className="flex flex-wrap gap-2">
+                  {["pending", "processing", "shipped", "delivered"].map((status) => (
+                    <Button
+                      key={status}
+                      size="sm"
+                      variant={viewingOrder.orderStatus === status ? "default" : "outline"}
+                      onClick={() => updateOrderStatusMutation.mutate({ id: viewingOrder.id, status })}
+                      disabled={updateOrderStatusMutation.isPending}
+                      className="capitalize"
+                    >
+                      {status}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

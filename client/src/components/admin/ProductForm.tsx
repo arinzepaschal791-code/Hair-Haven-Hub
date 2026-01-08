@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Save } from "lucide-react";
+import { Package, Save, Plus } from "lucide-react";
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -43,9 +43,10 @@ interface ProductFormProps {
   onSubmit: (data: ProductFormData) => void;
   isLoading?: boolean;
   defaultValues?: Partial<ProductFormData>;
+  mode?: "add" | "edit";
 }
 
-export function ProductForm({ onSubmit, isLoading, defaultValues }: ProductFormProps) {
+export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }: ProductFormProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -71,8 +72,8 @@ export function ProductForm({ onSubmit, isLoading, defaultValues }: ProductFormP
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Package className="h-5 w-5" />
-          Add New Product
+          {mode === "add" ? <Plus className="h-5 w-5" /> : <Package className="h-5 w-5" />}
+          {mode === "add" ? "Add New Product" : "Edit Product"}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -301,7 +302,7 @@ export function ProductForm({ onSubmit, isLoading, defaultValues }: ProductFormP
 
             <Button type="submit" className="w-full" size="lg" disabled={isLoading} data-testid="button-save-product">
               <Save className="h-5 w-5 mr-2" />
-              {isLoading ? "Saving..." : "Save Product"}
+              {isLoading ? "Saving..." : mode === "add" ? "Add Product" : "Update Product"}
             </Button>
           </form>
         </Form>

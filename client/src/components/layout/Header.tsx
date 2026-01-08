@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Menu, X, Search, User, Moon, Sun } from "lucide-react";
+import { ShoppingCart, Menu, X, Search, User, Moon, Sun, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { useTheme } from "@/lib/theme";
 
 const navLinks = [
@@ -19,6 +20,7 @@ const navLinks = [
 export function Header() {
   const [location] = useLocation();
   const { totalItems } = useCart();
+  const { totalItems: wishlistCount } = useWishlist();
   const { theme, toggleTheme } = useTheme();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -90,6 +92,20 @@ export function Header() {
                 <Sun className="h-5 w-5" />
               )}
             </Button>
+
+            <Link href="/wishlist">
+              <Button size="icon" variant="ghost" className="relative" data-testid="button-wishlist">
+                <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {wishlistCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
 
             <Link href="/cart">
               <Button size="icon" variant="ghost" className="relative" data-testid="button-cart">
