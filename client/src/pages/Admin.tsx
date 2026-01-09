@@ -38,11 +38,15 @@ export default function Admin() {
     queryKey: ["/api/admin/session"],
   });
 
-  useEffect(() => {
-    if (!sessionLoading && !session?.isAdmin) {
-      setLocation("/admin/login");
-    }
-  }, [session, sessionLoading, setLocation]);
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    enabled: session?.isAdmin === true,
+  });
+
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
+    enabled: session?.isAdmin === true,
+  });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -54,26 +58,6 @@ export default function Admin() {
       toast({ title: "Logged out successfully" });
       setLocation("/admin/login");
     },
-  });
-
-  if (sessionLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!session?.isAdmin) {
-    return null;
-  }
-
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
-  });
-
-  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ["/api/orders"],
   });
 
   const addProductMutation = useMutation({
@@ -158,6 +142,12 @@ export default function Admin() {
     },
   });
 
+  useEffect(() => {
+    if (!sessionLoading && !session?.isAdmin) {
+      setLocation("/admin/login");
+    }
+  }, [session, sessionLoading, setLocation]);
+
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsEditDialogOpen(true);
@@ -180,6 +170,18 @@ export default function Admin() {
       return [];
     }
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!session?.isAdmin) {
+    return null;
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
