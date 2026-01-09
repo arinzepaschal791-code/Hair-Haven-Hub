@@ -64,6 +64,7 @@ export default function Admin() {
     mutationFn: async (data: ProductFormData) => {
       const productData = {
         ...data,
+        badge: data.badge === "none" ? null : data.badge,
         images: data.images.split("\n").filter((url) => url.trim()),
         inStock: data.stockCount > 0,
       };
@@ -91,6 +92,7 @@ export default function Admin() {
     mutationFn: async ({ id, data }: { id: string; data: ProductFormData }) => {
       const productData = {
         ...data,
+        badge: data.badge === "none" ? null : data.badge,
         images: data.images.split("\n").filter((url) => url.trim()),
         inStock: data.stockCount > 0,
       };
@@ -497,7 +499,7 @@ export default function Admin() {
                 images: editingProduct.images.join("\n"),
                 stockCount: editingProduct.stockCount || 0,
                 featured: editingProduct.featured || false,
-                badge: editingProduct.badge || "",
+                badge: editingProduct.badge || "none",
               }}
             />
           )}

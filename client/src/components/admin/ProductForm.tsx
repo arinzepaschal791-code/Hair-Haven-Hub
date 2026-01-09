@@ -266,10 +266,12 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         <SelectItem value="New">New</SelectItem>
                         <SelectItem value="Sale">Sale</SelectItem>
                         <SelectItem value="Best Seller">Best Seller</SelectItem>
+                        <SelectItem value="Premium">Premium</SelectItem>
+                        <SelectItem value="Limited">Limited</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
