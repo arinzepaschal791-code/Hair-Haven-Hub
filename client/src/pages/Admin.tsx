@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { ProductForm, type ProductFormData } from "@/components/admin/ProductForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,17 +21,52 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, ShoppingCart, Users, TrendingUp, Trash2, Edit, Plus, Eye } from "lucide-react";
+import { Package, ShoppingCart, Users, TrendingUp, Trash2, Edit, Plus, Eye, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, Order, OrderItem } from "@shared/schema";
 
 export default function Admin() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("products");
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+
+  const { data: session, isLoading: sessionLoading } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/session"],
+  });
+
+  useEffect(() => {
+    if (!sessionLoading && !session?.isAdmin) {
+      setLocation("/admin/login");
+    }
+  }, [session, sessionLoading, setLocation]);
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/logout");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/session"] });
+      toast({ title: "Logged out successfully" });
+      setLocation("/admin/login");
+    },
+  });
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!session?.isAdmin) {
+    return null;
+  }
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -147,9 +183,20 @@ export default function Admin() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Manage your products and orders</p>
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-3xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage your products and orders</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => logoutMutation.mutate()}
+          disabled={logoutMutation.isPending}
+          data-testid="button-logout"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

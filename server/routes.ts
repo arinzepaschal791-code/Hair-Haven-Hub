@@ -1,13 +1,144 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertOrderSchema, insertSubscriberSchema, nigerianStates, lagosLGAs, abujLGAs } from "@shared/schema";
+import bcrypt from "bcrypt";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+declare module "express-session" {
+  interface SessionData {
+    adminId?: string;
+    isAdmin?: boolean;
+  }
+}
+
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage_multer = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage_multer,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error("Only image files are allowed"));
+  },
+});
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.session && req.session.isAdmin) {
+    next();
+  } else {
+    res.status(401).json({ error: "Unauthorized - Admin access required" });
+  }
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  // Admin authentication endpoints
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+
+      const admin = await storage.getAdminByUsername(username);
+      if (!admin) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const validPassword = await bcrypt.compare(password, admin.password);
+      if (!validPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      req.session.adminId = admin.id;
+      req.session.isAdmin = true;
+      
+      res.json({ message: "Login successful", admin: { id: admin.id, username: admin.username } });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  app.get("/api/admin/session", (req, res) => {
+    if (req.session && req.session.isAdmin) {
+      res.json({ isAdmin: true, adminId: req.session.adminId });
+    } else {
+      res.json({ isAdmin: false });
+    }
+  });
+
+  app.post("/api/admin/setup", async (req, res) => {
+    try {
+      const existingAdmin = await storage.getAdminByUsername("admin");
+      if (existingAdmin) {
+        return res.status(400).json({ error: "Admin already exists" });
+      }
+
+      const { password } = req.body;
+      if (!password || password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const admin = await storage.createAdminUser({
+        username: "admin",
+        password: hashedPassword,
+      });
+
+      res.status(201).json({ message: "Admin account created", admin: { id: admin.id, username: admin.username } });
+    } catch (error) {
+      console.error("Admin setup error:", error);
+      res.status(500).json({ error: "Failed to create admin" });
+    }
+  });
+
+  // Image upload endpoint
+  app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const imageUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: imageUrl });
+    } catch (error) {
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
   // Products endpoints
   app.get("/api/products", async (req, res) => {
     try {
@@ -30,7 +161,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAdmin, async (req, res) => {
     try {
       const parsed = insertProductSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -43,7 +174,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/products/:id", async (req, res) => {
+  app.patch("/api/products/:id", requireAdmin, async (req, res) => {
     try {
       const parsed = insertProductSchema.partial().safeParse(req.body);
       if (!parsed.success) {
@@ -59,7 +190,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteProduct(req.params.id);
       if (!deleted) {
@@ -71,8 +202,8 @@ export async function registerRoutes(
     }
   });
 
-  // Orders endpoints
-  app.get("/api/orders", async (req, res) => {
+  // Orders endpoints (admin protected)
+  app.get("/api/orders", requireAdmin, async (req, res) => {
     try {
       const orders = await storage.getAllOrders();
       res.json(orders);
@@ -117,7 +248,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/orders/:id/status", async (req, res) => {
+  app.patch("/api/orders/:id/status", requireAdmin, async (req, res) => {
     try {
       const { status } = req.body;
       const order = await storage.updateOrderStatus(req.params.id, status);

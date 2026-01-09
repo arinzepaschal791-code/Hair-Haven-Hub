@@ -17,6 +17,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import Admin from "@/pages/Admin";
+import AdminLogin from "@/pages/AdminLogin";
 import About from "@/pages/About";
 import Wishlist from "@/pages/Wishlist";
 import CategoryPage from "@/pages/CategoryPage";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/wishlist" component={Wishlist} />
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Admin} />
       <Route path="/about" component={About} />
       <Route component={NotFound} />
