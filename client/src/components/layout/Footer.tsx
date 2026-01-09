@@ -83,14 +83,18 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Customer Care</h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-muted-foreground text-sm">
-                  Track Your Order
-                </span>
+                <Link href="/track-order">
+                  <span className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer" data-testid="link-footer-track-order">
+                    Track Your Order
+                  </span>
+                </Link>
               </li>
               <li>
-                <span className="text-muted-foreground text-sm">
-                  Returns & Refunds
-                </span>
+                <Link href="/wishlist">
+                  <span className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer" data-testid="link-footer-wishlist">
+                    My Wishlist
+                  </span>
+                </Link>
               </li>
               <li>
                 <span className="text-muted-foreground text-sm">

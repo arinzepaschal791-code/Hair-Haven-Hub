@@ -20,6 +20,7 @@ import Admin from "@/pages/Admin";
 import AdminLogin from "@/pages/AdminLogin";
 import About from "@/pages/About";
 import Wishlist from "@/pages/Wishlist";
+import OrderTracking from "@/pages/OrderTracking";
 import CategoryPage from "@/pages/CategoryPage";
 import NotFound from "@/pages/not-found";
 
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/wishlist" component={Wishlist} />
+      <Route path="/track-order" component={OrderTracking} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Admin} />
       <Route path="/about" component={About} />
