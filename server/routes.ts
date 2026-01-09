@@ -29,9 +29,9 @@ const storage_multer = multer.diskStorage({
   },
 });
 
-const upload = multer({
+const imageUpload = multer({
   storage: storage_multer,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -40,6 +40,36 @@ const upload = multer({
       return cb(null, true);
     }
     cb(new Error("Only image files are allowed"));
+  },
+});
+
+const videoUpload = multer({
+  storage: storage_multer,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /mp4|webm|mov|avi/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = file.mimetype.startsWith("video/");
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error("Only video files are allowed"));
+  },
+});
+
+const mediaUpload = multer({
+  storage: storage_multer,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const imageTypes = /jpeg|jpg|png|gif|webp/;
+    const videoTypes = /mp4|webm|mov|avi/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isImage = imageTypes.test(ext) && (file.mimetype.startsWith("image/") || imageTypes.test(file.mimetype));
+    const isVideo = videoTypes.test(ext) && file.mimetype.startsWith("video/");
+    if (isImage || isVideo) {
+      return cb(null, true);
+    }
+    cb(new Error("Only image and video files are allowed"));
   },
 });
 
@@ -126,14 +156,55 @@ export async function registerRoutes(
     }
   });
 
-  // Image upload endpoint
-  app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
+  // Image upload endpoint (single)
+  app.post("/api/upload/image", requireAdmin, imageUpload.single("file"), (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
       const imageUrl = `/uploads/${req.file.filename}`;
-      res.json({ url: imageUrl });
+      res.json({ url: imageUrl, type: "image" });
+    } catch (error) {
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
+  // Multiple images upload endpoint
+  app.post("/api/upload/images", requireAdmin, imageUpload.array("files", 10), (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+      const urls = files.map((file) => `/uploads/${file.filename}`);
+      res.json({ urls, type: "image" });
+    } catch (error) {
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
+  // Video upload endpoint
+  app.post("/api/upload/video", requireAdmin, videoUpload.single("file"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const videoUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: videoUrl, type: "video" });
+    } catch (error) {
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
+  // Generic media upload (images or video)
+  app.post("/api/upload/media", requireAdmin, mediaUpload.single("file"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const mediaUrl = `/uploads/${req.file.filename}`;
+      const isVideo = req.file.mimetype.startsWith("video/");
+      res.json({ url: mediaUrl, type: isVideo ? "video" : "image" });
     } catch (error) {
       res.status(500).json({ error: "Upload failed" });
     }

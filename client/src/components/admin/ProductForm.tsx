@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,7 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Save, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Package, Save, Plus, Upload, X, Image, Video, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -31,7 +34,8 @@ const productSchema = z.object({
   category: z.string().min(1, "Category is required"),
   length: z.string().optional(),
   texture: z.string().optional(),
-  images: z.string().min(1, "At least one image URL is required"),
+  images: z.string().min(1, "At least one image is required"),
+  video: z.string().optional(),
   stockCount: z.number().min(0, "Stock count must be 0 or more"),
   featured: z.boolean().default(false),
   badge: z.string().optional(),
@@ -47,6 +51,16 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }: ProductFormProps) {
+  const { toast } = useToast();
+  const [uploadedImages, setUploadedImages] = useState<string[]>(
+    defaultValues?.images ? defaultValues.images.split("\n").filter(Boolean) : []
+  );
+  const [uploadedVideo, setUploadedVideo] = useState<string>(defaultValues?.video || "");
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -56,13 +70,105 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
       category: "",
       length: "",
       texture: "",
-      images: "",
+      images: defaultValues?.images || "",
+      video: "",
       stockCount: 10,
       featured: false,
       badge: "",
       ...defaultValues,
     },
   });
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImages(true);
+    const newUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+
+        const data = await response.json();
+        newUrls.push(data.url);
+      }
+
+      const allImages = [...uploadedImages, ...newUrls];
+      setUploadedImages(allImages);
+      form.setValue("images", allImages.join("\n"));
+      toast({
+        title: "Images uploaded",
+        description: `${newUrls.length} image(s) uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setIsUploadingVideo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]);
+
+      const response = await fetch("/api/upload/video", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      setUploadedVideo(data.url);
+      form.setValue("video", data.url);
+      toast({
+        title: "Video uploaded",
+        description: "Video uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = uploadedImages.filter((_, i) => i !== index);
+    setUploadedImages(newImages);
+    form.setValue("images", newImages.join("\n"));
+  };
+
+  const removeVideo = () => {
+    setUploadedVideo("");
+    form.setValue("video", "");
+  };
 
   const handleSubmit = (data: ProductFormData) => {
     onSubmit(data);
@@ -216,17 +322,154 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
               name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URLs</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter image URLs, one per line"
-                      {...field}
-                      data-testid="input-product-images"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Enter one image URL per line. First image will be the main image.
-                  </FormDescription>
+                  <FormLabel className="flex items-center gap-2">
+                    <Image className="h-4 w-4" />
+                    Product Images
+                  </FormLabel>
+                  <div className="space-y-4">
+                    <div
+                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e.target.files)}
+                        data-testid="input-image-upload"
+                      />
+                      {isUploadingImages ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <p className="text-sm text-muted-foreground">Uploading...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <p className="text-sm font-medium">Click to upload images</p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP up to 10MB each</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {uploadedImages.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {uploadedImages.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={url}
+                              alt={`Product ${index + 1}`}
+                              className="w-full aspect-square object-cover rounded-md border"
+                            />
+                            {index === 0 && (
+                              <Badge className="absolute top-1 left-1 text-xs">Main</Badge>
+                            )}
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeImage(index)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div>
+                      <FormDescription className="mb-2">
+                        Or enter image URLs manually (one per line):
+                      </FormDescription>
+                      <Textarea
+                        placeholder="https://example.com/image1.jpg"
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          setUploadedImages(e.target.value.split("\n").filter(Boolean));
+                        }}
+                        data-testid="input-product-images"
+                      />
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="video"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Product Video (Optional)
+                  </FormLabel>
+                  <div className="space-y-4">
+                    {uploadedVideo ? (
+                      <div className="relative">
+                        <video
+                          src={uploadedVideo}
+                          className="w-full max-w-md rounded-md border"
+                          controls
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-2 right-2"
+                          onClick={removeVideo}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => videoInputRef.current?.click()}
+                      >
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => handleVideoUpload(e.target.files)}
+                          data-testid="input-video-upload"
+                        />
+                        {isUploadingVideo ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm text-muted-foreground">Uploading video...</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Video className="h-8 w-8 text-muted-foreground" />
+                            <p className="text-sm font-medium">Click to upload video</p>
+                            <p className="text-xs text-muted-foreground">MP4, WEBM, MOV up to 100MB</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <FormDescription className="mb-2">
+                        Or enter video URL:
+                      </FormDescription>
+                      <Input
+                        placeholder="https://example.com/video.mp4"
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          setUploadedVideo(e.target.value);
+                        }}
+                        data-testid="input-product-video-url"
+                      />
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -302,7 +545,7 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
               )}
             />
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading} data-testid="button-save-product">
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading || isUploadingImages || isUploadingVideo} data-testid="button-save-product">
               <Save className="h-5 w-5 mr-2" />
               {isLoading ? "Saving..." : mode === "add" ? "Add Product" : "Update Product"}
             </Button>

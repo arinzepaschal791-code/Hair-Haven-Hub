@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,9 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSetup, setIsSetup] = useState(false);
 
-  const { data: session } = useQuery({
+  const { data: session } = useQuery<{ isAdmin: boolean }>({
     queryKey: ["/api/admin/session"],
   });
-
-  if (session?.isAdmin) {
-    setLocation("/admin");
-    return null;
-  }
 
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string }) => {
@@ -81,6 +76,17 @@ export default function AdminLogin() {
       loginMutation.mutate({ username, password });
     }
   };
+
+  // Redirect if already logged in (using useEffect to avoid updating state during render)
+  useEffect(() => {
+    if (session?.isAdmin) {
+      setLocation("/admin");
+    }
+  }, [session?.isAdmin, setLocation]);
+
+  if (session?.isAdmin) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -170,7 +176,7 @@ export default function AdminLogin() {
             <div className="text-center">
               <Button
                 type="button"
-                variant="link"
+                variant="ghost"
                 className="text-sm"
                 onClick={() => setIsSetup(!isSetup)}
               >

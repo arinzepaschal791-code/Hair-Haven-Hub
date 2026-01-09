@@ -66,6 +66,7 @@ export default function Admin() {
         ...data,
         badge: data.badge === "none" ? null : data.badge,
         images: data.images.split("\n").filter((url) => url.trim()),
+        video: data.video || null,
         inStock: data.stockCount > 0,
       };
       const response = await apiRequest("POST", "/api/products", productData);
@@ -94,6 +95,7 @@ export default function Admin() {
         ...data,
         badge: data.badge === "none" ? null : data.badge,
         images: data.images.split("\n").filter((url) => url.trim()),
+        video: data.video || null,
         inStock: data.stockCount > 0,
       };
       const response = await apiRequest("PATCH", `/api/products/${id}`, productData);
@@ -497,6 +499,7 @@ export default function Admin() {
                 length: editingProduct.length || "",
                 texture: editingProduct.texture || "",
                 images: editingProduct.images.join("\n"),
+                video: editingProduct.video || "",
                 stockCount: editingProduct.stockCount || 0,
                 featured: editingProduct.featured || false,
                 badge: editingProduct.badge || "none",

@@ -13,6 +13,7 @@ export const products = pgTable("products", {
   length: text("length"), // '14 inches', '18 inches', etc.
   texture: text("texture"), // 'straight', 'body-wave', 'deep-wave'
   images: text("images").array().notNull(),
+  video: text("video"), // product video URL
   inStock: boolean("in_stock").default(true),
   stockCount: integer("stock_count").default(10),
   featured: boolean("featured").default(false),
