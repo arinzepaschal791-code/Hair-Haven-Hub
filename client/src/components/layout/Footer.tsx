@@ -12,7 +12,7 @@ export function Footer() {
             <img 
               src={logoImage} 
               alt="NORA HAIR LINE" 
-              className="h-16 w-auto object-contain mb-2"
+              className="h-20 w-auto object-contain mb-2 brightness-110 contrast-110"
             />
             <p className="text-primary italic text-sm mb-3">Luxury for less...</p>
             <p className="text-muted-foreground text-sm mb-4">
