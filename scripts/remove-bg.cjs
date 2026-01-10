@@ -34,10 +34,19 @@ async function removeBackground() {
       
       const isVeryDark = (r < 30 && g < 50 && b < 50);
       
-      rgba[i * 4] = r;
-      rgba[i * 4 + 1] = g;
-      rgba[i * 4 + 2] = b;
-      rgba[i * 4 + 3] = (isTeal || isDarkTeal || isVeryDark) ? 0 : 255;
+      const isBackground = isTeal || isDarkTeal || isVeryDark;
+      
+      if (isBackground) {
+        rgba[i * 4] = 0;
+        rgba[i * 4 + 1] = 0;
+        rgba[i * 4 + 2] = 0;
+        rgba[i * 4 + 3] = 0;
+      } else {
+        rgba[i * 4] = 25;
+        rgba[i * 4 + 1] = 25;
+        rgba[i * 4 + 2] = 25;
+        rgba[i * 4 + 3] = 255;
+      }
     }
     
     await sharp(rgba, { raw: { width, height, channels: 4 } })
