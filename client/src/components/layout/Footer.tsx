@@ -9,11 +9,11 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="rounded-lg overflow-hidden shadow-md inline-block mb-2">
+            <div className="inline-block mb-2">
               <img 
                 src={logoImage} 
                 alt="NORA HAIR LINE" 
-                className="h-16 w-auto object-contain"
+                className="h-20 w-auto object-contain mix-blend-lighten dark:mix-blend-screen brightness-110 contrast-125"
               />
             </div>
             <p className="text-primary italic text-sm mb-3">Luxury for less...</p>
