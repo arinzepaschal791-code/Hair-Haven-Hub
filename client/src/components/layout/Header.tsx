@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useTheme } from "@/lib/theme";
+import logoImage from "@assets/nora_logo_1768041475636.jpg";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -30,9 +31,12 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-16">
           <Link href="/">
-            <span className="font-serif text-2xl font-bold text-foreground cursor-pointer" data-testid="link-logo">
-              NORA <span className="text-primary">HAIR LINE</span>
-            </span>
+            <img 
+              src={logoImage} 
+              alt="NORA HAIR LINE" 
+              className="h-12 w-auto cursor-pointer object-contain"
+              data-testid="link-logo"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
