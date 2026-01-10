@@ -1,9 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Quote } from "lucide-react";
-import customerImg1 from "@assets/stock_images/beautiful_african_wo_8e308ce0.jpg";
-import customerImg2 from "@assets/stock_images/beautiful_african_wo_217fa6d2.jpg";
-import customerImg3 from "@assets/stock_images/woman_long_straight__1bf9cbec.jpg";
+import customerImg1 from "@assets/stock_images/beautiful_black_nige_3c75a793.jpg";
+import customerImg2 from "@assets/stock_images/beautiful_black_nige_7db12ebc.jpg";
+import customerImg3 from "@assets/stock_images/beautiful_black_nige_c76e3b6b.jpg";
 
 const testimonials = [
   {
@@ -28,7 +28,7 @@ const testimonials = [
     id: 3,
     name: "Chidinma Nwachukwu",
     location: "Port Harcourt",
-    content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you NORAHAIRLINE!",
+    content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you NORA HAIR LINE!",
     rating: 5,
     image: customerImg3,
     productPurchased: "Bone Straight 18\"",
@@ -59,7 +59,7 @@ export function Testimonials() {
             What Our Customers Say
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Join over 5,000 satisfied customers who trust NORAHAIRLINE for their beauty needs
+            Join over 5,000 satisfied customers who trust NORA HAIR LINE for their beauty needs
           </p>
         </div>
 
