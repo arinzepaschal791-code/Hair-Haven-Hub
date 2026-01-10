@@ -9,12 +9,18 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="mb-3">
+            <div className="flex items-center gap-3 mb-3">
               <img 
                 src={logoImage} 
-                alt="NORA HAIR LINE" 
-                className="h-24 w-auto object-contain brightness-110 contrast-125 saturate-125"
+                alt="NORA HAIR LINE Logo" 
+                className="h-16 w-auto object-contain"
               />
+              <div className="flex flex-col leading-tight">
+                <span className="font-serif text-xl font-bold tracking-wide text-foreground">
+                  NORA HAIR LINE
+                </span>
+                <span className="text-xs text-primary italic">Luxury for less...</span>
+              </div>
             </div>
             <p className="text-muted-foreground text-sm mb-4">
               Premium Closure, Frontals, 360 Illusion Frontal, Wigs & Bundles. Quality you can trust at affordable prices.

@@ -2,15 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Gold & Teal Premium Theme */
+/* LIGHT MODE - Gold & Teal Premium Theme (matches NORA HAIR LINE logo) */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 180 10% 98%;
-  --foreground: 177 30% 12%;
+  --background: 170 15% 97%;
+  --foreground: 177 40% 10%;
   --border: 177 10% 85%;
   --card: 180 8% 96%;
   --card-foreground: 177 30% 12%;
