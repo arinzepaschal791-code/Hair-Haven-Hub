@@ -54,11 +54,16 @@ async function buildAll() {
     outfile: "dist/index.cjs",
     define: {
       "process.env.NODE_ENV": '"production"',
-      "import.meta.url": "undefined",
+    },
+    banner: {
+      js: `
+        const __importMetaUrl = typeof document === 'undefined' ? 'file://' + __filename : undefined;
+      `,
     },
     minify: true,
-    external: externals,
+    external: [...externals, "./vite"],
     logLevel: "info",
+    ignoreAnnotations: true,
   });
 }
 
