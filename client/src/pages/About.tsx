@@ -13,18 +13,19 @@ export default function About() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-                About <span className="text-primary">NORAHAIRLINE</span>
+                About <span className="text-primary">NORA HAIR LINE</span>
               </h1>
+              <p className="text-primary italic text-xl mb-4">Luxury for less...</p>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                NORAHAIRLINE is your trusted destination for premium imported hair products. 
-                Founded with a passion for beauty and excellence, we bring you authentic, 
-                high-quality bone straight hair, luxury wigs, and professional hair care products 
+                NORA HAIR LINE is your trusted destination for premium imported hair products. 
+                Located at Tradefair Shopping Center, Badagry Express Way, Lagos State, we bring you authentic, 
+                high-quality Closure, Frontals, 360 Illusion Frontal, Wigs & Bundles 
                 directly from top international suppliers.
               </p>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                 We understand that hair is more than just an accessory - it's a statement of 
                 confidence and self-expression. That's why we're committed to providing only the 
-                best products that help Nigerian women look and feel their absolute best.
+                best products at affordable prices that help Nigerian women look and feel their absolute best.
               </p>
               <Link href="/shop">
                 <Button size="lg" data-testid="button-explore-collection">
@@ -114,7 +115,7 @@ export default function About() {
             Reach out to us on WhatsApp for personalized recommendations.
           </p>
           <a
-            href="https://wa.me/2348012345678"
+            href="https://wa.me/2348038707795"
             target="_blank"
             rel="noopener noreferrer"
           >

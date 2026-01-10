@@ -31,7 +31,7 @@ export function Header() {
         <div className="flex items-center justify-between gap-4 h-16">
           <Link href="/">
             <span className="font-serif text-2xl font-bold text-foreground cursor-pointer" data-testid="link-logo">
-              NORA<span className="text-primary">HAIRLINE</span>
+              NORA <span className="text-primary">HAIR LINE</span>
             </span>
           </Link>
 

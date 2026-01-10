@@ -8,15 +8,16 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-serif text-2xl font-bold mb-4">
-              NORA<span className="text-primary">HAIRLINE</span>
+            <h3 className="font-serif text-2xl font-bold mb-2">
+              NORA <span className="text-primary">HAIR LINE</span>
             </h3>
+            <p className="text-primary italic text-sm mb-3">Luxury for less...</p>
             <p className="text-muted-foreground text-sm mb-4">
-              Premium imported bone straight hair and luxury wigs for the modern Nigerian woman. Quality you can trust.
+              Premium Closure, Frontals, 360 Illusion Frontal, Wigs & Bundles. Quality you can trust at affordable prices.
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://instagram.com"
+                href="https://instagram.com/norahairline"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -25,7 +26,7 @@ export function Footer() {
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://facebook.com/norahairline"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -34,7 +35,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://wa.me/2348012345678"
+                href="https://wa.me/2348038707795"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -115,20 +116,20 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-muted-foreground text-sm">
-                  Lekki Phase 1, Lagos, Nigeria
+                  No 5 Veet Gold Plaza, directly opposite Abia Gate @ Tradefair Shopping Center, Badagry Express Way, Lagos State
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-muted-foreground text-sm">
-                  +234 801 234 5678
-                </span>
+                <a href="tel:+2348038707795" className="text-muted-foreground hover:text-primary text-sm">
+                  0803 870 7795
+                </a>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-muted-foreground text-sm">
-                  hello@norahairline.ng
-                </span>
+                <SiWhatsapp className="h-5 w-5 text-[#25D366] shrink-0" />
+                <a href="https://wa.me/2348038707795" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary text-sm">
+                  WhatsApp: 0803 870 7795
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-primary shrink-0" />
@@ -142,7 +143,7 @@ export function Footer() {
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm text-center md:text-left">
-            2024 NORAHAIRLINE. All rights reserved.
+            2024 NORA HAIR LINE. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <span className="text-muted-foreground text-sm">

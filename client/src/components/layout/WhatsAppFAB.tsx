@@ -1,7 +1,7 @@
 import { SiWhatsapp } from "react-icons/si";
 
 export function WhatsAppFAB() {
-  const whatsappNumber = "2348012345678";
+  const whatsappNumber = "2348038707795";
   const message = encodeURIComponent(
     "Hi! I'm interested in your hair products. Can you help me?"
   );
