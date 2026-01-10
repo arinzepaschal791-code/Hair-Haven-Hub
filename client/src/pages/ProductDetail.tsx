@@ -10,6 +10,7 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/hooks/use-toast";
+import { isInstallmentEligible } from "@/lib/installment";
 import {
   ShoppingCart,
   Minus,
@@ -238,7 +239,9 @@ export default function ProductDetail() {
             </Link>
           </div>
 
+          {isInstallmentEligible(product.category) && (
           <InstallmentCalculator price={product.price} quantity={quantity} />
+        )}
 
           <div className="mt-6 space-y-3">
             <div className="flex items-center gap-3 text-sm">

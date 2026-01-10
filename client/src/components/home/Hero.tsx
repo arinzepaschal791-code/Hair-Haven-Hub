@@ -11,7 +11,7 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(177_80%_6%/0.9)] via-[hsl(177_70%_10%/0.75)] to-[hsl(177_60%_15%/0.5)]" />
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
         <div className="max-w-2xl">
@@ -23,7 +23,7 @@ export function Hero() {
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Premium Hair.
             <br />
-            <span className="text-primary">Perfect Confidence.</span>
+            <span className="text-gold-gradient">Perfect Confidence.</span>
           </h1>
           
           <p className="text-lg md:text-xl text-white/80 mb-8 leading-relaxed">
