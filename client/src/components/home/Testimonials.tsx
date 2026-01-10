@@ -1,9 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Quote } from "lucide-react";
-import customerImg1 from "@assets/stock_images/beautiful_black_nige_3c75a793.jpg";
-import customerImg2 from "@assets/stock_images/beautiful_black_nige_7db12ebc.jpg";
-import customerImg3 from "@assets/stock_images/beautiful_black_nige_c76e3b6b.jpg";
+import customerImg1 from "@assets/generated_images/nigerian_woman_bone_straight_hair.png";
+import customerImg2 from "@assets/generated_images/nigerian_lady_straight_hair_portrait.png";
+import customerImg3 from "@assets/generated_images/nigerian_beauty_straight_hair.png";
 
 const testimonials = [
   {

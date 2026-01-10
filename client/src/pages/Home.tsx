@@ -1,6 +1,7 @@
 import { Hero } from "@/components/home/Hero";
 import { FeaturedCollections } from "@/components/home/FeaturedCollections";
 import { InstallmentSpotlight } from "@/components/home/InstallmentSpotlight";
+import { LuxuryWigVideo } from "@/components/home/LuxuryWigVideo";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { Testimonials } from "@/components/home/Testimonials";
 import { Newsletter } from "@/components/home/Newsletter";
@@ -56,6 +57,7 @@ export default function Home() {
       </section>
 
       <InstallmentSpotlight />
+      <LuxuryWigVideo />
       <WhyChooseUs />
       <Testimonials />
       <Newsletter />
