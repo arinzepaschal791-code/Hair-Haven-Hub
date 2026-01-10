@@ -34,7 +34,7 @@ export function Header() {
             <img 
               src={logoImage} 
               alt="NORA HAIR LINE" 
-              className="h-14 w-auto cursor-pointer object-contain"
+              className="h-16 w-auto cursor-pointer object-contain brightness-110 contrast-125 saturate-125"
               data-testid="link-logo"
             />
           </Link>

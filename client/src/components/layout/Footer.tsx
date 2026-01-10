@@ -13,7 +13,7 @@ export function Footer() {
               <img 
                 src={logoImage} 
                 alt="NORA HAIR LINE" 
-                className="h-20 w-auto object-contain"
+                className="h-24 w-auto object-contain brightness-110 contrast-125 saturate-125"
               />
             </div>
             <p className="text-muted-foreground text-sm mb-4">
