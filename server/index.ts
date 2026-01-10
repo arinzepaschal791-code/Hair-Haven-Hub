@@ -4,16 +4,12 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
-import { fileURLToPath } from "url";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
-app.use("/assets", express.static(path.resolve(__dirname, "..", "attached_assets")));
+app.use("/assets", express.static(path.resolve(process.cwd(), "attached_assets")));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 const httpServer = createServer(app);
 
