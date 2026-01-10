@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { useCart } from "@/lib/cart";
@@ -11,6 +11,7 @@ import { CartSummary } from "@/components/cart/CartSummary";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { allItemsInstallmentEligible } from "@/lib/installment";
 import type { Order, OrderItem } from "@shared/schema";
 
 export default function Checkout() {
@@ -25,6 +26,15 @@ export default function Checkout() {
 
   const deliveryFee = totalAmount >= 150000 ? 0 : 5000;
   const finalTotal = totalAmount + deliveryFee;
+
+  const cartItems = items.map((item) => ({ category: item.product.category }));
+  const installmentAvailable = allItemsInstallmentEligible(cartItems);
+
+  useEffect(() => {
+    if (!installmentAvailable && paymentPlan === "installment") {
+      setPaymentPlan("full");
+    }
+  }, [installmentAvailable, paymentPlan]);
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -135,6 +145,7 @@ export default function Checkout() {
                 onPaymentPlanChange={setPaymentPlan}
                 onPlaceOrder={handlePlaceOrder}
                 isLoading={createOrderMutation.isPending}
+                installmentAvailable={installmentAvailable}
               />
             )}
           </div>

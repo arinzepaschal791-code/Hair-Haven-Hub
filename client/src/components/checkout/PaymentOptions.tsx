@@ -3,7 +3,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Wallet, Calendar, Check, Building } from "lucide-react";
+import { CreditCard, Wallet, Calendar, Check, Building, AlertCircle } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 
 interface PaymentOptionsProps {
@@ -12,6 +12,7 @@ interface PaymentOptionsProps {
   onPaymentPlanChange: (plan: "full" | "installment") => void;
   onPlaceOrder: () => void;
   isLoading?: boolean;
+  installmentAvailable?: boolean;
 }
 
 export function PaymentOptions({
@@ -20,6 +21,7 @@ export function PaymentOptions({
   onPaymentPlanChange,
   onPlaceOrder,
   isLoading = false,
+  installmentAvailable = true,
 }: PaymentOptionsProps) {
   const firstPayment = Math.round(totalAmount / 2);
   const secondPayment = totalAmount - firstPayment;
@@ -67,47 +69,63 @@ export function PaymentOptions({
               </div>
             </div>
 
-            <div
-              className={`flex items-start gap-4 p-4 rounded-md border-2 cursor-pointer transition-colors ${
-                paymentPlan === "installment"
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              }`}
-              onClick={() => onPaymentPlanChange("installment")}
-            >
-              <RadioGroupItem value="installment" id="installment" className="mt-1" data-testid="radio-installment" />
-              <div className="flex-1">
-                <Label
-                  htmlFor="installment"
-                  className="text-base font-medium cursor-pointer flex items-center gap-2"
-                >
-                  <Calendar className="h-5 w-5" />
-                  Pay in 2 Installments
-                  <Badge variant="secondary" className="ml-2">Popular</Badge>
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Split your payment over 30 days
-                </p>
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      Pay today (50%)
-                    </span>
-                    <span className="font-bold text-primary">
-                      N{firstPayment.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Pay within 30 days
-                    </span>
-                    <span>N{secondPayment.toLocaleString()}</span>
+            {installmentAvailable ? (
+              <div
+                className={`flex items-start gap-4 p-4 rounded-md border-2 cursor-pointer transition-colors ${
+                  paymentPlan === "installment"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+                onClick={() => onPaymentPlanChange("installment")}
+              >
+                <RadioGroupItem value="installment" id="installment" className="mt-1" data-testid="radio-installment" />
+                <div className="flex-1">
+                  <Label
+                    htmlFor="installment"
+                    className="text-base font-medium cursor-pointer flex items-center gap-2"
+                  >
+                    <Calendar className="h-5 w-5" />
+                    Pay in 2 Installments
+                    <Badge variant="secondary" className="ml-2">Popular</Badge>
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Split your payment over 30 days
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        Pay today (50%)
+                      </span>
+                      <span className="font-bold text-primary">
+                        N{firstPayment.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Pay within 30 days
+                      </span>
+                      <span>N{secondPayment.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-start gap-4 p-4 rounded-md border-2 border-border bg-muted/30 opacity-70">
+                <div className="mt-1 h-4 w-4 rounded-full border border-muted-foreground/30" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-base font-medium">Installment Payment</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <AlertCircle className="h-4 w-4" />
+                    Only available for Wigs and Bone Straight hair products
+                  </div>
+                </div>
+              </div>
+            )}
           </RadioGroup>
         </CardContent>
       </Card>

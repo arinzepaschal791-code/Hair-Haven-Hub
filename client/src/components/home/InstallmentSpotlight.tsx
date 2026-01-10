@@ -21,7 +21,7 @@ export function InstallmentSpotlight() {
               Buy Now, Pay in <span className="text-primary">2 Easy Installments</span>
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              We understand that quality hair is an investment. That's why we offer flexible payment plans that let you split your purchase in half. Get your hair today, pay the rest later!
+              We understand that quality hair is an investment. That's why we offer flexible payment plans on our <span className="font-medium text-foreground">Wigs and Bone Straight Hair</span> that let you split your purchase in half. Get your hair today, pay the rest later!
             </p>
 
             <div className="space-y-4 mb-8">
