@@ -9,11 +9,13 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <img 
-              src={logoImage} 
-              alt="NORA HAIR LINE" 
-              className="h-20 w-auto object-contain mb-2 brightness-110 contrast-110"
-            />
+            <div className="rounded-lg overflow-hidden shadow-md inline-block mb-2">
+              <img 
+                src={logoImage} 
+                alt="NORA HAIR LINE" 
+                className="h-16 w-auto object-contain"
+              />
+            </div>
             <p className="text-primary italic text-sm mb-3">Luxury for less...</p>
             <p className="text-muted-foreground text-sm mb-4">
               Premium Closure, Frontals, 360 Illusion Frontal, Wigs & Bundles. Quality you can trust at affordable prices.

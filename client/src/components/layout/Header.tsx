@@ -31,12 +31,16 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-16">
           <Link href="/">
-            <img 
-              src={logoImage} 
-              alt="NORA HAIR LINE" 
-              className="h-14 w-auto cursor-pointer object-contain brightness-110 contrast-110"
+            <div 
+              className="cursor-pointer rounded-lg overflow-hidden shadow-md"
               data-testid="link-logo"
-            />
+            >
+              <img 
+                src={logoImage} 
+                alt="NORA HAIR LINE" 
+                className="h-12 w-auto object-contain"
+              />
+            </div>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
