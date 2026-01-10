@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Clock, Instagram, Facebook } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import logoImage from "@assets/nora_logo_transparent.png";
 
 export function Footer() {
   return (
@@ -8,16 +9,12 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#CBA135] to-[#8B7355] flex items-center justify-center shadow-lg border-2 border-[#CBA135]/30">
-                <span className="font-serif text-2xl font-bold text-[#013A39]">N</span>
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="font-serif text-xl font-bold tracking-wide bg-gradient-to-r from-[#CBA135] via-[#D4AF37] to-[#CBA135] bg-clip-text text-transparent">
-                  NORA HAIR LINE
-                </span>
-                <span className="text-xs text-primary italic tracking-wider">Luxury for less...</span>
-              </div>
+            <div className="mb-3">
+              <img 
+                src={logoImage} 
+                alt="NORA HAIR LINE" 
+                className="h-20 w-auto object-contain"
+              />
             </div>
             <p className="text-muted-foreground text-sm mb-4">
               Premium Closure, Frontals, 360 Illusion Frontal, Wigs & Bundles. Quality you can trust at affordable prices.
