@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, CreditCard } from "lucide-react";
-import heroImage from "@assets/stock_images/woman_long_straight__87475d1c.jpg";
+import heroImage from "@assets/stock_images/black_woman_with_bea_956526ce.jpg";
 
 export function Hero() {
   return (
