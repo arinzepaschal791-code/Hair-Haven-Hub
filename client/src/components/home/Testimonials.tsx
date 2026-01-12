@@ -1,9 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Quote } from "lucide-react";
-import customerImg1 from "@assets/generated_images/nigerian_woman_bone_straight_hair.png";
-import customerImg2 from "@assets/generated_images/nigerian_lady_straight_hair_portrait.png";
-import customerImg3 from "@assets/generated_images/nigerian_beauty_straight_hair.png";
 
 const testimonials = [
   {
@@ -12,7 +9,7 @@ const testimonials = [
     location: "Lagos",
     content: "The bone straight hair I got is absolutely amazing! It's been 6 months and it still looks brand new. Best hair vendor in Nigeria!",
     rating: 5,
-    image: customerImg1,
+    image: "/testimonials/nigerian_woman_bone_straight_hair.png",
     productPurchased: "Bone Straight 22\"",
   },
   {
@@ -21,7 +18,7 @@ const testimonials = [
     location: "Abuja",
     content: "The installment payment option was a lifesaver. I got my dream wig without breaking the bank. Customer service is top-notch too!",
     rating: 5,
-    image: customerImg2,
+    image: "/testimonials/nigerian_lady_straight_hair_portrait.png",
     productPurchased: "Luxury Frontal Wig",
   },
   {
@@ -30,7 +27,7 @@ const testimonials = [
     location: "Port Harcourt",
     content: "Fast delivery and the hair quality exceeded my expectations. Will definitely be ordering again. Thank you NORA HAIR LINE!",
     rating: 5,
-    image: customerImg3,
+    image: "/testimonials/nigerian_beauty_straight_hair.png",
     productPurchased: "Bone Straight 18\"",
   },
 ];

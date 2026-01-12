@@ -11,6 +11,7 @@ const app = express();
 
 app.use("/assets", express.static(path.resolve(process.cwd(), "attached_assets")));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+app.use("/testimonials", express.static(path.resolve(process.cwd(), "client/public/testimonials")));
 const httpServer = createServer(app);
 
 declare module "http" {

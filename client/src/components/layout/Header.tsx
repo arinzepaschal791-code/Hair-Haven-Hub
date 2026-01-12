@@ -31,15 +31,12 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-16">
           <Link href="/">
-            <div className="flex flex-col items-center cursor-pointer" data-testid="link-logo">
+            <div className="flex items-center cursor-pointer" data-testid="link-logo">
               <img 
                 src={logoImage} 
                 alt="NORA HAIR LINE" 
-                className="h-10 w-auto object-contain drop-shadow-md"
+                className="h-12 w-auto object-contain"
               />
-              <span className="font-serif text-xs font-bold tracking-widest text-foreground mt-0.5">
-                NORA HAIR LINE
-              </span>
             </div>
           </Link>
 
