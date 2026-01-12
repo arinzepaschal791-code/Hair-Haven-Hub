@@ -9,6 +9,9 @@ import { pool } from "./db";
 
 const app = express();
 
+// Trust proxy for production (Replit's reverse proxy terminates TLS)
+app.set("trust proxy", 1);
+
 app.use("/assets", express.static(path.resolve(process.cwd(), "attached_assets")));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use("/testimonials", express.static(path.resolve(process.cwd(), "client/public/testimonials")));
@@ -42,10 +45,12 @@ app.use(
     secret: process.env.SESSION_SECRET || "norahairline-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
+      sameSite: "lax",
     },
   })
 );
