@@ -56,7 +56,7 @@ export function InstallmentCalculator({ price, quantity = 1 }: InstallmentCalcul
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
-          Your order ships immediately after the first payment!
+          Your order ships after complete payment is received.
         </p>
       </CardContent>
     </Card>

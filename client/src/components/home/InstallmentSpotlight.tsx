@@ -21,7 +21,7 @@ export function InstallmentSpotlight() {
               Buy Now, Pay in <span className="text-primary">2 Easy Installments</span>
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              We understand that quality hair is an investment. That's why we offer flexible payment plans on our <span className="font-medium text-foreground">Wigs and Bone Straight Hair</span> that let you split your purchase in half. Get your hair today, pay the rest later!
+              We understand that quality hair is an investment. That's why we offer flexible payment plans on our <span className="font-medium text-foreground">Wigs and Bone Straight Hair</span> that let you split your purchase into two easy payments. Your order ships once payment is complete!
             </p>
 
             <div className="space-y-4 mb-8">
@@ -32,7 +32,7 @@ export function InstallmentSpotlight() {
                 <div>
                   <p className="font-medium">Pay 50% upfront</p>
                   <p className="text-sm text-muted-foreground">
-                    Receive your order immediately after first payment
+                    Reserve your order with the first payment
                   </p>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export function InstallmentSpotlight() {
 
                 <div className="mt-6 pt-6 border-t text-center">
                   <p className="text-sm text-muted-foreground">
-                    Get your hair delivered after first payment!
+                    Order ships once full payment is complete!
                   </p>
                 </div>
               </CardContent>

@@ -74,7 +74,7 @@ export default function Cart() {
             </CardHeader>
             <CardContent className="pt-2">
               <p className="text-sm text-muted-foreground mb-4">
-                Split your payment into two halves. Your order ships immediately after the first payment!
+                Split your payment into two halves. Your order ships once full payment is complete!
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 p-3 bg-background rounded-md border">
