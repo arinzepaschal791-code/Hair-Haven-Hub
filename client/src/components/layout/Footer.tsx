@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Clock, Instagram, Facebook } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import logoImage from "@assets/nora_logo_transparent.png";
+import logoImage from "@assets/nora_logo_1768342898279.jpg";
 
 export function Footer() {
   return (
@@ -13,7 +13,7 @@ export function Footer() {
               <img 
                 src={logoImage} 
                 alt="NORA HAIR LINE" 
-                className="h-16 w-auto object-contain"
+                className="h-20 w-auto object-contain"
               />
             </div>
             <p className="text-muted-foreground text-sm mb-4">

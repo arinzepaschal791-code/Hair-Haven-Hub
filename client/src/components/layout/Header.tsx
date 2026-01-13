@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useTheme } from "@/lib/theme";
-import logoImage from "@assets/nora_logo_transparent.png";
+import logoImage from "@assets/nora_logo_1768342898279.jpg";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -35,7 +35,7 @@ export function Header() {
               <img 
                 src={logoImage} 
                 alt="NORA HAIR LINE" 
-                className="h-12 w-auto object-contain"
+                className="h-14 w-auto object-contain"
               />
             </div>
           </Link>
