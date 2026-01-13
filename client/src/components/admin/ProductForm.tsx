@@ -87,21 +87,37 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload/image", {
+        // Step 1: Request presigned URL from backend
+        const urlResponse = await fetch("/api/uploads/request-url", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
+          body: JSON.stringify({
+            name: file.name,
+            size: file.size,
+            contentType: file.type,
+          }),
         });
 
-        if (!response.ok) {
+        if (!urlResponse.ok) {
+          throw new Error("Failed to get upload URL");
+        }
+
+        const { uploadURL, objectPath } = await urlResponse.json();
+
+        // Step 2: Upload file directly to cloud storage
+        const uploadResponse = await fetch(uploadURL, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+
+        if (!uploadResponse.ok) {
           throw new Error("Upload failed");
         }
 
-        const data = await response.json();
-        newUrls.push(data.url);
+        // Use the object path for permanent storage URL
+        newUrls.push(objectPath);
       }
 
       const allImages = [...uploadedImages, ...newUrls];
@@ -109,7 +125,7 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
       form.setValue("images", allImages.join("\n"));
       toast({
         title: "Images uploaded",
-        description: `${newUrls.length} image(s) uploaded successfully.`,
+        description: `${newUrls.length} image(s) uploaded permanently.`,
       });
     } catch (error) {
       toast({
@@ -128,25 +144,42 @@ export function ProductForm({ onSubmit, isLoading, defaultValues, mode = "add" }
     setIsUploadingVideo(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", files[0]);
-
-      const response = await fetch("/api/upload/video", {
+      const file = files[0];
+      
+      // Step 1: Request presigned URL from backend
+      const urlResponse = await fetch("/api/uploads/request-url", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+        }),
       });
 
-      if (!response.ok) {
+      if (!urlResponse.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+
+      const { uploadURL, objectPath } = await urlResponse.json();
+
+      // Step 2: Upload file directly to cloud storage
+      const uploadResponse = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!uploadResponse.ok) {
         throw new Error("Upload failed");
       }
 
-      const data = await response.json();
-      setUploadedVideo(data.url);
-      form.setValue("video", data.url);
+      setUploadedVideo(objectPath);
+      form.setValue("video", objectPath);
       toast({
         title: "Video uploaded",
-        description: "Video uploaded successfully.",
+        description: "Video uploaded permanently.",
       });
     } catch (error) {
       toast({

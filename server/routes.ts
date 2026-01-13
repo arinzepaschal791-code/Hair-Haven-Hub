@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 declare module "express-session" {
   interface SessionData {
@@ -85,6 +86,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Register object storage routes for permanent file uploads
+  registerObjectStorageRoutes(app);
   
   // Admin authentication endpoints
   app.post("/api/admin/login", async (req, res) => {
