@@ -518,31 +518,81 @@ export async function registerRoutes(
   });
 
   // Paystack webhook - receives notifications directly from Paystack
-  // This is a backup verification method
+  // This is a backup verification method with HMAC signature verification
   app.post("/api/paystack/webhook", async (req, res) => {
     try {
-      // Verify webhook signature (optional but recommended for security)
-      const signature = req.headers["x-paystack-signature"];
       const secretKey = process.env.PAYSTACK_SECRET_KEY;
       
       if (!secretKey) {
-        return res.status(500).json({ error: "Paystack not configured" });
+        console.error("Webhook error: Paystack secret key not configured");
+        return res.sendStatus(500);
       }
 
-      // For now, we'll process without signature verification
-      // In production, you should verify the signature
+      // Get the signature from Paystack headers
+      const signature = req.headers["x-paystack-signature"] as string;
+      
+      if (!signature) {
+        console.error("Webhook rejected: Missing x-paystack-signature header");
+        return res.sendStatus(400);
+      }
+
+      // Verify the HMAC signature to ensure request is from Paystack
+      // Paystack uses HMAC SHA512 with the secret key
+      const crypto = await import("crypto");
+      const rawBody = (req as any).rawBody;
+      
+      if (!rawBody) {
+        console.error("Webhook error: Raw body not available for signature verification");
+        return res.sendStatus(400);
+      }
+
+      const expectedSignature = crypto
+        .createHmac("sha512", secretKey)
+        .update(rawBody)
+        .digest("hex");
+
+      // Compare signatures securely (constant-time comparison)
+      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+        console.error("Webhook rejected: Invalid signature - request may be forged");
+        return res.sendStatus(401);
+      }
+
+      // Signature verified - process the event
       const event = req.body;
 
       // Handle successful charge event
       if (event.event === "charge.success") {
         const paymentData = event.data;
         const reference = paymentData.reference;
+        const amountInKobo = paymentData.amount;
+        const currency = paymentData.currency;
 
-        // Find and update the order
+        // Find the order by reference
         const order = await storage.getOrderByReference(reference);
-        if (order && order.paymentStatus !== "paid") {
+        
+        if (!order) {
+          console.error(`Webhook: Order not found for reference ${reference}`);
+          return res.sendStatus(200); // Still return 200 to prevent retries
+        }
+
+        // Verify amount matches (convert order amount to kobo for comparison)
+        const expectedAmountKobo = Math.round(order.totalAmount * 100);
+        if (amountInKobo !== expectedAmountKobo) {
+          console.error(`Webhook: Amount mismatch for ${reference}. Expected ${expectedAmountKobo}, got ${amountInKobo}`);
+          return res.sendStatus(200); // Return 200 but don't update
+        }
+
+        // Verify currency is NGN
+        if (currency !== "NGN") {
+          console.error(`Webhook: Currency mismatch for ${reference}. Expected NGN, got ${currency}`);
+          return res.sendStatus(200);
+        }
+
+        // All checks passed - update order if not already paid
+        if (order.paymentStatus !== "paid") {
           await storage.updateOrderPayment(order.id, "paid", new Date().toISOString());
           await storage.updateOrderStatus(order.id, "processing");
+          console.log(`Webhook: Order ${order.id} marked as paid via webhook`);
         }
       }
 
