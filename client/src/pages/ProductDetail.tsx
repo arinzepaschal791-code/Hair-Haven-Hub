@@ -23,6 +23,7 @@ import {
   Heart,
 } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { PaystackButton } from "@/components/payment/PaystackButton";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -232,11 +233,7 @@ export default function ProductDetail() {
               <ShoppingCart className="h-5 w-5 mr-2" />
               {product.inStock ? "Add to Cart" : "Out of Stock"}
             </Button>
-            <Link href="/cart">
-              <Button variant="outline" className="w-full" size="lg" data-testid="button-buy-now">
-                Buy Now
-              </Button>
-            </Link>
+            <PaystackButton product={product} quantity={quantity} />
           </div>
 
           {isInstallmentEligible(product.category) && (

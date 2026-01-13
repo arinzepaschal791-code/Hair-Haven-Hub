@@ -55,9 +55,11 @@ export interface IStorage {
 
   getAllOrders(): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
+  getOrderByReference(reference: string): Promise<Order | undefined>;
   getOrdersByCustomer(customerId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updateOrderPayment(id: string, paymentStatus: string, paidAt?: string): Promise<Order | undefined>;
 
   getAllTestimonials(): Promise<Testimonial[]>;
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
@@ -174,6 +176,21 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     const [order] = await db.update(orders).set({ orderStatus: status }).where(eq(orders.id, id)).returning();
+    return order || undefined;
+  }
+
+  // Find order by Paystack reference
+  async getOrderByReference(reference: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.paystackReference, reference));
+    return order || undefined;
+  }
+
+  // Update order payment status after Paystack verification
+  async updateOrderPayment(id: string, paymentStatus: string, paidAt?: string): Promise<Order | undefined> {
+    const updates: { paymentStatus: string; paidAt?: string; firstPaymentStatus?: string } = { paymentStatus };
+    if (paidAt) updates.paidAt = paidAt;
+    if (paymentStatus === "paid") updates.firstPaymentStatus = "paid";
+    const [order] = await db.update(orders).set(updates).where(eq(orders.id, id)).returning();
     return order || undefined;
   }
 

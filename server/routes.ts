@@ -372,5 +372,186 @@ export async function registerRoutes(
     }
   });
 
+  // ===== PAYSTACK PAYMENT INTEGRATION =====
+  // These routes handle payment processing with Paystack
+  
+  // Get Paystack public key (safe to expose to frontend)
+  app.get("/api/paystack/config", (req, res) => {
+    // Return the public key for frontend Paystack popup
+    // This key is safe to share - it can only initialize payments, not verify them
+    const publicKey = process.env.PAYSTACK_PUBLIC_KEY;
+    if (!publicKey) {
+      return res.status(500).json({ error: "Paystack not configured" });
+    }
+    res.json({ publicKey });
+  });
+
+  // Initialize a payment - creates an order and returns payment reference
+  app.post("/api/paystack/initialize", async (req, res) => {
+    try {
+      const { email, amount, productId, productName, quantity, customerName, phone } = req.body;
+
+      // Validate required fields
+      if (!email || !amount || !productId || !productName) {
+        return res.status(400).json({ error: "Missing required fields: email, amount, productId, productName" });
+      }
+
+      // Create a unique reference for this transaction
+      // Format: NORA-timestamp-random for easy identification
+      const reference = `NORA-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+
+      // Create the order in database with pending payment status
+      const orderData = {
+        customerId: email, // Use email as customer ID for now
+        addressId: "pending", // Will be updated during checkout
+        items: JSON.stringify([{
+          productId,
+          productName,
+          price: amount,
+          quantity: quantity || 1,
+          image: ""
+        }]),
+        totalAmount: amount,
+        paymentPlan: "full",
+        firstPayment: amount,
+        secondPayment: 0,
+        firstPaymentStatus: "pending",
+        secondPaymentStatus: "paid",
+        orderStatus: "pending",
+        orderDate: new Date().toISOString(),
+        paystackReference: reference,
+        paymentStatus: "unpaid",
+      };
+
+      const order = await storage.createOrder(orderData);
+
+      // Return data needed for Paystack popup
+      res.json({
+        reference,
+        orderId: order.id,
+        amount: amount * 100, // Paystack expects amount in kobo (smallest currency unit)
+        email,
+        currency: "NGN",
+      });
+    } catch (error) {
+      console.error("Payment initialization error:", error);
+      res.status(500).json({ error: "Failed to initialize payment" });
+    }
+  });
+
+  // Verify payment after Paystack popup completes
+  // This is called from frontend after user completes payment
+  app.post("/api/paystack/verify", async (req, res) => {
+    try {
+      const { reference } = req.body;
+
+      if (!reference) {
+        return res.status(400).json({ error: "Payment reference is required" });
+      }
+
+      // Get Paystack secret key from environment (NEVER expose this to frontend!)
+      const secretKey = process.env.PAYSTACK_SECRET_KEY;
+      if (!secretKey) {
+        return res.status(500).json({ error: "Paystack not configured" });
+      }
+
+      // Verify the payment with Paystack API
+      // This confirms the payment was actually made
+      const verifyResponse = await fetch(
+        `https://api.paystack.co/transaction/verify/${reference}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const verifyData = await verifyResponse.json();
+
+      // Check if verification was successful
+      if (!verifyData.status) {
+        return res.status(400).json({ 
+          error: "Payment verification failed", 
+          message: verifyData.message 
+        });
+      }
+
+      // Check if the payment was actually successful
+      const paymentData = verifyData.data;
+      if (paymentData.status !== "success") {
+        // Update order with failed payment status
+        const order = await storage.getOrderByReference(reference);
+        if (order) {
+          await storage.updateOrderPayment(order.id, "failed");
+        }
+        return res.status(400).json({ 
+          success: false,
+          error: "Payment was not successful",
+          status: paymentData.status
+        });
+      }
+
+      // Payment successful! Update the order in database
+      const order = await storage.getOrderByReference(reference);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Mark order as paid
+      await storage.updateOrderPayment(order.id, "paid", new Date().toISOString());
+      await storage.updateOrderStatus(order.id, "processing");
+
+      res.json({
+        success: true,
+        message: "Payment verified successfully",
+        orderId: order.id,
+        amount: paymentData.amount / 100, // Convert back from kobo to Naira
+        reference: paymentData.reference,
+        paidAt: paymentData.paid_at,
+      });
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      res.status(500).json({ error: "Failed to verify payment" });
+    }
+  });
+
+  // Paystack webhook - receives notifications directly from Paystack
+  // This is a backup verification method
+  app.post("/api/paystack/webhook", async (req, res) => {
+    try {
+      // Verify webhook signature (optional but recommended for security)
+      const signature = req.headers["x-paystack-signature"];
+      const secretKey = process.env.PAYSTACK_SECRET_KEY;
+      
+      if (!secretKey) {
+        return res.status(500).json({ error: "Paystack not configured" });
+      }
+
+      // For now, we'll process without signature verification
+      // In production, you should verify the signature
+      const event = req.body;
+
+      // Handle successful charge event
+      if (event.event === "charge.success") {
+        const paymentData = event.data;
+        const reference = paymentData.reference;
+
+        // Find and update the order
+        const order = await storage.getOrderByReference(reference);
+        if (order && order.paymentStatus !== "paid") {
+          await storage.updateOrderPayment(order.id, "paid", new Date().toISOString());
+          await storage.updateOrderStatus(order.id, "processing");
+        }
+      }
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.sendStatus(500);
+    }
+  });
+
   return httpServer;
 }

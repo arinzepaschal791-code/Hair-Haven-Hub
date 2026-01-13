@@ -81,6 +81,10 @@ export const orders = pgTable("orders", {
   orderStatus: text("order_status").default("pending"), // pending, processing, shipped, delivered
   orderDate: text("order_date").notNull(),
   deliveryDate: text("delivery_date"),
+  // Paystack payment fields
+  paystackReference: text("paystack_reference"), // Unique reference for Paystack transaction
+  paymentStatus: text("payment_status").default("unpaid"), // unpaid, paid, failed
+  paidAt: text("paid_at"), // When payment was confirmed
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true });

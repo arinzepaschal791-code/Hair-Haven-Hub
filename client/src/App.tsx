@@ -22,6 +22,8 @@ import About from "@/pages/About";
 import Wishlist from "@/pages/Wishlist";
 import OrderTracking from "@/pages/OrderTracking";
 import CategoryPage from "@/pages/CategoryPage";
+import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentFailed from "@/pages/PaymentFailed";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -51,6 +53,8 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Admin} />
       <Route path="/about" component={About} />
+      <Route path="/payment-success" component={PaymentSuccess} />
+      <Route path="/payment-failed" component={PaymentFailed} />
       <Route component={NotFound} />
     </Switch>
   );
