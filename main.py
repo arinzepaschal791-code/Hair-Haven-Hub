@@ -3,14 +3,16 @@ import os
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/header')
-def header():
-    return render_template('Header.tsx')
+# REMOVE this route if you are not using HTML
+# Flask does NOT support .tsx files
+# @app.route("/header")
+# def header():
+#     return render_template("Header.tsx")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host="0.0.0.0", port=port)
