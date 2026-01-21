@@ -1,6 +1,16 @@
-def main():
-    print("Hello from repl-nix-workspace!")
+from flask import Flask, render_template
+import os
 
+app = Flask(__name__)
 
-if __name__ == "__main__":
-    main()
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/header')
+def header():
+    return render_template('Header.tsx')
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)
