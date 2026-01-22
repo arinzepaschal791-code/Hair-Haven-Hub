@@ -3,9 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <title>NoraHairLine</title>
+
+    <!-- Link to CSS (we’ll style it later) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>NoraHairLine is Live ✅</h1>
-    <p>If you see this page, Flask is working correctly.</p>
+
+    <header>
+        <h1>NoraHairLine</h1>
+        <p>Luxury Wigs • Bone Straight • Curly Hair</p>
+    </header>
+
+    <main>
+        <section>
+            <h2>Welcome to NoraHairLine</h2>
+            <p>
+                We sell premium-quality wigs, bone straight hair,
+                curly hair, hair creams, and shampoos.
+            </p>
+        </section>
+
+        <section>
+            <h2>Our Products</h2>
+            <ul>
+                <li>Bone Straight Wigs</li>
+                <li>Curly Wigs</li>
+                <li>Hair Creams</li>
+                <li>Hair Shampoos</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Contact Us</h2>
+            <p>Instagram: @norahairline</p>
+            <p>WhatsApp: +234 XXX XXX XXXX</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 NoraHairLine. All rights reserved.</p>
+    </footer>
+
 </body>
 </html>
