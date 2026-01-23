@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Edit Product</h1>
+
+<form method="POST" style="max-width: 600px;">
+    <div style="margin-bottom: 1rem;">
+        <label>Product Name:</label><br>
+        <input type="text" name="name" value="{{ product.name }}" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Category:</label><br>
+        <select name="category" required style="width: 100%; padding: 0.5rem;">
+            <option value="wigs" {% if product.category == 'wigs' %}selected{% endif %}>Wigs</option>
+            <option value="hair" {% if product.category == 'hair' %}selected{% endif %}>Hair</option>
+            <option value="creams" {% if product.category == 'creams' %}selected{% endif %}>Creams</option>
+            <option value="shampoos" {% if product.category == 'shampoos' %}selected{% endif %}>Shampoos</option>
+        </select>
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Price (₦):</label><br>
+        <input type="number" name="price" step="0.01" value="{{ product.price }}" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Description:</label><br>
+        <textarea name="description" rows="4" style="width: 100%; padding: 0.5rem;">{{ product.description }}</textarea>
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Image URL:</label><br>
+        <input type="text" name="image_url" value="{{ product.image_url }}" style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Stock Quantity:</label><br>
+        <input type="number" name="stock" value="{{ product.stock }}" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <button type="submit" style="background: #28a745; color: white; padding: 0.5rem 2rem; border: none; border-radius: 5px; cursor: pointer;">Update Product</button>
+</form>
+{% endblock %}
