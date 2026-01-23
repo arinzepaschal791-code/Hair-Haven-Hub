@@ -78,7 +78,8 @@ def init_db():
         password_hash TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
-    """)
+    """
+)
     conn.commit()
     conn.close()
 
@@ -100,7 +101,6 @@ def save_file(file_storage):
 # Admin auth helpers
 def is_logged_in():
     return session.get("admin_logged_in")
-
 def login_admin(username):
     session["admin_logged_in"] = True
     session["admin_username"] = username
@@ -255,8 +255,7 @@ def admin_dashboard():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) as cnt FROM products")
-    product_count = cur.fetchone()["cnt"]
-    cur.execute("SELECT COUNT(*) as cnt FROM orders WHERE status = 'pending'")
+    product_count = cur.fetchone()["cnt"]n    cur.execute("SELECT COUNT(*) as cnt FROM orders WHERE status = 'pending'")
     pending_orders = cur.fetchone()["cnt"]
     cur.execute("SELECT COUNT(*) as cnt FROM reviews WHERE approved = 0")
     pending_reviews = cur.fetchone()["cnt"]
