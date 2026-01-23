@@ -1,9 +1,27 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h2>{{ product.name }}</h2>
-<p>Price: ₦{{ product.price }}</p>
-<p>{{ product.description }}</p>
+<h1>Our Products</h1>
 
-<button>Add to Cart</button>
+<div style="margin: 2rem 0;">
+    <a href="{{ url_for('products', category='all') }}">All</a> |
+    <a href="{{ url_for('products', category='wigs') }}">Wigs</a> |
+    <a href="{{ url_for('products', category='hair') }}">Hair</a> |
+    <a href="{{ url_for('products', category='creams') }}">Creams</a> |
+    <a href="{{ url_for('products', category='shampoos') }}">Shampoos</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem;">
+    {% for product in products %}
+    <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
+        {% if product.image_url %}
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width: 100%; height: 200px; object-fit: cover;">
+        {% endif %}
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.category }}</p>
+        <p><strong>₦{{ product.price }}</strong></p>
+        <a href="{{ url_for('product_detail', id=product.id') }}" style="background: #333; color: white; padding: 0.5rem 1rem; text-decoration: none; display: inline-block; border-radius: 5px;">View Details</a>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}
