@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - NoraHairLine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Admin Panel</h1>
+</header>
+
+<main>
+    <p>Welcome, Admin! Here you can manage products and orders.</p>
+
+    <ul>
+        <li>Manage Bone Straight Wigs</li>
+        <li>Manage Curly Wigs</li>
+        <li>Manage Hair Creams</li>
+        <li>Manage Hair Shampoos</li>
+    </ul>
+
+    <a href="{{ url_for('index') }}">Go back to Home</a>
+</main>
+
+<footer>
+    <p>© 2026 NoraHairLine. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
