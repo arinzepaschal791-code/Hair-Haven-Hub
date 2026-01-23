@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Order: {{ product.name }}</h1>
+<p>Price: ₦{{ product.price }}</p>
+
+<form method="POST" style="max-width: 500px;">
+    <div style="margin-bottom: 1rem;">
+        <label>Your Name:</label><br>
+        <input type="text" name="name" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Email:</label><br>
+        <input type="email" name="email" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Phone:</label><br>
+        <input type="tel" name="phone" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+        <label>Quantity:</label><br>
+        <input type="number" name="quantity" value="1" min="1" required style="width: 100%; padding: 0.5rem;">
+    </div>
+    <button type="submit" style="background: #28a745; color: white; padding: 1rem 2rem; border: none; border-radius: 5px; cursor: pointer;">Place Order</button>
+</form>
+{% endblock %}
