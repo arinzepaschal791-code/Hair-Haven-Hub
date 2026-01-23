@@ -5,8 +5,13 @@ from models import db, Admin, Product, Order
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///norahairline.db')
+
+# Fix for Render PostgreSQL URL
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -18,17 +23,14 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return Admin.query.get(int(user_id))
 
-# Create tables
 with app.app_context():
     db.create_all()
 
-# HOME PAGE
 @app.route('/')
 def index():
     products = Product.query.all()
     return render_template('index.html', products=products)
 
-# PRODUCTS PAGE
 @app.route('/products')
 def products():
     category = request.args.get('category', 'all')
@@ -38,13 +40,11 @@ def products():
         products = Product.query.filter_by(category=category).all()
     return render_template('products.html', products=products, category=category)
 
-# PRODUCT DETAIL
 @app.route('/product/<int:id>')
 def product_detail(id):
     product = Product.query.get_or_404(id)
     return render_template('product_detail.html', product=product)
 
-# ORDER PRODUCT
 @app.route('/order/<int:product_id>', methods=['GET', 'POST'])
 def order(product_id):
     product = Product.query.get_or_404(product_id)
@@ -65,7 +65,6 @@ def order(product_id):
     
     return render_template('order.html', product=product)
 
-# ADMIN LOGIN
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -81,7 +80,6 @@ def login():
     
     return render_template('login.html')
 
-# ADMIN DASHBOARD
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
@@ -89,7 +87,6 @@ def admin_dashboard():
     orders = Order.query.order_by(Order.created_at.desc()).all()
     return render_template('admin_dashboard.html', products=products, orders=orders)
 
-# ADD PRODUCT
 @app.route('/admin/product/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
@@ -109,7 +106,6 @@ def add_product():
     
     return render_template('add_product.html')
 
-# EDIT PRODUCT
 @app.route('/admin/product/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_product(id):
@@ -128,7 +124,6 @@ def edit_product(id):
     
     return render_template('edit_product.html', product=product)
 
-# DELETE PRODUCT
 @app.route('/admin/product/delete/<int:id>')
 @login_required
 def delete_product(id):
@@ -138,7 +133,6 @@ def delete_product(id):
     flash('Product deleted successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-# UPDATE ORDER STATUS
 @app.route('/admin/order/update/<int:id>', methods=['POST'])
 @login_required
 def update_order(id):
@@ -148,14 +142,12 @@ def update_order(id):
     flash('Order status updated!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-# LOGOUT
 @app.route('/admin/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# CREATE FIRST ADMIN (Run once)
 @app.route('/create-admin')
 def create_admin():
     admin = Admin.query.filter_by(username='admin').first()
