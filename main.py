@@ -1,16 +1,1 @@
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-# Homepage route
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Admin Panel route
-@app.route('/admin')
-def admin_panel():
-    return render_template('admin.html')
-
-if __name__ == "__main__":
-    app.run(debug=True)
+from flask import Flask, render_template, request, redirect, url_for\nimport os\nimport sqlite3\n\napp = Flask(__name__)\napp.config['DATABASE'] = 'ecommerce.db'\napp.config['UPLOAD_FOLDER'] = 'static/images/uploads'\n\n# Database functions go here\n# Routes go here\n\nif __name__ == '__main__':\n    app.run(debug=True)\n
