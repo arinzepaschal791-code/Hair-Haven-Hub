@@ -177,6 +177,11 @@ def update_order(order_id):
     flash("Order status updated", "success")
     return redirect(url_for("admin_orders"))
 
+# --- Admin Panel ---
+@app.route("/admin")
+def admin_panel():
+    return redirect(url_for("admin_login"))
+
 # --- Run server ---
 if __name__ == "__main__":
     app.run(debug=True)
