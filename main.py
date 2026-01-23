@@ -1,187 +1,171 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from models import db, Admin, Product, Order
+import os
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # Replace with a strong secret key
+app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///norahairline.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-DATABASE = "database.db"
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
-# --- Database connection ---
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+@login_manager.user_loader
+def load_user(user_id):
+    return Admin.query.get(int(user_id))
 
-# --- Initialize DB and tables ---
-def init_db():
-    conn = get_db_connection()
-    conn.execute('''CREATE TABLE IF NOT EXISTS products (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL,
-                        price REAL NOT NULL,
-                        description TEXT
-                    )''')
-    conn.execute('''CREATE TABLE IF NOT EXISTS orders (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        product_id INTEGER NOT NULL,
-                        status TEXT NOT NULL,
-                        FOREIGN KEY(product_id) REFERENCES products(id)
-                    )''')
-    conn.commit()
-    conn.close()
+# Create tables
+with app.app_context():
+    db.create_all()
 
-init_db()
-
-# --- Home page ---
-@app.route("/")
+# HOME PAGE
+@app.route('/')
 def index():
-    conn = get_db_connection()
-    products = conn.execute("SELECT * FROM products").fetchall()
-    conn.close()
-    return render_template("index.html", products=products)
+    products = Product.query.all()
+    return render_template('index.html', products=products)
 
-# --- Product details ---
-@app.route("/product/<int:product_id>")
-def product_detail(product_id):
-    conn = get_db_connection()
-    product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
-    conn.close()
-    if not product:
-        flash("Product not found", "warning")
-        return redirect(url_for("index"))
-    return render_template("product_detail.html", product=product)
+# PRODUCTS PAGE
+@app.route('/products')
+def products():
+    category = request.args.get('category', 'all')
+    if category == 'all':
+        products = Product.query.all()
+    else:
+        products = Product.query.filter_by(category=category).all()
+    return render_template('products.html', products=products, category=category)
 
-# --- Admin login ---
-@app.route("/admin/login", methods=["GET", "POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        # Replace with your own credentials or DB check
-        if username == "admin" and password == "password":
-            session["admin_logged_in"] = True
-            return redirect(url_for("admin_dashboard"))
+# PRODUCT DETAIL
+@app.route('/product/<int:id>')
+def product_detail(id):
+    product = Product.query.get_or_404(id)
+    return render_template('product_detail.html', product=product)
+
+# ORDER PRODUCT
+@app.route('/order/<int:product_id>', methods=['GET', 'POST'])
+def order(product_id):
+    product = Product.query.get_or_404(product_id)
+    
+    if request.method == 'POST':
+        order = Order(
+            customer_name=request.form['name'],
+            customer_email=request.form['email'],
+            customer_phone=request.form['phone'],
+            product_id=product_id,
+            quantity=int(request.form['quantity']),
+            total_price=product.price * int(request.form['quantity'])
+        )
+        db.session.add(order)
+        db.session.commit()
+        flash('Order placed successfully! We will contact you soon.', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('order.html', product=product)
+
+# ADMIN LOGIN
+@app.route('/admin/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        admin = Admin.query.filter_by(username=username).first()
+        
+        if admin and check_password_hash(admin.password, password):
+            login_user(admin)
+            return redirect(url_for('admin_dashboard'))
         else:
-            flash("Invalid username or password", "danger")
-    return render_template("admin/login.html")
+            flash('Invalid credentials', 'danger')
+    
+    return render_template('login.html')
 
-# --- Admin logout ---
-@app.route("/admin/logout")
-def admin_logout():
-    session.pop("admin_logged_in", None)
-    return redirect(url_for("admin_login"))
-
-# --- Admin dashboard ---
-@app.route("/admin")
+# ADMIN DASHBOARD
+@app.route('/admin/dashboard')
+@login_required
 def admin_dashboard():
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
+    products = Product.query.all()
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    return render_template('admin_dashboard.html', products=products, orders=orders)
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # Count products
-    cur.execute("SELECT COUNT(*) AS cnt FROM products")
-    product_count = cur.fetchone()["cnt"]
-    # Count pending orders
-    cur.execute("SELECT COUNT(*) AS cnt FROM orders WHERE status = 'pending'")
-    pending_orders_count = cur.fetchone()["cnt"]
-    conn.close()
-
-    return render_template("admin/dashboard.html",
-                           product_count=product_count,
-                           pending_orders_count=pending_orders_count)
-
-# --- Admin: view products ---
-@app.route("/admin/products")
-def admin_products():
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    conn = get_db_connection()
-    products = conn.execute("SELECT * FROM products").fetchall()
-    conn.close()
-    return render_template("admin/products.html", products=products)
-
-# --- Admin: add product ---
-@app.route("/admin/products/add", methods=["GET", "POST"])
+# ADD PRODUCT
+@app.route('/admin/product/add', methods=['GET', 'POST'])
+@login_required
 def add_product():
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    if request.method == "POST":
-        name = request.form["name"]
-        price = request.form["price"]
-        description = request.form["description"]
-        conn = get_db_connection()
-        conn.execute("INSERT INTO products (name, price, description) VALUES (?, ?, ?)",
-                     (name, price, description))
-        conn.commit()
-        conn.close()
-        flash("Product added successfully", "success")
-        return redirect(url_for("admin_products"))
-    return render_template("admin/add_product.html")
+    if request.method == 'POST':
+        product = Product(
+            name=request.form['name'],
+            category=request.form['category'],
+            price=float(request.form['price']),
+            description=request.form['description'],
+            image_url=request.form['image_url'],
+            stock=int(request.form['stock'])
+        )
+        db.session.add(product)
+        db.session.commit()
+        flash('Product added successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('add_product.html')
 
-# --- Admin: edit product ---
-@app.route("/admin/products/edit/<int:product_id>", methods=["GET", "POST"])
-def edit_product(product_id):
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    conn = get_db_connection()
-    product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
-    if not product:
-        flash("Product not found", "warning")
-        return redirect(url_for("admin_products"))
-    if request.method == "POST":
-        name = request.form["name"]
-        price = request.form["price"]
-        description = request.form["description"]
-        conn.execute("UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?",
-                     (name, price, description, product_id))
-        conn.commit()
-        conn.close()
-        flash("Product updated successfully", "success")
-        return redirect(url_for("admin_products"))
-    conn.close()
-    return render_template("admin/edit_product.html", product=product)
+# EDIT PRODUCT
+@app.route('/admin/product/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_product(id):
+    product = Product.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        product.name = request.form['name']
+        product.category = request.form['category']
+        product.price = float(request.form['price'])
+        product.description = request.form['description']
+        product.image_url = request.form['image_url']
+        product.stock = int(request.form['stock'])
+        db.session.commit()
+        flash('Product updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('edit_product.html', product=product)
 
-# --- Admin: delete product ---
-@app.route("/admin/products/delete/<int:product_id>")
-def delete_product(product_id):
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    conn = get_db_connection()
-    conn.execute("DELETE FROM products WHERE id = ?", (product_id,))
-    conn.commit()
-    conn.close()
-    flash("Product deleted successfully", "success")
-    return redirect(url_for("admin_products"))
+# DELETE PRODUCT
+@app.route('/admin/product/delete/<int:id>')
+@login_required
+def delete_product(id):
+    product = Product.query.get_or_404(id)
+    db.session.delete(product)
+    db.session.commit()
+    flash('Product deleted successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
 
-# --- Admin: view orders ---
-@app.route("/admin/orders")
-def admin_orders():
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    conn = get_db_connection()
-    orders = conn.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()
-    conn.close()
-    return render_template("admin/orders.html", orders=orders)
+# UPDATE ORDER STATUS
+@app.route('/admin/order/update/<int:id>', methods=['POST'])
+@login_required
+def update_order(id):
+    order = Order.query.get_or_404(id)
+    order.status = request.form['status']
+    db.session.commit()
+    flash('Order status updated!', 'success')
+    return redirect(url_for('admin_dashboard'))
 
-# --- Admin: update order status ---
-@app.route("/admin/orders/update/<int:order_id>", methods=["POST"])
-def update_order(order_id):
-    if "admin_logged_in" not in session:
-        return redirect(url_for("admin_login"))
-    status = request.form["status"]
-    conn = get_db_connection()
-    conn.execute("UPDATE orders SET status = ? WHERE id = ?", (status, order_id))
-    conn.commit()
-    conn.close()
-    flash("Order status updated", "success")
-    return redirect(url_for("admin_orders"))
+# LOGOUT
+@app.route('/admin/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
-# --- Admin Panel ---
-@app.route("/admin")
-def admin_panel():
-    return redirect(url_for("admin_login"))
+# CREATE FIRST ADMIN (Run once)
+@app.route('/create-admin')
+def create_admin():
+    admin = Admin.query.filter_by(username='admin').first()
+    if not admin:
+        hashed_password = generate_password_hash('admin123')
+        admin = Admin(username='admin', password=hashed_password)
+        db.session.add(admin)
+        db.session.commit()
+        return 'Admin created! Username: admin, Password: admin123'
+    return 'Admin already exists'
 
-# --- Run server ---
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
