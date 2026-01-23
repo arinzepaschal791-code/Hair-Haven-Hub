@@ -2,15 +2,35 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # Replace with a strong key
+app.secret_key = "your_secret_key"  # Replace with a strong secret key
 
 DATABASE = "database.db"
 
-# --- Database helper ---
+# --- Database connection ---
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
+# --- Initialize DB and tables ---
+def init_db():
+    conn = get_db_connection()
+    conn.execute('''CREATE TABLE IF NOT EXISTS products (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        price REAL NOT NULL,
+                        description TEXT
+                    )''')
+    conn.execute('''CREATE TABLE IF NOT EXISTS orders (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        product_id INTEGER NOT NULL,
+                        status TEXT NOT NULL,
+                        FOREIGN KEY(product_id) REFERENCES products(id)
+                    )''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # --- Home page ---
 @app.route("/")
@@ -37,7 +57,7 @@ def admin_login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        # Replace with your real credentials or DB check
+        # Replace with your own credentials or DB check
         if username == "admin" and password == "password":
             session["admin_logged_in"] = True
             return redirect(url_for("admin_dashboard"))
@@ -59,16 +79,17 @@ def admin_dashboard():
 
     conn = get_db_connection()
     cur = conn.cursor()
+    # Count products
     cur.execute("SELECT COUNT(*) AS cnt FROM products")
     product_count = cur.fetchone()["cnt"]
+    # Count pending orders
     cur.execute("SELECT COUNT(*) AS cnt FROM orders WHERE status = 'pending'")
     pending_orders_count = cur.fetchone()["cnt"]
     conn.close()
-    return render_template(
-        "admin/dashboard.html",
-        product_count=product_count,
-        pending_orders_count=pending_orders_count
-    )
+
+    return render_template("admin/dashboard.html",
+                           product_count=product_count,
+                           pending_orders_count=pending_orders_count)
 
 # --- Admin: view products ---
 @app.route("/admin/products")
@@ -90,10 +111,8 @@ def add_product():
         price = request.form["price"]
         description = request.form["description"]
         conn = get_db_connection()
-        conn.execute(
-            "INSERT INTO products (name, price, description) VALUES (?, ?, ?)",
-            (name, price, description)
-        )
+        conn.execute("INSERT INTO products (name, price, description) VALUES (?, ?, ?)",
+                     (name, price, description))
         conn.commit()
         conn.close()
         flash("Product added successfully", "success")
@@ -114,10 +133,8 @@ def edit_product(product_id):
         name = request.form["name"]
         price = request.form["price"]
         description = request.form["description"]
-        conn.execute(
-            "UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?",
-            (name, price, description, product_id)
-        )
+        conn.execute("UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?",
+                     (name, price, description, product_id))
         conn.commit()
         conn.close()
         flash("Product updated successfully", "success")
