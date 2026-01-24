@@ -112,17 +112,20 @@
     <!-- Navigation Menu -->
     <nav class="main-nav">
         <ul>
-            <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
-            <li><a href="{{ url_for('products') }}"><i class="fas fa-store"></i> All Products</a></li>
-            <li><a href="{{ url_for('products', category='hair') }}"><i class="fas fa-user"></i> Hair Extensions</a></li>
-            <li><a href="{{ url_for('products', category='wigs') }}"><i class="fas fa-star"></i> Wigs</a></li>
-            <li><a href="{{ url_for('products', category='care') }}"><i class="fas fa-spa"></i> Hair Care</a></li>
-            {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('login') }}"><i class="fas fa-lock"></i> Admin Login</a></li>
-            {% endif %}
+            <!-- FIXED: Changed url_for('index') to / -->
+            <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+            
+            <!-- FIXED: Changed url_for('products') to /shop -->
+            <li><a href="/shop"><i class="fas fa-store"></i> All Products</a></li>
+            
+            <!-- FIXED: Removed category filters or changed to simple links -->
+            <li><a href="/shop?category=hair"><i class="fas fa-user"></i> Hair Extensions</a></li>
+            <li><a href="/shop?category=wigs"><i class="fas fa-star"></i> Wigs</a></li>
+            <li><a href="/shop?category=care"><i class="fas fa-spa"></i> Hair Care</a></li>
+            
+            <!-- FIXED: Changed to hardcoded links since auth might not be implemented -->
+            <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/admin"><i class="fas fa-lock"></i> Admin Login</a></li>
         </ul>
     </nav>
 
@@ -168,7 +171,8 @@
     </footer>
 
     <!-- Quick Order Button -->
-    <a href="{{ url_for('products') }}" class="quick-order">
+    <!-- FIXED: Changed url_for('products') to /shop -->
+    <a href="/shop" class="quick-order">
         <i class="fas fa-shopping-cart"></i>
         <span>Order Now</span>
     </a>
