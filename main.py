@@ -61,18 +61,21 @@ with app.app_context():
 # ============ WEBSITE PAGES ============
 
 @app.route('/')
-def index():  # CHANGED FROM 'home' TO 'index'
-    """Main store homepage - MUST be named 'index' for url_for('index') to work"""
+def index():
+    """Main store homepage - MUST be 'index' for url_for('index')"""
     return render_template('index.html')
 
-@app.route('/index.html')
-def index_html():
-    return redirect('/')
-
-@app.route('/home')  # ADD THIS: Keep 'home' endpoint as alias
+@app.route('/home')
 def home():
     """Alias for index"""
     return redirect(url_for('index'))
+
+@app.route('/shop')
+@app.route('/products')  # IMPORTANT: This allows url_for('products') to work
+def products():
+    """Products shopping page - MUST be 'products' for url_for('products')"""
+    category = request.args.get('category', '')
+    return render_template('products.html', category=category)
 
 @app.route('/admin')
 def admin():
@@ -84,31 +87,16 @@ def admin_dashboard():
     """Admin dashboard page"""
     return render_template('dashboard.html')
 
-@app.route('/admin/products')
-def admin_products():
-    """Admin products management"""
-    return render_template('admin_products.html')
+@app.route('/login')
+def login():
+    """Login page"""
+    return render_template('login.html')
 
-@app.route('/admin/orders')
-def admin_orders():
-    """Admin orders management"""
-    return render_template('admin_orders.html')
-
-@app.route('/admin/reviews')
-def admin_reviews():
-    """Admin reviews management"""
-    return render_template('admin_reviews.html')
-
-@app.route('/shop')
-@app.route('/products')
-def shop():
-    """Products shopping page"""
-    return render_template('products.html')
-
-@app.route('/product/<int:product_id>')
-def product_detail(product_id):
-    """Product detail page"""
-    return render_template('product_detail.html', product_id=product_id)
+@app.route('/logout')
+def logout():
+    """Logout page"""
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route('/cart')
 def cart():
@@ -119,11 +107,6 @@ def cart():
 def checkout():
     """Checkout page"""
     return render_template('checkout.html')
-
-@app.route('/login')
-def login():
-    """Login page"""
-    return render_template('login.html')
 
 @app.route('/register')
 def register():
@@ -151,10 +134,6 @@ def contact():
 def serve_static(filename):
     return send_from_directory('static', filename)
 
-@app.route('/uploads/<path:filename>')
-def serve_uploads(filename):
-    return send_from_directory('uploads', filename)
-
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory('static', 'favicon.ico')
@@ -163,38 +142,26 @@ def favicon():
 
 @app.route('/api')
 def api_info():
-    """API documentation"""
     return jsonify({
-        'app': 'Hair Haven Hub',
-        'version': '1.0.0',
-        'website': 'https://norahairline.onrender.com',
+        'app': 'NoraHairLine',
+        'status': 'online',
         'endpoints': {
-            'products': {
-                'GET /api/products': 'List all products',
-                'GET /api/products/<id>': 'Get single product',
-                'POST /api/products': 'Create product (admin)',
-                'PUT /api/products/<id>': 'Update product (admin)',
-                'DELETE /api/products/<id>': 'Delete product (admin)'
-            },
-            'orders': {
-                'GET /api/orders': 'List all orders',
-                'POST /api/orders': 'Create new order',
-                'GET /api/orders/<id>': 'Get single order'
-            },
-            'admin': {
-                'POST /api/admin/login': 'Admin login',
-                'GET /api/admin/dashboard': 'Dashboard stats',
-                'GET /api/admin/products': 'Admin products list'
-            }
+            'products': '/api/products',
+            'orders': '/api/orders'
         }
     })
 
-# Products API
-@app.route('/api/products', methods=['GET'])
-def api_get_products():
-    """Get all products"""
+@app.route('/api/products')
+def api_products():
+    """API to get products"""
     try:
-        products = Product.query.all()
+        category = request.args.get('category')
+        query = Product.query
+        
+        if category:
+            query = query.filter_by(category=category)
+            
+        products = query.all()
         return jsonify([{
             'id': p.id,
             'name': p.name,
@@ -203,223 +170,36 @@ def api_get_products():
             'category': p.category,
             'image_url': p.image_url,
             'stock': p.stock,
-            'featured': p.featured,
-            'created_at': p.created_at.isoformat() if p.created_at else None
+            'featured': p.featured
         } for p in products])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/products/<int:product_id>', methods=['GET'])
-def api_get_product(product_id):
-    """Get single product"""
-    product = Product.query.get_or_404(product_id)
-    return jsonify({
-        'id': product.id,
-        'name': product.name,
-        'description': product.description,
-        'price': float(product.price),
-        'category': product.category,
-        'image_url': product.image_url,
-        'stock': product.stock,
-        'featured': product.featured
-    })
-
-# Orders API
-@app.route('/api/orders', methods=['GET'])
-def api_get_orders():
-    """Get all orders"""
-    try:
-        orders = Order.query.all()
-        return jsonify([{
-            'id': o.id,
-            'customer_name': o.customer_name,
-            'customer_email': o.customer_email,
-            'product_id': o.product_id,
-            'quantity': o.quantity,
-            'total_price': float(o.total_price),
-            'status': o.status,
-            'created_at': o.created_at.isoformat() if o.created_at else None
-        } for o in orders])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/orders', methods=['POST'])
-def api_create_order():
-    """Create new order"""
-    try:
-        data = request.get_json()
-        
-        order = Order(
-            customer_name=data['customer_name'],
-            customer_email=data['customer_email'],
-            product_id=data['product_id'],
-            quantity=data['quantity'],
-            total_price=data['total_price'],
-            status='Pending'
-        )
-        
-        db.session.add(order)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'order_id': order.id,
-            'message': 'Order created successfully'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Admin API
-@app.route('/api/admin/login', methods=['POST'])
-def api_admin_login():
-    """Admin login"""
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    
-    admin = Admin.query.filter_by(username=username).first()
-    if admin and check_password_hash(admin.password, password):
-        session['admin_logged_in'] = True
-        session['admin_username'] = username
-        return jsonify({
-            'success': True,
-            'message': 'Login successful',
-            'user': {'username': username}
-        })
-    
-    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-
-@app.route('/api/admin/logout', methods=['POST'])
-def api_admin_logout():
-    """Admin logout"""
-    session.pop('admin_logged_in', None)
-    session.pop('admin_username', None)
-    return jsonify({'success': True, 'message': 'Logged out'})
-
-@app.route('/api/admin/dashboard', methods=['GET'])
-def api_admin_dashboard():
-    """Admin dashboard stats"""
-    if not session.get('admin_logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    stats = {
-        'total_products': Product.query.count(),
-        'total_orders': Order.query.count(),
-        'total_reviews': Review.query.count() if HAS_REVIEW and Review else 0,
-        'total_sales': float(db.session.query(db.func.sum(Order.total_price)).scalar() or 0),
-        'pending_orders': Order.query.filter_by(status='Pending').count(),
-        'low_stock': Product.query.filter(Product.stock < 10).count()
-    }
-    
-    # Recent orders
-    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
-    stats['recent_orders'] = [{
-        'id': o.id,
-        'customer_name': o.customer_name,
-        'total': float(o.total_price),
-        'status': o.status,
-        'date': o.created_at.strftime('%Y-%m-%d') if o.created_at else ''
-    } for o in recent_orders]
-    
-    return jsonify(stats)
-
-# Reviews API
-if HAS_REVIEW and Review:
-    @app.route('/api/reviews', methods=['GET'])
-    def api_get_reviews():
-        """Get all reviews"""
-        reviews = Review.query.all()
-        return jsonify([{
-            'id': r.id,
-            'product_id': r.product_id,
-            'customer_name': r.customer_name,
-            'rating': r.rating,
-            'comment': r.comment,
-            'created_at': r.created_at.isoformat() if r.created_at else None
-        } for r in reviews])
-    
-    @app.route('/api/products/<int:product_id>/reviews', methods=['GET'])
-    def api_get_product_reviews(product_id):
-        """Get reviews for a product"""
-        reviews = Review.query.filter_by(product_id=product_id).all()
-        return jsonify([{
-            'id': r.id,
-            'customer_name': r.customer_name,
-            'rating': r.rating,
-            'comment': r.comment,
-            'created_at': r.created_at.isoformat() if r.created_at else None
-        } for r in reviews])
-
-# Health check
 @app.route('/health')
 def health():
-    return jsonify({
-        'status': 'healthy',
-        'app': 'Hair Haven Hub',
-        'timestamp': datetime.utcnow().isoformat(),
-        'database': 'connected',
-        'templates': 'loaded'
-    })
+    return jsonify({'status': 'healthy'})
 
 # ============ ERROR PAGES ============
 
 @app.errorhandler(404)
 def page_not_found(e):
-    """Custom 404 page - check if template exists, otherwise return simple HTML"""
     try:
         return render_template('404.html'), 404
     except:
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head><title>404 - Page Not Found</title></head>
-        <body>
-            <h1>404 - Page Not Found</h1>
-            <p>The page you're looking for doesn't exist.</p>
-            <a href="/">Go to Homepage</a>
-        </body>
-        </html>
-        """, 404
+        return "Page not found", 404
 
 @app.errorhandler(500)
 def internal_error(e):
-    """Custom 500 page - check if template exists, otherwise return simple HTML"""
     try:
         return render_template('500.html'), 500
     except:
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head><title>500 - Internal Server Error</title></head>
-        <body>
-            <h1>500 - Internal Server Error</h1>
-            <p>Something went wrong on our server.</p>
-            <a href="/">Go to Homepage</a>
-        </body>
-        </html>
-        """, 500
+        return "Internal server error", 500
 
 # ============ START APPLICATION ============
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
-    
-    print(f"\n{'='*60}")
-    print(f"🚀 HAIR HAVEN HUB - FULL WEBSITE")
-    print(f"{'='*60}")
-    print(f"🌐 Store Frontend:    https://norahairline.onrender.com")
-    print(f"👑 Admin Panel:       https://norahairline.onrender.com/admin")
-    print(f"🛍️  Shop:              https://norahairline.onrender.com/shop")
-    print(f"📊 API Documentation: https://norahairline.onrender.com/api")
-    print(f"{'='*60}")
-    
-    # List available templates
-    if os.path.exists('templates'):
-        templates = [f for f in os.listdir('templates') if f.endswith('.html')]
-        print(f"📁 Templates found: {len(templates)}")
-        for template in sorted(templates):
-            print(f"   • {template}")
-    
-    print(f"{'='*60}\n")
-    
+    print(f"\n🚀 NoraHairLine Website Starting...")
+    print(f"🌐 URL: https://norahairline.onrender.com")
+    print(f"🔧 Debug: Check /health endpoint")
     app.run(host='0.0.0.0', port=port, debug=False)
