@@ -13,13 +13,6 @@ class Admin(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    slug = db.Column(db.String(100), unique=True, nullable=False)
-    icon = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -28,6 +21,7 @@ class Product(db.Model):
     category = db.Column(db.String(50), nullable=False)
     image_url = db.Column(db.String(500))
     video_url = db.Column(db.String(500))
+    gallery_images = db.Column(db.Text)  # Comma-separated URLs
     featured = db.Column(db.Boolean, default=False)
     stock = db.Column(db.Integer, default=100)
     rating = db.Column(db.Float, default=5.0)
