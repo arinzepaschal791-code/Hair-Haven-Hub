@@ -66,9 +66,30 @@ def allowed_video_file(filename):
 # Initialize database
 db.init_app(app)
 
+# ============ CREATE DEFAULT IMAGE DIRECTORY ============
+def ensure_directories():
+    """Ensure all required directories exist"""
+    directories = [
+        'static',
+        'static/images',
+        'templates',
+        'templates/admin',
+        'uploads',
+        'uploads/images',
+        'uploads/videos'
+    ]
+    
+    for directory in directories:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            print(f"📁 Created directory: {directory}/")
+
 # ============ DATABASE SETUP ============
 with app.app_context():
     try:
+        # Ensure all directories exist
+        ensure_directories()
+        
         # Create all tables
         db.create_all()
         print("✅ Database tables created successfully")
@@ -89,79 +110,85 @@ with app.app_context():
         # ===== CREATE SAMPLE PRODUCTS =====
         product_count = Product.query.count()
         if product_count == 0:
-            # Convert prices to Naira (1 USD ≈ 1500 NGN for sample data)
+            # Prices in Naira
             products = [
                 Product(
                     name="Premium Bone Straight Hair 24\"",
                     description="24-inch premium quality 100% human hair, bone straight texture",
-                    price=134985.0,  # ~89.99 USD in Naira
+                    price=134985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair1.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/hair1.jpg"]),
                     stock=50,
                     featured=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 ),
                 Product(
                     name="Curly Brazilian Hair 22\"",
                     description="22-inch natural Brazilian curly hair, soft and bouncy",
-                    price=149985.0,  # ~99.99 USD in Naira
+                    price=149985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair2.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/hair2.jpg"]),
                     stock=30,
                     featured=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 ),
                 Product(
                     name="Lace Front Wig - Natural Black",
                     description="13x4 lace front wig, natural black color, pre-plucked",
-                    price=194985.0,  # ~129.99 USD in Naira
+                    price=194985.0,  # Naira
                     category="wigs",
                     image_url="/static/images/wig1.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/wig1.jpg"]),
                     stock=20,
                     featured=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 ),
                 Product(
                     name="Hair Growth Oil 8oz",
                     description="Organic hair growth oil with rosemary and castor oil",
-                    price=37485.0,  # ~24.99 USD in Naira
+                    price=37485.0,  # Naira
                     category="care",
                     image_url="/static/images/oil1.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/oil1.jpg"]),
                     stock=100,
                     featured=False,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 ),
                 Product(
                     name="Moisturizing Shampoo 16oz",
                     description="Sulfate-free moisturizing shampoo for all hair types",
-                    price=28485.0,  # ~18.99 USD in Naira
+                    price=28485.0,  # Naira
                     category="care",
                     image_url="/static/images/shampoo1.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/shampoo1.jpg"]),
                     stock=80,
                     featured=False,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 ),
                 Product(
                     name="Silk Press Hair 26\"",
                     description="26-inch silk press hair, ultra smooth and shiny",
-                    price=179985.0,  # ~119.99 USD in Naira
+                    price=179985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair3.jpg",
                     video_url="",
                     image_urls=json.dumps(["/static/images/hair3.jpg"]),
                     stock=15,
                     featured=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 )
             ]
             
@@ -302,15 +329,71 @@ def edit_product(product_id):
         return redirect(url_for('admin'))
     return render_template('admin/edit_product.html', product_id=product_id)
 
+@app.route('/admin/logout')
+def admin_logout_route():
+    """Admin logout route"""
+    session.clear()
+    return redirect(url_for('admin'))
+
 # ============ STATIC FILE SERVING ============
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
-    return send_from_directory('static', filename)
+    """Serve static files with fallback for missing images"""
+    try:
+        return send_from_directory('static', filename)
+    except:
+        # If file not found, try to serve from appropriate subdirectory
+        if filename.startswith('images/'):
+            try:
+                # Try to serve a default image
+                return send_from_directory('static/images', 'default-product.jpg')
+            except:
+                # Return 404 if default image also not found
+                return "Image not found", 404
+        return "File not found", 404
+
+@app.route('/static/images/<path:filename>')
+def serve_images(filename):
+    """Serve images with fallback to default image"""
+    try:
+        return send_from_directory('static/images', filename)
+    except:
+        # Return default product image if file not found
+        try:
+            return send_from_directory('static/images', 'default-product.jpg')
+        except:
+            # Create a simple default image response
+            from flask import Response
+            return Response(
+                "Image not available",
+                status=200,
+                mimetype="text/plain"
+            )
 
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
-    return send_from_directory('uploads', filename)
+    """Serve uploaded files"""
+    try:
+        return send_from_directory('uploads', filename)
+    except:
+        return "File not found", 404
+
+@app.route('/uploads/images/<path:filename>')
+def serve_uploaded_images(filename):
+    """Serve uploaded images"""
+    try:
+        return send_from_directory('uploads/images', filename)
+    except:
+        return "Image not found", 404
+
+@app.route('/uploads/videos/<path:filename>')
+def serve_uploaded_videos(filename):
+    """Serve uploaded videos"""
+    try:
+        return send_from_directory('uploads/videos', filename)
+    except:
+        return "Video not found", 404
 
 @app.route('/favicon.ico')
 def favicon():
@@ -458,7 +541,7 @@ def api_get_products():
             'price': float(p.price),
             'formatted_price': f"₦{float(p.price):,.2f}",
             'category': p.category,
-            'image_url': p.image_url,
+            'image_url': p.image_url or '/static/images/default-product.jpg',
             'video_url': p.video_url or '',
             'image_urls': json.loads(p.image_urls) if p.image_urls else [],
             'stock': p.stock,
@@ -482,7 +565,7 @@ def api_get_product(product_id):
             'price': float(product.price),
             'formatted_price': f"₦{float(product.price):,.2f}",
             'category': product.category,
-            'image_url': product.image_url,
+            'image_url': product.image_url or '/static/images/default-product.jpg',
             'video_url': product.video_url or '',
             'image_urls': json.loads(product.image_urls) if product.image_urls else [],
             'stock': product.stock,
@@ -505,7 +588,7 @@ def api_get_featured_products():
             'price': float(p.price),
             'formatted_price': f"₦{float(p.price):,.2f}",
             'category': p.category,
-            'image_url': p.image_url,
+            'image_url': p.image_url or '/static/images/default-product.jpg',
             'video_url': p.video_url or '',
             'image_urls': json.loads(p.image_urls) if p.image_urls else []
         } for p in products])
@@ -551,10 +634,11 @@ def api_create_order():
         # Calculate total price in Naira
         total_price = float(product.price) * data['quantity']
         
-        # Update stock
+        # Check stock
         if product.stock < data['quantity']:
-            return jsonify({'error': 'Insufficient stock', 'success': False}), 400
+            return jsonify({'error': f'Only {product.stock} items left in stock', 'success': False}), 400
         
+        # Update stock
         product.stock -= data['quantity']
         
         order = Order(
@@ -706,7 +790,7 @@ def api_create_product():
             image_url=data.get('image_url', '/static/images/default-product.jpg'),
             video_url=data.get('video_url', ''),
             image_urls=image_urls_json,
-            stock=int(data.get('stock', 0)),
+            stock=int(data.get('stock', 100)),
             featured=bool(data.get('featured', False)),
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -872,6 +956,8 @@ def check_admin_access():
         '/admin/orders',
         '/admin/reviews',
         '/admin/products/add',
+        '/admin/products/edit/',
+        '/admin/logout',
         '/api/upload/image',
         '/api/upload/video',
         '/api/admin/products',
@@ -891,6 +977,9 @@ def check_admin_access():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     
+    # Ensure directories exist
+    ensure_directories()
+    
     print(f"\n{'='*60}")
     print(f"🚀 NORAHAIRLINE - FULL WEBSITE")
     print(f"{'='*60}")
@@ -904,21 +993,25 @@ if __name__ == '__main__':
     print(f"🔧 API:               https://norahairline.onrender.com/api")
     print(f"❤️  Health Check:      https://norahairline.onrender.com/health")
     print(f"💰 Currency:          NGN (₦ - Nigerian Naira)")
+    print(f"📁 Upload:            Image/Video upload enabled")
     print(f"{'='*60}")
     
+    # List available templates
     if os.path.exists('templates'):
         templates = [f for f in os.listdir('templates') if f.endswith('.html')]
         print(f"📁 Templates found: {len(templates)}")
+        for template in sorted(templates):
+            if template not in ['admin']:  # Skip admin folder
+                print(f"   • {template}")
     
+    # List admin templates
     admin_template_path = 'templates/admin'
     if os.path.exists(admin_template_path):
         admin_templates = [f for f in os.listdir(admin_template_path) if f.endswith('.html')]
         print(f"👑 Admin templates: {len(admin_templates)}")
+        for template in sorted(admin_templates):
+            print(f"   • admin/{template}")
     
-    print(f"📁 Upload directories created:")
-    print(f"   • {UPLOAD_FOLDER}/")
-    print(f"   • {IMAGE_FOLDER}/")
-    print(f"   • {VIDEO_FOLDER}/")
     print(f"{'='*60}\n")
     
     app.run(host='0.0.0.0', port=port, debug=False)
