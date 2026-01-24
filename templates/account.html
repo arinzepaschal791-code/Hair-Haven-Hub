@@ -1040,3 +1040,307 @@
             // Hide all sections
             document.querySelectorAll('.account-section').forEach(section => {
                 section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(`${sectionId}-section`).style.display = 'block';
+            
+            // Update active menu item
+            document.querySelectorAll('.account-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Load section data
+            if (sectionId === 'orders') {
+                loadOrders();
+            } else if (sectionId === 'wishlist') {
+                loadWishlist();
+            } else if (sectionId === 'addresses') {
+                loadAddresses();
+            }
+        }
+        
+        // Load orders
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('customer_orders')) || [];
+            const container = document.getElementById('orders-list');
+            
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-bag"></i>
+                        <p>You haven't placed any orders yet</p>
+                        <a href="/shop" class="btn" style="margin-top: 1rem;">Browse Products</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            orders.forEach(order => {
+                const statusClass = `status-${order.status.toLowerCase()}`;
+                
+                html += `
+                    <tr>
+                        <td><strong>${order.id}</strong></td>
+                        <td>${new Date(order.date).toLocaleDateString()}</td>
+                        <td>${order.items} item${order.items > 1 ? 's' : ''}</td>
+                        <td>$${order.total.toFixed(2)}</td>
+                        <td><span class="order-status ${statusClass}">${order.status}</span></td>
+                        <td>
+                            <a href="/order/${order.id}" class="btn btn-sm btn-outline">View</a>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Load wishlist
+        function loadWishlist() {
+            const wishlist = JSON.parse(localStorage.getItem('customer_wishlist')) || [];
+            const container = document.getElementById('wishlist-items');
+            
+            if (wishlist.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-heart"></i>
+                        <p>Your wishlist is empty</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Add products you love to your wishlist</p>
+                        <a href="/shop" class="btn" style="margin-top: 1rem;">Browse Products</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = wishlist.map(item => `
+                <div class="wishlist-item">
+                    <button class="remove-wishlist" onclick="removeFromWishlist(${item.id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img src="${item.image || '/static/images/placeholder.jpg'}" 
+                         alt="${item.name}" 
+                         class="wishlist-img">
+                    <div class="wishlist-info">
+                        <h3 class="wishlist-name">${item.name}</h3>
+                        <div class="wishlist-price">$${item.price.toFixed(2)}</div>
+                        <div class="action-buttons" style="display: flex; gap: 0.5rem;">
+                            <a href="/product/${item.id}" class="btn btn-sm">View Details</a>
+                            <button class="btn btn-sm btn-outline" onclick="addToCartFromWishlist(${item.id})">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load addresses
+        function loadAddresses() {
+            const addresses = JSON.parse(localStorage.getItem('customer_addresses')) || [
+                {
+                    id: 1,
+                    type: 'Primary Address',
+                    name: 'John Doe',
+                    street: '123 Main Street',
+                    city: 'New York',
+                    state: 'NY',
+                    zip: '10001',
+                    country: 'United States',
+                    phone: '(555) 123-4567',
+                    default: true
+                }
+            ];
+            
+            const container = document.getElementById('addresses-list');
+            container.innerHTML = addresses.map(address => `
+                <div class="address-card ${address.default ? 'default' : ''}">
+                    <div class="address-header">
+                        <div class="address-type">${address.type}</div>
+                        ${address.default ? '<span class="default-badge">Default</span>' : ''}
+                    </div>
+                    <div class="address-body">
+                        <p><strong>${address.name}</strong></p>
+                        <p>${address.street}</p>
+                        <p>${address.city}, ${address.state} ${address.zip}</p>
+                        <p>${address.country}</p>
+                        <p>Phone: ${address.phone}</p>
+                    </div>
+                    <div class="address-actions">
+                        <button class="btn btn-sm btn-outline" onclick="editAddress(${address.id})">Edit</button>
+                        ${!address.default ? 
+                            `<button class="btn btn-sm btn-outline" onclick="deleteAddress(${address.id})">Delete</button>` 
+                            : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Add new address
+        function addNewAddress() {
+            const newAddress = {
+                id: Date.now(),
+                type: 'New Address',
+                name: 'Your Name',
+                street: 'Enter street address',
+                city: 'City',
+                state: 'State',
+                zip: 'ZIP Code',
+                country: 'Country',
+                phone: '(555) 000-0000',
+                default: false
+            };
+            
+            const addresses = JSON.parse(localStorage.getItem('customer_addresses')) || [];
+            addresses.push(newAddress);
+            localStorage.setItem('customer_addresses', JSON.stringify(addresses));
+            
+            loadAddresses();
+            alert('New address added. Please edit to update details.');
+        }
+        
+        // Edit address
+        function editAddress(addressId) {
+            alert('Edit address functionality to be implemented');
+        }
+        
+        // Delete address
+        function deleteAddress(addressId) {
+            if (confirm('Are you sure you want to delete this address?')) {
+                let addresses = JSON.parse(localStorage.getItem('customer_addresses')) || [];
+                addresses = addresses.filter(addr => addr.id !== addressId);
+                localStorage.setItem('customer_addresses', JSON.stringify(addresses));
+                loadAddresses();
+            }
+        }
+        
+        // Remove from wishlist
+        function removeFromWishlist(productId) {
+            let wishlist = JSON.parse(localStorage.getItem('customer_wishlist')) || [];
+            wishlist = wishlist.filter(item => item.id !== productId);
+            localStorage.setItem('customer_wishlist', JSON.stringify(wishlist));
+            loadWishlist();
+            loadAccountStats();
+        }
+        
+        // Clear wishlist
+        function clearWishlist() {
+            if (confirm('Are you sure you want to clear your entire wishlist?')) {
+                localStorage.removeItem('customer_wishlist');
+                loadWishlist();
+                loadAccountStats();
+            }
+        }
+        
+        // Add to cart from wishlist
+        function addToCartFromWishlist(productId) {
+            const wishlist = JSON.parse(localStorage.getItem('customer_wishlist')) || [];
+            const product = wishlist.find(item => item.id === productId);
+            
+            if (product) {
+                let cart = JSON.parse(localStorage.getItem('norahair_cart')) || [];
+                const existingIndex = cart.findIndex(item => item.productId === productId);
+                
+                if (existingIndex !== -1) {
+                    cart[existingIndex].quantity += 1;
+                } else {
+                    cart.push({
+                        productId: product.id,
+                        quantity: 1,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image
+                    });
+                }
+                
+                localStorage.setItem('norahair_cart', JSON.stringify(cart));
+                alert('Added to cart!');
+                updateCartCount();
+            }
+        }
+        
+        // Update cart count
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('norahair_cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = totalItems;
+        }
+        
+        // Profile form submission
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('profileFirstName').value;
+            const lastName = document.getElementById('profileLastName').value;
+            const email = document.getElementById('profileEmail').value;
+            const phone = document.getElementById('profilePhone').value;
+            
+            // Save to localStorage
+            localStorage.setItem('customer_name', `${firstName} ${lastName}`);
+            localStorage.setItem('customer_email', email);
+            localStorage.setItem('customer_phone', phone);
+            
+            // Update display
+            loadCustomerData();
+            
+            alert('Profile updated successfully!');
+        });
+        
+        // Security form submission
+        document.getElementById('securityForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword) {
+                alert('Please enter your current password');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                alert('New password must be at least 8 characters long');
+                return;
+            }
+            
+            // In a real app, you would validate current password with backend
+            alert('Password updated successfully!');
+            this.reset();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomerData();
+            loadAccountStats();
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>
