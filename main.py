@@ -1,243 +1,322 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+#!/usr/bin/env python3
+from flask import Flask, jsonify, request, abort
+from flask_cors import CORS
 from models import db, Admin, Product, Order, Review
 from datetime import datetime
 import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS if you have a frontend
 
-# ===== CONFIGURATION =====
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hairline-secret-key-2024')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///norahairline.db')
+# Configure database
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL', 
+    'sqlite:///database.db'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
-# Fix for Render PostgreSQL URL
-if 'DATABASE_URL' in os.environ:
-    uri = os.environ.get('DATABASE_URL')
-    if uri.startswith('postgres://'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = uri.replace('postgres://', 'postgresql://', 1)
-
-# ===== INITIALIZE =====
+# Initialize db with app
 db.init_app(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'admin_login'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return Admin.query.get(int(user_id))
-
-# ===== CREATE DATABASE TABLES =====
+# Create tables
 with app.app_context():
     db.create_all()
 
-# ===== PUBLIC ROUTES =====
+# ============ REVIEW ROUTES ============
 
-@app.route('/')
-def index():
-    products = Product.query.limit(6).all()
-    return render_template('index.html', products=products)
+@app.route('/api/reviews', methods=['GET'])
+def get_all_reviews():
+    """Get all reviews with optional filters"""
+    product_id = request.args.get('product_id')
+    min_rating = request.args.get('min_rating', type=int)
+    
+    query = Review.query
+    
+    if product_id:
+        query = query.filter_by(product_id=product_id)
+    if min_rating:
+        query = query.filter(Review.rating >= min_rating)
+    
+    reviews = query.order_by(Review.created_at.desc()).all()
+    
+    return jsonify([{
+        'id': r.id,
+        'product_id': r.product_id,
+        'customer_name': r.customer_name,
+        'customer_email': r.customer_email,
+        'rating': r.rating,
+        'comment': r.comment,
+        'created_at': r.created_at.isoformat() if r.created_at else None
+    } for r in reviews])
 
-@app.route('/products')
-def products():
-    category = request.args.get('category', 'all')
-    if category == 'all':
-        products_list = Product.query.all()
-    else:
-        products_list = Product.query.filter_by(category=category).all()
-    return render_template('products.html', products=products_list, category=category)
+@app.route('/api/products/<int:product_id>/reviews', methods=['GET'])
+def get_product_reviews(product_id):
+    """Get reviews for a specific product"""
+    reviews = Review.query.filter_by(product_id=product_id)\
+                .order_by(Review.created_at.desc()).all()
+    
+    # Calculate average rating
+    avg_rating = db.session.query(db.func.avg(Review.rating))\
+                   .filter_by(product_id=product_id).scalar() or 0
+    
+    return jsonify({
+        'product_id': product_id,
+        'average_rating': round(float(avg_rating), 1),
+        'total_reviews': len(reviews),
+        'reviews': [{
+            'id': r.id,
+            'customer_name': r.customer_name,
+            'rating': r.rating,
+            'comment': r.comment,
+            'created_at': r.created_at.isoformat() if r.created_at else None
+        } for r in reviews]
+    })
 
-@app.route('/product/<int:id>')
-def product_detail(id):
-    product = Product.query.get_or_404(id)
-    return render_template('product_detail.html', product=product)
+@app.route('/api/reviews', methods=['POST'])
+def create_review():
+    """Create a new review"""
+    data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ['product_id', 'customer_name', 'rating', 'comment']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+    
+    # Validate rating (1-5)
+    if not 1 <= data['rating'] <= 5:
+        return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+    
+    # Check if product exists
+    product = Product.query.get(data['product_id'])
+    if not product:
+        return jsonify({'error': 'Product not found'}), 404
+    
+    # Create review
+    review = Review(
+        product_id=data['product_id'],
+        customer_name=data['customer_name'],
+        customer_email=data.get('customer_email', ''),
+        rating=data['rating'],
+        comment=data['comment']
+    )
+    
+    db.session.add(review)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Review created successfully',
+        'review_id': review.id,
+        'review': {
+            'id': review.id,
+            'product_id': review.product_id,
+            'customer_name': review.customer_name,
+            'rating': review.rating,
+            'comment': review.comment,
+            'created_at': review.created_at.isoformat() if review.created_at else None
+        }
+    }), 201
 
-@app.route('/order/<int:product_id>', methods=['GET', 'POST'])
-def order(product_id):
+@app.route('/api/reviews/<int:review_id>', methods=['GET'])
+def get_review(review_id):
+    """Get a specific review by ID"""
+    review = Review.query.get_or_404(review_id)
+    
+    return jsonify({
+        'id': review.id,
+        'product_id': review.product_id,
+        'customer_name': review.customer_name,
+        'customer_email': review.customer_email,
+        'rating': review.rating,
+        'comment': review.comment,
+        'created_at': review.created_at.isoformat() if review.created_at else None
+    })
+
+@app.route('/api/reviews/<int:review_id>', methods=['DELETE'])
+def delete_review(review_id):
+    """Delete a review (admin only - add authentication in production)"""
+    review = Review.query.get_or_404(review_id)
+    
+    db.session.delete(review)
+    db.session.commit()
+    
+    return jsonify({'message': 'Review deleted successfully'})
+
+# ============ PRODUCT ROUTES ============
+
+@app.route('/api/products', methods=['GET'])
+def get_products():
+    """Get all products"""
+    products = Product.query.all()
+    
+    # Get average rating for each product
+    products_with_ratings = []
+    for product in products:
+        avg_rating = db.session.query(db.func.avg(Review.rating))\
+                       .filter_by(product_id=product.id).scalar() or 0
+        review_count = Review.query.filter_by(product_id=product.id).count()
+        
+        products_with_ratings.append({
+            'id': product.id,
+            'name': product.name,
+            'description': product.description,
+            'price': product.price,
+            'category': product.category,
+            'image_url': product.image_url,
+            'stock': product.stock,
+            'featured': product.featured,
+            'average_rating': round(float(avg_rating), 1),
+            'review_count': review_count,
+            'created_at': product.created_at.isoformat() if product.created_at else None
+        })
+    
+    return jsonify(products_with_ratings)
+
+@app.route('/api/products/<int:product_id>', methods=['GET'])
+def get_product(product_id):
+    """Get a specific product with its reviews"""
     product = Product.query.get_or_404(product_id)
     
-    if request.method == 'POST':
-        order = Order(
-            customer_name=request.form['name'],
-            customer_email=request.form['email'],
-            customer_phone=request.form['phone'],
-            product_id=product_id,
-            quantity=int(request.form['quantity']),
-            total_price=product.price * int(request.form['quantity'])
-        )
-        
-        db.session.add(order)
-        db.session.commit()
-        
-        flash(f'Order placed successfully! Order ID: {order.id}', 'success')
-        return redirect(url_for('index'))
+    # Get reviews for this product
+    reviews = Review.query.filter_by(product_id=product_id)\
+                .order_by(Review.created_at.desc()).limit(10).all()
     
-    return render_template('order.html', product=product)
-
-# ===== ADMIN ROUTES =====
-
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if not username or not password:
-            flash('Please enter both username and password', 'danger')
-            return render_template('admin/admin_login.html')
-        
-        user = Admin.query.filter_by(username=username).first()
-        
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            flash('✅ Login successful! Welcome to Admin Dashboard', 'success')
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash('❌ Invalid username or password', 'danger')
+    avg_rating = db.session.query(db.func.avg(Review.rating))\
+                   .filter_by(product_id=product_id).scalar() or 0
     
-    return render_template('admin/admin_login.html')
+    return jsonify({
+        'product': {
+            'id': product.id,
+            'name': product.name,
+            'description': product.description,
+            'price': product.price,
+            'category': product.category,
+            'image_url': product.image_url,
+            'stock': product.stock,
+            'featured': product.featured,
+            'average_rating': round(float(avg_rating), 1),
+            'total_reviews': Review.query.filter_by(product_id=product_id).count(),
+            'created_at': product.created_at.isoformat() if product.created_at else None
+        },
+        'recent_reviews': [{
+            'id': r.id,
+            'customer_name': r.customer_name,
+            'rating': r.rating,
+            'comment': r.comment,
+            'created_at': r.created_at.isoformat() if r.created_at else None
+        } for r in reviews]
+    })
 
-@app.route('/admin/dashboard')
-@login_required
+# ============ ORDER ROUTES ============
+
+@app.route('/api/orders', methods=['POST'])
+def create_order():
+    """Create a new order"""
+    data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ['customer_name', 'customer_email', 'product_id', 'quantity']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+    
+    # Check product exists and has stock
+    product = Product.query.get(data['product_id'])
+    if not product:
+        return jsonify({'error': 'Product not found'}), 404
+    
+    if product.stock < data['quantity']:
+        return jsonify({'error': 'Insufficient stock'}), 400
+    
+    # Calculate total
+    total_price = product.price * data['quantity']
+    
+    # Create order
+    order = Order(
+        customer_name=data['customer_name'],
+        customer_email=data['customer_email'],
+        product_id=data['product_id'],
+        quantity=data['quantity'],
+        total_price=total_price,
+        status=data.get('status', 'Pending')
+    )
+    
+    # Update stock
+    product.stock -= data['quantity']
+    
+    db.session.add(order)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Order created successfully',
+        'order_id': order.id,
+        'total': total_price
+    }), 201
+
+# ============ ADMIN ROUTES ============
+
+@app.route('/api/admin/dashboard', methods=['GET'])
 def admin_dashboard():
+    """Admin dashboard statistics"""
     total_products = Product.query.count()
     total_orders = Order.query.count()
-    pending_orders = Order.query.filter_by(status='Pending').count()
-    recent_products = Product.query.order_by(Product.created_at.desc()).limit(5).all()
+    total_reviews = Review.query.count()
     
-    return render_template('admin/admin_dashboard.html',
-                         total_products=total_products,
-                         total_orders=total_orders,
-                         pending_orders=pending_orders,
-                         recent_products=recent_products)
-
-@app.route('/admin/products')
-@login_required
-def admin_products():
-    products_list = Product.query.all()
-    return render_template('admin/admin_dashboard.html', products=products_list)
-
-@app.route('/admin/add-product', methods=['GET', 'POST'])
-@login_required
-def add_product():
-    if request.method == 'POST':
-        try:
-            name = request.form['name']
-            description = request.form['description']
-            price = float(request.form['price'])
-            category = request.form['category']
-            stock = int(request.form.get('stock', 100))
-            
-            product = Product(
-                name=name,
-                description=description,
-                price=price,
-                category=category,
-                stock=stock,
-                image_url=request.form.get('image_url', '')
-            )
-            
-            db.session.add(product)
-            db.session.commit()
-            
-            flash(f'✅ Product "{name}" added successfully!', 'success')
-            return redirect(url_for('admin_products'))
-            
-        except Exception as e:
-            flash(f'❌ Error adding product: {str(e)}', 'danger')
+    # Recent orders
+    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
     
-    return render_template('admin/add_product.html')
-
-@app.route('/admin/edit-product/<int:id>', methods=['GET', 'POST'])
-@login_required
-def edit_product(id):
-    product = Product.query.get_or_404(id)
+    # Recent reviews
+    recent_reviews = Review.query.order_by(Review.created_at.desc()).limit(10).all()
     
-    if request.method == 'POST':
-        try:
-            product.name = request.form['name']
-            product.description = request.form['description']
-            product.price = float(request.form['price'])
-            product.category = request.form['category']
-            product.stock = int(request.form.get('stock', 100))
-            product.image_url = request.form.get('image_url', '')
-            
-            db.session.commit()
-            flash(f'✅ Product "{product.name}" updated successfully!', 'success')
-            return redirect(url_for('admin_products'))
-            
-        except Exception as e:
-            flash(f'❌ Error updating product: {str(e)}', 'danger')
-    
-    return render_template('admin/edit_product.html', product=product)
+    return jsonify({
+        'stats': {
+            'total_products': total_products,
+            'total_orders': total_orders,
+            'total_reviews': total_reviews
+        },
+        'recent_orders': [{
+            'id': o.id,
+            'customer_name': o.customer_name,
+            'total_price': o.total_price,
+            'status': o.status,
+            'created_at': o.created_at.isoformat() if o.created_at else None
+        } for o in recent_orders],
+        'recent_reviews': [{
+            'id': r.id,
+            'product_id': r.product_id,
+            'customer_name': r.customer_name,
+            'rating': r.rating,
+            'created_at': r.created_at.isoformat() if r.created_at else None
+        } for r in recent_reviews]
+    })
 
-@app.route('/admin/delete-product/<int:id>')
-@login_required
-def delete_product(id):
-    product = Product.query.get_or_404(id)
-    name = product.name
-    db.session.delete(product)
-    db.session.commit()
-    flash(f'✅ Product "{name}" deleted successfully!', 'success')
-    return redirect(url_for('admin_products'))
+# ============ HEALTH CHECK ============
 
-@app.route('/admin/orders')
-@login_required
-def admin_orders():
-    orders = Order.query.order_by(Order.created_at.desc()).all()
-    return render_template('admin/orders.html', orders=orders)
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'database': 'connected' if db.session.bind else 'disconnected'
+    })
 
-@app.route('/admin/logout')
-@login_required
-def admin_logout():
-    logout_user()
-    flash('👋 Logged out successfully!', 'info')
-    return redirect(url_for('index'))
+@app.route('/')
+def home():
+    """Home/API info endpoint"""
+    return jsonify({
+        'name': 'E-commerce API',
+        'version': '1.0.0',
+        'endpoints': {
+            'products': '/api/products',
+            'reviews': '/api/reviews',
+            'orders': '/api/orders',
+            'admin': '/api/admin/dashboard',
+            'health': '/health'
+        }
+    })
 
-# ===== SETUP ROUTES =====
-
-@app.route('/setup-admin')
-def setup_admin():
-    # Check if admin already exists
-    existing_admin = Admin.query.filter_by(username='admin').first()
-    
-    if existing_admin:
-        return '''
-        <!DOCTYPE html>
-        <html>
-        <head><title>Admin Exists</title></head>
-        <body style="padding: 40px; text-align: center;">
-            <h1>⚠️ Admin Already Exists</h1>
-            <p>Admin account is already created.</p>
-            <p>Username: <strong>admin</strong></p>
-            <p>Password: <strong>nora123</strong></p>
-            <p><a href="/admin/login">Go to Login Page</a></p>
-        </body>
-        </html>
-        '''
-    
-    # Create admin with password: nora123
-    hashed_password = generate_password_hash('nora123', method='pbkdf2:sha256')
-    new_admin = Admin(username='admin', password=hashed_password)
-    
-    db.session.add(new_admin)
-    db.session.commit()
-    
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head><title>Admin Created</title></head>
-    <body style="padding: 40px; text-align: center;">
-        <h1>✅ Admin Setup Complete!</h1>
-        <p>Username: <strong>admin</strong></p>
-        <p>Password: <strong>nora123</strong></p>
-        <p><a href="/admin/login">Go to Login Page</a></p>
-    </body>
-    </html>
-    '''
-
-# ===== RUN APPLICATION =====
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
