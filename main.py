@@ -61,13 +61,18 @@ with app.app_context():
 # ============ WEBSITE PAGES ============
 
 @app.route('/')
-def home():
-    """Main store homepage"""
+def index():  # CHANGED FROM 'home' TO 'index'
+    """Main store homepage - MUST be named 'index' for url_for('index') to work"""
     return render_template('index.html')
 
 @app.route('/index.html')
 def index_html():
     return redirect('/')
+
+@app.route('/home')  # ADD THIS: Keep 'home' endpoint as alias
+def home():
+    """Alias for index"""
+    return redirect(url_for('index'))
 
 @app.route('/admin')
 def admin():
@@ -75,22 +80,22 @@ def admin():
     return render_template('admin.html')
 
 @app.route('/admin/dashboard')
-def admin_dashboard_page():
+def admin_dashboard():
     """Admin dashboard page"""
     return render_template('dashboard.html')
 
 @app.route('/admin/products')
-def admin_products_page():
+def admin_products():
     """Admin products management"""
     return render_template('admin_products.html')
 
 @app.route('/admin/orders')
-def admin_orders_page():
+def admin_orders():
     """Admin orders management"""
     return render_template('admin_orders.html')
 
 @app.route('/admin/reviews')
-def admin_reviews_page():
+def admin_reviews():
     """Admin reviews management"""
     return render_template('admin_reviews.html')
 
@@ -360,11 +365,39 @@ def health():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    """Custom 404 page - check if template exists, otherwise return simple HTML"""
+    try:
+        return render_template('404.html'), 404
+    except:
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head><title>404 - Page Not Found</title></head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The page you're looking for doesn't exist.</p>
+            <a href="/">Go to Homepage</a>
+        </body>
+        </html>
+        """, 404
 
 @app.errorhandler(500)
 def internal_error(e):
-    return render_template('500.html'), 500
+    """Custom 500 page - check if template exists, otherwise return simple HTML"""
+    try:
+        return render_template('500.html'), 500
+    except:
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head><title>500 - Internal Server Error</title></head>
+        <body>
+            <h1>500 - Internal Server Error</h1>
+            <p>Something went wrong on our server.</p>
+            <a href="/">Go to Homepage</a>
+        </body>
+        </html>
+        """, 500
 
 # ============ START APPLICATION ============
 
