@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NoraHairLine Admin{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .admin-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .main-content { flex: 1; }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { margin-bottom: 10px; }
+        .nav-menu { padding: 20px; }
+        .nav-item { margin-bottom: 10px; }
+        .nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 15px; color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
+        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); }
+        .content-header { background: white; padding: 20px; border-bottom: 1px solid #e9ecef; }
+        .content-body { padding: 20px; }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>NoraHairLine</h2>
+                <p>Admin Panel</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="nav-link {% if request.endpoint == 'admin_products' %}active{% endif %}">
+                    <i class="fas fa-box"></i> Products
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="nav-link {% if request.endpoint == 'admin_orders' %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a href="{{ url_for('admin_reviews') }}" class="nav-link {% if request.endpoint == 'admin_reviews' %}active{% endif %}">
+                    <i class="fas fa-star"></i> Reviews
+                </a>
+                <a href="{{ url_for('add_product') }}" class="nav-link {% if request.endpoint == 'add_product' %}active{% endif %}">
+                    <i class="fas fa-plus-circle"></i> Add Product
+                </a>
+                <div style="margin-top: 50px;">
+                    <a href="{{ url_for('index') }}" class="nav-link">
+                        <i class="fas fa-home"></i> View Site
+                    </a>
+                    <a href="{{ url_for('admin_logout') }}" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>{% block header %}{% endblock %}</h1>
+            </header>
+            
+            <div class="content-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
