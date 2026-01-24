@@ -1,271 +1,469 @@
-{% extends 'base.html' %}
-
-{% block title %}Admin Login - NoraHairLine{% endblock %}
-
-{% block content %}
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <i class="fas fa-lock fa-3x"></i>
-            <h2>Admin Login</h2>
-            <p>Access your NoraHairLine dashboard</p>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NoraHairLine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         
-        <form method="POST" action="{{ url_for('login') }}" class="login-form">
-            <div class="form-group">
-                <label for="username">
-                    <i class="fas fa-user"></i> Username
-                </label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    placeholder="Enter your username" 
-                    required
-                    value="admin"
-                >
-            </div>
+        :root {
+            --primary: #8a6d3b;
+            --primary-dark: #6b4f2b;
+            --secondary: #f5f5f5;
+            --dark: #333;
+            --light: #fff;
+            --gray: #888;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-container {
+            display: flex;
+            width: 100%;
+            max-width: 1000px;
+            background: var(--light);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .login-left {
+            flex: 1;
+            background: linear-gradient(rgba(138, 109, 59, 0.9), rgba(138, 109, 59, 0.9)), url('/static/images/login-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .login-right {
+            flex: 1;
+            padding: 3rem;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .logo span {
+            color: var(--dark);
+        }
+        
+        .welcome-text {
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-text h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .welcome-text p {
+            color: var(--gray);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(138, 109, 59, 0.1);
+        }
+        
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: var(--light);
+            padding: 0.8rem;
+            border-radius: 5px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--gray);
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #ddd;
+        }
+        
+        .divider::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #ddd;
+        }
+        
+        .social-login {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .social-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .signup-link {
+            text-align: center;
+            color: var(--gray);
+        }
+        
+        .signup-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .left-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .left-content p {
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .features {
+            list-style: none;
+        }
+        
+        .features li {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .features i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        
+        .back-to-store {
+            display: inline-block;
+            margin-top: 2rem;
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+        }
+        
+        .back-to-store:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+            }
             
-            <div class="form-group">
-                <label for="password">
-                    <i class="fas fa-key"></i> Password
-                </label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="Enter your password" 
-                    required
-                    value="admin123"
-                >
-            </div>
+            .login-left, .login-right {
+                padding: 2rem;
+            }
             
-            <div class="form-options">
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </button>
+            .login-left {
+                order: 2;
+            }
+            
+            .login-right {
+                order: 1;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .login-left, .login-right {
+                padding: 1.5rem;
+            }
+            
+            .social-login {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Left Side -->
+        <div class="login-left">
+            <div class="left-content">
+                <h2>Welcome Back</h2>
+                <p>Sign in to access your account and continue your shopping experience.</p>
                 
-                <a href="/" class="back-home">
-                    <i class="fas fa-home"></i> Back to Home
+                <ul class="features">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Track your orders</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Save your favorite products</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Fast checkout experience</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Exclusive member discounts</span>
+                    </li>
+                </ul>
+                
+                <a href="/" class="back-to-store">
+                    <i class="fas fa-arrow-left"></i> Back to Store
                 </a>
             </div>
-        </form>
+        </div>
         
-        <div class="login-help">
-            <h4><i class="fas fa-question-circle"></i> First Time Setup?</h4>
-            <p>If this is your first time, you need to create an admin account:</p>
-            <ol>
-                <li>Go to: <a href="/create-admin" class="setup-link">/create-admin</a></li>
-                <li>This creates account: <strong>admin / admin123</strong></li>
-                <li>Then come back here to login</li>
-            </ol>
-            <div class="credentials">
-                <p><strong>Default credentials after setup:</strong></p>
-                <p>Username: <code>admin</code></p>
-                <p>Password: <code>admin123</code></p>
+        <!-- Right Side -->
+        <div class="login-right">
+            <div class="logo">Nora<span>HairLine</span></div>
+            
+            <div class="welcome-text">
+                <h1>Sign In</h1>
+                <p>Enter your credentials to access your account</p>
+            </div>
+            
+            <div id="error-message" class="alert" style="display: none;"></div>
+            <div id="success-message" class="alert" style="display: none;"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox"> Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+            
+            <div class="social-login">
+                <button class="social-btn">
+                    <i class="fab fa-google"></i>
+                    <span>Google</span>
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-facebook-f"></i>
+                    <span>Facebook</span>
+                </button>
+            </div>
+            
+            <div class="signup-link">
+                <p>Don't have an account? <a href="/register">Sign up here</a></p>
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    /* Login Styles */
-    .login-container {
-        max-width: 500px;
-        margin: 50px auto;
-        padding: 20px;
-    }
-    
-    .login-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 40px;
-        border-top: 5px solid #6a11cb;
-    }
-    
-    .login-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    
-    .login-header i {
-        color: #6a11cb;
-        margin-bottom: 15px;
-    }
-    
-    .login-header h2 {
-        color: #333;
-        margin-bottom: 10px;
-    }
-    
-    .login-header p {
-        color: #666;
-    }
-    
-    .form-group {
-        margin-bottom: 25px;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        color: #333;
-        font-weight: 500;
-    }
-    
-    .form-group label i {
-        margin-right: 10px;
-        color: #6a11cb;
-    }
-    
-    .form-group input {
-        width: 100%;
-        padding: 15px;
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        font-size: 16px;
-        transition: border-color 0.3s;
-    }
-    
-    .form-group input:focus {
-        border-color: #6a11cb;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
-    }
-    
-    .form-options {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 30px;
-    }
-    
-    .login-btn {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        transition: transform 0.3s, box-shadow 0.3s;
-    }
-    
-    .login-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
-    }
-    
-    .back-home {
-        color: #666;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .back-home:hover {
-        color: #6a11cb;
-    }
-    
-    .login-help {
-        margin-top: 40px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        border-left: 4px solid #6a11cb;
-    }
-    
-    .login-help h4 {
-        color: #333;
-        margin-bottom: 15px;
-    }
-    
-    .login-help ol {
-        margin: 15px 0;
-        padding-left: 20px;
-    }
-    
-    .login-help li {
-        margin-bottom: 8px;
-    }
-    
-    .setup-link {
-        color: #2575fc;
-        font-weight: 500;
-        text-decoration: none;
-    }
-    
-    .setup-link:hover {
-        text-decoration: underline;
-    }
-    
-    .credentials {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 15px;
-        border: 1px solid #ddd;
-    }
-    
-    .credentials code {
-        background: #f1f1f1;
-        padding: 3px 6px;
-        border-radius: 4px;
-        font-family: monospace;
-    }
-    
-    /* Error message styling */
-    .alert-danger {
-        background: #fee;
-        border: 1px solid #fcc;
-        color: #c00;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .alert-danger i {
-        color: #c00;
-    }
-</style>
-
-<script>
-    // Auto-focus username field
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('username').focus();
-        
-        // Show password toggle (optional)
-        const passwordField = document.getElementById('password');
-        const toggleBtn = document.createElement('button');
-        toggleBtn.type = 'button';
-        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
-        toggleBtn.style.position = 'absolute';
-        toggleBtn.style.right = '10px';
-        toggleBtn.style.top = '50%';
-        toggleBtn.style.transform = 'translateY(-50%)';
-        toggleBtn.style.background = 'none';
-        toggleBtn.style.border = 'none';
-        toggleBtn.style.cursor = 'pointer';
-        toggleBtn.style.color = '#666';
-        
-        passwordField.parentElement.style.position = 'relative';
-        passwordField.style.paddingRight = '40px';
-        passwordField.parentElement.appendChild(toggleBtn);
-        
-        toggleBtn.addEventListener('click', function() {
-            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordField.setAttribute('type', type);
-            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+    <script>
+        // Customer login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+            
+            // Reset messages
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            
+            // Validate inputs
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+            
+            // Show loading state
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            loginBtn.disabled = true;
+            
+            try {
+                // Note: You'll need to implement customer login API endpoint
+                // For now, we'll simulate a successful login
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                showSuccess('Login successful! Redirecting...');
+                
+                // Store customer session in localStorage (temporary solution)
+                localStorage.setItem('customer_logged_in', 'true');
+                localStorage.setItem('customer_email', email);
+                
+                setTimeout(() => {
+                    window.location.href = '/account';
+                }, 1500);
+                
+            } catch (error) {
+                showError('Login failed. Please check your credentials.');
+                console.error('Login error:', error);
+            } finally {
+                // Restore button
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
         });
-    });
-</script>
-{% endblock %}
+        
+        function showError(message) {
+            const errorMsg = document.getElementById('error-message');
+            errorMsg.textContent = message;
+            errorMsg.className = 'alert alert-error';
+            errorMsg.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successMsg = document.getElementById('success-message');
+            successMsg.textContent = message;
+            successMsg.className = 'alert alert-success';
+            successMsg.style.display = 'block';
+        }
+        
+        // Auto-focus email field
+        document.getElementById('email').focus();
+    </script>
+</body>
+</html>
