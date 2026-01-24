@@ -165,31 +165,6 @@ def products():
     category = request.args.get('category', '')
     return render_template('products.html', category=category)
 
-@app.route('/admin')
-def admin():
-    """Admin login page"""
-    return render_template('admin.html')
-
-@app.route('/admin/dashboard')
-def admin_dashboard():
-    """Admin dashboard page"""
-    return render_template('dashboard.html')
-
-@app.route('/admin/products')
-def admin_products():
-    """Admin products management"""
-    return render_template('admin_products.html')
-
-@app.route('/admin/orders')
-def admin_orders():
-    """Admin orders management"""
-    return render_template('admin_orders.html')
-
-@app.route('/admin/reviews')
-def admin_reviews():
-    """Admin reviews management"""
-    return render_template('admin_reviews.html')
-
 @app.route('/login')
 def login():
     """User login page"""
@@ -236,6 +211,59 @@ def product_detail(product_id):
     """Product detail page"""
     return render_template('product_detail.html', product_id=product_id)
 
+# ============ ADMIN PAGES ============
+
+@app.route('/admin')
+def admin():
+    """Admin login page"""
+    # If already logged in, redirect to dashboard
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+    return render_template('admin/admin_login.html')
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    """Admin dashboard page"""
+    # Check if admin is logged in
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin/admin_dashboard.html')
+
+@app.route('/admin/products')
+def admin_products():
+    """Admin products management"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin/products.html')
+
+@app.route('/admin/orders')
+def admin_orders():
+    """Admin orders management"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin/order.html')
+
+@app.route('/admin/reviews')
+def admin_reviews():
+    """Admin reviews management"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin_reviews.html')
+
+@app.route('/admin/products/add')
+def add_product():
+    """Add product page"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin/add_product.html')
+
+@app.route('/admin/products/edit/<int:product_id>')
+def edit_product(product_id):
+    """Edit product page"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin'))
+    return render_template('admin/edit_product.html', product_id=product_id)
+
 # ============ STATIC FILE SERVING ============
 
 @app.route('/static/<path:filename>')
@@ -272,7 +300,11 @@ def api_info():
             'admin': {
                 'POST /api/admin/login': 'Admin login',
                 'POST /api/admin/logout': 'Admin logout',
-                'GET /api/admin/dashboard': 'Dashboard stats'
+                'GET /api/admin/dashboard': 'Dashboard stats',
+                'GET /api/admin/check-auth': 'Check admin authentication',
+                'POST /api/admin/products': 'Create product',
+                'PUT /api/admin/products/<id>': 'Update product',
+                'DELETE /api/admin/products/<id>': 'Delete product'
             },
             'health': 'GET /health'
         }
@@ -452,6 +484,14 @@ def api_admin_logout():
     session.pop('admin_username', None)
     return jsonify({'success': True, 'message': 'Logged out'})
 
+@app.route('/api/admin/check-auth', methods=['GET'])
+def api_check_admin_auth():
+    """Check if admin is logged in"""
+    return jsonify({
+        'logged_in': session.get('admin_logged_in', False),
+        'username': session.get('admin_username', '')
+    })
+
 @app.route('/api/admin/dashboard', methods=['GET'])
 def api_admin_dashboard():
     """Admin dashboard statistics"""
@@ -495,6 +535,106 @@ def api_admin_dashboard():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============ ADMIN PRODUCTS API ============
+
+@app.route('/api/admin/products', methods=['POST'])
+def api_create_product():
+    """Create new product (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['name', 'description', 'price', 'category']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
+        
+        # Create new product
+        product = Product(
+            name=data['name'],
+            description=data['description'],
+            price=float(data['price']),
+            category=data['category'],
+            image_url=data.get('image_url', '/static/images/default-product.jpg'),
+            stock=int(data.get('stock', 0)),
+            featured=bool(data.get('featured', False)),
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(product)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Product created successfully',
+            'product_id': product.id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/admin/products/<int:product_id>', methods=['PUT'])
+def api_update_product(product_id):
+    """Update product (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        product = Product.query.get_or_404(product_id)
+        data = request.get_json()
+        
+        # Update fields
+        if 'name' in data:
+            product.name = data['name']
+        if 'description' in data:
+            product.description = data['description']
+        if 'price' in data:
+            product.price = float(data['price'])
+        if 'category' in data:
+            product.category = data['category']
+        if 'image_url' in data:
+            product.image_url = data['image_url']
+        if 'stock' in data:
+            product.stock = int(data['stock'])
+        if 'featured' in data:
+            product.featured = bool(data['featured'])
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Product updated successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
+def api_delete_product(product_id):
+    """Delete product (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        product = Product.query.get_or_404(product_id)
+        
+        db.session.delete(product)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Product deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
 
 # ============ REVIEWS API ============
 
@@ -562,6 +702,24 @@ def internal_error(e):
     except:
         return "Internal server error", 500
 
+# ============ MIDDLEWARE FOR ADMIN PROTECTION ============
+
+@app.before_request
+def check_admin_access():
+    # List of admin routes that require authentication
+    admin_routes = [
+        '/admin/dashboard',
+        '/admin/products',
+        '/admin/orders',
+        '/admin/reviews',
+        '/admin/products/add',
+    ]
+    
+    # Check if the request path starts with any admin route
+    if any(request.path.startswith(route) for route in admin_routes):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin'))
+
 # ============ START APPLICATION ============
 
 if __name__ == '__main__':
@@ -574,6 +732,8 @@ if __name__ == '__main__':
     print(f"🛍️  Shop:              https://norahairline.onrender.com/shop")
     print(f"👑 Admin Login:       https://norahairline.onrender.com/admin")
     print(f"📊 Admin Dashboard:   https://norahairline.onrender.com/admin/dashboard")
+    print(f"🛍️  Admin Products:    https://norahairline.onrender.com/admin/products")
+    print(f"📦 Admin Orders:      https://norahairline.onrender.com/admin/orders")
     print(f"🔧 API:               https://norahairline.onrender.com/api")
     print(f"❤️  Health Check:      https://norahairline.onrender.com/health")
     print(f"{'='*60}")
@@ -584,6 +744,14 @@ if __name__ == '__main__':
         print(f"📁 Templates found: {len(templates)}")
         for template in sorted(templates):
             print(f"   • {template}")
+    
+    # List admin templates
+    admin_template_path = 'templates/admin'
+    if os.path.exists(admin_template_path):
+        admin_templates = [f for f in os.listdir(admin_template_path) if f.endswith('.html')]
+        print(f"👑 Admin templates: {len(admin_templates)}")
+        for template in sorted(admin_templates):
+            print(f"   • admin/{template}")
     
     print(f"{'='*60}\n")
     
