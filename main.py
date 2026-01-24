@@ -21,7 +21,7 @@ app = Flask(__name__,
            template_folder='templates')
 CORS(app)
 
-# Database configuration
+# ============ DATABASE CONFIGURATION ============
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
     if database_url.startswith('postgres://'):
@@ -33,75 +33,118 @@ else:
     print("✓ Using SQLite database")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 app.config['SESSION_TYPE'] = 'filesystem'
 
 # Initialize database
 db.init_app(app)
 
-# Create tables and default admin
+# ============ DATABASE SETUP ============
 with app.app_context():
     try:
+        # Create all tables
         db.create_all()
-        print("✓ Database tables created")
+        print("✅ Database tables created successfully")
         
-        # Create default admin if none exists
-        if Admin.query.count() == 0:
-            default_admin = Admin(
+        # ===== CREATE DEFAULT ADMIN =====
+        admin_count = Admin.query.count()
+        if admin_count == 0:
+            admin = Admin(
                 username='admin',
                 password=generate_password_hash('admin123'),
+                created_at=datetime.utcnow()
             )
-            db.session.add(default_admin)
-            db.session.commit()
-            print("✓ Created default admin: username='admin', password='admin123'")
-            
-        # Add sample products if none exist
-        if Product.query.count() == 0:
-            sample_products = [
+            db.session.add(admin)
+            print(f"👑 Created default admin: username='admin', password='admin123'")
+        else:
+            print(f"👑 Admin already exists: {admin_count} admin(s) found")
+        
+        # ===== CREATE SAMPLE PRODUCTS =====
+        product_count = Product.query.count()
+        if product_count == 0:
+            products = [
                 Product(
-                    name="Premium Bone Straight Hair",
-                    description="24-inch premium quality bone straight hair extensions",
+                    name="Premium Bone Straight Hair 24\"",
+                    description="24-inch premium quality 100% human hair, bone straight texture",
                     price=89.99,
                     category="hair",
-                    image_url="",
+                    image_url="/static/images/hair1.jpg",
                     stock=50,
-                    featured=True
+                    featured=True,
+                    created_at=datetime.utcnow()
                 ),
                 Product(
-                    name="Curly Brazilian Hair",
-                    description="Natural Brazilian curly hair 22-inch",
+                    name="Curly Brazilian Hair 22\"",
+                    description="22-inch natural Brazilian curly hair, soft and bouncy",
                     price=99.99,
                     category="hair",
-                    image_url="",
+                    image_url="/static/images/hair2.jpg",
                     stock=30,
-                    featured=True
+                    featured=True,
+                    created_at=datetime.utcnow()
                 ),
                 Product(
-                    name="Lace Front Wig",
-                    description="Natural looking lace front wig",
+                    name="Lace Front Wig - Natural Black",
+                    description="13x4 lace front wig, natural black color, pre-plucked",
                     price=129.99,
                     category="wigs",
-                    image_url="",
+                    image_url="/static/images/wig1.jpg",
                     stock=20,
-                    featured=True
+                    featured=True,
+                    created_at=datetime.utcnow()
                 ),
                 Product(
-                    name="Hair Growth Oil",
-                    description="Organic hair growth and strengthening oil",
+                    name="Hair Growth Oil 8oz",
+                    description="Organic hair growth oil with rosemary and castor oil",
                     price=24.99,
                     category="care",
-                    image_url="",
+                    image_url="/static/images/oil1.jpg",
                     stock=100,
-                    featured=False
+                    featured=False,
+                    created_at=datetime.utcnow()
+                ),
+                Product(
+                    name="Moisturizing Shampoo 16oz",
+                    description="Sulfate-free moisturizing shampoo for all hair types",
+                    price=18.99,
+                    category="care",
+                    image_url="/static/images/shampoo1.jpg",
+                    stock=80,
+                    featured=False,
+                    created_at=datetime.utcnow()
+                ),
+                Product(
+                    name="Silk Press Hair 26\"",
+                    description="26-inch silk press hair, ultra smooth and shiny",
+                    price=119.99,
+                    category="hair",
+                    image_url="/static/images/hair3.jpg",
+                    stock=15,
+                    featured=True,
+                    created_at=datetime.utcnow()
                 )
             ]
-            for product in sample_products:
-                db.session.add(product)
-            db.session.commit()
-            print("✓ Added sample products")
             
+            # Add products to session
+            for product in products:
+                db.session.add(product)
+            
+            print(f"🛍️  Created {len(products)} sample products")
+        
+        else:
+            print(f"🛍️  Products already exist: {product_count} product(s) found")
+        
+        # Commit all changes
+        db.session.commit()
+        print("✅ Database setup completed successfully")
+        
     except Exception as e:
-        print(f"⚠ Database error: {e}")
+        print(f"❌ Database setup error: {str(e)}")
+        # Rollback in case of error
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+# ============ END DATABASE SETUP ============
 
 # ============ WEBSITE PAGES ============
 
@@ -220,27 +263,18 @@ def api_info():
             'products': {
                 'GET /api/products': 'List all products',
                 'GET /api/products/<id>': 'Get single product',
-                'POST /api/products': 'Create product (admin)',
-                'PUT /api/products/<id>': 'Update product (admin)',
-                'DELETE /api/products/<id>': 'Delete product (admin)'
+                'GET /api/products/featured': 'Get featured products'
             },
             'orders': {
                 'GET /api/orders': 'List all orders',
-                'POST /api/orders': 'Create new order',
-                'GET /api/orders/<id>': 'Get single order'
+                'POST /api/orders': 'Create new order'
             },
             'admin': {
                 'POST /api/admin/login': 'Admin login',
                 'POST /api/admin/logout': 'Admin logout',
-                'GET /api/admin/dashboard': 'Dashboard stats',
-                'GET /api/admin/products': 'Admin products list',
-                'GET /api/admin/orders': 'Admin orders list'
+                'GET /api/admin/dashboard': 'Dashboard stats'
             },
-            'auth': {
-                'POST /api/login': 'User login',
-                'POST /api/register': 'User registration',
-                'POST /api/logout': 'User logout'
-            }
+            'health': 'GET /health'
         }
     })
 
@@ -305,7 +339,7 @@ def api_get_featured_products():
         return jsonify([{
             'id': p.id,
             'name': p.name,
-            'description': p.description,
+            'description': p.description[:100] + '...' if len(p.description) > 100 else p.description,
             'price': float(p.price),
             'category': p.category,
             'image_url': p.image_url
