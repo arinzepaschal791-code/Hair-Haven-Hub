@@ -4,90 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- LINK TO CSS - THIS FIXES THE STYLING ISSUE -->
+    <!-- CSS Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
-    <title>NoraHairLine - {% block title %}{% endblock %}</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Basic styles for navigation -->
+    <title>NoraHairLine - {% block title %}Premium Hair & Beauty{% endblock %}</title>
+    
     <style>
-        nav ul {
-            list-style-type: none;
+        /* Logo styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        
+        .logo-icon {
+            font-size: 48px;
+            color: white;
+        }
+        
+        .logo-text {
+            text-align: center;
+        }
+        
+        .logo-main {
+            font-size: 42px;
+            font-weight: bold;
+            color: white;
             margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #333;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         
-        nav li {
-            float: left;
+        .logo-tagline {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            margin: 5px 0 0 0;
+            font-weight: 300;
         }
         
-        nav li a {
-            display: block;
+        /* Quick order button */
+        .quick-order {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #e74c3c;
             color: white;
-            text-align: center;
-            padding: 14px 16px;
+            padding: 15px 20px;
+            border-radius: 50px;
             text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
         }
         
-        nav li a:hover {
-            background-color: #111;
+        .quick-order:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .alert {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 4px;
-        }
-        
-        .alert-success {
-            background-color: #dff0d8;
-            border-color: #d6e9c6;
-            color: #3c763d;
-        }
-        
-        .alert-danger {
-            background-color: #f2dede;
-            border-color: #ebccd1;
-            color: #a94442;
-        }
-        
-        .alert-info {
-            background-color: #d9edf7;
-            border-color: #bce8f1;
-            color: #31708f;
-        }
-        
-        footer {
-            background-color: #333;
+        /* Back to top */
+        .back-to-top {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: #3498db;
             color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: 40px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-top:hover {
+            background: #2980b9;
+            transform: translateY(-5px);
         }
     </style>
 </head>
 <body>
+    <!-- Logo Header -->
+    <header class="logo-container">
+        <i class="fas fa-crown logo-icon"></i>
+        <div class="logo-text">
+            <h1 class="logo-main">NoraHairLine</h1>
+            <p class="logo-tagline">Premium Hair · Wigs · Beauty</p>
+        </div>
+    </header>
+
     <!-- Navigation Menu -->
-    <nav>
+    <nav class="main-nav">
         <ul>
-            <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('products') }}">All Products</a></li>
-            <li><a href="{{ url_for('products', category='hair') }}">Hair</a></li>
-            <li><a href="{{ url_for('products', category='wigs') }}">Wigs</a></li>
-            <li><a href="{{ url_for('products', category='care') }}">Hair Care</a></li>
+            <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="{{ url_for('products') }}"><i class="fas fa-store"></i> All Products</a></li>
+            <li><a href="{{ url_for('products', category='hair') }}"><i class="fas fa-user"></i> Hair Extensions</a></li>
+            <li><a href="{{ url_for('products', category='wigs') }}"><i class="fas fa-star"></i> Wigs</a></li>
+            <li><a href="{{ url_for('products', category='care') }}"><i class="fas fa-spa"></i> Hair Care</a></li>
             {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             {% else %}
-                <li><a href="{{ url_for('login') }}">Admin Login</a></li>
+                <li><a href="{{ url_for('login') }}"><i class="fas fa-lock"></i> Admin Login</a></li>
             {% endif %}
         </ul>
     </nav>
@@ -99,14 +133,12 @@
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <!-- Page Title -->
-        {% block pagetitle %}{% endblock %}
 
         <!-- Main Content Block -->
         <main>
@@ -117,28 +149,76 @@
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <h3>NoraHairLine</h3>
+            <h3><i class="fas fa-crown"></i> NoraHairLine</h3>
             <p>Premium Hair · Wigs · Beauty Products</p>
             <p>High-quality hair extensions, wigs, and hair care products</p>
+            <div class="contact-info">
+                <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
+                <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Lagos, Nigeria</p>
+            </div>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-whatsapp"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
             <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
-            <p>Contact: info@norahairline.com | Phone: (123) 456-7890</p>
         </div>
     </footer>
 
-    <!-- Basic JavaScript for interactivity -->
+    <!-- Quick Order Button -->
+    <a href="{{ url_for('products') }}" class="quick-order">
+        <i class="fas fa-shopping-cart"></i>
+        <span>Order Now</span>
+    </a>
+
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <!-- JavaScript -->
     <script>
-        // Auto-hide flash messages after 5 seconds
+        // Back to top functionality
+        document.querySelector('.back-to-top').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Show/hide back to top button
+        window.addEventListener('scroll', function() {
+            const backToTop = document.querySelector('.back-to-top');
+            if (window.scrollY > 300) {
+                backToTop.style.display = 'flex';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s';
+                setTimeout(function() {
+                    alert.style.display = 'none';
+                }, 500);
+            });
+        }, 5000);
+
+        // Make current page active in nav
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    alert.style.opacity = '0';
-                    alert.style.transition = 'opacity 0.5s';
-                    setTimeout(function() {
-                        alert.style.display = 'none';
-                    }, 500);
-                });
-            }, 5000);
+            const currentUrl = window.location.pathname;
+            const navLinks = document.querySelectorAll('.main-nav a');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentUrl) {
+                    link.style.backgroundColor = '#3498db';
+                    link.style.color = 'white';
+                }
+            });
         });
     </script>
 </body>
