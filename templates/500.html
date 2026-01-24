@@ -3,43 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 - Internal Server Error</title>
+    <title>Server Error - NoraHairLine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #8a6d3b;
+            --primary-dark: #6b4f2b;
+            --secondary: #f5f5f5;
+            --dark: #333;
+            --light: #fff;
+            --gray: #888;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            background: #f9f9f9;
+            background-color: #f5f5f5;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
+        
+        /* Header */
+        header {
+            background-color: var(--light);
+            box-shadow: var(--shadow);
+            padding: 1rem 5%;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .logo span {
+            color: var(--dark);
+        }
+        
+        /* Error Container */
         .error-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .error-content {
             max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
+            padding: 3rem;
+            background: var(--light);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+        
+        .error-icon {
+            font-size: 6rem;
+            color: #dc3545;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+        
+        .error-title {
+            font-size: 3.5rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+        
+        .error-subtitle {
+            font-size: 1.5rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+        
+        .error-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-details {
+            background: #f8f9fa;
+            padding: 1.5rem;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: left;
+            margin-bottom: 2rem;
+            border-left: 4px solid #dc3545;
         }
-        h1 {
-            color: #e74c3c;
+        
+        .error-details h3 {
+            margin-bottom: 0.5rem;
+            color: #dc3545;
         }
+        
+        .error-details p {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .technical-info {
+            font-family: monospace;
+            background: #212529;
+            color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+        
         .btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: #8a5a44;
-            color: white;
-            text-decoration: none;
+            background: var(--primary);
+            color: var(--light);
+            padding: 0.8rem 2rem;
             border-radius: 5px;
-            margin-top: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .action-buttons {
+            margin-top: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        /* Status Updates */
+        .status-updates {
+            background: #e7f3ff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #007bff;
+            text-align: left;
+        }
+        
+        .status-updates h3 {
+            color: #007bff;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-list {
+            list-style: none;
+        }
+        
+        .status-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .status-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        /* Contact Info */
+        .contact-info {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .contact-info p {
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 2rem 5%;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .copyright {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #444;
+            color: #aaa;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .error-title {
+                font-size: 2.5rem;
+            }
+            
+            .error-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .error-content {
+                padding: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .error-title {
+                font-size: 2rem;
+            }
+            
+            .error-icon {
+                font-size: 4rem;
+            }
+            
+            .error-content {
+                padding: 1.5rem;
+            }
+            
+            .technical-info {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="error-container">
-        <h1>500 - Internal Server Error</h1>
-        <p>Oops! Something went wrong on our server.</p>
-        <p>Our team has been notified and is working to fix the issue.</p>
-        <a href="/" class="btn">Go to Homepage</a>
-        <a href="/admin" class="btn" style="background: #34495e;">Go to Admin Panel</a>
-    </div>
+    <!-- Header -->
+    <header>
+        <a href="/" class="logo">Nora<span>HairLine</span></a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="error-container">
+        <div class="error-content">
+            <div class="error-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            
+            <h1 class="error-title">500</h1>
+            <h2 class="error-subtitle">Internal Server Error</h2>
+            
+            <p class="error-message">
+                Something went wrong on our end. Our technical team has been notified and is working to fix the issue.
+                Please try again in a few moments.
+            </p>
+            
+            <!-- Status Updates -->
+            <div class="status-updates">
+                <h3><i class="fas fa-wrench"></i> System Status</h3>
+                <ul class="status-list">
+                    <li>Website: <strong style="color: #dc3545;">Experiencing Issues</strong></li>
+                    <li>Database: <strong style="color: #ffc107;">Under Maintenance</strong></li>
+                    <li>Payment Gateway: <strong style="color: #28a745;">Operational</strong></li>
+                    <li>Last Checked: <span id="current-time">Just now</span></li>
+                </ul>
+            </div>
+            
+            <!-- Error Details -->
+            <div class="error-details">
+                <h3><i class="fas fa-bug"></i> Error Information</h3>
+                <p>Error ID: <code id="error-id">ERR-{{ timestamp }}-{{ random_id }}</code></p>
+                <p>Time: <span id="error-time">{{ current_time }}</span></p>
+                <p>Status: Internal Server Error (500)</p>
+                
+                <div class="technical-info">
+                    // Technical details would appear here<br>
+                    // This information helps our developers debug the issue<br>
+                    // Error: Database connection timeout<br>
+                    // File: /app/models/database.py<br>
+                    // Line: 127<br>
+                    // Timestamp: {{ timestamp }}<br>
+                    // Request ID: {{ request_id }}
+                </div>
+            </div>
+            
+            <!-- Contact Info -->
+            <div class="contact-info">
+                <p>Need immediate assistance?</p>
+                <p>Email: <strong>support@norahairline.com</strong></p>
+                <p>Phone: <strong>(555) 123-HELP</strong></p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button onclick="window.location.reload()" class="btn">
+                    <i class="fas fa-redo"></i> Refresh Page
+                </button>
+                <a href="/" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Back to Homepage
+                </a>
+                <a href="/contact" class="btn btn-danger">
+                    <i class="fas fa-headset"></i> Contact Support
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>NoraHairLine &copy; 2024. Premium Hair Products Store.</p>
+        <p class="copyright">We apologize for the inconvenience. Our team is working to resolve this issue as quickly as possible.</p>
+    </footer>
+
+    <script>
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour12: true,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+            
+            // Generate error ID
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substr(2, 9).toUpperCase();
+            document.getElementById('error-id').textContent = `ERR-${timestamp}-${randomId}`;
+            document.getElementById('error-time').textContent = now.toLocaleString();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTime();
+            
+            // Update time every second
+            setInterval(updateCurrentTime, 1000);
+            
+            // Try to reconnect every 30 seconds
+            setInterval(function() {
+                console.log('Attempting to reconnect...');
+                // In a real app, you would check server status here
+            }, 30000);
+        });
+        
+        // Auto-refresh after 1 minute
+        setTimeout(function() {
+            console.log('Auto-refreshing page...');
+            window.location.reload();
+        }, 60000);
+    </script>
 </body>
 </html>
