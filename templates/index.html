@@ -1,23 +1,61 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h1>NoraHairLine</h1>
-<p>Premium Hair • Wigs • Beauty</p>
+{% block title %}Home - Premium Hair & Beauty{% endblock %}
 
-<h2>Welcome</h2>
-<p>Welcome to NoraHairLine. We provide high-quality bone straight, curly hair, wigs, hair creams, and shampoos.</p>
-
-<h2>Featured Products</h2>
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem;">
-    {% for product in products[:6] %}
-    <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
-        {% if product.image_url %}
-        <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width: 100%; height: 200px; object-fit: cover;">
-        {% endif %}
-        <h3>{{ product.name }}</h3>
-        <p>₦{{ product.price }}</p>
-        <a href="{{ url_for('product_detail', id=product.id) }}" style="background: #333; color: white; padding: 0.5rem 1rem; text-decoration: none; display: inline-block; border-radius: 5px;">View Details</a>
+{% block pagetitle %}
+    <div class="welcome-banner">
+        <h1>NoraHairLine</h1>
+        <p class="tagline">Premium Hair · Wigs · Beauty</p>
     </div>
-    {% endfor %}
-</div>
+{% endblock %}
+
+{% block content %}
+    <section class="welcome-section">
+        <h2>Welcome to NoraHairLine</h2>
+        <p class="welcome-text">We provide high-quality bone straight, curly hair, wigs, hair creams, and shampoos.</p>
+    </section>
+
+    <section class="featured-products">
+        <h2>Featured Products</h2>
+        <div class="products-grid">
+            {% if products %}
+                {% for product in products %}
+                <div class="product-card">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                    {% else %}
+                    <div class="no-image-placeholder">Image Coming Soon</div>
+                    {% endif %}
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-description">{{ product.description[:100] }}...</p>
+                    <p class="product-price">${{ "%.2f"|format(product.price) }}</p>
+                    <div class="product-actions">
+                        <a href="{{ url_for('product_detail', id=product.id) }}" class="btn-view">View Details</a>
+                        <a href="{{ url_for('order', product_id=product.id) }}" class="btn-order">Order Now</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-products">No featured products available yet. Check back soon!</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="categories">
+        <h2>Shop by Category</h2>
+        <div class="category-grid">
+            <a href="{{ url_for('products', category='hair') }}" class="category-card">
+                <h3>Hair Extensions</h3>
+                <p>Bone straight, curly, wavy</p>
+            </a>
+            <a href="{{ url_for('products', category='wigs') }}" class="category-card">
+                <h3>Wigs</h3>
+                <p>Full wigs, lace front</p>
+            </a>
+            <a href="{{ url_for('products', category='care') }}" class="category-card">
+                <h3>Hair Care</h3>
+                <p>Creams, shampoos, conditioners</p>
+            </a>
+        </div>
+    </section>
 {% endblock %}
