@@ -1,27 +1,679 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - NoraHairLine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #8a6d3b;
+            --primary-dark: #6b4f2b;
+            --secondary: #f5f5f5;
+            --dark: #333;
+            --light: #fff;
+            --gray: #888;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        /* Header & Navigation (Same as index.html) */
+        header {
+            background-color: var(--light);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .logo span {
+            color: var(--dark);
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-icons {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-icons a {
+            color: var(--dark);
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+        
+        .nav-icons a:hover {
+            color: var(--primary);
+        }
+        
+        /* Shop Page */
+        .shop-header {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/static/images/shop-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 5rem 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .shop-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 5%;
+            display: flex;
+            gap: 3rem;
+        }
+        
+        /* Filters Sidebar */
+        .filters {
+            width: 250px;
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+        
+        .filters h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .filter-group {
+            margin-bottom: 2rem;
+        }
+        
+        .filter-group h4 {
+            margin-bottom: 0.8rem;
+            color: var(--dark);
+        }
+        
+        .category-list {
+            list-style: none;
+        }
+        
+        .category-list li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .category-list a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .category-list a:hover, .category-list a.active {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+        
+        .price-range {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .price-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            color: var(--gray);
+        }
+        
+        /* Products Grid */
+        .products-section {
+            flex: 1;
+        }
+        
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .products-count {
+            color: var(--gray);
+        }
+        
+        .sort-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .product-card {
+            background: var(--light);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 1.5rem;
+        }
+        
+        .product-category {
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .product-name {
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+        
+        .product-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0.5rem 0 1rem;
+        }
+        
+        .stock-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .low-stock {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--light);
+            padding: 0.6rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 3rem 0;
+        }
+        
+        .pagination a {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: var(--dark);
+        }
+        
+        .pagination a.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Footer (Same as index.html) */
+        footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 4rem 5% 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #aaa;
+        }
+        
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .filters {
+                width: 100%;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .products-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">Nora<span>HairLine</span></a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/shop" class="active">Shop</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+                {% if session.get('admin_logged_in') %}
+                <li><a href="/admin/dashboard">Admin</a></li>
+                {% endif %}
+            </ul>
+            <div class="nav-icons">
+                <a href="/account"><i class="fas fa-user"></i></a>
+                <a href="/cart"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span></a>
+                {% if session.get('admin_logged_in') %}
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i></a>
+                {% else %}
+                <a href="/login"><i class="fas fa-sign-in-alt"></i></a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
 
-{% block content %}
-<h1>Our Products</h1>
+    <!-- Shop Header -->
+    <section class="shop-header">
+        <h1>Shop Premium Hair Products</h1>
+        <p>Discover our collection of 100% human hair, wigs, and hair care essentials</p>
+    </section>
 
-<div style="margin: 2rem 0;">
-    <a href="{{ url_for('products', category='all') }}">All</a> |
-    <a href="{{ url_for('products', category='wigs') }}">Wigs</a> |
-    <a href="{{ url_for('products', category='hair') }}">Hair</a> |
-    <a href="{{ url_for('products', category='creams') }}">Creams</a> |
-    <a href="{{ url_for('products', category='shampoos') }}">Shampoos</a>
-</div>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Filters Sidebar -->
+        <aside class="filters">
+            <h3>Categories</h3>
+            <ul class="category-list">
+                <li><a href="/shop" class="{% if not category %}active{% endif %}">All Products <span id="count-all">0</span></a></li>
+                <li><a href="/shop?category=hair" class="{% if category == 'hair' %}active{% endif %}">Hair <span id="count-hair">0</span></a></li>
+                <li><a href="/shop?category=wigs" class="{% if category == 'wigs' %}active{% endif %}">Wigs <span id="count-wigs">0</span></a></li>
+                <li><a href="/shop?category=care" class="{% if category == 'care' %}active{% endif %}">Hair Care <span id="count-care">0</span></a></li>
+            </ul>
+            
+            <h3>Filter by Price</h3>
+            <input type="range" min="0" max="500" value="500" class="price-range" id="priceFilter">
+            <div class="price-display">
+                <span>$0</span>
+                <span>$<span id="maxPrice">500</span></span>
+            </div>
+            
+            <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="applyFilters()">Apply Filters</button>
+            <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="resetFilters()">Reset</button>
+        </aside>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem;">
-    {% for product in products %}
-    <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
-        {% if product.image_url %}
-        <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width: 100%; height: 200px; object-fit: cover;">
-        {% endif %}
-        <h3>{{ product.name }}</h3>
-        <p>{{ product.category }}</p>
-        <p><strong>₦{{ product.price }}</strong></p>
-        <a href="{{ url_for('product_detail', id=product.id') }}" style="background: #333; color: white; padding: 0.5rem 1rem; text-decoration: none; display: inline-block; border-radius: 5px;">View Details</a>
+        <!-- Products -->
+        <main class="products-section">
+            <div class="products-header">
+                <div>
+                    <h2 id="category-title">All Products</h2>
+                    <p class="products-count" id="products-count">0 products</p>
+                </div>
+                <select class="sort-select" id="sortSelect">
+                    <option value="name">Sort by Name</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="newest">Newest First</option>
+                </select>
+            </div>
+
+            <div class="products-grid" id="products-container">
+                <!-- Products will be loaded by JavaScript -->
+                <div class="loading">Loading products...</div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <!-- Pagination will be generated by JavaScript -->
+            </div>
+        </main>
     </div>
-    {% endfor %}
-</div>
-{% endblock %}
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>NoraHairLine</h3>
+                <p>Your destination for premium quality hair products and accessories.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Info</h3>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Hair City</p>
+                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let allProducts = [];
+        let currentCategory = "{{ category }}";
+        let currentPage = 1;
+        const productsPerPage = 9;
+        let maxPrice = 500;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load all products
+            fetch('/api/products')
+                .then(response => response.json())
+                .then(products => {
+                    allProducts = products;
+                    updateCategoryCounts();
+                    loadProducts();
+                    updateCategoryTitle();
+                    
+                    // Update price filter max
+                    if (products.length > 0) {
+                        const maxProductPrice = Math.max(...products.map(p => p.price));
+                        maxPrice = Math.ceil(maxProductPrice / 50) * 50; // Round up to nearest 50
+                        document.getElementById('priceFilter').max = maxPrice;
+                        document.getElementById('priceFilter').value = maxPrice;
+                        document.getElementById('maxPrice').textContent = maxPrice;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('products-container').innerHTML = '<p>Error loading products</p>';
+                });
+            
+            // Setup event listeners
+            document.getElementById('priceFilter').addEventListener('input', function() {
+                document.getElementById('maxPrice').textContent = this.value;
+            });
+            
+            document.getElementById('sortSelect').addEventListener('change', loadProducts);
+        });
+        
+        function updateCategoryCounts() {
+            const allCount = allProducts.length;
+            const hairCount = allProducts.filter(p => p.category === 'hair').length;
+            const wigsCount = allProducts.filter(p => p.category === 'wigs').length;
+            const careCount = allProducts.filter(p => p.category === 'care').length;
+            
+            document.getElementById('count-all').textContent = allCount;
+            document.getElementById('count-hair').textContent = hairCount;
+            document.getElementById('count-wigs').textContent = wigsCount;
+            document.getElementById('count-care').textContent = careCount;
+        }
+        
+        function updateCategoryTitle() {
+            const titleElement = document.getElementById('category-title');
+            const countElement = document.getElementById('products-count');
+            
+            let title = 'All Products';
+            let filteredProducts = allProducts;
+            
+            if (currentCategory) {
+                filteredProducts = allProducts.filter(p => p.category === currentCategory);
+                title = currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1);
+                if (currentCategory === 'care') title = 'Hair Care';
+            }
+            
+            titleElement.textContent = title;
+            countElement.textContent = `${filteredProducts.length} products`;
+        }
+        
+        function loadProducts() {
+            let filteredProducts = allProducts;
+            
+            // Filter by category
+            if (currentCategory) {
+                filteredProducts = filteredProducts.filter(p => p.category === currentCategory);
+            }
+            
+            // Filter by price
+            const priceFilter = parseInt(document.getElementById('priceFilter').value);
+            filteredProducts = filteredProducts.filter(p => p.price <= priceFilter);
+            
+            // Sort products
+            const sortValue = document.getElementById('sortSelect').value;
+            switch(sortValue) {
+                case 'price_low':
+                    filteredProducts.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price_high':
+                    filteredProducts.sort((a, b) => b.price - a.price);
+                    break;
+                case 'newest':
+                    filteredProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    break;
+                default: // 'name'
+                    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            // Paginate
+            const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+            const startIndex = (currentPage - 1) * productsPerPage;
+            const endIndex = startIndex + productsPerPage;
+            const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+            
+            // Update count
+            document.getElementById('products-count').textContent = `${filteredProducts.length} products`;
+            
+            // Render products
+            const container = document.getElementById('products-container');
+            if (paginatedProducts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 3rem; color: var(--gray);">No products found matching your criteria.</p>';
+            } else {
+                container.innerHTML = paginatedProducts.map(product => `
+                    <div class="product-card">
+                        <img src="${product.image_url || '/static/images/placeholder.jpg'}" alt="${product.name}" class="product-img">
+                        <div class="product-info">
+                            <span class="product-category">${product.category}</span>
+                            <h3 class="product-name">${product.name}</h3>
+                            <p class="product-price">$${product.price.toFixed(2)}</p>
+                            <span class="stock-status ${product.stock > 10 ? 'in-stock' : product.stock > 0 ? 'low-stock' : 'out-of-stock'}">
+                                ${product.stock > 10 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                            </span>
+                            <div style="margin-top: 1rem;">
+                                <a href="/product/${product.id}" class="btn">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render pagination
+            renderPagination(totalPages);
+        }
+        
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            if (currentPage > 1) {
+                html += `<a href="#" onclick="changePage(${currentPage - 1})">&laquo; Previous</a>`;
+            }
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<a href="#" class="active">${i}</a>`;
+                } else if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<a href="#" onclick="changePage(${i})">${i}</a>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span>...</span>`;
+                }
+            }
+            
+            if (currentPage < totalPages) {
+                html += `<a href="#" onclick="changePage(${currentPage + 1})">Next &raquo;</a>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function changePage(page) {
+            currentPage = page;
+            loadProducts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function applyFilters() {
+            currentPage = 1;
+            loadProducts();
+        }
+        
+        function resetFilters() {
+            currentCategory = '';
+            document.getElementById('priceFilter').value = maxPrice;
+            document.getElementById('maxPrice').textContent = maxPrice;
+            document.getElementById('sortSelect').value = 'name';
+            currentPage = 1;
+            updateCategoryTitle();
+            loadProducts();
+        }
+    </script>
+</body>
+</html>
