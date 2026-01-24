@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from models import db, Admin, Product, Order, Review, Category
+from models import db, Admin, Product, Order, Review
 from datetime import datetime
 import os
 import uuid
@@ -32,7 +32,7 @@ if 'DATABASE_URL' in os.environ:
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'admin_login'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -42,375 +42,298 @@ def load_user(user_id):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_uploaded_file(file):
+def save_uploaded_file(file, folder='images'):
     if file and allowed_file(file.filename):
         # Generate unique filename
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+        os.makedirs(folder_path, exist_ok=True)
+        filepath = os.path.join(folder_path, unique_filename)
         file.save(filepath)
-        return f"/static/uploads/{unique_filename}"
+        return f"/static/uploads/{folder}/{unique_filename}"
     return None
 
 # ===== CREATE DATABASE TABLES =====
 with app.app_context():
     db.create_all()
-    # Create default categories if they don't exist
-    if not Category.query.first():
-        default_categories = [
-            Category(name='Hair Extensions', slug='hair', icon='fas fa-user'),
-            Category(name='Wigs', slug='wigs', icon='fas fa-star'),
-            Category(name='Hair Care', slug='care', icon='fas fa-spa'),
-            Category(name='Accessories', slug='accessories', icon='fas fa-tshirt')
-        ]
-        for category in default_categories:
-            db.session.add(category)
-        db.session.commit()
 
 # ===== PUBLIC ROUTES =====
 
-# Home Page
 @app.route('/')
 def index():
-    featured = Product.query.filter_by(featured=True).limit(8).all()
-    latest = Product.query.order_by(Product.created_at.desc()).limit(6).all()
-    reviews = Review.query.filter_by(approved=True).order_by(Review.created_at.desc()).limit(5).all()
-    
-    # Get video products
-    video_products = Product.query.filter(Product.video_url != None).limit(3).all()
-    
-    return render_template('index.html', 
-                         featured=featured, 
-                         latest=latest, 
-                         reviews=reviews,
-                         video_products=video_products)
+    products = Product.query.filter_by(featured=True).limit(8).all()
+    if not products:
+        products = Product.query.limit(8).all()
+    return render_template('index.html', products=products)
 
-# All Products Page
 @app.route('/products')
 def products():
     category = request.args.get('category', 'all')
-    sort = request.args.get('sort', 'newest')
+    search = request.args.get('search', '')
     
     query = Product.query
     
     if category != 'all':
         query = query.filter_by(category=category)
     
-    # Sorting
-    if sort == 'price_low':
-        query = query.order_by(Product.price.asc())
-    elif sort == 'price_high':
-        query = query.order_by(Product.price.desc())
-    elif sort == 'popular':
-        # Would need order count for this - using rating for now
-        query = query.order_by(Product.rating.desc())
-    else:  # newest
-        query = query.order_by(Product.created_at.desc())
+    if search:
+        query = query.filter(Product.name.ilike(f'%{search}%') | Product.description.ilike(f'%{search}%'))
     
-    products = query.all()
-    categories = Category.query.all()
-    
-    return render_template('products.html', 
-                         products=products, 
-                         categories=categories,
-                         selected_category=category,
-                         sort=sort)
+    products_list = query.order_by(Product.created_at.desc()).all()
+    return render_template('products.html', products=products_list, category=category, search=search)
 
-# Single Product Page
 @app.route('/product/<int:id>')
 def product_detail(id):
     product = Product.query.get_or_404(id)
-    related = Product.query.filter_by(category=product.category)\
-                          .filter(Product.id != id)\
-                          .limit(4).all()
-    reviews = Review.query.filter_by(product_id=id, approved=True)\
-                         .order_by(Review.created_at.desc()).all()
-    
-    return render_template('product_detail.html', 
-                         product=product, 
-                         related=related, 
-                         reviews=reviews)
+    return render_template('product_detail.html', product=product)
 
-# Add Review
-@app.route('/add-review/<int:product_id>', methods=['POST'])
-def add_review(product_id):
-    name = request.form.get('name')
-    email = request.form.get('email')
-    rating = int(request.form.get('rating', 5))
-    comment = request.form.get('comment')
+@app.route('/order/<int:product_id>', methods=['GET', 'POST'])
+def order(product_id):
+    product = Product.query.get_or_404(product_id)
     
-    review = Review(
-        product_id=product_id,
-        customer_name=name,
-        customer_email=email,
-        rating=rating,
-        comment=comment,
-        approved=False  # Admin must approve first
-    )
-    
-    db.session.add(review)
-    db.session.commit()
-    
-    # Update product rating
-    product = Product.query.get(product_id)
-    product_reviews = Review.query.filter_by(product_id=product_id, approved=True).all()
-    if product_reviews:
-        avg_rating = sum(r.rating for r in product_reviews) / len(product_reviews)
-        product.rating = round(avg_rating, 1)
+    if request.method == 'POST':
+        order = Order(
+            customer_name=request.form['name'],
+            customer_email=request.form['email'],
+            customer_phone=request.form['phone'],
+            product_id=product_id,
+            quantity=int(request.form['quantity']),
+            total_price=product.price * int(request.form['quantity'])
+        )
+        
+        db.session.add(order)
         db.session.commit()
+        
+        flash(f'Order placed successfully! Order ID: {order.id}', 'success')
+        return redirect(url_for('index'))
     
-    flash('Thank you for your review! It will appear after approval.', 'success')
-    return redirect(url_for('product_detail', id=product_id))
-
-# Quick Order (AJAX)
-@app.route('/quick-order', methods=['POST'])
-def quick_order():
-    try:
-        data = request.json
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
-        
-        product = Product.query.get(product_id)
-        if not product:
-            return jsonify({'success': False, 'message': 'Product not found'})
-        
-        # In a real app, you'd save this to database
-        # For now, just return success
-        total = product.price * quantity
-        
-        return jsonify({
-            'success': True,
-            'message': f'Quick order received for {product.name}',
-            'total': f'${total:.2f}'
-        })
-    except:
-        return jsonify({'success': False, 'message': 'Error processing order'})
-
-# Search Products
-@app.route('/search')
-def search():
-    query = request.args.get('q', '')
-    if query:
-        products = Product.query.filter(
-            (Product.name.ilike(f'%{query}%')) | 
-            (Product.description.ilike(f'%{query}%'))
-        ).all()
-    else:
-        products = []
-    
-    return render_template('search.html', products=products, query=query)
+    return render_template('order.html', product=product)
 
 # ===== ADMIN ROUTES =====
 
-# Admin Login
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('Please enter both username and password', 'danger')
+            return render_template('admin/admin_login.html')
         
         user = Admin.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
             login_user(user)
-            flash('✅ Welcome to NoraHairLine Admin Dashboard!', 'success')
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            flash('✅ Login successful! Welcome to Admin Dashboard', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
             flash('❌ Invalid username or password', 'danger')
     
-    return render_template('admin/login.html')
+    return render_template('admin/admin_login.html')
 
-# Admin Dashboard
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    stats = {
-        'total_products': Product.query.count(),
-        'total_orders': Order.query.count(),
-        'pending_orders': Order.query.filter_by(status='Pending').count(),
-        'total_reviews': Review.query.count(),
-        'pending_reviews': Review.query.filter_by(approved=False).count(),
-        'recent_orders': Order.query.order_by(Order.created_at.desc()).limit(5).all(),
-        'recent_reviews': Review.query.order_by(Review.created_at.desc()).limit(5).all()
-    }
+    # Get statistics
+    total_products = Product.query.count()
+    total_orders = Order.query.count()
+    total_reviews = Review.query.count() if hasattr(Review, 'query') else 0
+    pending_orders = Order.query.filter_by(status='Pending').count()
     
-    return render_template('admin/dashboard.html', stats=stats)
+    # Get recent data
+    recent_products = Product.query.order_by(Product.created_at.desc()).limit(5).all()
+    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
+    recent_reviews = Review.query.order_by(Review.created_at.desc()).limit(5).all() if hasattr(Review, 'query') else []
+    
+    # Get low stock products
+    low_stock = Product.query.filter(Product.stock < 10).limit(5).all()
+    
+    return render_template('admin/admin_dashboard.html',
+                         total_products=total_products,
+                         total_orders=total_orders,
+                         total_reviews=total_reviews,
+                         pending_orders=pending_orders,
+                         recent_products=recent_products,
+                         recent_orders=recent_orders,
+                         recent_reviews=recent_reviews,
+                         low_stock=low_stock)
 
-# Admin Products Management
 @app.route('/admin/products')
 @login_required
 def admin_products():
+    search = request.args.get('search', '')
     category = request.args.get('category', 'all')
-    search_query = request.args.get('q', '')
     
     query = Product.query
+    
+    if search:
+        query = query.filter(Product.name.ilike(f'%{search}%') | Product.description.ilike(f'%{search}%'))
     
     if category != 'all':
         query = query.filter_by(category=category)
     
-    if search_query:
-        query = query.filter(Product.name.ilike(f'%{search_query}%'))
+    products_list = query.order_by(Product.created_at.desc()).all()
     
-    products = query.order_by(Product.created_at.desc()).all()
-    categories = Category.query.all()
-    
-    return render_template('admin/products.html', 
-                         products=products, 
-                         categories=categories,
-                         selected_category=category,
-                         search_query=search_query)
+    return render_template('admin/admin_dashboard.html', 
+                         products=products_list, 
+                         search=search, 
+                         category=category)
 
-# Add Product
 @app.route('/admin/add-product', methods=['GET', 'POST'])
 @login_required
 def add_product():
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        category = request.form['category']
-        featured = 'featured' in request.form
-        stock = int(request.form.get('stock', 100))
-        
-        # Handle image upload
-        image_url = ''
-        if 'image' in request.files:
-            file = request.files['image']
-            if file.filename:
-                image_url = save_uploaded_file(file)
-        
-        # Handle video upload
-        video_url = ''
-        if 'video' in request.files:
-            video_file = request.files['video']
-            if video_file.filename:
-                video_url = save_uploaded_file(video_file)
-        
-        # If no file uploaded, use URL from form
-        if not image_url:
-            image_url = request.form.get('image_url', '')
-        
-        if not video_url:
+        try:
+            # Get form data
+            name = request.form['name']
+            description = request.form['description']
+            price = float(request.form['price'])
+            category = request.form['category']
+            stock = int(request.form.get('stock', 100))
+            featured = 'featured' in request.form
             video_url = request.form.get('video_url', '')
-        
-        product = Product(
-            name=name,
-            description=description,
-            price=price,
-            category=category,
-            image_url=image_url,
-            video_url=video_url,
-            featured=featured,
-            stock=stock,
-            rating=5.0  # Default rating
-        )
-        
-        db.session.add(product)
-        db.session.commit()
-        
-        flash(f'✅ Product "{name}" added successfully!', 'success')
-        return redirect(url_for('admin_products'))
+            
+            # Handle main image upload
+            image_url = ''
+            if 'image' in request.files:
+                file = request.files['image']
+                if file.filename:
+                    image_url = save_uploaded_file(file, 'images')
+            
+            # Handle additional images
+            gallery_images = []
+            if 'gallery_images' in request.files:
+                files = request.files.getlist('gallery_images')
+                for file in files:
+                    if file.filename:
+                        gallery_url = save_uploaded_file(file, 'gallery')
+                        gallery_images.append(gallery_url)
+            
+            # If no file uploaded, use URL from form
+            if not image_url:
+                image_url = request.form.get('image_url', '')
+            
+            # Create product
+            product = Product(
+                name=name,
+                description=description,
+                price=price,
+                category=category,
+                image_url=image_url,
+                video_url=video_url,
+                featured=featured,
+                stock=stock,
+                gallery_images=','.join(gallery_images) if gallery_images else ''
+            )
+            
+            db.session.add(product)
+            db.session.commit()
+            
+            flash(f'✅ Product "{name}" added successfully!', 'success')
+            return redirect(url_for('admin_products'))
+            
+        except Exception as e:
+            flash(f'❌ Error adding product: {str(e)}', 'danger')
     
-    categories = Category.query.all()
-    return render_template('admin/add_product.html', categories=categories)
+    return render_template('admin/add_product.html')
 
-# Edit Product
 @app.route('/admin/edit-product/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_product(id):
     product = Product.query.get_or_404(id)
     
     if request.method == 'POST':
-        product.name = request.form['name']
-        product.description = request.form['description']
-        product.price = float(request.form['price'])
-        product.category = request.form['category']
-        product.featured = 'featured' in request.form
-        product.stock = int(request.form.get('stock', 100))
-        
-        # Handle image upload
-        if 'image' in request.files:
-            file = request.files['image']
-            if file.filename:
-                product.image_url = save_uploaded_file(file)
-        elif request.form.get('image_url'):
-            product.image_url = request.form.get('image_url')
-        
-        # Handle video upload
-        if 'video' in request.files:
-            video_file = request.files['video']
-            if video_file.filename:
-                product.video_url = save_uploaded_file(video_file)
-        elif request.form.get('video_url'):
-            product.video_url = request.form.get('video_url')
-        
-        db.session.commit()
-        flash(f'✅ Product "{product.name}" updated successfully!', 'success')
-        return redirect(url_for('admin_products'))
+        try:
+            product.name = request.form['name']
+            product.description = request.form['description']
+            product.price = float(request.form['price'])
+            product.category = request.form['category']
+            product.stock = int(request.form.get('stock', 100))
+            product.featured = 'featured' in request.form
+            product.video_url = request.form.get('video_url', '')
+            
+            # Handle main image upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file.filename:
+                    product.image_url = save_uploaded_file(file, 'images')
+            elif request.form.get('image_url'):
+                product.image_url = request.form.get('image_url')
+            
+            # Handle gallery images
+            if 'gallery_images' in request.files:
+                files = request.files.getlist('gallery_images')
+                gallery_images = []
+                for file in files:
+                    if file.filename:
+                        gallery_url = save_uploaded_file(file, 'gallery')
+                        gallery_images.append(gallery_url)
+                
+                if gallery_images:
+                    # Keep existing images and add new ones
+                    existing_images = product.gallery_images.split(',') if product.gallery_images else []
+                    existing_images = [img for img in existing_images if img]
+                    product.gallery_images = ','.join(existing_images + gallery_images)
+            
+            product.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            flash(f'✅ Product "{product.name}" updated successfully!', 'success')
+            return redirect(url_for('admin_products'))
+            
+        except Exception as e:
+            flash(f'❌ Error updating product: {str(e)}', 'danger')
     
-    categories = Category.query.all()
-    return render_template('admin/edit_product.html', product=product, categories=categories)
+    # Parse gallery images
+    gallery_images = []
+    if product.gallery_images:
+        gallery_images = [img.strip() for img in product.gallery_images.split(',') if img.strip()]
+    
+    return render_template('admin/edit_product.html', 
+                         product=product, 
+                         gallery_images=gallery_images)
 
-# Delete Product
 @app.route('/admin/delete-product/<int:id>')
 @login_required
 def delete_product(id):
     product = Product.query.get_or_404(id)
     name = product.name
-    
-    # Also delete associated reviews
-    Review.query.filter_by(product_id=id).delete()
-    
     db.session.delete(product)
     db.session.commit()
-    
     flash(f'✅ Product "{name}" deleted successfully!', 'success')
     return redirect(url_for('admin_products'))
 
-# Manage Reviews
-@app.route('/admin/reviews')
+@app.route('/admin/toggle-featured/<int:id>')
 @login_required
-def admin_reviews():
-    status = request.args.get('status', 'all')
+def toggle_featured(id):
+    product = Product.query.get_or_404(id)
+    product.featured = not product.featured
+    db.session.commit()
     
-    query = Review.query
-    
-    if status == 'pending':
-        query = query.filter_by(approved=False)
-    elif status == 'approved':
-        query = query.filter_by(approved=True)
-    
-    reviews = query.order_by(Review.created_at.desc()).all()
-    
-    return render_template('admin/reviews.html', reviews=reviews, status=status)
+    status = "featured" if product.featured else "unfeatured"
+    flash(f'✅ Product "{product.name}" {status}!', 'success')
+    return redirect(url_for('admin_products'))
 
-# Approve/Reject Review
-@app.route('/admin/review/<int:id>/<action>')
+@app.route('/admin/delete-image/<int:id>/<int:image_index>')
 @login_required
-def review_action(id, action):
-    review = Review.query.get_or_404(id)
+def delete_image(id, image_index):
+    product = Product.query.get_or_404(id)
     
-    if action == 'approve':
-        review.approved = True
-        db.session.commit()
-        
-        # Update product rating
-        product = Product.query.get(review.product_id)
-        product_reviews = Review.query.filter_by(product_id=review.product_id, approved=True).all()
-        if product_reviews:
-            avg_rating = sum(r.rating for r in product_reviews) / len(product_reviews)
-            product.rating = round(avg_rating, 1)
+    if product.gallery_images:
+        images = product.gallery_images.split(',')
+        if 0 <= image_index < len(images):
+            # Remove the image
+            images.pop(image_index)
+            product.gallery_images = ','.join(images)
             db.session.commit()
-        
-        flash(f'✅ Review from {review.customer_name} approved!', 'success')
-    elif action == 'reject':
-        db.session.delete(review)
-        db.session.commit()
-        flash('❌ Review rejected and deleted.', 'success')
+            flash('✅ Image deleted successfully!', 'success')
     
-    return redirect(url_for('admin_reviews'))
+    return redirect(url_for('edit_product', id=id))
 
-# Manage Orders
 @app.route('/admin/orders')
 @login_required
 def admin_orders():
@@ -422,11 +345,9 @@ def admin_orders():
         query = query.filter_by(status=status)
     
     orders = query.order_by(Order.created_at.desc()).all()
-    
     return render_template('admin/orders.html', orders=orders, status=status)
 
-# Update Order Status
-@app.route('/admin/order/<int:id>/update', methods=['POST'])
+@app.route('/admin/update-order/<int:id>', methods=['POST'])
 @login_required
 def update_order_status(id):
     order = Order.query.get_or_404(id)
@@ -437,48 +358,91 @@ def update_order_status(id):
     flash(f'✅ Order #{id} status updated to {order.status}', 'success')
     return redirect(url_for('admin_orders'))
 
-# Bulk Actions
-@app.route('/admin/bulk-action', methods=['POST'])
+@app.route('/admin/reviews')
 @login_required
-def bulk_action():
-    action = request.form['action']
-    selected_ids = request.form.getlist('selected_ids')
+def admin_reviews():
+    status = request.args.get('status', 'pending')
     
-    if not selected_ids:
-        flash('❌ No items selected', 'danger')
-        return redirect(request.referrer)
+    query = Review.query
     
-    if action == 'delete_products':
-        Product.query.filter(Product.id.in_(selected_ids)).delete(synchronize_session=False)
-        flash(f'✅ {len(selected_ids)} products deleted', 'success')
-    elif action == 'feature_products':
-        Product.query.filter(Product.id.in_(selected_ids)).update({'featured': True}, synchronize_session=False)
-        flash(f'✅ {len(selected_ids)} products featured', 'success')
-    elif action == 'unfeature_products':
-        Product.query.filter(Product.id.in_(selected_ids)).update({'featured': False}, synchronize_session=False)
-        flash(f'✅ {len(selected_ids)} products unfeatured', 'success')
-    elif action == 'approve_reviews':
-        Review.query.filter(Review.id.in_(selected_ids)).update({'approved': True}, synchronize_session=False)
-        flash(f'✅ {len(selected_ids)} reviews approved', 'success')
+    if status == 'approved':
+        query = query.filter_by(approved=True)
+    elif status == 'pending':
+        query = query.filter_by(approved=False)
     
-    db.session.commit()
-    return redirect(request.referrer)
+    reviews = query.order_by(Review.created_at.desc()).all()
+    return render_template('admin/reviews.html', reviews=reviews, status=status)
 
-# Admin Logout
-@app.route('/logout')
+@app.route('/admin/approve-review/<int:id>')
 @login_required
-def logout():
+def approve_review(id):
+    review = Review.query.get_or_404(id)
+    review.approved = True
+    db.session.commit()
+    
+    # Update product rating
+    product_reviews = Review.query.filter_by(product_id=review.product_id, approved=True).all()
+    if product_reviews:
+        avg_rating = sum(r.rating for r in product_reviews) / len(product_reviews)
+        product = Product.query.get(review.product_id)
+        if product:
+            product.rating = round(avg_rating, 1)
+            db.session.commit()
+    
+    flash('✅ Review approved!', 'success')
+    return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/delete-review/<int:id>')
+@login_required
+def delete_review(id):
+    review = Review.query.get_or_404(id)
+    db.session.delete(review)
+    db.session.commit()
+    flash('✅ Review deleted!', 'success')
+    return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/logout')
+@login_required
+def admin_logout():
     logout_user()
     flash('👋 Logged out successfully!', 'info')
     return redirect(url_for('index'))
 
 # ===== SETUP ROUTES =====
 
-# Create Admin Account with password: nora123
 @app.route('/setup-admin')
 def setup_admin():
-    # Delete existing admin if any
-    Admin.query.delete()
+    # Check if admin already exists
+    existing_admin = Admin.query.filter_by(username='admin').first()
+    
+    if existing_admin:
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Admin Exists</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+                .card { max-width: 500px; margin: 0 auto; padding: 30px; background: #f8f9fa; border-radius: 10px; }
+                h1 { color: #333; }
+                .credentials { background: white; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                .btn { display: inline-block; background: #6a11cb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>⚠️ Admin Already Exists</h1>
+                <p>Admin account is already created.</p>
+                <div class="credentials">
+                    <p><strong>Username:</strong> admin</p>
+                    <p><strong>Password:</strong> nora123</p>
+                </div>
+                <a class="btn" href="/admin/login">Go to Login Page</a>
+                <a class="btn" href="/">Go to Homepage</a>
+            </div>
+        </body>
+        </html>
+        '''
     
     # Create admin with password: nora123
     hashed_password = generate_password_hash('nora123', method='pbkdf2:sha256')
@@ -496,21 +460,19 @@ def setup_admin():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>✅ Admin Setup Complete</title>
+        <title>✅ Admin Created</title>
         <style>
-            body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-            .card { background: white; color: #333; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 500px; }
-            .success { color: #10b981; font-size: 48px; margin-bottom: 20px; }
-            .credentials { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #667eea; }
-            .btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; margin: 10px; font-weight: bold; transition: transform 0.3s; }
-            .btn:hover { transform: translateY(-3px); }
+            body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+            .card { background: white; color: #333; padding: 40px; border-radius: 15px; max-width: 500px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+            h1 { color: #10b981; }
+            .credentials { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea; }
+            .btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; margin: 10px; font-weight: bold; }
             .warning { color: #f59e0b; background: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0; }
         </style>
     </head>
     <body>
         <div class="card">
-            <div class="success">✅</div>
-            <h1>Admin Setup Complete!</h1>
+            <h1>✅ Admin Setup Complete!</h1>
             <p>Your admin account has been created successfully.</p>
             
             <div class="credentials">
@@ -524,7 +486,7 @@ def setup_admin():
             </div>
             
             <div style="margin-top: 30px;">
-                <a class="btn" href="/login">Go to Login Page</a>
+                <a class="btn" href="/admin/login">Go to Login Page</a>
                 <a class="btn" href="/" style="background: #4b5563;">Go to Homepage</a>
             </div>
         </div>
@@ -532,7 +494,6 @@ def setup_admin():
     </html>
     '''
 
-# Quick Setup - Add Sample Data
 @app.route('/quick-setup')
 def quick_setup():
     # Add sample products if none exist
@@ -543,40 +504,35 @@ def quick_setup():
                 'description': '100% Virgin Brazilian Hair, 24 inches, Can be dyed and styled',
                 'price': 129.99,
                 'category': 'hair',
-                'image_url': '/static/samples/hair1.jpg',
-                'featured': True,
                 'stock': 50,
+                'featured': True,
                 'rating': 4.8
             },
             {
-                'name': 'Curly Hair Extensions',
-                'description': 'Natural Water Wave, 22 inches, Malaysian Hair',
+                'name': 'Curly Hair Extension',
+                'description': 'Natural Water Wave, 22 inches, Malaysian Hair, Tangle Free',
                 'price': 109.99,
                 'category': 'hair',
-                'image_url': '/static/samples/hair2.jpg',
-                'featured': True,
                 'stock': 35,
+                'featured': True,
                 'rating': 4.9
             },
             {
                 'name': 'Lace Front Wig - Blonde',
-                'description': 'HD Lace Front Wig, Pre-plucked Hairline',
+                'description': 'HD Lace Front Wig, 180% Density, Pre-plucked Hairline',
                 'price': 199.99,
                 'category': 'wigs',
-                'image_url': '/static/samples/wig1.jpg',
-                'video_url': '/static/samples/wig-video.mp4',
-                'featured': True,
                 'stock': 20,
+                'featured': True,
                 'rating': 4.7
             },
             {
                 'name': 'Hair Growth Shampoo',
-                'description': 'Organic Hair Growth Shampoo, 500ml',
+                'description': 'Organic Hair Growth Shampoo, Sulfate Free, 500ml',
                 'price': 24.99,
                 'category': 'care',
-                'image_url': '/static/samples/shampoo.jpg',
-                'featured': True,
                 'stock': 100,
+                'featured': True,
                 'rating': 4.6
             }
         ]
@@ -585,48 +541,32 @@ def quick_setup():
             product = Product(**data)
             db.session.add(product)
         
-        # Add sample reviews
-        sample_reviews = [
-            {
-                'product_id': 1,
-                'customer_name': 'Sarah Johnson',
-                'customer_email': 'sarah@email.com',
-                'rating': 5,
-                'comment': 'Amazing quality! The hair looks so natural.',
-                'approved': True
-            },
-            {
-                'product_id': 2,
-                'customer_name': 'Mike Smith',
-                'customer_email': 'mike@email.com',
-                'rating': 4,
-                'comment': 'Good product, arrived on time.',
-                'approved': True
-            }
-        ]
-        
-        for data in sample_reviews:
-            review = Review(**data)
-            db.session.add(review)
-        
         db.session.commit()
         
         return '''
-        <!DOCTYPE html>
         <html>
-        <head><title>✅ Setup Complete</title></head>
-        <body style="padding: 40px; text-align: center;">
-            <h1>✅ Sample Data Added!</h1>
-            <p>4 sample products and 2 reviews have been added.</p>
-            <p><a href="/">View Homepage</a> | <a href="/admin/dashboard">Go to Admin</a></p>
+        <head>
+            <title>✅ Setup Complete</title>
+            <style>
+                body { padding: 40px; text-align: center; font-family: Arial, sans-serif; }
+                .success { color: #10b981; font-size: 48px; margin: 20px; }
+                .btn { display: inline-block; background: #6a11cb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="success">✅</div>
+            <h1>Sample Data Added!</h1>
+            <p>4 sample products have been added to your database.</p>
+            <div>
+                <a class="btn" href="/">View Homepage</a>
+                <a class="btn" href="/admin/dashboard">Go to Admin Dashboard</a>
+            </div>
         </body>
         </html>
         '''
     
     return '''
-    <!DOCTYPE html>
     <html>
-    <head><title>⚠️ Already Setup</title></head>
     <body style="padding: 40px; text-align: center;">
         <h1>⚠️ Already Setup</h1>
         <p>Sample data already exists.</p>
@@ -637,36 +577,28 @@ def quick_setup():
 
 # ===== API ROUTES =====
 
-# Get product data for AJAX
-@app.route('/api/products')
-def api_products():
-    products = Product.query.all()
-    data = []
-    for p in products:
-        data.append({
-            'id': p.id,
-            'name': p.name,
-            'price': p.price,
-            'image': p.image_url,
-            'category': p.category,
-            'rating': p.rating,
-            'stock': p.stock
-        })
-    return jsonify(data)
-
-# Get stats for dashboard
 @app.route('/api/stats')
 @login_required
 def api_stats():
     stats = {
         'products': Product.query.count(),
         'orders': Order.query.count(),
-        'reviews': Review.query.count(),
+        'reviews': Review.query.count() if hasattr(Review, 'query') else 0,
         'pending_orders': Order.query.filter_by(status='Pending').count(),
-        'pending_reviews': Review.query.filter_by(approved=False).count(),
         'revenue': sum(o.total_price for o in Order.query.filter_by(status='Delivered').all()) or 0
     }
     return jsonify(stats)
+
+# ===== ERROR HANDLERS =====
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 # ===== RUN APPLICATION =====
 if __name__ == '__main__':
