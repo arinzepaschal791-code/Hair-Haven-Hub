@@ -3,48 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NoraHairLine{% endblock %}</title>
+    
+    <!-- LINK TO CSS - THIS FIXES THE STYLING ISSUE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <title>NoraHairLine - {% block title %}{% endblock %}</title>
+    
+    <!-- Basic styles for navigation -->
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        nav { background: #333; color: white; padding: 1rem; }
-        nav ul { list-style: none; display: flex; gap: 2rem; }
-        nav a { color: white; text-decoration: none; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-        .alert { padding: 1rem; margin: 1rem 0; border-radius: 5px; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-danger { background: #f8d7da; color: #721c24; }
-        footer { background: #333; color: white; text-align: center; padding: 1rem; margin-top: 2rem; }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+        
+        nav li {
+            float: left;
+        }
+        
+        nav li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        
+        nav li a:hover {
+            background-color: #111;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+            color: #3c763d;
+        }
+        
+        .alert-danger {
+            background-color: #f2dede;
+            border-color: #ebccd1;
+            color: #a94442;
+        }
+        
+        .alert-info {
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+            color: #31708f;
+        }
+        
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Menu -->
     <nav>
         <ul>
             <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('products') }}">Products</a></li>
+            <li><a href="{{ url_for('products') }}">All Products</a></li>
+            <li><a href="{{ url_for('products', category='hair') }}">Hair</a></li>
+            <li><a href="{{ url_for('products', category='wigs') }}">Wigs</a></li>
+            <li><a href="{{ url_for('products', category='care') }}">Hair Care</a></li>
             {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% else %}
-            <li><a href="{{ url_for('login') }}">Admin</a></li>
+                <li><a href="{{ url_for('login') }}">Admin Login</a></li>
             {% endif %}
         </ul>
     </nav>
 
+    <!-- Main Content Container -->
     <div class="container">
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                        {{ message }}
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        <!-- Page Title -->
+        {% block pagetitle %}{% endblock %}
+
+        <!-- Main Content Block -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
+    <!-- Footer -->
     <footer>
-        <p>&copy; 2026 NoraHairLine. All rights reserved.</p>
+        <div class="footer-content">
+            <h3>NoraHairLine</h3>
+            <p>Premium Hair · Wigs · Beauty Products</p>
+            <p>High-quality hair extensions, wigs, and hair care products</p>
+            <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
+            <p>Contact: info@norahairline.com | Phone: (123) 456-7890</p>
+        </div>
     </footer>
+
+    <!-- Basic JavaScript for interactivity -->
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s';
+                    setTimeout(function() {
+                        alert.style.display = 'none';
+                    }, 500);
+                });
+            }, 5000);
+        });
+    </script>
 </body>
 </html>
