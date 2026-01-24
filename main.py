@@ -3,6 +3,9 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime
+import json
+import uuid
+from werkzeug.utils import secure_filename
 
 # Import models
 try:
@@ -36,6 +39,30 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 app.config['SESSION_TYPE'] = 'filesystem'
 
+# ============ FILE UPLOAD CONFIGURATION ============
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+
+UPLOAD_FOLDER = 'uploads'
+IMAGE_FOLDER = os.path.join(UPLOAD_FOLDER, 'images')
+VIDEO_FOLDER = os.path.join(UPLOAD_FOLDER, 'videos')
+
+# Create upload directories if they don't exist
+for folder in [UPLOAD_FOLDER, IMAGE_FOLDER, VIDEO_FOLDER]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+
+def allowed_image_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+def allowed_video_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
+
 # Initialize database
 db.init_app(app)
 
@@ -62,13 +89,16 @@ with app.app_context():
         # ===== CREATE SAMPLE PRODUCTS =====
         product_count = Product.query.count()
         if product_count == 0:
+            # Convert prices to Naira (1 USD ≈ 1500 NGN for sample data)
             products = [
                 Product(
                     name="Premium Bone Straight Hair 24\"",
                     description="24-inch premium quality 100% human hair, bone straight texture",
-                    price=89.99,
+                    price=134985.0,  # ~89.99 USD in Naira
                     category="hair",
                     image_url="/static/images/hair1.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/hair1.jpg"]),
                     stock=50,
                     featured=True,
                     created_at=datetime.utcnow()
@@ -76,9 +106,11 @@ with app.app_context():
                 Product(
                     name="Curly Brazilian Hair 22\"",
                     description="22-inch natural Brazilian curly hair, soft and bouncy",
-                    price=99.99,
+                    price=149985.0,  # ~99.99 USD in Naira
                     category="hair",
                     image_url="/static/images/hair2.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/hair2.jpg"]),
                     stock=30,
                     featured=True,
                     created_at=datetime.utcnow()
@@ -86,9 +118,11 @@ with app.app_context():
                 Product(
                     name="Lace Front Wig - Natural Black",
                     description="13x4 lace front wig, natural black color, pre-plucked",
-                    price=129.99,
+                    price=194985.0,  # ~129.99 USD in Naira
                     category="wigs",
                     image_url="/static/images/wig1.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/wig1.jpg"]),
                     stock=20,
                     featured=True,
                     created_at=datetime.utcnow()
@@ -96,9 +130,11 @@ with app.app_context():
                 Product(
                     name="Hair Growth Oil 8oz",
                     description="Organic hair growth oil with rosemary and castor oil",
-                    price=24.99,
+                    price=37485.0,  # ~24.99 USD in Naira
                     category="care",
                     image_url="/static/images/oil1.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/oil1.jpg"]),
                     stock=100,
                     featured=False,
                     created_at=datetime.utcnow()
@@ -106,9 +142,11 @@ with app.app_context():
                 Product(
                     name="Moisturizing Shampoo 16oz",
                     description="Sulfate-free moisturizing shampoo for all hair types",
-                    price=18.99,
+                    price=28485.0,  # ~18.99 USD in Naira
                     category="care",
                     image_url="/static/images/shampoo1.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/shampoo1.jpg"]),
                     stock=80,
                     featured=False,
                     created_at=datetime.utcnow()
@@ -116,9 +154,11 @@ with app.app_context():
                 Product(
                     name="Silk Press Hair 26\"",
                     description="26-inch silk press hair, ultra smooth and shiny",
-                    price=119.99,
+                    price=179985.0,  # ~119.99 USD in Naira
                     category="hair",
                     image_url="/static/images/hair3.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/hair3.jpg"]),
                     stock=15,
                     featured=True,
                     created_at=datetime.utcnow()
@@ -216,7 +256,6 @@ def product_detail(product_id):
 @app.route('/admin')
 def admin():
     """Admin login page"""
-    # If already logged in, redirect to dashboard
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     return render_template('admin/admin_login.html')
@@ -224,7 +263,6 @@ def admin():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     """Admin dashboard page"""
-    # Check if admin is logged in
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
     return render_template('admin/admin_dashboard.html')
@@ -248,7 +286,7 @@ def admin_reviews():
     """Admin reviews management"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin_reviews.html')
+    return render_template('admin/reviews.html')
 
 @app.route('/admin/products/add')
 def add_product():
@@ -278,6 +316,86 @@ def serve_uploads(filename):
 def favicon():
     return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+# ============ FILE UPLOAD ENDPOINTS ============
+
+@app.route('/api/upload/image', methods=['POST'])
+def upload_image():
+    """Upload product image"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        if not allowed_image_file(file.filename):
+            return jsonify({'success': False, 'message': 'File type not allowed. Use PNG, JPG, JPEG, GIF, or WEBP'}), 400
+        
+        # Generate unique filename
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        
+        # Save file
+        file_path = os.path.join(IMAGE_FOLDER, unique_filename)
+        file.save(file_path)
+        
+        # Return URL path
+        url_path = f"/uploads/images/{unique_filename}"
+        
+        return jsonify({
+            'success': True,
+            'message': 'Image uploaded successfully',
+            'url': url_path,
+            'filename': unique_filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/upload/video', methods=['POST'])
+def upload_video():
+    """Upload product video"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        if not allowed_video_file(file.filename):
+            return jsonify({'success': False, 'message': 'File type not allowed. Use MP4, MOV, AVI, MKV, or WEBM'}), 400
+        
+        # Generate unique filename
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        
+        # Save file
+        file_path = os.path.join(VIDEO_FOLDER, unique_filename)
+        file.save(file_path)
+        
+        # Return URL path
+        url_path = f"/uploads/videos/{unique_filename}"
+        
+        return jsonify({
+            'success': True,
+            'message': 'Video uploaded successfully',
+            'url': url_path,
+            'filename': unique_filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # ============ API ENDPOINTS ============
 
 @app.route('/api')
@@ -287,6 +405,7 @@ def api_info():
         'app': 'NoraHairLine',
         'version': '1.0.0',
         'status': 'online',
+        'currency': 'NGN (₦)',
         'endpoints': {
             'products': {
                 'GET /api/products': 'List all products',
@@ -296,6 +415,10 @@ def api_info():
             'orders': {
                 'GET /api/orders': 'List all orders',
                 'POST /api/orders': 'Create new order'
+            },
+            'upload': {
+                'POST /api/upload/image': 'Upload image (admin only)',
+                'POST /api/upload/video': 'Upload video (admin only)'
             },
             'admin': {
                 'POST /api/admin/login': 'Admin login',
@@ -322,7 +445,6 @@ def api_get_products():
         if category:
             query = query.filter_by(category=category)
         
-        # Get featured products for homepage
         featured_only = request.args.get('featured', '').lower() == 'true'
         if featured_only:
             query = query.filter_by(featured=True)
@@ -334,11 +456,15 @@ def api_get_products():
             'name': p.name,
             'description': p.description,
             'price': float(p.price),
+            'formatted_price': f"₦{float(p.price):,.2f}",
             'category': p.category,
             'image_url': p.image_url,
+            'video_url': p.video_url or '',
+            'image_urls': json.loads(p.image_urls) if p.image_urls else [],
             'stock': p.stock,
             'featured': p.featured,
-            'created_at': p.created_at.isoformat() if p.created_at else None
+            'created_at': p.created_at.isoformat() if p.created_at else None,
+            'updated_at': p.updated_at.isoformat() if p.updated_at else None
         } for p in products])
         
     except Exception as e:
@@ -354,11 +480,15 @@ def api_get_product(product_id):
             'name': product.name,
             'description': product.description,
             'price': float(product.price),
+            'formatted_price': f"₦{float(product.price):,.2f}",
             'category': product.category,
             'image_url': product.image_url,
+            'video_url': product.video_url or '',
+            'image_urls': json.loads(product.image_urls) if product.image_urls else [],
             'stock': product.stock,
             'featured': product.featured,
-            'created_at': product.created_at.isoformat() if product.created_at else None
+            'created_at': product.created_at.isoformat() if product.created_at else None,
+            'updated_at': product.updated_at.isoformat() if product.updated_at else None
         })
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 404
@@ -373,8 +503,11 @@ def api_get_featured_products():
             'name': p.name,
             'description': p.description[:100] + '...' if len(p.description) > 100 else p.description,
             'price': float(p.price),
+            'formatted_price': f"₦{float(p.price):,.2f}",
             'category': p.category,
-            'image_url': p.image_url
+            'image_url': p.image_url,
+            'video_url': p.video_url or '',
+            'image_urls': json.loads(p.image_urls) if p.image_urls else []
         } for p in products])
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
@@ -393,6 +526,7 @@ def api_get_orders():
             'product_id': o.product_id,
             'quantity': o.quantity,
             'total_price': float(o.total_price),
+            'formatted_total_price': f"₦{float(o.total_price):,.2f}",
             'status': o.status,
             'created_at': o.created_at.isoformat() if o.created_at else None
         } for o in orders])
@@ -405,21 +539,24 @@ def api_create_order():
     try:
         data = request.get_json()
         
-        # Validate required fields
         required_fields = ['customer_name', 'customer_email', 'product_id', 'quantity']
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
         
-        # Get product to calculate total
         product = Product.query.get(data['product_id'])
         if not product:
             return jsonify({'error': 'Product not found', 'success': False}), 404
         
-        # Calculate total price
-        total_price = product.price * data['quantity']
+        # Calculate total price in Naira
+        total_price = float(product.price) * data['quantity']
         
-        # Create order
+        # Update stock
+        if product.stock < data['quantity']:
+            return jsonify({'error': 'Insufficient stock', 'success': False}), 400
+        
+        product.stock -= data['quantity']
+        
         order = Order(
             customer_name=data['customer_name'],
             customer_email=data['customer_email'],
@@ -440,6 +577,7 @@ def api_create_order():
                 'id': order.id,
                 'customer_name': order.customer_name,
                 'total_price': float(order.total_price),
+                'formatted_total_price': f"₦{float(order.total_price):,.2f}",
                 'status': order.status
             }
         })
@@ -496,38 +634,40 @@ def api_check_admin_auth():
 def api_admin_dashboard():
     """Admin dashboard statistics"""
     try:
-        # Check if admin is logged in
         if not session.get('admin_logged_in'):
             return jsonify({'error': 'Unauthorized', 'success': False}), 401
+        
+        total_sales = float(db.session.query(db.func.sum(Order.total_price)).scalar() or 0)
         
         stats = {
             'total_products': Product.query.count(),
             'total_orders': Order.query.count(),
             'total_reviews': Review.query.count() if HAS_REVIEW and Review else 0,
-            'total_sales': float(db.session.query(db.func.sum(Order.total_price)).scalar() or 0),
+            'total_sales': total_sales,
+            'formatted_total_sales': f"₦{total_sales:,.2f}",
             'pending_orders': Order.query.filter_by(status='Pending').count(),
             'completed_orders': Order.query.filter_by(status='Completed').count(),
             'low_stock': Product.query.filter(Product.stock < 10).count(),
             'out_of_stock': Product.query.filter(Product.stock == 0).count()
         }
         
-        # Recent orders
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
         stats['recent_orders'] = [{
             'id': o.id,
             'customer_name': o.customer_name,
             'product_id': o.product_id,
             'total': float(o.total_price),
+            'formatted_total': f"₦{float(o.total_price):,.2f}",
             'status': o.status,
             'date': o.created_at.strftime('%Y-%m-%d') if o.created_at else ''
         } for o in recent_orders]
         
-        # Recent products
         recent_products = Product.query.order_by(Product.created_at.desc()).limit(5).all()
         stats['recent_products'] = [{
             'id': p.id,
             'name': p.name,
             'price': float(p.price),
+            'formatted_price': f"₦{float(p.price):,.2f}",
             'stock': p.stock
         } for p in recent_products]
         
@@ -547,22 +687,29 @@ def api_create_product():
         
         data = request.get_json()
         
-        # Validate required fields
         required_fields = ['name', 'description', 'price', 'category']
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
         
-        # Create new product
+        image_urls = data.get('image_urls', [])
+        if isinstance(image_urls, list):
+            image_urls_json = json.dumps(image_urls)
+        else:
+            image_urls_json = '[]'
+        
         product = Product(
             name=data['name'],
             description=data['description'],
             price=float(data['price']),
             category=data['category'],
             image_url=data.get('image_url', '/static/images/default-product.jpg'),
+            video_url=data.get('video_url', ''),
+            image_urls=image_urls_json,
             stock=int(data.get('stock', 0)),
             featured=bool(data.get('featured', False)),
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
         )
         
         db.session.add(product)
@@ -571,7 +718,13 @@ def api_create_product():
         return jsonify({
             'success': True,
             'message': 'Product created successfully',
-            'product_id': product.id
+            'product_id': product.id,
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': float(product.price),
+                'formatted_price': f"₦{float(product.price):,.2f}"
+            }
         })
         
     except Exception as e:
@@ -588,7 +741,6 @@ def api_update_product(product_id):
         product = Product.query.get_or_404(product_id)
         data = request.get_json()
         
-        # Update fields
         if 'name' in data:
             product.name = data['name']
         if 'description' in data:
@@ -599,11 +751,18 @@ def api_update_product(product_id):
             product.category = data['category']
         if 'image_url' in data:
             product.image_url = data['image_url']
+        if 'video_url' in data:
+            product.video_url = data['video_url']
+        if 'image_urls' in data:
+            image_urls = data['image_urls']
+            if isinstance(image_urls, list):
+                product.image_urls = json.dumps(image_urls)
         if 'stock' in data:
             product.stock = int(data['stock'])
         if 'featured' in data:
             product.featured = bool(data['featured'])
         
+        product.updated_at = datetime.utcnow()
         db.session.commit()
         
         return jsonify({
@@ -681,7 +840,8 @@ def health():
         'app': 'NoraHairLine',
         'timestamp': datetime.utcnow().isoformat(),
         'database': 'connected',
-        'version': '1.0.0'
+        'version': '1.0.0',
+        'currency': 'NGN (₦)'
     })
 
 # ============ ERROR HANDLERS ============
@@ -706,19 +866,25 @@ def internal_error(e):
 
 @app.before_request
 def check_admin_access():
-    # List of admin routes that require authentication
     admin_routes = [
         '/admin/dashboard',
         '/admin/products',
         '/admin/orders',
         '/admin/reviews',
         '/admin/products/add',
+        '/api/upload/image',
+        '/api/upload/video',
+        '/api/admin/products',
+        '/api/admin/dashboard'
     ]
     
-    # Check if the request path starts with any admin route
-    if any(request.path.startswith(route) for route in admin_routes):
-        if not session.get('admin_logged_in'):
-            return redirect(url_for('admin'))
+    for route in admin_routes:
+        if request.path.startswith(route):
+            if not session.get('admin_logged_in'):
+                if request.path.startswith('/api/'):
+                    return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+                else:
+                    return redirect(url_for('admin'))
 
 # ============ START APPLICATION ============
 
@@ -734,25 +900,25 @@ if __name__ == '__main__':
     print(f"📊 Admin Dashboard:   https://norahairline.onrender.com/admin/dashboard")
     print(f"🛍️  Admin Products:    https://norahairline.onrender.com/admin/products")
     print(f"📦 Admin Orders:      https://norahairline.onrender.com/admin/orders")
+    print(f"➕ Add Product:        https://norahairline.onrender.com/admin/products/add")
     print(f"🔧 API:               https://norahairline.onrender.com/api")
     print(f"❤️  Health Check:      https://norahairline.onrender.com/health")
+    print(f"💰 Currency:          NGN (₦ - Nigerian Naira)")
     print(f"{'='*60}")
     
-    # List available templates
     if os.path.exists('templates'):
         templates = [f for f in os.listdir('templates') if f.endswith('.html')]
         print(f"📁 Templates found: {len(templates)}")
-        for template in sorted(templates):
-            print(f"   • {template}")
     
-    # List admin templates
     admin_template_path = 'templates/admin'
     if os.path.exists(admin_template_path):
         admin_templates = [f for f in os.listdir(admin_template_path) if f.endswith('.html')]
         print(f"👑 Admin templates: {len(admin_templates)}")
-        for template in sorted(admin_templates):
-            print(f"   • admin/{template}")
     
+    print(f"📁 Upload directories created:")
+    print(f"   • {UPLOAD_FOLDER}/")
+    print(f"   • {IMAGE_FOLDER}/")
+    print(f"   • {VIDEO_FOLDER}/")
     print(f"{'='*60}\n")
     
     app.run(host='0.0.0.0', port=port, debug=False)
