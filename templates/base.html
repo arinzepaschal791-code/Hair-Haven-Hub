@@ -3,227 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- CSS Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- Font Awesome for icons -->
+    <title>{% block title %}NoraHairLine - Premium Hair Products{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <title>NoraHairLine - {% block title %}Premium Hair & Beauty{% endblock %}</title>
-    
-    <style>
-        /* Logo styles */
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            padding: 20px;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        }
-        
-        .logo-icon {
-            font-size: 48px;
-            color: white;
-        }
-        
-        .logo-text {
-            text-align: center;
-        }
-        
-        .logo-main {
-            font-size: 42px;
-            font-weight: bold;
-            color: white;
-            margin: 0;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .logo-tagline {
-            font-size: 18px;
-            color: rgba(255,255,255,0.9);
-            margin: 5px 0 0 0;
-            font-weight: 300;
-        }
-        
-        /* Quick order button */
-        .quick-order {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #e74c3c;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .quick-order:hover {
-            background: #c0392b;
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
-        }
-        
-        /* Back to top */
-        .back-to-top {
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            background: #3498db;
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 24px;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-            z-index: 999;
-            transition: all 0.3s ease;
-        }
-        
-        .back-to-top:hover {
-            background: #2980b9;
-            transform: translateY(-5px);
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Logo Header -->
-    <header class="logo-container">
-        <i class="fas fa-crown logo-icon"></i>
-        <div class="logo-text">
-            <h1 class="logo-main">NoraHairLine</h1>
-            <p class="logo-tagline">Premium Hair · Wigs · Beauty</p>
-        </div>
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">Nora<span>HairLine</span></a>
+            <ul class="nav-links">
+                <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a></li>
+                <li><a href="/shop" {% if request.path.startswith('/shop') or request.path.startswith('/products') %}class="active"{% endif %}>Shop</a></li>
+                <li><a href="/about" {% if request.path == '/about' %}class="active"{% endif %}>About</a></li>
+                <li><a href="/contact" {% if request.path == '/contact' %}class="active"{% endif %}>Contact</a></li>
+                {% if session.get('admin_logged_in') %}
+                <li><a href="/admin/dashboard" {% if request.path.startswith('/admin') %}class="active"{% endif %}>Admin</a></li>
+                {% endif %}
+            </ul>
+            <div class="nav-icons">
+                <a href="/account" {% if request.path == '/account' %}class="active"{% endif %}>
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="/cart" {% if request.path == '/cart' %}class="active"{% endif %}>
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cart-count">0</span>
+                </a>
+                {% if session.get('admin_logged_in') %}
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i></a>
+                {% else %}
+                <a href="/login" {% if request.path == '/login' %}class="active"{% endif %}>
+                    <i class="fas fa-sign-in-alt"></i>
+                </a>
+                {% endif %}
+            </div>
+        </nav>
     </header>
 
-    <!-- Navigation Menu -->
-    <nav class="main-nav">
-        <ul>
-            <!-- FIXED: Changed url_for('index') to / -->
-            <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
-            
-            <!-- FIXED: Changed url_for('products') to /shop -->
-            <li><a href="/shop"><i class="fas fa-store"></i> All Products</a></li>
-            
-            <!-- FIXED: Removed category filters or changed to simple links -->
-            <li><a href="/shop?category=hair"><i class="fas fa-user"></i> Hair Extensions</a></li>
-            <li><a href="/shop?category=wigs"><i class="fas fa-star"></i> Wigs</a></li>
-            <li><a href="/shop?category=care"><i class="fas fa-spa"></i> Hair Care</a></li>
-            
-            <!-- FIXED: Changed to hardcoded links since auth might not be implemented -->
-            <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/admin"><i class="fas fa-lock"></i> Admin Login</a></li>
-        </ul>
-    </nav>
-
-    <!-- Main Content Container -->
-    <div class="container">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'message' else 'info' }}">
-                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                        {{ message }}
-                    </div>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-        <!-- Main Content Block -->
-        <main>
-            {% block content %}{% endblock %}
-        </main>
-    </div>
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
 
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <h3><i class="fas fa-crown"></i> NoraHairLine</h3>
-            <p>Premium Hair · Wigs · Beauty Products</p>
-            <p>High-quality hair extensions, wigs, and hair care products</p>
-            <div class="contact-info">
+            <div class="footer-section">
+                <h3>NoraHairLine</h3>
+                <p>Your destination for premium quality hair products and accessories.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/admin">Admin Login</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Info</h3>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Hair City</p>
+                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
                 <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
-                <p><i class="fas fa-phone"></i> (123) 456-7890</p>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Lagos, Nigeria</p>
             </div>
-            <div class="social-links">
-                <a href="#"><i class="fab fa-facebook"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-                <a href="#"><i class="fab fa-whatsapp"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
+            <div class="footer-section">
+                <h3>Newsletter</h3>
+                <p>Subscribe for exclusive offers and hair care tips</p>
+                <form class="newsletter-form" id="newsletter-form">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
             </div>
+        </div>
+        <div class="copyright">
             <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- Quick Order Button -->
-    <!-- FIXED: Changed url_for('products') to /shop -->
-    <a href="/shop" class="quick-order">
-        <i class="fas fa-shopping-cart"></i>
-        <span>Order Now</span>
-    </a>
-
-    <!-- Back to Top Button -->
-    <a href="#" class="back-to-top">
-        <i class="fas fa-arrow-up"></i>
-    </a>
-
     <!-- JavaScript -->
     <script>
-        // Back to top functionality
-        document.querySelector('.back-to-top').addEventListener('click', function(e) {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        // Update cart count
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('norahair_cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = totalItems;
+        }
 
-        // Show/hide back to top button
-        window.addEventListener('scroll', function() {
-            const backToTop = document.querySelector('.back-to-top');
-            if (window.scrollY > 300) {
-                backToTop.style.display = 'flex';
-            } else {
-                backToTop.style.display = 'none';
-            }
-        });
-
-        // Auto-hide flash messages
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                alert.style.opacity = '0';
-                alert.style.transition = 'opacity 0.5s';
-                setTimeout(function() {
-                    alert.style.display = 'none';
-                }, 500);
-            });
-        }, 5000);
-
-        // Make current page active in nav
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            const currentUrl = window.location.pathname;
-            const navLinks = document.querySelectorAll('.main-nav a');
+            updateCartCount();
             
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentUrl) {
-                    link.style.backgroundColor = '#3498db';
-                    link.style.color = 'white';
+            // Newsletter form
+            document.getElementById('newsletter-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = this.querySelector('input[type="email"]').value;
+                if (email) {
+                    alert('Thank you for subscribing!');
+                    this.reset();
                 }
             });
         });
     </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
