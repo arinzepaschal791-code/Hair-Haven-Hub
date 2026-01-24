@@ -1,38 +1,584 @@
-{% extends 'base.html' %}
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Product - NoraHairLine Admin{% endblock %}
 
 {% block content %}
-<h1>Edit Product</h1>
+<div class="edit-product">
+    <div class="page-header">
+        <h1><i class="fas fa-edit"></i> Edit Product</h1>
+        <p>Edit the details of {{ product.name }}</p>
+    </div>
 
-<form method="POST" style="max-width: 600px;">
-    <div style="margin-bottom: 1rem;">
-        <label>Product Name:</label><br>
-        <input type="text" name="name" value="{{ product.name }}" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Category:</label><br>
-        <select name="category" required style="width: 100%; padding: 0.5rem;">
-            <option value="wigs" {% if product.category == 'wigs' %}selected{% endif %}>Wigs</option>
-            <option value="hair" {% if product.category == 'hair' %}selected{% endif %}>Hair</option>
-            <option value="creams" {% if product.category == 'creams' %}selected{% endif %}>Creams</option>
-            <option value="shampoos" {% if product.category == 'shampoos' %}selected{% endif %}>Shampoos</option>
-        </select>
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Price (₦):</label><br>
-        <input type="number" name="price" step="0.01" value="{{ product.price }}" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Description:</label><br>
-        <textarea name="description" rows="4" style="width: 100%; padding: 0.5rem;">{{ product.description }}</textarea>
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Image URL:</label><br>
-        <input type="text" name="image_url" value="{{ product.image_url }}" style="width: 100%; padding: 0.5rem;">
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Stock Quantity:</label><br>
-        <input type="number" name="stock" value="{{ product.stock }}" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <button type="submit" style="background: #28a745; color: white; padding: 0.5rem 2rem; border: none; border-radius: 5px; cursor: pointer;">Update Product</button>
-</form>
+    <form method="POST" action="{{ url_for('edit_product', id=product.id) }}" enctype="multipart/form-data" class="product-form">
+        <div class="form-grid">
+            <!-- Left Column - Basic Info -->
+            <div class="form-column">
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="name"><i class="fas fa-tag"></i> Product Name *</label>
+                        <input type="text" id="name" name="name" required 
+                               value="{{ product.name }}"
+                               placeholder="Enter product name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category"><i class="fas fa-folder"></i> Category *</label>
+                        <select id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="hair" {% if product.category == 'hair' %}selected{% endif %}>Hair Extensions</option>
+                            <option value="wigs" {% if product.category == 'wigs' %}selected{% endif %}>Wigs</option>
+                            <option value="care" {% if product.category == 'care' %}selected{% endif %}>Hair Care</option>
+                            <option value="accessories" {% if product.category == 'accessories' %}selected{% endif %}>Accessories</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price"><i class="fas fa-dollar-sign"></i> Price ($) *</label>
+                        <input type="number" id="price" name="price" step="0.01" min="0" required 
+                               value="{{ "%.2f"|format(product.price) }}"
+                               placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock"><i class="fas fa-boxes"></i> Stock Quantity *</label>
+                        <input type="number" id="stock" name="stock" min="0" required
+                               value="{{ product.stock }}">
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="featured" name="featured" {% if product.featured %}checked{% endif %}>
+                        <label for="featured">
+                            <i class="fas fa-star"></i> Feature this product on homepage
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Media & Description -->
+            <div class="form-column">
+                <div class="form-section">
+                    <h3><i class="fas fa-image"></i> Product Media</h3>
+                    
+                    <!-- Current Main Image -->
+                    {% if product.image_url %}
+                    <div class="current-media">
+                        <label>Current Main Image:</label>
+                        <div class="current-image">
+                            <img src="{{ product.image_url }}" alt="Current product image">
+                            <div class="image-info">
+                                <p>Main product image</p>
+                                <input type="text" name="image_url" value="{{ product.image_url }}" 
+                                       placeholder="Or enter new image URL">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="image"><i class="fas fa-camera"></i> Upload New Main Image</label>
+                        <div class="file-upload">
+                            <input type="file" id="image" name="image" accept="image/*">
+                            <div class="upload-preview" id="imagePreview">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload or drag and drop</p>
+                                <span>PNG, JPG, GIF up to 5MB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Gallery Images -->
+                    {% if gallery_images %}
+                    <div class="current-gallery">
+                        <label>Current Gallery Images:</label>
+                        <div class="gallery-grid">
+                            {% for img_url in gallery_images %}
+                            <div class="gallery-item">
+                                <img src="{{ img_url }}" alt="Gallery image {{ loop.index }}">
+                                <a href="{{ url_for('delete_image', id=product.id, image_index=loop.index0) }}" 
+                                   class="delete-image" onclick="return confirm('Delete this image?')">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="gallery_images"><i class="fas fa-images"></i> Add More Gallery Images</label>
+                        <div class="file-upload multiple">
+                            <input type="file" id="gallery_images" name="gallery_images" 
+                                   accept="image/*" multiple>
+                            <div class="upload-preview" id="galleryPreview">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload multiple images</p>
+                                <span>PNG, JPG, GIF up to 5MB each</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="video_url"><i class="fas fa-video"></i> Video URL (Optional)</label>
+                        <input type="url" id="video_url" name="video_url" 
+                               value="{{ product.video_url or '' }}"
+                               placeholder="https://youtube.com/watch?v=... or direct video URL">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3><i class="fas fa-align-left"></i> Product Description</h3>
+                    
+                    <div class="form-group">
+                        <label for="description"><i class="fas fa-edit"></i> Description *</label>
+                        <textarea id="description" name="description" rows="6" required
+                                  placeholder="Describe your product in detail...">{{ product.description }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn-update">
+                <i class="fas fa-save"></i> Update Product
+            </button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn-cancel">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+            <a href="{{ url_for('delete_product', id=product.id) }}" 
+               class="btn-delete" onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                <i class="fas fa-trash"></i> Delete Product
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Edit Product Styles */
+    .edit-product {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        color: #333;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .page-header p {
+        color: #666;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 1024px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Current Media */
+    .current-media {
+        margin-bottom: 20px;
+    }
+
+    .current-media label {
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .current-image {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #e1e1e1;
+    }
+
+    .current-image img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .image-info {
+        flex: 1;
+    }
+
+    .image-info input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    /* Current Gallery */
+    .current-gallery {
+        margin-bottom: 20px;
+    }
+
+    .current-gallery label {
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #e1e1e1;
+    }
+
+    .gallery-item {
+        position: relative;
+    }
+
+    .gallery-item img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .delete-image {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 25px;
+        height: 25px;
+        background: #f56565;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 12px;
+    }
+
+    .delete-image:hover {
+        background: #c53030;
+    }
+
+    /* Form Sections */
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .form-section h3 {
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group label i {
+        color: #6a11cb;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="url"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s;
+        background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: #6a11cb;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+        font-family: inherit;
+    }
+
+    /* File Upload */
+    .file-upload {
+        position: relative;
+    }
+
+    .file-upload input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .upload-preview {
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .upload-preview:hover {
+        border-color: #6a11cb;
+        background: #f0f0ff;
+    }
+
+    .upload-preview i {
+        font-size: 48px;
+        color: #ccc;
+        margin-bottom: 15px;
+    }
+
+    .upload-preview p {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .upload-preview span {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .file-upload.multiple .upload-preview {
+        padding: 30px 20px;
+    }
+
+    /* Checkbox */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .checkbox-group label {
+        margin-bottom: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        padding: 30px 0;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+    }
+
+    .btn-cancel {
+        background: #f8f9fa;
+        color: #666;
+        border: 2px solid #e1e1e1;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-cancel:hover {
+        background: #e9ecef;
+        color: #333;
+    }
+
+    .btn-delete {
+        background: #f56565;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-delete:hover {
+        background: #c53030;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .edit-product {
+            padding: 15px;
+        }
+
+        .form-section {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-update,
+        .btn-cancel,
+        .btn-delete {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .current-image {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    // Image preview for main image
+    document.getElementById('image').addEventListener('change', function(e) {
+        const preview = document.getElementById('imagePreview');
+        const file = this.files[0];
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" class="preview-image" style="width: 100%; max-height: 200px; object-fit: contain;">
+                    <p style="margin-top: 10px;">${file.name}</p>
+                `;
+                preview.classList.add('has-image');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Gallery images preview
+    document.getElementById('gallery_images').addEventListener('change', function(e) {
+        const preview = document.getElementById('galleryPreview');
+        const files = this.files;
+        
+        if (files.length > 0) {
+            let html = '<div class="preview-container">';
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    html += `<img src="${e.target.result}" alt="Preview" class="preview-image">`;
+                    preview.innerHTML = html + '</div>';
+                    preview.classList.add('has-images');
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+
+    // Form validation
+    document.querySelector('.product-form').addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value;
+        const description = document.getElementById('description').value.trim();
+        
+        if (!name || !price || !description) {
+            e.preventDefault();
+            alert('Please fill in all required fields (marked with *)');
+            return false;
+        }
+        
+        if (parseFloat(price) < 0) {
+            e.preventDefault();
+            alert('Price cannot be negative');
+            return false;
+        }
+        
+        // Show loading
+        const submitBtn = this.querySelector('.btn-update');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Product...';
+        submitBtn.disabled = true;
+    });
+</script>
 {% endblock %}
