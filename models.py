@@ -23,9 +23,15 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(50), nullable=False)
     image_url = db.Column(db.String(500))
+    video_url = db.Column(db.String(500))  # NEW: For product videos
+    image_urls = db.Column(db.Text)  # NEW: For multiple images (JSON string)
     stock = db.Column(db.Integer, default=100)
     featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # NEW
+    
+    # Relationship with orders
+    orders = db.relationship('Order', backref='product', lazy=True)
     
     def __repr__(self):
         return f'<Product {self.name}>'
@@ -55,6 +61,9 @@ class Review(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with product
+    product = db.relationship('Product', backref=db.backref('reviews', lazy=True))
     
     def __repr__(self):
         return f'<Review {self.id} - Rating: {self.rating}>'
