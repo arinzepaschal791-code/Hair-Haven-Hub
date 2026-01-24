@@ -1,61 +1,434 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoraHairLine - Premium Hair Products</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #8a6d3b;
+            --primary-dark: #6b4f2b;
+            --secondary: #f5f5f5;
+            --dark: #333;
+            --light: #fff;
+            --gray: #888;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        /* Header & Navigation */
+        header {
+            background-color: var(--light);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .logo span {
+            color: var(--dark);
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-icons {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-icons a {
+            color: var(--dark);
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+        
+        .nav-icons a:hover {
+            color: var(--primary);
+        }
+        
+        .cart-count {
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            position: relative;
+            top: -8px;
+            right: 5px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/static/images/hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: var(--light);
+            text-align: center;
+            padding: 8rem 1rem;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            opacity: 0.9;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--light);
+            padding: 0.8rem 2rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--light);
+            margin-left: 1rem;
+        }
+        
+        /* Featured Products */
+        .section-title {
+            text-align: center;
+            margin: 4rem 0 2rem;
+            font-size: 2.2rem;
+            color: var(--dark);
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 0 5%;
+            max-width: 1400px;
+            margin: 0 auto 4rem;
+        }
+        
+        .product-card {
+            background: var(--light);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 1.5rem;
+        }
+        
+        .product-category {
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .product-name {
+            font-size: 1.3rem;
+            margin: 0.5rem 0;
+        }
+        
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0.5rem 0 1rem;
+        }
+        
+        /* Categories */
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .category-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--light);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            width: 200px;
+            transition: var(--transition);
+        }
+        
+        .category-card:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: scale(1.05);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 4rem 5% 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #aaa;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">Nora<span>HairLine</span></a>
+            <ul class="nav-links">
+                <li><a href="/" class="active">Home</a></li>
+                <li><a href="/shop">Shop</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+                {% if session.get('admin_logged_in') %}
+                <li><a href="/admin/dashboard">Admin</a></li>
+                {% endif %}
+            </ul>
+            <div class="nav-icons">
+                <a href="/account"><i class="fas fa-user"></i></a>
+                <a href="/cart"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span></a>
+                {% if session.get('admin_logged_in') %}
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i></a>
+                {% else %}
+                <a href="/login"><i class="fas fa-sign-in-alt"></i></a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
 
-{% block title %}Home - Premium Hair & Beauty{% endblock %}
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Premium Hair For Every Style</h1>
+        <p>Discover our collection of 100% human hair, wigs, and hair care products. Quality you can trust, styles you'll love.</p>
+        <a href="/shop" class="btn">Shop Now</a>
+        <a href="/about" class="btn btn-outline">Learn More</a>
+    </section>
 
-{% block pagetitle %}
-    <div class="welcome-banner">
-        <h1>NoraHairLine</h1>
-        <p class="tagline">Premium Hair · Wigs · Beauty</p>
+    <!-- Featured Products -->
+    <h2 class="section-title">Featured Products</h2>
+    <div class="products-grid" id="featured-products">
+        <!-- Products will be loaded by JavaScript -->
+        <div class="loading">Loading featured products...</div>
     </div>
-{% endblock %}
 
-{% block content %}
-    <section class="welcome-section">
-        <h2>Welcome to NoraHairLine</h2>
-        <p class="welcome-text">We provide high-quality bone straight, curly hair, wigs, hair creams, and shampoos.</p>
-    </section>
+    <!-- Categories -->
+    <h2 class="section-title">Shop By Category</h2>
+    <div class="categories">
+        <a href="/shop?category=hair" class="category-card">
+            <div class="category-icon">💇</div>
+            <h3>Hair</h3>
+            <p>100% Human Hair</p>
+        </a>
+        <a href="/shop?category=wigs" class="category-card">
+            <div class="category-icon">👑</div>
+            <h3>Wigs</h3>
+            <p>Lace Front & More</p>
+        </a>
+        <a href="/shop?category=care" class="category-card">
+            <div class="category-icon">🧴</div>
+            <h3>Care</h3>
+            <p>Shampoo & Oil</p>
+        </a>
+    </div>
 
-    <section class="featured-products">
-        <h2>Featured Products</h2>
-        <div class="products-grid">
-            {% if products %}
-                {% for product in products %}
-                <div class="product-card">
-                    {% if product.image_url %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
-                    {% else %}
-                    <div class="no-image-placeholder">Image Coming Soon</div>
-                    {% endif %}
-                    <h3 class="product-name">{{ product.name }}</h3>
-                    <p class="product-description">{{ product.description[:100] }}...</p>
-                    <p class="product-price">${{ "%.2f"|format(product.price) }}</p>
-                    <div class="product-actions">
-                        <a href="{{ url_for('product_detail', id=product.id) }}" class="btn-view">View Details</a>
-                        <a href="{{ url_for('order', product_id=product.id) }}" class="btn-order">Order Now</a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-products">No featured products available yet. Check back soon!</p>
-            {% endif %}
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>NoraHairLine</h3>
+                <p>Your destination for premium quality hair products and accessories. We provide the best 100% human hair with unmatched quality.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/admin">Admin Login</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Info</h3>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Hair City</p>
+                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
+            </div>
         </div>
-    </section>
-
-    <section class="categories">
-        <h2>Shop by Category</h2>
-        <div class="category-grid">
-            <a href="{{ url_for('products', category='hair') }}" class="category-card">
-                <h3>Hair Extensions</h3>
-                <p>Bone straight, curly, wavy</p>
-            </a>
-            <a href="{{ url_for('products', category='wigs') }}" class="category-card">
-                <h3>Wigs</h3>
-                <p>Full wigs, lace front</p>
-            </a>
-            <a href="{{ url_for('products', category='care') }}" class="category-card">
-                <h3>Hair Care</h3>
-                <p>Creams, shampoos, conditioners</p>
-            </a>
+        <div class="copyright">
+            <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
         </div>
-    </section>
-{% endblock %}
+    </footer>
+
+    <script>
+        // Load featured products
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/products/featured')
+                .then(response => response.json())
+                .then(products => {
+                    const container = document.getElementById('featured-products');
+                    if (products.error) {
+                        container.innerHTML = '<p>Error loading products</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = products.map(product => `
+                        <div class="product-card">
+                            <img src="${product.image_url || '/static/images/placeholder.jpg'}" alt="${product.name}" class="product-img">
+                            <div class="product-info">
+                                <span class="product-category">${product.category}</span>
+                                <h3 class="product-name">${product.name}</h3>
+                                <p class="product-price">$${product.price}</p>
+                                <p>${product.description}</p>
+                                <div style="margin-top: 1rem;">
+                                    <a href="/product/${product.id}" class="btn" style="padding: 0.5rem 1rem;">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('featured-products').innerHTML = '<p>Error loading products</p>';
+                });
+        });
+    </script>
+</body>
+</html>
