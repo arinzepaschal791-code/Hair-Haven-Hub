@@ -3,523 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Product - NoraHairLine Admin</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Edit Product | NoraHairLine Admin</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        /* Same styles as add_product.html, just change the header */
+        /* Copy all the CSS from add_product.html */
+        /* Change the header to: */
         
-        :root {
-            --primary: #8a6d3b;
-            --primary-dark: #6b4f2b;
-            --secondary: #f5f5f5;
-            --dark: #333;
-            --light: #fff;
-            --gray: #888;
-            --shadow: 0 5px 15px rgba(0,0,0,0.1);
-            --transition: all 0.3s ease;
-        }
-        
-        body {
-            background-color: #f5f5f5;
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background: var(--dark);
-            color: var(--light);
-            padding: 2rem 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 2rem;
-            padding: 0 1.5rem;
-        }
-        
-        .logo span {
-            color: var(--light);
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-        }
-        
-        .sidebar-menu li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .sidebar-menu a {
+        .header h1 {
+            color: #333;
+            font-size: 24px;
             display: flex;
             align-items: center;
-            padding: 0.8rem 1.5rem;
-            color: #ccc;
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background: rgba(255,255,255,0.1);
-            color: var(--light);
-            border-left: 4px solid var(--primary);
-        }
-        
-        .sidebar-menu i {
-            width: 20px;
-            margin-right: 1rem;
-            font-size: 1.1rem;
-        }
-        
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            padding: 2rem;
-        }
-        
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .page-title {
-            font-size: 1.8rem;
-            color: var(--dark);
-        }
-        
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-        
-        .breadcrumb a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        /* Form Container */
-        .form-container {
-            background: var(--light);
-            border-radius: 10px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .form-section {
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .section-title i {
-            color: var(--primary);
-        }
-        
-        /* Form Groups */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-            font-weight: 500;
-        }
-        
-        .form-group label .required {
-            color: #dc3545;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(138, 109, 59, 0.1);
-        }
-        
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .form-help {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-top: 0.3rem;
-        }
-        
-        /* Checkbox & Radio */
-        .checkbox-group, .radio-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        /* Image Preview */
-        .image-preview-section {
-            text-align: center;
-        }
-        
-        .current-image {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 5px;
-            object-fit: cover;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-        }
-        
-        /* Image Upload */
-        .image-upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 1rem;
-        }
-        
-        .image-upload-area:hover {
-            border-color: var(--primary);
-            background: #f9f9f9;
-        }
-        
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--gray);
-            margin-bottom: 1rem;
-        }
-        
-        .upload-text {
-            color: var(--gray);
-            margin-bottom: 1rem;
-        }
-        
-        .upload-btn {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .upload-btn:hover {
-            background: var(--primary-dark);
-        }
-        
-        /* Buttons */
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #eee;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            border-radius: 5px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
-            font-size: 1rem;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: var(--light);
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        /* Alert Messages */
-        .alert {
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        /* Stats Cards */
-        .product-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: var(--light);
-            padding: 1rem;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-        
-        .stat-card h3 {
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-card p {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-        
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 200px;
-            }
-            
-            .main-content {
-                margin-left: 200px;
-            }
-            
-            .form-container {
-                padding: 1.5rem;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: static;
-                padding: 1rem 0;
-            }
-            
-            .sidebar-menu {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 0.5rem;
-                padding: 0 1rem;
-            }
-            
-            .sidebar-menu li {
-                margin-bottom: 0;
-            }
-            
-            .sidebar-menu a {
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .top-bar {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .form-actions .btn {
-                width: 100%;
-                text-align: center;
-            }
+            gap: 10px;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">Nora<span>HairLine</span></div>
+    <div class="admin-container">
+        <!-- Sidebar (same as add_product.html) -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>NoraHairLine</h2>
+                <p>Admin Dashboard</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/products" class="active"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="/admin/orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
+                <li><a href="/admin/products/add"><i class="fas fa-plus-circle"></i> Add Product</a></li>
+                <li><a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
         
-        <ul class="sidebar-menu">
-            <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/admin/products" class="active"><i class="fas fa-box"></i> Products</a></li>
-            <li><a href="/admin/orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-            {% if HAS_REVIEW %}
-            <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
-            {% endif %}
-            <li><a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a></li>
-            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-        </ul>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div>
-                <h1 class="page-title">Edit Product</h1>
-                <div class="breadcrumb">
-                    <a href="/admin/dashboard">Dashboard</a>
-                    <span>›</span>
-                    <a href="/admin/products">Products</a>
-                    <span>›</span>
-                    <span>Edit Product</span>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-edit"></i> Edit Product: <span id="productName"></span></h1>
+                <div class="header-actions">
+                    <a href="/admin/products" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Products
+                    </a>
+                    <button class="btn btn-danger" onclick="deleteProduct()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
                 </div>
             </div>
-            <div>
-                <a href="/admin/products" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> Back to Products
-                </a>
-            </div>
-        </div>
-
-        <!-- Alert Messages -->
-        <div id="success-alert" class="alert alert-success" style="display: none;"></div>
-        <div id="error-alert" class="alert alert-error" style="display: none;"></div>
-
-        <!-- Product Stats -->
-        <div class="product-stats" id="productStats" style="display: none;">
-            <div class="stat-card">
-                <h3 id="stat-price">$0.00</h3>
-                <p>Price</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="stat-stock">0</h3>
-                <p>In Stock</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="stat-sold">0</h3>
-                <p>Sold</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="stat-views">0</h3>
-                <p>Views</p>
-            </div>
-        </div>
-
-        <!-- Product Form -->
-        <div class="form-container">
-            <form id="productForm">
-                <input type="hidden" id="productId" value="">
-                
-                <!-- Basic Information -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-info-circle"></i> Basic Information
-                    </h3>
-                    
-                    <div class="form-grid">
+            
+            <div class="alert" id="alertMessage"></div>
+            
+            <div class="form-container">
+                <form id="productForm">
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="productName">Product Name <span class="required">*</span></label>
-                            <input type="text" id="productName" class="form-control" 
-                                   placeholder="Enter product name" required>
-                            <div class="form-help">Enter a descriptive name for the product</div>
+                            <label for="name">Product Name *</label>
+                            <input type="text" id="name" class="form-control" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="productCategory">Category <span class="required">*</span></label>
-                            <select id="productCategory" class="form-control" required>
+                            <label for="category">Category *</label>
+                            <select id="category" class="form-control" required>
                                 <option value="">Select Category</option>
-                                <option value="hair">Hair</option>
+                                <option value="hair">Hair Extensions</option>
                                 <option value="wigs">Wigs</option>
                                 <option value="care">Hair Care</option>
                                 <option value="accessories">Accessories</option>
@@ -528,375 +74,348 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="productDescription">Description <span class="required">*</span></label>
-                        <textarea id="productDescription" class="form-control" 
-                                  placeholder="Enter product description" rows="4" required></textarea>
-                        <div class="form-help">Describe the product features, benefits, and specifications</div>
+                        <label for="description">Description *</label>
+                        <textarea id="description" class="form-control" required></textarea>
                     </div>
-                </div>
-
-                <!-- Pricing & Inventory -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-tag"></i> Pricing & Inventory
-                    </h3>
                     
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="productPrice">Price ($) <span class="required">*</span></label>
-                            <input type="number" id="productPrice" class="form-control" 
-                                   placeholder="0.00" min="0" step="0.01" required>
-                            <div class="form-help">Enter price in USD</div>
+                    <div class="form-row">
+                        <div class="form-group naira-input">
+                            <label for="price">Price (₦) *</label>
+                            <input type="number" id="price" class="form-control" min="0" step="0.01" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="productStock">Stock Quantity <span class="required">*</span></label>
-                            <input type="number" id="productStock" class="form-control" 
-                                   placeholder="0" min="0" required>
-                            <div class="form-help">Available quantity in stock</div>
+                            <label for="stock">Stock Quantity *</label>
+                            <input type="number" id="stock" class="form-control" min="0" required>
                         </div>
                     </div>
                     
+                    <!-- Main Image Upload -->
                     <div class="form-group">
-                        <label for="productSKU">SKU (Stock Keeping Unit)</label>
-                        <input type="text" id="productSKU" class="form-control" 
-                               placeholder="e.g., NORA-HAIR-001">
-                        <div class="form-help">Unique identifier for inventory tracking</div>
-                    </div>
-                </div>
-
-                <!-- Product Image -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-image"></i> Product Image
-                    </h3>
-                    
-                    <div class="image-preview-section">
-                        <img src="" alt="Current Product Image" class="current-image" id="currentImage">
-                        <div>
-                            <button type="button" class="btn btn-secondary" onclick="changeImage()">
-                                <i class="fas fa-exchange-alt"></i> Change Image
-                            </button>
+                        <label>Main Product Image *</label>
+                        <div class="upload-section" id="mainImageUpload">
+                            <p>Click to change main product image</p>
+                            <div class="upload-btn" onclick="document.getElementById('mainImageFile').click()">
+                                <i class="fas fa-cloud-upload-alt"></i> Change Image
+                            </div>
+                            <input type="file" id="mainImageFile" accept="image/*" style="display: none;" onchange="uploadMainImage(this.files[0])">
+                            <div id="mainImagePreview" style="margin-top: 20px;"></div>
                         </div>
+                        <input type="hidden" id="image_url">
                     </div>
                     
-                    <div class="image-upload-area" id="imageUploadArea" style="display: none;" 
-                         onclick="document.getElementById('imageUpload').click()">
-                        <div class="upload-icon">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                        </div>
-                        <div class="upload-text">
-                            <p>Click to upload new product image</p>
-                            <p>Recommended: 600x600px, JPG or PNG format</p>
-                        </div>
-                        <div class="upload-btn">Choose File</div>
-                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                    </div>
-                    
-                    <div class="form-group" style="margin-top: 1.5rem;">
-                        <label for="imageUrl">Image URL</label>
-                        <input type="text" id="imageUrl" class="form-control" 
-                               placeholder="/static/images/product.jpg">
-                        <div class="form-help">Enter direct image URL</div>
-                    </div>
-                </div>
-
-                <!-- Additional Settings -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-cog"></i> Additional Settings
-                    </h3>
-                    
+                    <!-- Additional Images Upload -->
                     <div class="form-group">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="featuredProduct">
-                            <label for="featuredProduct">Featured Product</label>
+                        <label>Additional Product Images</label>
+                        <div class="upload-section" id="additionalImagesUpload">
+                            <p>Click to add more images (Max 5 images total)</p>
+                            <div class="upload-btn" onclick="document.getElementById('additionalImagesFile').click()">
+                                <i class="fas fa-cloud-upload-alt"></i> Add Images
+                            </div>
+                            <input type="file" id="additionalImagesFile" accept="image/*" multiple style="display: none;" onchange="uploadAdditionalImages(this.files)">
+                            <div class="preview-images" id="additionalImagesPreview"></div>
                         </div>
-                        <div class="form-help">Show this product in featured sections</div>
+                        <input type="hidden" id="image_urls">
+                    </div>
+                    
+                    <!-- Video Upload -->
+                    <div class="form-group">
+                        <label>Product Video (Optional)</label>
+                        <div class="upload-section" id="videoUpload">
+                            <p>Click to change product video</p>
+                            <div class="upload-btn" onclick="document.getElementById('videoFile').click()">
+                                <i class="fas fa-video"></i> Change Video
+                            </div>
+                            <input type="file" id="videoFile" accept="video/*" style="display: none;" onchange="uploadVideo(this.files[0])">
+                            <div id="videoPreview" style="margin-top: 20px;"></div>
+                        </div>
+                        <input type="hidden" id="video_url">
                     </div>
                     
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="productStatus" checked>
-                            <label for="productStatus">Active</label>
+                            <input type="checkbox" id="featured">
+                            <label for="featured">Feature this product on homepage</label>
                         </div>
-                        <div class="form-help">Product will be visible in store when active</div>
                     </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <div>
-                        <button type="button" class="btn btn-danger" id="deleteBtn">
-                            <i class="fas fa-trash"></i> Delete Product
+                    
+                    <div class="form-group" style="margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 30px; font-size: 16px;">
+                            <i class="fas fa-save"></i> Update Product
                         </button>
+                        <a href="/admin/products" class="btn btn-secondary" style="margin-left: 10px;">
+                            Cancel
+                        </a>
                     </div>
-                    <div>
-                        <button type="button" class="btn btn-outline" onclick="cancelEdit()">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </main>
+    </div>
 
     <script>
-        let productId = null;
-        let currentProduct = null;
+        let additionalImages = [];
+        let productId = window.location.pathname.split('/').pop();
         
-        // Check admin authentication
-        async function checkAdminAuth() {
-            try {
-                const response = await fetch('/api/admin/dashboard');
-                if (response.status === 401) {
-                    window.location.href = '/admin';
-                }
-            } catch (error) {
-                console.error('Auth check error:', error);
-                window.location.href = '/admin';
-            }
-        }
-        
-        // Get product ID from URL
-        function getProductIdFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id');
+        function showAlert(message, type = 'success') {
+            const alert = document.getElementById('alertMessage');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
         }
         
         // Load product data
         async function loadProduct() {
-            productId = getProductIdFromUrl();
-            
-            if (!productId) {
-                showError('No product ID specified');
-                return;
-            }
-            
             try {
                 const response = await fetch(`/api/products/${productId}`);
                 const product = await response.json();
                 
-                if (product.error) {
-                    throw new Error(product.error);
+                // Populate form
+                document.getElementById('name').value = product.name;
+                document.getElementById('productName').textContent = product.name;
+                document.getElementById('description').value = product.description;
+                document.getElementById('price').value = product.price;
+                document.getElementById('stock').value = product.stock;
+                document.getElementById('category').value = product.category;
+                document.getElementById('featured').checked = product.featured;
+                document.getElementById('image_url').value = product.image_url;
+                document.getElementById('video_url').value = product.video_url;
+                
+                // Handle multiple images
+                additionalImages = product.image_urls || [];
+                updateAdditionalImagesPreview();
+                
+                // Show main image preview
+                if (product.image_url) {
+                    document.getElementById('mainImagePreview').innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${product.image_url}" alt="Preview" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;">
+                            <span>Current main image</span>
+                        </div>
+                    `;
                 }
                 
-                currentProduct = product;
-                populateForm(product);
-                showProductStats(product);
+                // Show video preview
+                if (product.video_url) {
+                    document.getElementById('videoPreview').innerHTML = `
+                        <div>
+                            <p>Current video: <a href="${product.video_url}" target="_blank">View Video</a></p>
+                        </div>
+                    `;
+                }
                 
             } catch (error) {
-                console.error('Error loading product:', error);
-                showError('Error loading product: ' + error.message);
-                
-                // Redirect after delay
-                setTimeout(() => {
-                    window.location.href = '/admin/products';
-                }, 3000);
+                showAlert('Error loading product', 'danger');
             }
         }
         
-        // Populate form with product data
-        function populateForm(product) {
-            document.getElementById('productId').value = product.id;
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productCategory').value = product.category;
-            document.getElementById('productDescription').value = product.description;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productStock').value = product.stock;
-            document.getElementById('productSKU').value = product.sku || '';
-            document.getElementById('imageUrl').value = product.image_url || '';
-            document.getElementById('featuredProduct').checked = product.featured || false;
-            document.getElementById('productStatus').checked = product.active !== false;
+        // Upload functions (same as add_product.html)
+        async function uploadMainImage(file) {
+            if (!file) return;
             
-            // Set current image
-            const currentImage = document.getElementById('currentImage');
-            currentImage.src = product.image_url || '/static/images/placeholder.jpg';
-            currentImage.alt = product.name;
-        }
-        
-        // Show product stats
-        function showProductStats(product) {
-            document.getElementById('productStats').style.display = 'grid';
-            document.getElementById('stat-price').textContent = `$${product.price.toFixed(2)}`;
-            document.getElementById('stat-stock').textContent = product.stock;
-            document.getElementById('stat-sold').textContent = product.sold || '0';
-            document.getElementById('stat-views').textContent = product.views || '0';
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAdminAuth();
-            loadProduct();
-            setupImageUpload();
-        });
-        
-        // Image upload handling
-        function setupImageUpload() {
-            const imageUpload = document.getElementById('imageUpload');
+            const formData = new FormData();
+            formData.append('file', file);
             
-            imageUpload.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
+            try {
+                const response = await fetch('/api/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('image_url').value = data.url;
                     
-                    reader.addEventListener('load', function() {
-                        document.getElementById('currentImage').src = reader.result;
-                        document.getElementById('imageUrl').value = reader.result;
+                    const preview = document.getElementById('mainImagePreview');
+                    preview.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${data.url}" alt="Preview" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;">
+                            <span style="color: green;"><i class="fas fa-check-circle"></i> New image uploaded</span>
+                        </div>
+                    `;
+                    
+                    showAlert('Main image updated', 'success');
+                } else {
+                    showAlert(data.message || 'Failed to upload image', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error uploading image', 'danger');
+            }
+        }
+        
+        async function uploadAdditionalImages(files) {
+            if (!files || files.length === 0) return;
+            
+            const filesToUpload = Array.from(files).slice(0, 5 - additionalImages.length);
+            
+            for (const file of filesToUpload) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('/api/upload/image', {
+                        method: 'POST',
+                        body: formData
                     });
                     
-                    reader.readAsDataURL(file);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        additionalImages.push(data.url);
+                        updateAdditionalImagesPreview();
+                        showAlert('Additional image added', 'success');
+                    } else {
+                        showAlert(data.message || 'Failed to upload image', 'danger');
+                    }
+                } catch (error) {
+                    showAlert('Error uploading image', 'danger');
                 }
+            }
+        }
+        
+        function updateAdditionalImagesPreview() {
+            const preview = document.getElementById('additionalImagesPreview');
+            preview.innerHTML = '';
+            
+            additionalImages.forEach((url, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-container';
+                container.innerHTML = `
+                    <img src="${url}" class="preview-image" alt="Additional image ${index + 1}">
+                    <button type="button" class="remove-image" onclick="removeAdditionalImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                preview.appendChild(container);
             });
+            
+            document.getElementById('image_urls').value = JSON.stringify(additionalImages);
         }
         
-        // Change image button
-        function changeImage() {
-            document.getElementById('imageUploadArea').style.display = 'block';
+        function removeAdditionalImage(index) {
+            additionalImages.splice(index, 1);
+            updateAdditionalImagesPreview();
         }
         
-        // Hide alerts
-        function hideAlerts() {
-            document.getElementById('success-alert').style.display = 'none';
-            document.getElementById('error-alert').style.display = 'none';
+        async function uploadVideo(file) {
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload/video', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('video_url').value = data.url;
+                    
+                    const preview = document.getElementById('videoPreview');
+                    preview.innerHTML = `
+                        <div style="color: green;">
+                            <i class="fas fa-check-circle"></i> New video uploaded
+                            <br>
+                            <small>${file.name}</small>
+                        </div>
+                    `;
+                    
+                    showAlert('Video updated', 'success');
+                } else {
+                    showAlert(data.message || 'Failed to upload video', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error uploading video', 'danger');
+            }
         }
         
-        // Show success alert
-        function showSuccess(message) {
-            const alert = document.getElementById('success-alert');
-            alert.textContent = message;
-            alert.style.display = 'block';
-            document.getElementById('error-alert').style.display = 'none';
-        }
-        
-        // Show error alert
-        function showError(message) {
-            const alert = document.getElementById('error-alert');
-            alert.textContent = message;
-            alert.style.display = 'block';
-            document.getElementById('success-alert').style.display = 'none';
-        }
-        
-        // Form submission
+        // Update product
         document.getElementById('productForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Validate form
-            const name = document.getElementById('productName').value.trim();
-            const category = document.getElementById('productCategory').value;
-            const description = document.getElementById('productDescription').value.trim();
-            const price = parseFloat(document.getElementById('productPrice').value);
-            const stock = parseInt(document.getElementById('productStock').value);
-            
-            if (!name || !category || !description || isNaN(price) || isNaN(stock)) {
-                showError('Please fill in all required fields correctly');
-                return;
-            }
-            
-            if (price < 0) {
-                showError('Price cannot be negative');
-                return;
-            }
-            
-            if (stock < 0) {
-                showError('Stock quantity cannot be negative');
-                return;
-            }
-            
-            // Get image URL
-            let imageUrl = document.getElementById('imageUrl').value.trim();
-            if (!imageUrl) {
-                imageUrl = '/static/images/placeholder.jpg';
-            }
-            
-            // Get additional settings
-            const featured = document.getElementById('featuredProduct').checked;
-            const active = document.getElementById('productStatus').checked;
-            
-            // Prepare product data
             const productData = {
-                id: productId,
-                name: name,
-                description: description,
-                price: price,
-                category: category,
-                stock: stock,
-                image_url: imageUrl,
-                featured: featured,
-                active: active,
-                sku: document.getElementById('productSKU').value.trim() || currentProduct.sku
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value),
+                category: document.getElementById('category').value,
+                stock: parseInt(document.getElementById('stock').value),
+                featured: document.getElementById('featured').checked,
+                image_url: document.getElementById('image_url').value,
+                video_url: document.getElementById('video_url').value,
+                image_urls: additionalImages
             };
             
-            // Show loading state
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Changes...';
-            submitBtn.disabled = true;
-            
             try {
-                // Note: You'll need to implement an API endpoint for updating products
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                const response = await fetch(`/api/admin/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(productData)
+                });
                 
-                showSuccess('Product updated successfully!');
-                currentProduct = productData;
-                showProductStats(productData);
+                const data = await response.json();
                 
-                // Update current image if changed
-                if (imageUrl !== currentProduct.image_url) {
-                    document.getElementById('currentImage').src = imageUrl;
+                if (data.success) {
+                    showAlert('Product updated successfully!', 'success');
+                    // Update the product name in header
+                    document.getElementById('productName').textContent = productData.name;
+                } else {
+                    showAlert(data.error || 'Failed to update product', 'danger');
                 }
-                
-                console.log('Product data to update:', productData);
-                
             } catch (error) {
-                showError('Error updating product: ' + error.message);
-                console.error('Error:', error);
-            } finally {
-                // Restore button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                showAlert('Error updating product', 'danger');
             }
         });
         
         // Delete product
-        document.getElementById('deleteBtn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-                const deleteBtn = this;
-                const originalText = deleteBtn.innerHTML;
-                deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-                deleteBtn.disabled = true;
+        async function deleteProduct() {
+            if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/products/${productId}`, {
+                    method: 'DELETE'
+                });
                 
-                // Note: You'll need to implement an API endpoint for deleting products
-                setTimeout(() => {
-                    showSuccess('Product deleted (simulated). Redirecting...');
-                    
-                    // Redirect after delay
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Product deleted successfully', 'success');
                     setTimeout(() => {
                         window.location.href = '/admin/products';
-                    }, 2000);
-                }, 1500);
-            }
-        });
-        
-        // Cancel edit
-        function cancelEdit() {
-            if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-                window.location.href = '/admin/products';
+                    }, 1500);
+                } else {
+                    showAlert(data.error || 'Failed to delete product', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error deleting product', 'danger');
             }
         }
         
-        // Auto-generate SKU on category change if empty
-        document.getElementById('productCategory').addEventListener('change', function() {
-            const skuField = document.getElementById('productSKU');
-            if (!skuField.value) {
-                const category = this.value;
-                const randomNum = Math.floor(100 + Math.random() * 900);
-                skuField.value = `NORA-${category.toUpperCase()}-${randomNum}`;
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/admin/check-auth');
+                const data = await response.json();
+                
+                if (!data.logged_in) {
+                    window.location.href = '/admin';
+                }
+            } catch (error) {
+                window.location.href = '/admin';
             }
-        });
+        }
+        
+        // Initialize
+        checkAuth();
+        loadProduct();
     </script>
 </body>
 </html>
