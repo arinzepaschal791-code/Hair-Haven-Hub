@@ -3,489 +3,1020 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products Management | NoraHairLine Admin</title>
+    <title>Add Product - NoraHairLine Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <style>
+        :root {
+            --primary: #9d4edd;
+            --primary-dark: #7b2cbf;
+            --secondary: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --success: #38b000;
+            --danger: #e63946;
+            --warning: #ffba08;
+            --info: #4361ee;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            color: #333;
+            background-color: #f5f5f5;
+            color: var(--dark);
+            line-height: 1.6;
         }
-        
+
         .admin-container {
             display: flex;
             min-height: 100vh;
         }
-        
+
+        /* Sidebar Styles */
         .sidebar {
             width: 250px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            z-index: 100;
         }
-        
+
         .sidebar-header {
             padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
-        
+
         .sidebar-header h2 {
-            font-size: 20px;
+            font-size: 1.5rem;
             margin-bottom: 5px;
+            color: white;
         }
-        
+
         .sidebar-header p {
-            font-size: 12px;
+            font-size: 0.9rem;
             opacity: 0.8;
         }
-        
+
         .nav-links {
             list-style: none;
+            padding: 20px 0;
         }
-        
+
         .nav-links li {
             margin-bottom: 5px;
         }
-        
+
         .nav-links a {
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: white;
+            color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
         }
-        
+
         .nav-links a:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 3px solid white;
         }
-        
+
         .nav-links a.active {
-            background: rgba(255,255,255,0.2);
-            border-left: 4px solid white;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 3px solid white;
+            font-weight: 600;
         }
-        
+
         .nav-links i {
             margin-right: 10px;
-            width: 20px;
-            text-align: center;
+            font-size: 1.2rem;
         }
-        
+
+        .nav-links .badge {
+            margin-left: auto;
+            background: var(--secondary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+        }
+
+        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: 250px;
             padding: 20px;
+            background-color: #f5f5f5;
         }
-        
+
+        /* Header */
         .header {
             background: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .header h1 {
-            color: #333;
-            font-size: 24px;
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
-        
-        .header-actions {
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
-        
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #c1121f;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* File Upload */
+        .file-upload-container {
+            margin-top: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--light-gray);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: #f5f0ff;
+        }
+
+        .file-upload-area i {
+            font-size: 48px;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .file-upload-area p {
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+
+        .file-upload-area .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .file-upload-area .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        #imagePreview, #videoPreview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .preview-item img, .preview-item video {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+            margin-top: 20px;
+        }
+
         .btn {
-            padding: 8px 16px;
+            padding: 12px 25px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
         }
-        
+
+        .btn i {
+            margin-right: 8px;
+        }
+
         .btn-primary {
-            background: #667eea;
+            background: var(--primary);
             color: white;
         }
-        
+
         .btn-primary:hover {
-            background: #5a67d8;
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.2);
         }
-        
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
         .btn-success {
-            background: #10b981;
+            background: var(--success);
             color: white;
         }
-        
+
         .btn-success:hover {
-            background: #0da271;
+            background: #2d9100;
         }
-        
-        .btn-danger {
-            background: #ef4444;
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
             color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        
-        .products-table {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            background: #f8f9fa;
-            padding: 15px;
-            text-align: left;
             font-weight: 600;
-            color: #555;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .product-image {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-in-stock {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-low-stock {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status-out-of-stock {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .featured-badge {
-            background: #dbeafe;
-            color: #1e40af;
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .action-btn {
-            padding: 6px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
             display: flex;
             align-items: center;
-            gap: 3px;
+            justify-content: space-between;
+            min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
         }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: var(--success);
+        }
+
+        .toast-error {
+            background: var(--danger);
+        }
+
+        .toast-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
         }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+
+        .loading-overlay.active {
+            display: flex;
         }
-        
-        .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .alert.show {
-            display: block;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #6c757d;
-        }
-        
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: #dee2e6;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #6c757d;
-        }
-        
-        .loading i {
-            font-size: 24px;
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header h2,
+            .nav-links span,
+            .sidebar-header p {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+
+            .nav-links i {
+                margin-right: 0;
+                font-size: 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .user-info {
+                justify-content: center;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="admin-container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>NoraHairLine</h2>
-                <p>Admin Dashboard</p>
+                <p>Admin Panel</p>
             </div>
             <ul class="nav-links">
-                <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="/admin/products" class="active"><i class="fas fa-box"></i> Products</a></li>
-                <li><a href="/admin/orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-                <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
-                <li><a href="/admin/products/add"><i class="fas fa-plus-circle"></i> Add Product</a></li>
-                <li><a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="/admin/products" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
+                <li><a href="/admin/orders"><i class="fas fa-shopping-cart"></i> <span>Orders</span> <span class="badge">5</span></a></li>
+                <li><a href="/admin/reviews"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
+                <li><a href="/admin/products/add"><i class="fas fa-plus-circle"></i> <span>Add Product</span></a></li>
+                <li><a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
             </ul>
-        </div>
-        
+        </aside>
+
         <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1><i class="fas fa-box"></i> Product Management</h1>
-                <div class="header-actions">
-                    <a href="/admin/products/add" class="btn btn-success">
-                        <i class="fas fa-plus"></i> Add New Product
-                    </a>
-                    <a href="/admin/dashboard" class="btn">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1>Add New Product</h1>
+                    <p>Add new hair products to your store inventory</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <a href="/admin/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
+            </header>
+
+            <!-- Form Container -->
+            <div class="form-container">
+                <form id="addProductForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Product Name *</label>
+                            <input type="text" id="productName" class="form-control" placeholder="e.g., Premium Bone Straight Hair 24''" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Category *</label>
+                            <select id="productCategory" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <option value="hair">Hair Extensions</option>
+                                <option value="wigs">Wigs</option>
+                                <option value="closure">Closures</option>
+                                <option value="frontal">Frontals</option>
+                                <option value="360">360 Frontal</option>
+                                <option value="bundles">Bundles</option>
+                                <option value="care">Hair Care</option>
+                                <option value="tools">Tools & Accessories</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productDescription">Description *</label>
+                        <textarea id="productDescription" class="form-control" placeholder="Describe the product features, quality, length, texture, etc." rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Price (₦) *</label>
+                            <input type="number" id="productPrice" class="form-control" placeholder="0.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stock Quantity *</label>
+                            <input type="number" id="productStock" class="form-control" placeholder="100" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Featured Product</label>
+                            <div style="margin-top: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="featuredProduct">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <div style="margin-top: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="productStatus" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span style="margin-left: 10px; color: var(--gray);">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label>Product Images *</label>
+                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">Upload main product images. First image will be used as main display.</p>
+                        
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" id="imageUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop images here or click to browse</p>
+                                <span class="btn">Browse Images</span>
+                                <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                            </div>
+                            <div id="imagePreview"></div>
+                        </div>
+                    </div>
+
+                    <!-- Video Upload (Optional) -->
+                    <div class="form-group">
+                        <label>Product Video (Optional)</label>
+                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">Upload product demonstration video (max 100MB)</p>
+                        
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" id="videoUploadArea">
+                                <i class="fas fa-video"></i>
+                                <p>Drag & drop video here or click to browse</p>
+                                <span class="btn">Browse Video</span>
+                                <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                            </div>
+                            <div id="videoPreview"></div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Product
+                        </button>
+                        <a href="/admin/products" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
-            
-            <div class="alert" id="alertMessage"></div>
-            
-            <div class="products-table">
-                <div class="loading" id="loading">
-                    <i class="fas fa-spinner"></i> Loading products...
-                </div>
-                
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <i class="fas fa-box-open"></i>
-                    <h3>No Products Found</h3>
-                    <p>Get started by adding your first product.</p>
-                    <a href="/admin/products/add" class="btn btn-primary" style="margin-top: 15px;">
-                        <i class="fas fa-plus"></i> Add Product
-                    </a>
-                </div>
-                
-                <table id="productsTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productsBody">
-                        <!-- Products will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toastMessage">Product added successfully!</span>
+        <button class="toast-close" onclick="hideToast()">&times;</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
     </div>
 
     <script>
-        function showAlert(message, type = 'success') {
-            const alert = document.getElementById('alertMessage');
-            alert.textContent = message;
-            alert.className = `alert alert-${type} show`;
-            setTimeout(() => {
-                alert.classList.remove('show');
-            }, 5000);
+        // DOM Elements
+        const addProductForm = document.getElementById('addProductForm');
+        const imageInput = document.getElementById('imageInput');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const videoInput = document.getElementById('videoInput');
+        const videoUploadArea = document.getElementById('videoUploadArea');
+        const videoPreview = document.getElementById('videoPreview');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // Arrays to store uploaded files
+        let uploadedImages = [];
+        let uploadedVideo = null;
+
+        // Image Upload Handling
+        imageUploadArea.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', handleImageUpload);
+
+        // Video Upload Handling
+        videoUploadArea.addEventListener('click', () => videoInput.click());
+        videoInput.addEventListener('change', handleVideoUpload);
+
+        // Drag and drop for images
+        imageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUploadArea.style.borderColor = '#9d4edd';
+            imageUploadArea.style.background = '#f5f0ff';
+        });
+
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.style.borderColor = '#e9ecef';
+            imageUploadArea.style.background = '#fafafa';
+        });
+
+        imageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUploadArea.style.borderColor = '#e9ecef';
+            imageUploadArea.style.background = '#fafafa';
+            
+            const files = Array.from(e.dataTransfer.files);
+            handleImageFiles(files);
+        });
+
+        // Drag and drop for video
+        videoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            videoUploadArea.style.borderColor = '#9d4edd';
+            videoUploadArea.style.background = '#f5f0ff';
+        });
+
+        videoUploadArea.addEventListener('dragleave', () => {
+            videoUploadArea.style.borderColor = '#e9ecef';
+            videoUploadArea.style.background = '#fafafa';
+        });
+
+        videoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoUploadArea.style.borderColor = '#e9ecef';
+            videoUploadArea.style.background = '#fafafa';
+            
+            const files = Array.from(e.dataTransfer.files);
+            const videoFile = files.find(file => file.type.startsWith('video/'));
+            if (videoFile) {
+                handleVideoFile(videoFile);
+            }
+        });
+
+        function handleImageUpload(e) {
+            const files = Array.from(e.target.files);
+            handleImageFiles(files);
         }
-        
-        function formatPrice(price) {
-            return `₦${parseFloat(price).toLocaleString('en-NG', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })}`;
-        }
-        
-        function getStockStatus(stock) {
-            if (stock === 0) return {text: 'Out of Stock', class: 'status-out-of-stock'};
-            if (stock < 10) return {text: 'Low Stock', class: 'status-low-stock'};
-            return {text: 'In Stock', class: 'status-in-stock'};
-        }
-        
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/products');
-                const products = await response.json();
-                
-                const loading = document.getElementById('loading');
-                const emptyState = document.getElementById('emptyState');
-                const productsTable = document.getElementById('productsTable');
-                const productsBody = document.getElementById('productsBody');
-                
-                loading.style.display = 'none';
-                
-                if (products.length === 0) {
-                    emptyState.style.display = 'block';
-                    productsTable.style.display = 'none';
+
+        function handleImageFiles(files) {
+            files.forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    showToast('Please upload only image files', 'error');
                     return;
                 }
-                
-                emptyState.style.display = 'none';
-                productsTable.style.display = 'table';
-                productsBody.innerHTML = '';
-                
-                products.forEach(product => {
-                    const stockStatus = getStockStatus(product.stock);
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <img src="${product.image_url || '/static/images/default-product.jpg'}" 
-                                 alt="${product.name}" 
-                                 class="product-image"
-                                 onerror="this.src='/static/images/default-product.jpg'">
-                        </td>
-                        <td>
-                            <strong>${product.name}</strong>
-                            ${product.featured ? '<span class="featured-badge" style="margin-left: 5px;">Featured</span>' : ''}
-                        </td>
-                        <td>${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</td>
-                        <td>${formatPrice(product.price)}</td>
-                        <td>${product.stock}</td>
-                        <td>
-                            <span class="status-badge ${stockStatus.class}">${stockStatus.text}</span>
-                        </td>
-                        <td>
-                            <div class="actions">
-                                <a href="/admin/products/edit/${product.id}" class="action-btn btn-primary">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <button onclick="deleteProduct(${product.id}, '${product.name}')" class="action-btn btn-danger">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    productsBody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error('Error loading products:', error);
-                showAlert('Error loading products', 'danger');
-                document.getElementById('loading').style.display = 'none';
-            }
+
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    showToast('Image file size should be less than 10MB', 'error');
+                    return;
+                }
+
+                // Upload to server
+                uploadImageToServer(file);
+            });
         }
-        
-        async function deleteProduct(productId, productName) {
-            if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+
+        function handleVideoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            handleVideoFile(file);
+        }
+
+        function handleVideoFile(file) {
+            if (!file.type.startsWith('video/')) {
+                showToast('Please upload only video files', 'error');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) { // 100MB limit
+                showToast('Video file size should be less than 100MB', 'error');
+                return;
+            }
+
+            // Upload to server
+            uploadVideoToServer(file);
+        }
+
+        function uploadImageToServer(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loadingOverlay.classList.add('active');
+
+            fetch('/api/upload/image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.classList.remove('active');
+                
+                if (data.success) {
+                    uploadedImages.push(data.url);
+                    displayImagePreview(data.url, file.name);
+                    showToast('Image uploaded successfully', 'success');
+                } else {
+                    showToast(data.message || 'Failed to upload image', 'error');
+                }
+            })
+            .catch(error => {
+                loadingOverlay.classList.remove('active');
+                showToast('Error uploading image', 'error');
+                console.error('Upload error:', error);
+            });
+        }
+
+        function uploadVideoToServer(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loadingOverlay.classList.add('active');
+
+            fetch('/api/upload/video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.classList.remove('active');
+                
+                if (data.success) {
+                    uploadedVideo = data.url;
+                    displayVideoPreview(data.url, file.name);
+                    showToast('Video uploaded successfully', 'success');
+                } else {
+                    showToast(data.message || 'Failed to upload video', 'error');
+                }
+            })
+            .catch(error => {
+                loadingOverlay.classList.remove('active');
+                showToast('Error uploading video', 'error');
+                console.error('Upload error:', error);
+            });
+        }
+
+        function displayImagePreview(url, filename) {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = filename;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.onclick = () => {
+                previewItem.remove();
+                const index = uploadedImages.indexOf(url);
+                if (index > -1) {
+                    uploadedImages.splice(index, 1);
+                }
+            };
+            
+            previewItem.appendChild(img);
+            previewItem.appendChild(removeBtn);
+            imagePreview.appendChild(previewItem);
+        }
+
+        function displayVideoPreview(url, filename) {
+            videoPreview.innerHTML = '';
+            
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.onclick = () => {
+                previewItem.remove();
+                uploadedVideo = null;
+            };
+            
+            previewItem.appendChild(video);
+            previewItem.appendChild(removeBtn);
+            videoPreview.appendChild(previewItem);
+        }
+
+        // Form Submission
+        addProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate required fields
+            const productName = document.getElementById('productName').value.trim();
+            const productCategory = document.getElementById('productCategory').value;
+            const productDescription = document.getElementById('productDescription').value.trim();
+            const productPrice = document.getElementById('productPrice').value;
+            const productStock = document.getElementById('productStock').value;
+            
+            if (!productName || !productCategory || !productDescription || !productPrice || !productStock) {
+                showToast('Please fill in all required fields', 'error');
                 return;
             }
             
-            try {
-                const response = await fetch(`/api/admin/products/${productId}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
+            if (uploadedImages.length === 0) {
+                showToast('Please upload at least one product image', 'error');
+                return;
+            }
+            
+            // Prepare product data
+            const productData = {
+                name: productName,
+                description: productDescription,
+                price: parseFloat(productPrice),
+                category: productCategory,
+                stock: parseInt(productStock),
+                featured: document.getElementById('featuredProduct').checked,
+                image_url: uploadedImages[0], // First image as main image
+                image_urls: uploadedImages,
+                video_url: uploadedVideo || ''
+            };
+            
+            // Submit to server
+            loadingOverlay.classList.add('active');
+            
+            fetch('/api/admin/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.classList.remove('active');
                 
                 if (data.success) {
-                    showAlert(`Product "${productName}" deleted successfully`, 'success');
-                    // Reload products after a short delay
-                    setTimeout(loadProducts, 1000);
+                    showToast('Product added successfully!', 'success');
+                    
+                    // Clear form after successful submission
+                    setTimeout(() => {
+                        addProductForm.reset();
+                        imagePreview.innerHTML = '';
+                        videoPreview.innerHTML = '';
+                        uploadedImages = [];
+                        uploadedVideo = null;
+                        
+                        // Redirect to products page after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '/admin/products';
+                        }, 2000);
+                    }, 1500);
                 } else {
-                    showAlert(data.error || 'Failed to delete product', 'danger');
+                    showToast(data.error || 'Failed to add product', 'error');
                 }
-            } catch (error) {
-                showAlert('Error deleting product', 'danger');
-            }
+            })
+            .catch(error => {
+                loadingOverlay.classList.remove('active');
+                showToast('Error adding product', 'error');
+                console.error('Error:', error);
+            });
+        });
+
+        // Toast Functions
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            
+            setTimeout(() => {
+                hideToast();
+            }, 5000);
         }
-        
-        // Check authentication
-        async function checkAuth() {
-            try {
-                const response = await fetch('/api/admin/check-auth');
-                const data = await response.json();
-                
-                if (!data.logged_in) {
-                    window.location.href = '/admin';
+
+        function hideToast() {
+            toast.classList.remove('show');
+        }
+
+        // Initialize tooltips and other UI elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default values
+            document.getElementById('productStock').value = 100;
+            document.getElementById('productPrice').value = '';
+            
+            // Add currency formatting
+            const priceInput = document.getElementById('productPrice');
+            priceInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
                 }
-            } catch (error) {
-                window.location.href = '/admin';
-            }
-        }
-        
-        // Initialize
-        checkAuth();
-        loadProducts();
-        
-        // Auto-refresh every 30 seconds
-        setInterval(loadProducts, 30000);
+            });
+        });
     </script>
 </body>
 </html>
