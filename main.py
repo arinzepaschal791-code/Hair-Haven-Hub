@@ -213,12 +213,29 @@ with app.app_context():
         traceback.print_exc()
 # ============ END DATABASE SETUP ============
 
+# ============ WEBSITE CONFIGURATION ============
+# NoraHairLine Business Information
+WEBSITE_CONFIG = {
+    'brand_name': 'NORA HAIR LINE',
+    'tagline': 'Luxury for less...',
+    'wholesale': 'STRICTLY WHOLESALE DEAL IN: Closure | Frontals | 360 illusion frontal | Wigs | Bundles',
+    'address': 'No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.',
+    'phone': '08038707795',
+    'whatsapp': 'https://wa.me/2348038707795',
+    'instagram': '@norahairline',
+    'instagram_url': 'https://instagram.com/norahairline',
+    'currency': 'NGN',
+    'currency_symbol': '₦',
+    'contact_email': 'info@norahairline.com',
+    'support_email': 'support@norahairline.com'
+}
+
 # ============ WEBSITE PAGES ============
 
 @app.route('/')
 def index():
     """Main store homepage"""
-    return render_template('index.html')
+    return render_template('index.html', **WEBSITE_CONFIG)
 
 @app.route('/home')
 def home():
@@ -230,12 +247,12 @@ def home():
 def products():
     """Products shopping page"""
     category = request.args.get('category', '')
-    return render_template('products.html', category=category)
+    return render_template('products.html', category=category, **WEBSITE_CONFIG)
 
 @app.route('/login')
 def login():
     """User login page"""
-    return render_template('login.html')
+    return render_template('login.html', **WEBSITE_CONFIG)
 
 @app.route('/logout')
 def logout():
@@ -246,54 +263,38 @@ def logout():
 @app.route('/cart')
 def cart():
     """Shopping cart page"""
-    return render_template('cart.html')
+    return render_template('cart.html', **WEBSITE_CONFIG)
 
 @app.route('/checkout')
 def checkout():
     """Checkout page"""
-    return render_template('checkout.html')
+    return render_template('checkout.html', **WEBSITE_CONFIG)
 
 @app.route('/register')
 def register():
     """User registration page"""
-    return render_template('register.html')
+    return render_template('register.html', **WEBSITE_CONFIG)
 
 @app.route('/account')
 def account():
     """User account page"""
-    return render_template('account.html')
+    return render_template('account.html', **WEBSITE_CONFIG)
 
 @app.route('/about')
 def about():
     """About us page"""
-    # Updated with NoraHairLine information from the business card
-    return render_template('about.html', 
-                         brand_name="NORA HAIR LINE",
-                         tagline="Luxury for less...",
-                         description="STRICTLY WHOLESALE DEAL IN: Closure | Frontals | 360 illusion frontal | Wigs | Bundles",
-                         address="No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.",
-                         phone="08038707795",
-                         instagram="@norahairline",
-                         instagram_url="https://instagram.com/norahairline",
-                         whatsapp="08038707795",
-                         whatsapp_url="https://wa.me/2348038707795")
+    # Without leadership team
+    return render_template('about.html', **WEBSITE_CONFIG)
 
 @app.route('/contact')
 def contact():
     """Contact us page"""
-    return render_template('contact.html', 
-                         brand_name="NORA HAIR LINE",
-                         address="No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.",
-                         phone="08038707795",
-                         whatsapp="08038707795",
-                         whatsapp_url="https://wa.me/2348038707795",
-                         instagram="@norahairline",
-                         instagram_url="https://instagram.com/norahairline")
+    return render_template('contact.html', **WEBSITE_CONFIG)
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
     """Product detail page"""
-    return render_template('product_detail.html', product_id=product_id)
+    return render_template('product_detail.html', product_id=product_id, **WEBSITE_CONFIG)
 
 # ============ ADMIN PAGES ============
 
@@ -302,14 +303,14 @@ def admin():
     """Admin login page"""
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
-    return render_template('admin/admin_login.html')
+    return render_template('admin/admin_login.html', **WEBSITE_CONFIG)
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
     """Admin dashboard page"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/admin_dashboard.html')
+    return render_template('admin/admin_dashboard.html', **WEBSITE_CONFIG)
 
 @app.route('/admin/products')
 def admin_products():
@@ -334,18 +335,24 @@ def admin_products():
         categories = db.session.query(Product.category).distinct().all()
         categories = [cat[0] for cat in categories if cat[0]]
         
+        # Format prices in Naira
+        for product in products:
+            product.formatted_price = f"₦{product.price:,.2f}"
+        
         # Pass data to template
         return render_template('admin/products.html', 
                              products=products,
                              categories=categories,
-                             selected_category=category)
+                             selected_category=category,
+                             **WEBSITE_CONFIG)
     except Exception as e:
         print(f"Error in admin_products: {e}")
         # Return empty page if error
         return render_template('admin/products.html', 
                              products=[],
                              categories=[],
-                             selected_category='')
+                             selected_category='',
+                             **WEBSITE_CONFIG)
 
 @app.route('/admin/orders')
 def admin_orders():
@@ -356,10 +363,15 @@ def admin_orders():
     try:
         # Get orders
         orders = Order.query.order_by(Order.created_at.desc()).all()
-        return render_template('admin/order.html', orders=orders)
+        
+        # Format total prices in Naira
+        for order in orders:
+            order.formatted_total_price = f"₦{order.total_price:,.2f}"
+            
+        return render_template('admin/order.html', orders=orders, **WEBSITE_CONFIG)
     except Exception as e:
         print(f"Error in admin_orders: {e}")
-        return render_template('admin/order.html', orders=[])
+        return render_template('admin/order.html', orders=[], **WEBSITE_CONFIG)
 
 @app.route('/admin/reviews')
 def admin_reviews():
@@ -370,19 +382,19 @@ def admin_reviews():
     try:
         if HAS_REVIEW and Review:
             reviews = Review.query.order_by(Review.created_at.desc()).all()
-            return render_template('admin/reviews.html', reviews=reviews)
+            return render_template('admin/reviews.html', reviews=reviews, **WEBSITE_CONFIG)
         else:
-            return render_template('admin/reviews.html', reviews=[])
+            return render_template('admin/reviews.html', reviews=[], **WEBSITE_CONFIG)
     except Exception as e:
         print(f"Error in admin_reviews: {e}")
-        return render_template('admin/reviews.html', reviews=[])
+        return render_template('admin/reviews.html', reviews=[], **WEBSITE_CONFIG)
 
 @app.route('/admin/products/add')
 def add_product():
-    """Add product page"""
+    """Add product page - FIXED ROUTE"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/add_product.html')
+    return render_template('admin/add_product.html', **WEBSITE_CONFIG)
 
 @app.route('/admin/products/edit/<int:product_id>')
 def edit_product(product_id):
@@ -392,7 +404,8 @@ def edit_product(product_id):
     
     try:
         product = Product.query.get_or_404(product_id)
-        return render_template('admin/edit_product.html', product=product)
+        product.formatted_price = f"₦{product.price:,.2f}"
+        return render_template('admin/edit_product.html', product=product, **WEBSITE_CONFIG)
     except Exception as e:
         print(f"Error loading product {product_id}: {e}")
         return redirect(url_for('admin_products'))
@@ -558,9 +571,10 @@ def api_info():
         'status': 'online',
         'currency': 'NGN (₦)',
         'contact': {
-            'phone': '08038707795',
-            'whatsapp': 'https://wa.me/2348038707795',
-            'instagram': '@norahairline'
+            'phone': WEBSITE_CONFIG['phone'],
+            'whatsapp': WEBSITE_CONFIG['whatsapp'],
+            'instagram': WEBSITE_CONFIG['instagram'],
+            'address': WEBSITE_CONFIG['address']
         },
         'endpoints': {
             'products': {
@@ -615,7 +629,7 @@ def api_get_products():
             'name': p.name,
             'description': p.description,
             'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",
+            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
             'category': p.category,
             'image_url': p.image_url or '/static/images/default-product.jpg',
             'video_url': p.video_url or '',
@@ -639,7 +653,7 @@ def api_get_product(product_id):
             'name': product.name,
             'description': product.description,
             'price': float(product.price),
-            'formatted_price': f"₦{float(product.price):,.2f}",
+            'formatted_price': f"₦{float(product.price):,.2f}",  # Naira format
             'category': product.category,
             'image_url': product.image_url or '/static/images/default-product.jpg',
             'video_url': product.video_url or '',
@@ -662,7 +676,7 @@ def api_get_featured_products():
             'name': p.name,
             'description': p.description[:100] + '...' if len(p.description) > 100 else p.description,
             'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",
+            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
             'category': p.category,
             'image_url': p.image_url or '/static/images/default-product.jpg',
             'video_url': p.video_url or '',
@@ -687,7 +701,7 @@ def api_get_orders():
             'product_id': o.product_id,
             'quantity': o.quantity,
             'total_price': float(o.total_price),
-            'formatted_total_price': f"₦{float(o.total_price):,.2f}",
+            'formatted_total_price': f"₦{float(o.total_price):,.2f}",  # Naira format
             'status': o.status,
             'payment_status': o.payment_status,
             'notes': o.notes,
@@ -843,7 +857,7 @@ def api_admin_dashboard():
             'total_orders': Order.query.count(),
             'total_reviews': Review.query.count() if HAS_REVIEW and Review else 0,
             'total_sales': total_sales,
-            'formatted_total_sales': f"₦{total_sales:,.2f}",
+            'formatted_total_sales': f"₦{total_sales:,.2f}",  # Naira format
             'pending_orders': Order.query.filter_by(status='Pending').count(),
             'completed_orders': Order.query.filter_by(status='Completed').count(),
             'low_stock': Product.query.filter(Product.stock < 10).count(),
@@ -856,7 +870,7 @@ def api_admin_dashboard():
             'customer_name': o.customer_name,
             'product_id': o.product_id,
             'total': float(o.total_price),
-            'formatted_total': f"₦{float(o.total_price):,.2f}",
+            'formatted_total': f"₦{float(o.total_price):,.2f}",  # Naira format
             'status': o.status,
             'date': o.created_at.strftime('%Y-%m-%d') if o.created_at else ''
         } for o in recent_orders]
@@ -866,7 +880,7 @@ def api_admin_dashboard():
             'id': p.id,
             'name': p.name,
             'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",
+            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
             'stock': p.stock
         } for p in recent_products]
         
@@ -922,7 +936,7 @@ def api_create_product():
                 'id': product.id,
                 'name': product.name,
                 'price': float(product.price),
-                'formatted_price': f"₦{float(product.price):,.2f}"
+                'formatted_price': f"₦{float(product.price):,.2f}"  # Naira format
             }
         })
         
@@ -1039,8 +1053,8 @@ def health():
         'status': 'healthy',
         'app': 'NoraHairLine',
         'brand': 'NORA HAIR LINE - Luxury for less...',
-        'contact': '08038707795',
-        'location': 'No 5 Veet gold plaza, Tradefair Shopping Center, Lagos',
+        'contact': WEBSITE_CONFIG['phone'],
+        'location': WEBSITE_CONFIG['address'],
         'timestamp': datetime.utcnow().isoformat(),
         'database': 'connected',
         'version': '1.0.0',
@@ -1053,7 +1067,7 @@ def health():
 def page_not_found(e):
     """Custom 404 page"""
     try:
-        return render_template('404.html'), 404
+        return render_template('404.html', **WEBSITE_CONFIG), 404
     except:
         return "Page not found", 404
 
@@ -1061,7 +1075,7 @@ def page_not_found(e):
 def internal_error(e):
     """Custom 500 page"""
     try:
-        return render_template('500.html'), 500
+        return render_template('500.html', **WEBSITE_CONFIG), 500
     except:
         return "Internal server error", 500
 
@@ -1100,39 +1114,19 @@ if __name__ == '__main__':
     ensure_directories()
     
     print(f"\n{'='*60}")
-    print(f"🚀 NORAHAIRLINE - LUXURY FOR LESS")
+    print(f"🚀 NORA HAIR LINE - LUXURY FOR LESS")
     print(f"{'='*60}")
-    print(f"🌐 Homepage:          https://norahairline.onrender.com")
-    print(f"🛍️  Shop:              https://norahairline.onrender.com/shop")
-    print(f"👑 Admin Login:       https://norahairline.onrender.com/admin")
-    print(f"📊 Admin Dashboard:   https://norahairline.onrender.com/admin/dashboard")
-    print(f"🛍️  Admin Products:    https://norahairline.onrender.com/admin/products")
-    print(f"📦 Admin Orders:      https://norahairline.onrender.com/admin/orders")
-    print(f"➕ Add Product:        https://norahairline.onrender.com/admin/products/add")
-    print(f"🔧 API:               https://norahairline.onrender.com/api")
-    print(f"❤️  Health Check:      https://norahairline.onrender.com/health")
+    print(f"🌐 Homepage:          http://localhost:{port}")
+    print(f"🛍️  Shop:              http://localhost:{port}/shop")
+    print(f"👑 Admin Login:       http://localhost:{port}/admin")
+    print(f"📊 Admin Dashboard:   http://localhost:{port}/admin/dashboard")
+    print(f"🛍️  Admin Products:    http://localhost:{port}/admin/products")
+    print(f"➕ Add Product:        http://localhost:{port}/admin/products/add")
     print(f"💰 Currency:          NGN (₦ - Nigerian Naira)")
-    print(f"📍 Address:           No 5 Veet gold plaza, Tradefair Shopping Center")
-    print(f"📞 Contact:           08038707795")
-    print(f"📸 Instagram:         @norahairline")
+    print(f"📍 Address:           {WEBSITE_CONFIG['address']}")
+    print(f"📞 Contact:           {WEBSITE_CONFIG['phone']}")
+    print(f"📸 Instagram:         {WEBSITE_CONFIG['instagram']}")
+    print(f"💬 WhatsApp:          {WEBSITE_CONFIG['whatsapp']}")
     print(f"{'='*60}")
     
-    # List available templates
-    if os.path.exists('templates'):
-        templates = [f for f in os.listdir('templates') if f.endswith('.html')]
-        print(f"📁 Templates found: {len(templates)}")
-        for template in sorted(templates):
-            if template not in ['admin']:  # Skip admin folder
-                print(f"   • {template}")
-    
-    # List admin templates
-    admin_template_path = 'templates/admin'
-    if os.path.exists(admin_template_path):
-        admin_templates = [f for f in os.listdir(admin_template_path) if f.endswith('.html')]
-        print(f"👑 Admin templates: {len(admin_templates)}")
-        for template in sorted(admin_templates):
-            print(f"   • admin/{template}")
-    
-    print(f"{'='*60}\n")
-    
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)
