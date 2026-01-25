@@ -32,7 +32,7 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     print(f"✓ Using PostgreSQL database")
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hairhaven.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
     print("✓ Using SQLite database")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -266,12 +266,29 @@ def account():
 @app.route('/about')
 def about():
     """About us page"""
-    return render_template('about.html')
+    # Updated with NoraHairLine information from the business card
+    return render_template('about.html', 
+                         brand_name="NORA HAIR LINE",
+                         tagline="Luxury for less...",
+                         description="STRICTLY WHOLESALE DEAL IN: Closure | Frontals | 360 illusion frontal | Wigs | Bundles",
+                         address="No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.",
+                         phone="08038707795",
+                         instagram="@norahairline",
+                         instagram_url="https://instagram.com/norahairline",
+                         whatsapp="08038707795",
+                         whatsapp_url="https://wa.me/2348038707795")
 
 @app.route('/contact')
 def contact():
     """Contact us page"""
-    return render_template('contact.html')
+    return render_template('contact.html', 
+                         brand_name="NORA HAIR LINE",
+                         address="No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.",
+                         phone="08038707795",
+                         whatsapp="08038707795",
+                         whatsapp_url="https://wa.me/2348038707795",
+                         instagram="@norahairline",
+                         instagram_url="https://instagram.com/norahairline")
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
@@ -296,24 +313,69 @@ def admin_dashboard():
 
 @app.route('/admin/products')
 def admin_products():
-    """Admin products management"""
+    """Admin products management - FIXED TO LOAD DATA"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/products.html')
+    
+    try:
+        # Get category filter
+        category = request.args.get('category', '')
+        
+        # Build query
+        query = Product.query
+        
+        if category:
+            query = query.filter_by(category=category)
+        
+        # Get products
+        products = query.order_by(Product.created_at.desc()).all()
+        
+        # Get categories for filter dropdown
+        categories = db.session.query(Product.category).distinct().all()
+        categories = [cat[0] for cat in categories if cat[0]]
+        
+        # Pass data to template
+        return render_template('admin/products.html', 
+                             products=products,
+                             categories=categories,
+                             selected_category=category)
+    except Exception as e:
+        print(f"Error in admin_products: {e}")
+        # Return empty page if error
+        return render_template('admin/products.html', 
+                             products=[],
+                             categories=[],
+                             selected_category='')
 
 @app.route('/admin/orders')
 def admin_orders():
     """Admin orders management"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/order.html')
+    
+    try:
+        # Get orders
+        orders = Order.query.order_by(Order.created_at.desc()).all()
+        return render_template('admin/order.html', orders=orders)
+    except Exception as e:
+        print(f"Error in admin_orders: {e}")
+        return render_template('admin/order.html', orders=[])
 
 @app.route('/admin/reviews')
 def admin_reviews():
     """Admin reviews management"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/reviews.html')
+    
+    try:
+        if HAS_REVIEW and Review:
+            reviews = Review.query.order_by(Review.created_at.desc()).all()
+            return render_template('admin/reviews.html', reviews=reviews)
+        else:
+            return render_template('admin/reviews.html', reviews=[])
+    except Exception as e:
+        print(f"Error in admin_reviews: {e}")
+        return render_template('admin/reviews.html', reviews=[])
 
 @app.route('/admin/products/add')
 def add_product():
@@ -327,7 +389,13 @@ def edit_product(product_id):
     """Edit product page"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/edit_product.html', product_id=product_id)
+    
+    try:
+        product = Product.query.get_or_404(product_id)
+        return render_template('admin/edit_product.html', product=product)
+    except Exception as e:
+        print(f"Error loading product {product_id}: {e}")
+        return redirect(url_for('admin_products'))
 
 @app.route('/admin/logout')
 def admin_logout_route():
@@ -489,6 +557,11 @@ def api_info():
         'version': '1.0.0',
         'status': 'online',
         'currency': 'NGN (₦)',
+        'contact': {
+            'phone': '08038707795',
+            'whatsapp': 'https://wa.me/2348038707795',
+            'instagram': '@norahairline'
+        },
         'endpoints': {
             'products': {
                 'GET /api/products': 'List all products',
@@ -532,6 +605,9 @@ def api_get_products():
         if featured_only:
             query = query.filter_by(featured=True)
             
+        # Sort by newest first
+        query = query.order_by(Product.created_at.desc())
+        
         products = query.all()
         
         return jsonify([{
@@ -580,7 +656,7 @@ def api_get_product(product_id):
 def api_get_featured_products():
     """Get featured products for homepage"""
     try:
-        products = Product.query.filter_by(featured=True).limit(6).all()
+        products = Product.query.filter_by(featured=True).order_by(Product.created_at.desc()).limit(6).all()
         return jsonify([{
             'id': p.id,
             'name': p.name,
@@ -601,17 +677,22 @@ def api_get_featured_products():
 def api_get_orders():
     """Get all orders"""
     try:
-        orders = Order.query.all()
+        orders = Order.query.order_by(Order.created_at.desc()).all()
         return jsonify([{
             'id': o.id,
             'customer_name': o.customer_name,
             'customer_email': o.customer_email,
+            'customer_phone': o.customer_phone,
+            'customer_address': o.customer_address,
             'product_id': o.product_id,
             'quantity': o.quantity,
             'total_price': float(o.total_price),
             'formatted_total_price': f"₦{float(o.total_price):,.2f}",
             'status': o.status,
-            'created_at': o.created_at.isoformat() if o.created_at else None
+            'payment_status': o.payment_status,
+            'notes': o.notes,
+            'created_at': o.created_at.isoformat() if o.created_at else None,
+            'updated_at': o.updated_at.isoformat() if o.updated_at else None
         } for o in orders])
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
@@ -644,10 +725,14 @@ def api_create_order():
         order = Order(
             customer_name=data['customer_name'],
             customer_email=data['customer_email'],
+            customer_phone=data.get('customer_phone', ''),
+            customer_address=data.get('customer_address', ''),
             product_id=data['product_id'],
             quantity=data['quantity'],
             total_price=total_price,
-            status='Pending'
+            status='Pending',
+            payment_status='Pending',
+            notes=data.get('notes', '')
         )
         
         db.session.add(order)
@@ -664,6 +749,36 @@ def api_create_order():
                 'formatted_total_price': f"₦{float(order.total_price):,.2f}",
                 'status': order.status
             }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/orders/<int:order_id>/status', methods=['PUT'])
+def api_update_order_status(order_id):
+    """Update order status"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        data = request.get_json()
+        new_status = data.get('status')
+        
+        if not new_status:
+            return jsonify({'error': 'Status is required', 'success': False}), 400
+        
+        order = Order.query.get_or_404(order_id)
+        order.status = new_status
+        order.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Order status updated to {new_status}',
+            'order_id': order.id,
+            'status': new_status
         })
         
     except Exception as e:
@@ -894,6 +1009,7 @@ if HAS_REVIEW and Review:
                 'customer_email': r.customer_email,
                 'rating': r.rating,
                 'comment': r.comment,
+                'approved': r.approved,
                 'created_at': r.created_at.isoformat() if r.created_at else None
             } for r in reviews])
         except Exception as e:
@@ -903,7 +1019,7 @@ if HAS_REVIEW and Review:
     def api_get_product_reviews(product_id):
         """Get reviews for a specific product"""
         try:
-            reviews = Review.query.filter_by(product_id=product_id).all()
+            reviews = Review.query.filter_by(product_id=product_id, approved=True).all()
             return jsonify([{
                 'id': r.id,
                 'customer_name': r.customer_name,
@@ -922,6 +1038,9 @@ def health():
     return jsonify({
         'status': 'healthy',
         'app': 'NoraHairLine',
+        'brand': 'NORA HAIR LINE - Luxury for less...',
+        'contact': '08038707795',
+        'location': 'No 5 Veet gold plaza, Tradefair Shopping Center, Lagos',
         'timestamp': datetime.utcnow().isoformat(),
         'database': 'connected',
         'version': '1.0.0',
@@ -981,7 +1100,7 @@ if __name__ == '__main__':
     ensure_directories()
     
     print(f"\n{'='*60}")
-    print(f"🚀 NORAHAIRLINE - FULL WEBSITE")
+    print(f"🚀 NORAHAIRLINE - LUXURY FOR LESS")
     print(f"{'='*60}")
     print(f"🌐 Homepage:          https://norahairline.onrender.com")
     print(f"🛍️  Shop:              https://norahairline.onrender.com/shop")
@@ -993,7 +1112,9 @@ if __name__ == '__main__':
     print(f"🔧 API:               https://norahairline.onrender.com/api")
     print(f"❤️  Health Check:      https://norahairline.onrender.com/health")
     print(f"💰 Currency:          NGN (₦ - Nigerian Naira)")
-    print(f"📁 Upload:            Image/Video upload enabled")
+    print(f"📍 Address:           No 5 Veet gold plaza, Tradefair Shopping Center")
+    print(f"📞 Contact:           08038707795")
+    print(f"📸 Instagram:         @norahairline")
     print(f"{'='*60}")
     
     # List available templates
