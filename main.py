@@ -597,7 +597,15 @@ def api_info():
                 'GET /api/admin/check-auth': 'Check admin authentication',
                 'POST /api/admin/products': 'Create product',
                 'PUT /api/admin/products/<id>': 'Update product',
-                'DELETE /api/admin/products/<id>': 'Delete product'
+                'DELETE /api/admin/products/<id>': 'Delete product',
+                'GET /api/admin/reviews': 'Get all reviews (admin only)',
+                'PUT /api/admin/reviews/<id>/approve': 'Approve review (admin only)',
+                'DELETE /api/admin/reviews/<id>': 'Delete review (admin only)'
+            },
+            'reviews': {
+                'GET /api/reviews': 'Get all reviews',
+                'POST /api/reviews': 'Create new review',
+                'GET /api/products/<id>/reviews': 'Get reviews for specific product'
             },
             'health': 'GET /health'
         }
@@ -1043,6 +1051,129 @@ if HAS_REVIEW and Review:
             } for r in reviews])
         except Exception as e:
             return jsonify({'error': str(e), 'success': False}), 500
+    
+    @app.route('/api/reviews', methods=['POST'])
+    def api_create_review():
+        """Create new review"""
+        try:
+            data = request.get_json()
+            
+            required_fields = ['product_id', 'customer_name', 'rating']
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
+            
+            # Check if product exists
+            product = Product.query.get(data['product_id'])
+            if not product:
+                return jsonify({'error': 'Product not found', 'success': False}), 404
+            
+            # Validate rating (1-5)
+            rating = int(data['rating'])
+            if rating < 1 or rating > 5:
+                return jsonify({'error': 'Rating must be between 1 and 5', 'success': False}), 400
+            
+            review = Review(
+                product_id=data['product_id'],
+                customer_name=data['customer_name'],
+                customer_email=data.get('customer_email', ''),
+                rating=rating,
+                comment=data.get('comment', ''),
+                approved=False,  # Reviews need admin approval
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            
+            db.session.add(review)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Review submitted successfully. It will appear after approval.',
+                'review_id': review.id
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e), 'success': False}), 500
+
+# ============ ADMIN REVIEWS API ============
+
+@app.route('/api/admin/reviews', methods=['GET'])
+def api_admin_get_reviews():
+    """Get all reviews (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        if not HAS_REVIEW or not Review:
+            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
+        
+        reviews = Review.query.order_by(Review.created_at.desc()).all()
+        
+        return jsonify([{
+            'id': r.id,
+            'product_id': r.product_id,
+            'customer_name': r.customer_name,
+            'customer_email': r.customer_email,
+            'rating': r.rating,
+            'comment': r.comment,
+            'approved': r.approved,
+            'created_at': r.created_at.isoformat() if r.created_at else None,
+            'updated_at': r.updated_at.isoformat() if r.updated_at else None
+        } for r in reviews])
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/admin/reviews/<int:review_id>/approve', methods=['PUT'])
+def api_admin_approve_review(review_id):
+    """Approve review (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        if not HAS_REVIEW or not Review:
+            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
+        
+        review = Review.query.get_or_404(review_id)
+        review.approved = True
+        review.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Review approved successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/admin/reviews/<int:review_id>', methods=['DELETE'])
+def api_admin_delete_review(review_id):
+    """Delete review (admin only)"""
+    try:
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        if not HAS_REVIEW or not Review:
+            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
+        
+        review = Review.query.get_or_404(review_id)
+        
+        db.session.delete(review)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Review deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
 
 # ============ HEALTH & UTILITY ============
 
@@ -1094,7 +1225,8 @@ def check_admin_access():
         '/api/upload/image',
         '/api/upload/video',
         '/api/admin/products',
-        '/api/admin/dashboard'
+        '/api/admin/dashboard',
+        '/api/admin/reviews'
     ]
     
     for route in admin_routes:
