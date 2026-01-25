@@ -3,637 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - NoraHairLine</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>About Us - {{ brand_name }}</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        :root {
-            --primary: #8a6d3b;
-            --primary-dark: #6b4f2b;
-            --secondary: #f5f5f5;
-            --dark: #333;
-            --light: #fff;
-            --gray: #888;
-            --shadow: 0 5px 15px rgba(0,0,0,0.1);
-            --transition: all 0.3s ease;
-        }
-        
+
         body {
-            background-color: #f9f9f9;
-            color: var(--dark);
+            font-family: 'Arial', sans-serif;
             line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
         }
-        
-        /* Header & Navigation */
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
         header {
-            background-color: var(--light);
-            box-shadow: var(--shadow);
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
-        
-        .navbar {
+
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 5%;
-            max-width: 1400px;
-            margin: 0 auto;
+            padding: 20px 0;
         }
-        
+
         .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
+            font-size: 24px;
+            font-weight: bold;
+            color: #9d4edd;
             text-decoration: none;
         }
-        
-        .logo span {
-            color: var(--dark);
+
+        .tagline {
+            color: #666;
+            font-size: 14px;
+            margin-left: 10px;
         }
-        
+
         .nav-links {
             display: flex;
-            list-style: none;
-            gap: 2rem;
+            gap: 30px;
         }
-        
+
         .nav-links a {
             text-decoration: none;
-            color: var(--dark);
+            color: #333;
             font-weight: 500;
-            transition: var(--transition);
+            transition: color 0.3s;
         }
-        
+
         .nav-links a:hover {
-            color: var(--primary);
+            color: #9d4edd;
         }
-        
+
         .nav-links a.active {
-            color: var(--primary);
+            color: #9d4edd;
         }
-        
-        .nav-icons {
-            display: flex;
-            gap: 1.5rem;
-        }
-        
-        .nav-icons a {
-            color: var(--dark);
-            font-size: 1.2rem;
-            transition: var(--transition);
-        }
-        
-        .nav-icons a:hover {
-            color: var(--primary);
-        }
-        
-        .cart-count {
-            background: var(--primary);
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%);
             color: white;
-            border-radius: 50%;
-            padding: 0.2rem 0.5rem;
-            font-size: 0.8rem;
-            position: relative;
-            top: -8px;
-            right: 5px;
-        }
-        
-        /* About Hero */
-        .about-hero {
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/static/images/about-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
+            padding: 100px 0;
             text-align: center;
-            padding: 8rem 1rem;
         }
-        
-        .about-hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
         }
-        
-        .about-hero p {
-            font-size: 1.2rem;
-            max-width: 700px;
+
+        .hero p {
+            font-size: 20px;
+            max-width: 800px;
             margin: 0 auto;
-            opacity: 0.9;
         }
-        
-        /* Main Content */
-        .about-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 4rem 5%;
+
+        /* About Content */
+        .about-content {
+            padding: 80px 0;
+            background: white;
         }
-        
+
         .section-title {
             text-align: center;
-            margin-bottom: 3rem;
-            font-size: 2.2rem;
-            color: var(--dark);
-            position: relative;
+            margin-bottom: 50px;
         }
-        
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 4px;
-            background: var(--primary);
-            margin: 1rem auto;
-            border-radius: 2px;
+
+        .section-title h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
         }
-        
-        /* Story Section */
-        .story-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            margin-bottom: 6rem;
-        }
-        
-        .story-content h2 {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            color: var(--dark);
-        }
-        
-        .story-image {
-            width: 100%;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-        }
-        
-        /* Values Section */
-        .values-section {
-            margin-bottom: 6rem;
-        }
-        
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .value-card {
-            background: var(--light);
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            transition: var(--transition);
-        }
-        
-        .value-card:hover {
-            transform: translateY(-10px);
-        }
-        
-        .value-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-        
-        .value-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--dark);
-        }
-        
-        /* Team Section */
-        .team-section {
-            margin-bottom: 6rem;
-        }
-        
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-        
-        .team-member {
-            background: var(--light);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-        
-        .team-member:hover {
-            transform: translateY(-10px);
-        }
-        
-        .member-image {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-        }
-        
-        .member-info {
-            padding: 1.5rem;
-            text-align: center;
-        }
-        
-        .member-name {
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-        
-        .member-role {
-            color: var(--primary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        /* Stats Section */
-        .stats-section {
-            background: linear-gradient(rgba(138, 109, 59, 0.9), rgba(138, 109, 59, 0.9));
-            color: white;
-            padding: 4rem 1rem;
-            margin-bottom: 6rem;
-            border-radius: 15px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            max-width: 1000px;
+
+        .section-title p {
+            color: #666;
+            font-size: 18px;
+            max-width: 600px;
             margin: 0 auto;
         }
-        
-        .stat-item {
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .about-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 40px 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
             text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+
+        .about-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
         }
-        
-        .stat-label {
-            font-size: 1.1rem;
-            opacity: 0.9;
+
+        .about-icon {
+            font-size: 48px;
+            color: #9d4edd;
+            margin-bottom: 20px;
         }
-        
-        /* CTA Section */
-        .cta-section {
+
+        .about-card h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .about-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Business Info */
+        .business-info {
+            background: #f8f9fa;
+            padding: 80px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
             text-align: center;
-            padding: 4rem 1rem;
-            background: var(--light);
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 4rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
-        
-        .cta-section h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--dark);
+
+        .info-card h3 {
+            color: #9d4edd;
+            margin-bottom: 15px;
+            font-size: 20px;
         }
-        
-        .cta-section p {
-            max-width: 600px;
-            margin: 0 auto 2rem;
-            color: var(--gray);
+
+        .info-card p {
+            color: #666;
+            margin-bottom: 10px;
         }
-        
-        .btn {
-            display: inline-block;
-            background: var(--primary);
-            color: var(--light);
-            padding: 0.8rem 2rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: var(--transition);
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-3px);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            margin-left: 1rem;
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary);
+
+        /* Wholesale Info */
+        .wholesale-info {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
             color: white;
+            padding: 60px 0;
+            text-align: center;
         }
-        
+
+        .wholesale-info h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .wholesale-info p {
+            font-size: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .contact-item {
+            text-align: center;
+        }
+
+        .contact-icon {
+            font-size: 40px;
+            color: #9d4edd;
+            margin-bottom: 20px;
+        }
+
+        .contact-item h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .contact-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+
         /* Footer */
         footer {
-            background: var(--dark);
-            color: var(--light);
-            padding: 4rem 5% 2rem;
-            margin-top: 4rem;
+            background: #333;
+            color: white;
+            padding: 60px 0 30px;
         }
-        
+
         .footer-content {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            max-width: 1400px;
-            margin: 0 auto;
+            gap: 40px;
+            margin-bottom: 40px;
         }
-        
+
         .footer-section h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #9d4edd;
         }
-        
-        .footer-links {
-            list-style: none;
-        }
-        
-        .footer-links li {
-            margin-bottom: 0.8rem;
-        }
-        
-        .footer-links a {
+
+        .footer-section p {
             color: #ccc;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: white;
+            background: #9d4edd;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-decoration: none;
-            transition: var(--transition);
+            transition: background 0.3s;
         }
-        
-        .footer-links a:hover {
-            color: var(--primary);
-            padding-left: 5px;
+
+        .social-links a:hover {
+            background: #7b2cbf;
         }
-        
+
         .copyright {
             text-align: center;
-            margin-top: 3rem;
-            padding-top: 2rem;
+            padding-top: 30px;
             border-top: 1px solid #444;
-            color: #aaa;
+            color: #999;
+            font-size: 14px;
         }
-        
+
         /* Responsive */
-        @media (max-width: 992px) {
-            .story-section {
-                grid-template-columns: 1fr;
-                gap: 3rem;
-            }
-            
-            .story-image {
-                order: -1;
-            }
-        }
-        
         @media (max-width: 768px) {
-            .navbar {
+            .header-content {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 20px;
             }
-            
-            .about-hero h1 {
-                font-size: 2.5rem;
+
+            .nav-links {
+                gap: 15px;
             }
-            
-            .section-title {
-                font-size: 1.8rem;
+
+            .hero h1 {
+                font-size: 36px;
             }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+
+            .hero p {
+                font-size: 18px;
+                padding: 0 20px;
             }
-        }
-        
-        @media (max-width: 480px) {
-            .about-hero {
-                padding: 6rem 1rem;
-            }
-            
-            .about-hero h1 {
-                font-size: 2rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .value-card, .team-member {
-                margin: 0 1rem;
+
+            .section-title h2 {
+                font-size: 28px;
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Header -->
     <header>
-        <nav class="navbar">
-            <a href="/" class="logo">Nora<span>HairLine</span></a>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/shop">Shop</a></li>
-                <li><a href="/about" class="active">About</a></li>
-                <li><a href="/contact">Contact</a></li>
-                {% if session.get('admin_logged_in') %}
-                <li><a href="/admin/dashboard">Admin</a></li>
-                {% endif %}
-            </ul>
-            <div class="nav-icons">
-                <a href="/account"><i class="fas fa-user"></i></a>
-                <a href="/cart"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cart-count">0</span></a>
-                {% if session.get('admin_logged_in') %}
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i></a>
-                {% else %}
-                <a href="/login"><i class="fas fa-sign-in-alt"></i></a>
-                {% endif %}
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <a href="/" class="logo">{{ brand_name }}</a>
+                    <span class="tagline">{{ tagline }}</span>
+                </div>
+                <nav class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/shop">Shop</a>
+                    <a href="/about" class="active">About</a>
+                    <a href="/contact">Contact</a>
+                    <a href="/cart"><i class="fas fa-shopping-cart"></i></a>
+                </nav>
             </div>
-        </nav>
+        </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="about-hero">
-        <h1>Our Story</h1>
-        <p>Discover the journey of NoraHairLine - where beauty meets quality, and every strand tells a story of excellence.</p>
+    <section class="hero">
+        <div class="container">
+            <h1>About Nora Hair Line</h1>
+            <p>Premium hair extensions and beauty products at wholesale prices. Luxury made accessible for all.</p>
+        </div>
     </section>
 
-    <!-- Main Content -->
-    <main class="about-container">
-        <!-- Our Story -->
-        <div class="story-section">
-            <div class="story-content">
-                <h2>Where Beauty Begins</h2>
-                <p>Founded in 2010, NoraHairLine began as a small family business with a passion for helping people look and feel their best. What started as a single boutique in downtown Los Angeles has grown into a trusted name in premium hair products worldwide.</p>
-                <p>Our founder, Nora Johnson, believed that everyone deserves access to high-quality, natural-looking hair that enhances their natural beauty. With this vision, she sourced the finest materials from around the world and developed relationships with expert artisans.</p>
-                <p>Today, we continue Nora's legacy by combining traditional craftsmanship with modern innovation. Each product is carefully curated, tested, and perfected to meet our rigorous standards of quality, comfort, and style.</p>
+    <!-- About Content -->
+    <section class="about-content">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Story</h2>
+                <p>Founded with a vision to provide premium quality hair products at affordable wholesale prices.</p>
             </div>
-            <img src="/static/images/story-image.jpg" alt="Our Story" class="story-image">
-        </div>
-
-        <!-- Our Values -->
-        <div class="values-section">
-            <h2 class="section-title">Our Core Values</h2>
-            <div class="values-grid">
-                <div class="value-card">
-                    <div class="value-icon">
+            
+            <div class="about-grid">
+                <div class="about-card">
+                    <div class="about-icon">
                         <i class="fas fa-gem"></i>
                     </div>
-                    <h3>Quality First</h3>
-                    <p>We never compromise on quality. Every product undergoes rigorous testing to ensure it meets our high standards of excellence.</p>
+                    <h3>Premium Quality</h3>
+                    <p>We source only the finest human hair and materials, ensuring every product meets our strict quality standards.</p>
                 </div>
                 
-                <div class="value-card">
-                    <div class="value-icon">
+                <div class="about-card">
+                    <div class="about-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <h3>Wholesale Prices</h3>
+                    <p>By dealing directly with manufacturers, we offer luxury products at wholesale prices without compromising quality.</p>
+                </div>
+                
+                <div class="about-card">
+                    <div class="about-icon">
                         <i class="fas fa-heart"></i>
                     </div>
-                    <h3>Customer Love</h3>
-                    <p>Your satisfaction is our priority. We're dedicated to providing exceptional service and support to every customer.</p>
-                </div>
-                
-                <div class="value-card">
-                    <div class="value-icon">
-                        <i class="fas fa-leaf"></i>
-                    </div>
-                    <h3>Sustainable Beauty</h3>
-                    <p>We're committed to ethical sourcing and sustainable practices that respect both people and the planet.</p>
-                </div>
-                
-                <div class="value-card">
-                    <div class="value-icon">
-                        <i class="fas fa-handshake"></i>
-                    </div>
-                    <h3>Trust & Transparency</h3>
-                    <p>We believe in honest relationships with our customers, suppliers, and community. No hidden details, just pure quality.</p>
+                    <h3>Customer Satisfaction</h3>
+                    <p>Your satisfaction is our priority. We work tirelessly to ensure every customer gets the best value and service.</p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Our Team -->
-        <div class="team-section">
-            <h2 class="section-title">Meet Our Leadership</h2>
-            <div class="team-grid">
-                <div class="team-member">
-                    <img src="/static/images/team1.jpg" alt="Nora Johnson" class="member-image">
-                    <div class="member-info">
-                        <h3 class="member-name">Nora Johnson</h3>
-                        <div class="member-role">Founder & CEO</div>
-                        <p>With over 20 years in the beauty industry, Nora leads with passion and vision.</p>
-                    </div>
+    <!-- Wholesale Info -->
+    <section class="wholesale-info">
+        <div class="container">
+            <h2>{{ wholesale }}</h2>
+            <p>We specialize in wholesale distribution of premium hair products to salons, stylists, and beauty entrepreneurs across Nigeria.</p>
+        </div>
+    </section>
+
+    <!-- Business Information -->
+    <section class="business-info">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Business</h2>
+                <p>Located in the heart of Lagos, serving customers nationwide</p>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <i class="fas fa-map-marker-alt" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
+                    <h3>Our Location</h3>
+                    <p>{{ address }}</p>
                 </div>
                 
-                <div class="team-member">
-                    <img src="/static/images/team2.jpg" alt="Michael Chen" class="member-image">
-                    <div class="member-info">
-                        <h3 class="member-name">Michael Chen</h3>
-                        <div class="member-role">Head of Product</div>
-                        <p>Michael ensures every product meets our quality standards and customer expectations.</p>
-                    </div>
+                <div class="info-card">
+                    <i class="fas fa-phone" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
+                    <h3>Contact Number</h3>
+                    <p>{{ phone }}</p>
+                    <p>WhatsApp: {{ phone }}</p>
                 </div>
                 
-                <div class="team-member">
-                    <img src="/static/images/team3.jpg" alt="Sarah Williams" class="member-image">
-                    <div class="member-info">
-                        <h3 class="member-name">Sarah Williams</h3>
-                        <div class="member-role">Creative Director</div>
-                        <p>Sarah brings trends to life while maintaining our classic, timeless aesthetic.</p>
-                    </div>
-                </div>
-                
-                <div class="team-member">
-                    <img src="/static/images/team4.jpg" alt="David Rodriguez" class="member-image">
-                    <div class="member-info">
-                        <h3 class="member-name">David Rodriguez</h3>
-                        <div class="member-role">Customer Experience</div>
-                        <p>David ensures every customer interaction is exceptional from start to finish.</p>
-                    </div>
+                <div class="info-card">
+                    <i class="fas fa-hashtag" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
+                    <h3>Social Media</h3>
+                    <p>Instagram: {{ instagram }}</p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Stats -->
-        <div class="stats-section">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number">14+</div>
-                    <div class="stat-label">Years of Excellence</div>
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Get in Touch</h2>
+                <p>Contact us for wholesale inquiries, product information, or business partnerships</p>
+            </div>
+            
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <h3>Visit Our Store</h3>
+                    <p>{{ address }}</p>
                 </div>
                 
-                <div class="stat-item">
-                    <div class="stat-number">50,000+</div>
-                    <div class="stat-label">Happy Customers</div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h3>Call Us</h3>
+                    <p>{{ phone }}</p>
                 </div>
                 
-                <div class="stat-item">
-                    <div class="stat-number">200+</div>
-                    <div class="stat-label">Premium Products</div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <h3>WhatsApp</h3>
+                    <p>{{ phone }}</p>
                 </div>
                 
-                <div class="stat-item">
-                    <div class="stat-number">15+</div>
-                    <div class="stat-label">Countries Served</div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fab fa-instagram"></i>
+                    </div>
+                    <h3>Instagram</h3>
+                    <p>{{ instagram }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- CTA -->
-        <div class="cta-section">
-            <h2>Join Our Beauty Journey</h2>
-            <p>Experience the difference that quality hair products can make. Discover your perfect style with NoraHairLine.</p>
-            <a href="/shop" class="btn">Shop Our Collection</a>
-            <a href="/contact" class="btn btn-outline">Contact Us</a>
-        </div>
-    </main>
+    </section>
 
     <!-- Footer -->
     <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>NoraHairLine</h3>
-                <p>Your destination for premium quality hair products and accessories. We provide the best 100% human hair with unmatched quality.</p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>{{ brand_name }}</h3>
+                    <p>{{ tagline }}</p>
+                    <p>{{ wholesale }}</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> {{ address }}</p>
+                    <p><i class="fas fa-phone"></i> {{ phone }}</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Connect With Us</h3>
+                    <div class="social-links">
+                        <a href="{{ whatsapp }}" target="_blank">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="{{ instagram_url }}" target="_blank">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul class="footer-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/shop">Shop</a></li>
-                    <li><a href="/about">About Us</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/admin">Admin Login</a></li>
-                </ul>
+            
+            <div class="copyright">
+                <p>&copy; 2024 {{ brand_name }}. All rights reserved.</p>
             </div>
-            <div class="footer-section">
-                <h3>Contact Info</h3>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Hair City</p>
-                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        // Update cart count
-        document.addEventListener('DOMContentLoaded', function() {
-            const cart = JSON.parse(localStorage.getItem('norahair_cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cart-count').textContent = totalItems;
-        });
-    </script>
 </body>
 </html>
