@@ -1,11 +1,8 @@
 Flask==2.3.3
 Werkzeug==2.3.7
 Flask-SQLAlchemy==3.0.5
-SQLAlchemy==1.4.51  # CHANGED FROM 2.0.19 TO 1.4.51 (Stable version)
+SQLAlchemy==1.4.51
 psycopg2-binary==2.9.7
 Flask-Login==0.6.2
-cryptography==41.0.4
-gunicorn==20.1.0
 python-dotenv==1.0.0
-Flask-CORS==4.0.0
-blinker==1.7.0
+gunicorn==20.1.0
