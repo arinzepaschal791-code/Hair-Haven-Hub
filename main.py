@@ -83,6 +83,14 @@ def format_price(price):
     except (ValueError, TypeError):
         return "₦0.00"
 
+def generate_order_number():
+    """Generate unique order number"""
+    import random
+    import string
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return f'NORA-{timestamp}-{random_str}'
+
 def create_directories():
     """Create required directories"""
     directories = [
@@ -112,6 +120,22 @@ def get_cart_count():
     except Exception as e:
         logger.error(f"Error getting cart count: {e}")
     return 0
+
+def get_or_create_cart():
+    """Get or create active cart for current user"""
+    if not MODELS_AVAILABLE or not session.get('user_id'):
+        return None
+    
+    try:
+        cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+        if not cart:
+            cart = Cart(user_id=session['user_id'])
+            db.session.add(cart)
+            db.session.commit()
+        return cart
+    except Exception as e:
+        logger.error(f"Error getting cart: {e}")
+        return None
 
 # Database initialization
 def init_database():
@@ -402,17 +426,47 @@ def logout():
 @app.route('/cart')
 def cart():
     """Cart page"""
-    return render_template('cart.html', cart_items=[])
+    cart_items = []
+    cart_total = 0
+    
+    if MODELS_AVAILABLE and session.get('user_id'):
+        cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+        if cart:
+            cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
+            for item in cart_items:
+                item.formatted_price = format_price(item.product.price)
+                item.item_total = item.product.price * item.quantity
+                item.formatted_item_total = format_price(item.item_total)
+                cart_total += item.item_total
+    
+    return render_template('cart.html', 
+                         cart_items=cart_items,
+                         cart_total=cart_total,
+                         formatted_cart_total=format_price(cart_total))
 
 @app.route('/checkout')
 def checkout():
     """Checkout page"""
+    if not session.get('user_id'):
+        flash('Please login to checkout.', 'error')
+        return redirect(url_for('login'))
+    
     return render_template('checkout.html')
 
 @app.route('/orders')
 def orders():
     """Orders page"""
-    return render_template('orders.html', orders=[])
+    orders_list = []
+    
+    if MODELS_AVAILABLE and session.get('user_id'):
+        orders_list = Order.query.filter_by(user_id=session['user_id']).order_by(
+            Order.created_at.desc()
+        ).all()
+        
+        for order in orders_list:
+            order.formatted_total = format_price(order.total_price)
+    
+    return render_template('orders.html', orders=orders_list)
 
 # ============ ADMIN ROUTES ============
 
@@ -465,29 +519,40 @@ def admin_dashboard():
     try:
         stats = {}
         recent_products = []
+        recent_orders = []
         
         if MODELS_AVAILABLE:
             stats = {
                 'products': Product.query.count(),
                 'orders': Order.query.count(),
-                'users': User.query.count()
+                'users': User.query.count(),
+                'revenue': db.session.query(db.func.sum(Order.total_price)).scalar() or 0
             }
             
             recent_products = Product.query.order_by(
                 Product.created_at.desc()
             ).limit(5).all()
             
+            recent_orders = Order.query.order_by(
+                Order.created_at.desc()
+            ).limit(5).all()
+            
             for product in recent_products:
                 product.formatted_price = format_price(product.price)
+            
+            for order in recent_orders:
+                order.formatted_total = format_price(order.total_price)
         
         return render_template('admin/dashboard.html',
                              stats=stats,
-                             recent_products=recent_products)
+                             recent_products=recent_products,
+                             recent_orders=recent_orders)
     except Exception as e:
         logger.error(f"Admin dashboard error: {e}")
         return render_template('admin/dashboard.html',
-                             stats={'products': 0, 'orders': 0, 'users': 0},
-                             recent_products=[])
+                             stats={'products': 0, 'orders': 0, 'users': 0, 'revenue': 0},
+                             recent_products=[],
+                             recent_orders=[])
 
 @app.route('/admin/products')
 def admin_products():
@@ -508,6 +573,42 @@ def admin_products():
         logger.error(f"Admin products error: {e}")
         return render_template('admin/products.html', products=[])
 
+@app.route('/admin/orders')
+def admin_orders():
+    """Admin orders management"""
+    if not session.get('admin_logged_in'):
+        flash('Please login as admin.', 'warning')
+        return redirect(url_for('admin_login'))
+    
+    try:
+        orders_list = []
+        if MODELS_AVAILABLE:
+            orders_list = Order.query.order_by(Order.created_at.desc()).all()
+            for order in orders_list:
+                order.formatted_total = format_price(order.total_price)
+        
+        return render_template('admin/orders.html', orders=orders_list)
+    except Exception as e:
+        logger.error(f"Admin orders error: {e}")
+        return render_template('admin/orders.html', orders=[])
+
+@app.route('/admin/users')
+def admin_users():
+    """Admin users management"""
+    if not session.get('admin_logged_in'):
+        flash('Please login as admin.', 'warning')
+        return redirect(url_for('admin_login'))
+    
+    try:
+        users = []
+        if MODELS_AVAILABLE:
+            users = User.query.order_by(User.created_at.desc()).all()
+        
+        return render_template('admin/users.html', users=users)
+    except Exception as e:
+        logger.error(f"Admin users error: {e}")
+        return render_template('admin/users.html', users=[])
+
 @app.route('/admin/logout')
 def admin_logout():
     """Admin logout"""
@@ -523,7 +624,8 @@ def health():
     return jsonify({
         'status': 'healthy',
         'database': MODELS_AVAILABLE,
-        'time': datetime.now().isoformat()
+        'time': datetime.now().isoformat(),
+        'version': '1.0.0'
     })
 
 @app.route('/api/products')
@@ -547,6 +649,57 @@ def api_products():
     except Exception as e:
         logger.error(f"API error: {e}")
         return jsonify([]), 500
+
+@app.route('/api/cart/add', methods=['POST'])
+def api_add_to_cart():
+    """Add item to cart"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        quantity = data.get('quantity', 1)
+        
+        if not product_id:
+            return jsonify({'success': False, 'message': 'Product ID required'}), 400
+        
+        if not MODELS_AVAILABLE:
+            return jsonify({'success': False, 'message': 'System temporarily unavailable'}), 500
+        
+        # Get or create cart
+        cart = get_or_create_cart()
+        if not cart:
+            return jsonify({'success': False, 'message': 'Cart not available'}), 500
+        
+        # Check if product exists
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'message': 'Product not found'}), 404
+        
+        # Check stock
+        if product.stock < quantity:
+            return jsonify({'success': False, 'message': 'Insufficient stock'}), 400
+        
+        # Check if item already in cart
+        existing_item = CartItem.query.filter_by(cart_id=cart.id, product_id=product_id).first()
+        if existing_item:
+            existing_item.quantity += quantity
+        else:
+            cart_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=quantity)
+            db.session.add(cart_item)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Item added to cart',
+            'cart_count': get_cart_count()
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Add to cart error: {e}")
+        return jsonify({'success': False, 'message': 'Server error'}), 500
 
 # ============ STATIC FILES ============
 
@@ -593,6 +746,11 @@ if __name__ == '__main__':
     print(f"👤 Customer login: customer@example.com / password")
     print(f"👑 Admin login: admin@norahairline.com / admin123")
     print(f"🔧 Admin Dashboard: http://localhost:{port}/admin/login")
+    print(f"📊 Health check: http://localhost:{port}/api/health")
+    print(f"{'='*60}")
+    print(f"📁 Template folder: {app.template_folder}")
+    print(f"📁 Static folder: {app.static_folder}")
+    print(f"📁 Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
     print(f"{'='*60}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
