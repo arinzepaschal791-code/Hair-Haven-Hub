@@ -9,15 +9,25 @@ from werkzeug.utils import secure_filename
 
 # Import models
 try:
-    from models import db, Admin, Product, Order, Review
+    from models import db, Admin, Product, Order, Review, User, Cart, CartItem, Payment
     print("✓ All models imported successfully")
     HAS_REVIEW = True
+    HAS_USER = True
+    HAS_CART = True
+    HAS_PAYMENT = True
 except ImportError as e:
     print(f"Import error: {e}")
     from models import db, Admin, Product, Order
     Review = None
+    User = None
+    Cart = None
+    CartItem = None
+    Payment = None
     HAS_REVIEW = False
-    print("✓ Imported without Review model")
+    HAS_USER = False
+    HAS_CART = False
+    HAS_PAYMENT = False
+    print("✓ Imported basic models only")
 
 app = Flask(__name__, 
            static_folder='static',
@@ -38,6 +48,15 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 app.config['SESSION_TYPE'] = 'filesystem'
+
+# ============ PAYMENT CONFIGURATION ============
+PAYMENT_CONFIG = {
+    'account_number': '2059311531',
+    'bank_name': 'UBA',
+    'account_name': 'CHUKWUNEKE CHIAMAKA',
+    'currency': 'NGN',
+    'currency_symbol': '₦'
+}
 
 # ============ FILE UPLOAD CONFIGURATION ============
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -66,12 +85,15 @@ def allowed_video_file(filename):
 # Initialize database
 db.init_app(app)
 
-# ============ CREATE DEFAULT IMAGE DIRECTORY ============
+# ============ CREATE DEFAULT DIRECTORIES ============
 def ensure_directories():
     """Ensure all required directories exist"""
     directories = [
         'static',
         'static/images',
+        'static/css',
+        'static/js',
+        'static/uploads',
         'templates',
         'templates/admin',
         'uploads',
@@ -100,6 +122,7 @@ with app.app_context():
             admin = Admin(
                 username='admin',
                 password=generate_password_hash('admin123'),
+                email='admin@norahairline.com',
                 created_at=datetime.utcnow()
             )
             db.session.add(admin)
@@ -114,7 +137,7 @@ with app.app_context():
             products = [
                 Product(
                     name="Premium Bone Straight Hair 24\"",
-                    description="24-inch premium quality 100% human hair, bone straight texture",
+                    description="24-inch premium quality 100% human hair, bone straight texture. Perfect for everyday wear. Easy to install and maintain.",
                     price=134985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair1.jpg",
@@ -127,7 +150,7 @@ with app.app_context():
                 ),
                 Product(
                     name="Curly Brazilian Hair 22\"",
-                    description="22-inch natural Brazilian curly hair, soft and bouncy",
+                    description="22-inch natural Brazilian curly hair, soft and bouncy. Perfect for Afro-centric styles.",
                     price=149985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair2.jpg",
@@ -140,7 +163,7 @@ with app.app_context():
                 ),
                 Product(
                     name="Lace Front Wig - Natural Black",
-                    description="13x4 lace front wig, natural black color, pre-plucked",
+                    description="13x4 lace front wig, natural black color, pre-plucked hairline. Looks 100% natural.",
                     price=194985.0,  # Naira
                     category="wigs",
                     image_url="/static/images/wig1.jpg",
@@ -153,7 +176,7 @@ with app.app_context():
                 ),
                 Product(
                     name="Hair Growth Oil 8oz",
-                    description="Organic hair growth oil with rosemary and castor oil",
+                    description="Organic hair growth oil with rosemary and castor oil. Promotes hair growth and thickness.",
                     price=37485.0,  # Naira
                     category="care",
                     image_url="/static/images/oil1.jpg",
@@ -166,7 +189,7 @@ with app.app_context():
                 ),
                 Product(
                     name="Moisturizing Shampoo 16oz",
-                    description="Sulfate-free moisturizing shampoo for all hair types",
+                    description="Sulfate-free moisturizing shampoo for all hair types. Gentle on hair and scalp.",
                     price=28485.0,  # Naira
                     category="care",
                     image_url="/static/images/shampoo1.jpg",
@@ -179,7 +202,7 @@ with app.app_context():
                 ),
                 Product(
                     name="Silk Press Hair 26\"",
-                    description="26-inch silk press hair, ultra smooth and shiny",
+                    description="26-inch silk press hair, ultra smooth and shiny. Professional quality for salons.",
                     price=179985.0,  # Naira
                     category="hair",
                     image_url="/static/images/hair3.jpg",
@@ -187,6 +210,32 @@ with app.app_context():
                     image_urls=json.dumps(["/static/images/hair3.jpg"]),
                     stock=15,
                     featured=True,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                ),
+                Product(
+                    name="360 Lace Frontal Wig",
+                    description="360 lace frontal wig with baby hairs. Full coverage for versatile styling.",
+                    price=249985.0,  # Naira
+                    category="wigs",
+                    image_url="/static/images/wig2.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/wig2.jpg"]),
+                    stock=25,
+                    featured=True,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                ),
+                Product(
+                    name="Deep Conditioner 12oz",
+                    description="Deep conditioning treatment for dry and damaged hair. Restores moisture and shine.",
+                    price=22485.0,  # Naira
+                    category="care",
+                    image_url="/static/images/conditioner1.jpg",
+                    video_url="",
+                    image_urls=json.dumps(["/static/images/conditioner1.jpg"]),
+                    stock=60,
+                    featured=False,
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow()
                 )
@@ -201,6 +250,47 @@ with app.app_context():
         else:
             print(f"🛍️  Products already exist: {product_count} product(s) found")
         
+        # ===== CREATE SAMPLE REVIEWS =====
+        if HAS_REVIEW and Review:
+            review_count = Review.query.count()
+            if review_count == 0:
+                sample_reviews = [
+                    Review(
+                        product_id=1,
+                        customer_name="Chinwe Okafor",
+                        customer_email="chinwe@example.com",
+                        rating=5,
+                        comment="Excellent quality hair! Looks and feels natural. Will definitely order again.",
+                        approved=True,
+                        created_at=datetime.utcnow()
+                    ),
+                    Review(
+                        product_id=2,
+                        customer_name="Amina Bello",
+                        customer_email="amina@example.com",
+                        rating=4,
+                        comment="Love the curls! So soft and easy to maintain. Perfect for Nigerian weather.",
+                        approved=True,
+                        created_at=datetime.utcnow()
+                    ),
+                    Review(
+                        product_id=3,
+                        customer_name="Ngozi Eze",
+                        customer_email="ngozi@example.com",
+                        rating=5,
+                        comment="Best lace front wig I've ever owned! The hairline is so natural.",
+                        approved=True,
+                        created_at=datetime.utcnow()
+                    )
+                ]
+                
+                for review in sample_reviews:
+                    db.session.add(review)
+                
+                print(f"🌟 Created {len(sample_reviews)} sample reviews")
+            else:
+                print(f"🌟 Reviews already exist: {review_count} review(s) found")
+        
         # Commit all changes
         db.session.commit()
         print("✅ Database setup completed successfully")
@@ -211,10 +301,8 @@ with app.app_context():
         db.session.rollback()
         import traceback
         traceback.print_exc()
-# ============ END DATABASE SETUP ============
 
 # ============ WEBSITE CONFIGURATION ============
-# NoraHairLine Business Information
 WEBSITE_CONFIG = {
     'brand_name': 'NORA HAIR LINE',
     'tagline': 'Luxury for less...',
@@ -227,32 +315,210 @@ WEBSITE_CONFIG = {
     'currency': 'NGN',
     'currency_symbol': '₦',
     'contact_email': 'info@norahairline.com',
-    'support_email': 'support@norahairline.com'
+    'support_email': 'support@norahairline.com',
+    'logo_url': '/static/images/logo.png',
+    'year': datetime.now().year,
+    'payment_config': PAYMENT_CONFIG
 }
+
+# ============ HELPER FUNCTIONS ============
+def format_price(price):
+    """Format price as Nigerian Naira"""
+    return f"₦{float(price):,.2f}"
+
+def get_cart_count():
+    """Get cart item count for current user"""
+    if HAS_CART and Cart and CartItem:
+        if session.get('user_id'):
+            cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+            if cart:
+                return CartItem.query.filter_by(cart_id=cart.id).count()
+    return 0
 
 # ============ WEBSITE PAGES ============
 
 @app.route('/')
 def index():
-    """Main store homepage"""
-    return render_template('index.html', **WEBSITE_CONFIG)
-
-@app.route('/home')
-def home():
-    """Alias for index"""
-    return redirect(url_for('index'))
+    """Main store homepage with modern design"""
+    try:
+        # Get featured products
+        featured_products = Product.query.filter_by(featured=True).order_by(Product.created_at.desc()).limit(8).all()
+        
+        # Format product prices
+        for product in featured_products:
+            product.formatted_price = format_price(product.price)
+        
+        # Get approved reviews
+        if HAS_REVIEW and Review:
+            approved_reviews = Review.query.filter_by(approved=True).order_by(Review.created_at.desc()).limit(6).all()
+        else:
+            approved_reviews = []
+        
+        # Get product categories count
+        categories = {
+            'hair': Product.query.filter_by(category='hair').count(),
+            'wigs': Product.query.filter_by(category='wigs').count(),
+            'care': Product.query.filter_by(category='care').count()
+        }
+        
+        # Calculate total products
+        total_products = Product.query.count()
+        
+        # Get cart count
+        cart_count = get_cart_count()
+        
+        return render_template('index.html', 
+                             featured_products=featured_products,
+                             reviews=approved_reviews,
+                             categories=categories,
+                             total_products=total_products,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    except Exception as e:
+        print(f"Error in index route: {e}")
+        return render_template('index.html', 
+                             featured_products=[],
+                             reviews=[],
+                             categories={'hair': 0, 'wigs': 0, 'care': 0},
+                             total_products=0,
+                             cart_count=0,
+                             **WEBSITE_CONFIG)
 
 @app.route('/shop')
 @app.route('/products')
-def products():
+def products_page():
     """Products shopping page"""
     category = request.args.get('category', '')
-    return render_template('products.html', category=category, **WEBSITE_CONFIG)
+    search = request.args.get('search', '')
+    
+    try:
+        query = Product.query
+        
+        if category:
+            query = query.filter_by(category=category)
+        
+        if search:
+            query = query.filter(Product.name.ilike(f'%{search}%'))
+        
+        products = query.order_by(Product.created_at.desc()).all()
+        
+        # Format prices
+        for product in products:
+            product.formatted_price = format_price(product.price)
+        
+        cart_count = get_cart_count()
+        
+        return render_template('products.html', 
+                             products=products,
+                             category=category,
+                             search=search,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    except Exception as e:
+        print(f"Error in products_page: {e}")
+        return render_template('products.html', 
+                             products=[],
+                             category=category,
+                             search=search,
+                             cart_count=0,
+                             **WEBSITE_CONFIG)
 
-@app.route('/login')
+@app.route('/product/<int:product_id>')
+def product_detail(product_id):
+    """Product detail page"""
+    try:
+        product = Product.query.get_or_404(product_id)
+        product.formatted_price = format_price(product.price)
+        
+        # Get related products
+        related_products = Product.query.filter(
+            Product.category == product.category,
+            Product.id != product.id
+        ).limit(4).all()
+        
+        for p in related_products:
+            p.formatted_price = format_price(p.price)
+        
+        # Get product reviews
+        if HAS_REVIEW and Review:
+            reviews = Review.query.filter_by(product_id=product_id, approved=True).all()
+        else:
+            reviews = []
+        
+        cart_count = get_cart_count()
+        
+        return render_template('product_detail.html', 
+                             product=product,
+                             related_products=related_products,
+                             reviews=reviews,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    except Exception as e:
+        print(f"Error in product_detail: {e}")
+        return redirect(url_for('products_page'))
+
+# ============ USER AUTHENTICATION ============
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """User login page"""
-    return render_template('login.html', **WEBSITE_CONFIG)
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        if HAS_USER and User:
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password, password):
+                session['user_id'] = user.id
+                session['user_email'] = user.email
+                session['user_name'] = user.name
+                return redirect(url_for('index'))
+        
+        return render_template('login.html', error='Invalid credentials', **WEBSITE_CONFIG)
+    
+    cart_count = get_cart_count()
+    return render_template('login.html', cart_count=cart_count, **WEBSITE_CONFIG)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration page"""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            return render_template('register.html', error='Passwords do not match', **WEBSITE_CONFIG)
+        
+        if HAS_USER and User:
+            # Check if user exists
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return render_template('register.html', error='Email already registered', **WEBSITE_CONFIG)
+            
+            # Create new user
+            user = User(
+                name=name,
+                email=email,
+                phone=phone,
+                password=generate_password_hash(password),
+                created_at=datetime.utcnow()
+            )
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            # Log user in
+            session['user_id'] = user.id
+            session['user_email'] = user.email
+            session['user_name'] = user.name
+            
+            return redirect(url_for('index'))
+    
+    cart_count = get_cart_count()
+    return render_template('register.html', cart_count=cart_count, **WEBSITE_CONFIG)
 
 @app.route('/logout')
 def logout():
@@ -260,41 +526,474 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+# ============ CART FUNCTIONALITY ============
+
 @app.route('/cart')
 def cart():
     """Shopping cart page"""
-    return render_template('cart.html', **WEBSITE_CONFIG)
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        if HAS_CART and Cart and CartItem:
+            # Get or create cart
+            cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+            if not cart:
+                cart = Cart(user_id=session['user_id'], status='active')
+                db.session.add(cart)
+                db.session.commit()
+            
+            # Get cart items
+            cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
+            
+            # Calculate totals
+            subtotal = 0
+            for item in cart_items:
+                if item.product:
+                    item.total = item.quantity * item.product.price
+                    subtotal += item.total
+                    item.formatted_total = format_price(item.total)
+                    item.product.formatted_price = format_price(item.product.price)
+            
+            shipping = 2000 if subtotal > 0 else 0  # NGN 2000 shipping
+            total = subtotal + shipping
+            
+            cart_count = len(cart_items)
+            
+            return render_template('cart.html',
+                                 cart_items=cart_items,
+                                 subtotal=subtotal,
+                                 shipping=shipping,
+                                 total=total,
+                                 formatted_subtotal=format_price(subtotal),
+                                 formatted_shipping=format_price(shipping),
+                                 formatted_total=format_price(total),
+                                 cart_count=cart_count,
+                                 **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in cart: {e}")
+    
+    return render_template('cart.html', cart_items=[], cart_count=0, **WEBSITE_CONFIG)
+
+@app.route('/add-to-cart/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    """Add product to cart"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        quantity = int(request.form.get('quantity', 1))
+        
+        # Get product
+        product = Product.query.get_or_404(product_id)
+        
+        # Check stock
+        if product.stock < quantity:
+            return jsonify({'success': False, 'message': f'Only {product.stock} items in stock'}), 400
+        
+        if HAS_CART and Cart and CartItem:
+            # Get or create cart
+            cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+            if not cart:
+                cart = Cart(user_id=session['user_id'], status='active')
+                db.session.add(cart)
+                db.session.commit()
+            
+            # Check if item already in cart
+            cart_item = CartItem.query.filter_by(cart_id=cart.id, product_id=product_id).first()
+            if cart_item:
+                cart_item.quantity += quantity
+            else:
+                cart_item = CartItem(
+                    cart_id=cart.id,
+                    product_id=product_id,
+                    quantity=quantity
+                )
+                db.session.add(cart_item)
+            
+            # Update product stock
+            product.stock -= quantity
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Product added to cart',
+                'cart_count': CartItem.query.filter_by(cart_id=cart.id).count()
+            })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+    return jsonify({'success': False, 'message': 'Cart functionality not available'}), 500
+
+@app.route('/update-cart/<int:item_id>', methods=['POST'])
+def update_cart(item_id):
+    """Update cart item quantity"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        quantity = int(request.form.get('quantity', 1))
+        
+        if HAS_CART and CartItem:
+            cart_item = CartItem.query.get_or_404(item_id)
+            
+            # Verify cart belongs to user
+            cart = Cart.query.get(cart_item.cart_id)
+            if cart.user_id != session['user_id']:
+                return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            
+            # Get product
+            product = Product.query.get(cart_item.product_id)
+            
+            # Calculate stock difference
+            stock_diff = quantity - cart_item.quantity
+            
+            if product.stock < stock_diff:
+                return jsonify({'success': False, 'message': f'Only {product.stock + cart_item.quantity} items in stock'}), 400
+            
+            # Update quantities
+            cart_item.quantity = quantity
+            product.stock -= stock_diff
+            
+            db.session.commit()
+            
+            # Calculate new totals
+            item_total = cart_item.quantity * product.price
+            
+            return jsonify({
+                'success': True,
+                'message': 'Cart updated',
+                'item_total': float(item_total),
+                'formatted_item_total': format_price(item_total)
+            })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+    return jsonify({'success': False, 'message': 'Cart functionality not available'}), 500
+
+@app.route('/remove-from-cart/<int:item_id>', methods=['POST'])
+def remove_from_cart(item_id):
+    """Remove item from cart"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        if HAS_CART and CartItem:
+            cart_item = CartItem.query.get_or_404(item_id)
+            
+            # Verify cart belongs to user
+            cart = Cart.query.get(cart_item.cart_id)
+            if cart.user_id != session['user_id']:
+                return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            
+            # Restore product stock
+            product = Product.query.get(cart_item.product_id)
+            product.stock += cart_item.quantity
+            
+            # Remove item
+            db.session.delete(cart_item)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Item removed from cart'
+            })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+    return jsonify({'success': False, 'message': 'Cart functionality not available'}), 500
+
+# ============ CHECKOUT & PAYMENT ============
 
 @app.route('/checkout')
 def checkout():
     """Checkout page"""
-    return render_template('checkout.html', **WEBSITE_CONFIG)
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        if HAS_CART and Cart and CartItem:
+            # Get cart
+            cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
+            if not cart:
+                return redirect(url_for('cart'))
+            
+            # Get cart items
+            cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
+            if not cart_items:
+                return redirect(url_for('cart'))
+            
+            # Calculate totals
+            subtotal = sum(item.quantity * item.product.price for item in cart_items if item.product)
+            shipping = 2000 if subtotal > 0 else 0
+            total = subtotal + shipping
+            
+            cart_count = len(cart_items)
+            
+            return render_template('checkout.html',
+                                 subtotal=subtotal,
+                                 shipping=shipping,
+                                 total=total,
+                                 formatted_subtotal=format_price(subtotal),
+                                 formatted_shipping=format_price(shipping),
+                                 formatted_total=format_price(total),
+                                 cart_count=cart_count,
+                                 **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in checkout: {e}")
+    
+    return redirect(url_for('cart'))
 
-@app.route('/register')
-def register():
-    """User registration page"""
-    return render_template('register.html', **WEBSITE_CONFIG)
+@app.route('/place-order', methods=['POST'])
+def place_order():
+    """Place order and create payment"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Get user info
+        user_id = session['user_id']
+        
+        # Get cart
+        cart = Cart.query.filter_by(user_id=user_id, status='active').first()
+        if not cart:
+            return jsonify({'success': False, 'message': 'Cart not found'}), 400
+        
+        # Get cart items
+        cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
+        if not cart_items:
+            return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+        
+        # Calculate total
+        total = sum(item.quantity * item.product.price for item in cart_items if item.product)
+        shipping = 2000
+        total_with_shipping = total + shipping
+        
+        # Create order
+        order = Order(
+            user_id=user_id,
+            customer_name=data.get('name', session.get('user_name', '')),
+            customer_email=data.get('email', session.get('user_email', '')),
+            customer_phone=data.get('phone', ''),
+            customer_address=data.get('address', ''),
+            customer_city=data.get('city', ''),
+            customer_state=data.get('state', ''),
+            total_price=total_with_shipping,
+            shipping_fee=shipping,
+            status='pending',
+            payment_status='pending',
+            notes=data.get('notes', ''),
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(order)
+        db.session.flush()  # Get order ID
+        
+        # Create order items
+        for cart_item in cart_items:
+            if cart_item.product:
+                # Create order item record (you would need an OrderItem model)
+                # For now, we'll store product info in order notes
+                pass
+        
+        # Create payment record
+        if HAS_PAYMENT and Payment:
+            payment = Payment(
+                order_id=order.id,
+                amount=total_with_shipping,
+                payment_method='bank_transfer',
+                status='pending',
+                reference=f"NHL{datetime.now().strftime('%Y%m%d')}{order.id:04d}",
+                created_at=datetime.utcnow()
+            )
+            db.session.add(payment)
+        
+        # Update cart status
+        cart.status = 'completed'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Order placed successfully',
+            'order_id': order.id,
+            'reference': payment.reference if HAS_PAYMENT and Payment else f"ORDER{order.id}",
+            'total': float(total_with_shipping),
+            'formatted_total': format_price(total_with_shipping)
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/payment/<int:order_id>')
+def payment_page(order_id):
+    """Payment page"""
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        order = Order.query.get_or_404(order_id)
+        
+        # Verify order belongs to user
+        if order.user_id != session['user_id']:
+            return redirect(url_for('index'))
+        
+        # Get payment info if exists
+        payment = None
+        if HAS_PAYMENT and Payment:
+            payment = Payment.query.filter_by(order_id=order_id).first()
+        
+        order.formatted_total = format_price(order.total_price)
+        
+        cart_count = get_cart_count()
+        
+        return render_template('payment.html',
+                             order=order,
+                             payment=payment,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in payment_page: {e}")
+        return redirect(url_for('index'))
+
+@app.route('/confirm-payment/<int:order_id>', methods=['POST'])
+def confirm_payment(order_id):
+    """User confirms they've made payment"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Please login first'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        order = Order.query.get_or_404(order_id)
+        
+        # Verify order belongs to user
+        if order.user_id != session['user_id']:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        # Update payment status
+        if HAS_PAYMENT and Payment:
+            payment = Payment.query.filter_by(order_id=order_id).first()
+            if payment:
+                payment.status = 'processing'
+                payment.payment_proof = data.get('proof_details', '')
+                payment.updated_at = datetime.utcnow()
+        
+        order.payment_status = 'processing'
+        order.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Payment confirmation received. Admin will verify your payment.',
+            'order_id': order.id
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ============ ORDER TRACKING ============
+
+@app.route('/orders')
+def user_orders():
+    """User order history"""
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        orders = Order.query.filter_by(user_id=session['user_id']).order_by(Order.created_at.desc()).all()
+        
+        for order in orders:
+            order.formatted_total = format_price(order.total_price)
+            if order.created_at:
+                order.formatted_date = order.created_at.strftime('%b %d, %Y')
+        
+        cart_count = get_cart_count()
+        
+        return render_template('orders.html',
+                             orders=orders,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in user_orders: {e}")
+        return render_template('orders.html', orders=[], cart_count=0, **WEBSITE_CONFIG)
+
+@app.route('/order/<int:order_id>')
+def order_detail(order_id):
+    """Order detail page"""
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        order = Order.query.get_or_404(order_id)
+        
+        # Verify order belongs to user
+        if order.user_id != session['user_id']:
+            return redirect(url_for('index'))
+        
+        order.formatted_total = format_price(order.total_price)
+        order.formatted_date = order.created_at.strftime('%B %d, %Y %I:%M %p') if order.created_at else ''
+        
+        # Get payment info
+        payment = None
+        if HAS_PAYMENT and Payment:
+            payment = Payment.query.filter_by(order_id=order_id).first()
+        
+        cart_count = get_cart_count()
+        
+        return render_template('order_detail.html',
+                             order=order,
+                             payment=payment,
+                             cart_count=cart_count,
+                             **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in order_detail: {e}")
+        return redirect(url_for('user_orders'))
+
+# ============ ACCOUNT MANAGEMENT ============
 
 @app.route('/account')
 def account():
     """User account page"""
-    return render_template('account.html', **WEBSITE_CONFIG)
-
-@app.route('/about')
-def about():
-    """About us page"""
-    # Without leadership team
-    return render_template('about.html', **WEBSITE_CONFIG)
-
-@app.route('/contact')
-def contact():
-    """Contact us page"""
-    return render_template('contact.html', **WEBSITE_CONFIG)
-
-@app.route('/product/<int:product_id>')
-def product_detail(product_id):
-    """Product detail page"""
-    return render_template('product_detail.html', product_id=product_id, **WEBSITE_CONFIG)
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    
+    try:
+        if HAS_USER and User:
+            user = User.query.get(session['user_id'])
+            
+            # Get order count
+            order_count = Order.query.filter_by(user_id=session['user_id']).count()
+            
+            cart_count = get_cart_count()
+            
+            return render_template('account.html',
+                                 user=user,
+                                 order_count=order_count,
+                                 cart_count=cart_count,
+                                 **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in account: {e}")
+    
+    return render_template('account.html', cart_count=0, **WEBSITE_CONFIG)
 
 # ============ ADMIN PAGES ============
 
@@ -310,11 +1009,47 @@ def admin_dashboard():
     """Admin dashboard page"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
-    return render_template('admin/admin_dashboard.html', **WEBSITE_CONFIG)
+    
+    try:
+        # Get stats
+        total_products = Product.query.count()
+        total_orders = Order.query.count()
+        total_users = User.query.count() if HAS_USER and User else 0
+        
+        total_sales = db.session.query(db.func.sum(Order.total_price)).scalar() or 0
+        
+        # Recent orders
+        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
+        for order in recent_orders:
+            order.formatted_total = format_price(order.total_price)
+            order.formatted_date = order.created_at.strftime('%b %d') if order.created_at else ''
+        
+        # Low stock products
+        low_stock = Product.query.filter(Product.stock < 10).limit(5).all()
+        
+        # Pending payments
+        pending_payments = []
+        if HAS_PAYMENT and Payment:
+            pending_payments = Payment.query.filter_by(status='processing').limit(5).all()
+        
+        return render_template('admin/admin_dashboard.html',
+                             total_products=total_products,
+                             total_orders=total_orders,
+                             total_users=total_users,
+                             total_sales=total_sales,
+                             formatted_total_sales=format_price(total_sales),
+                             recent_orders=recent_orders,
+                             low_stock=low_stock,
+                             pending_payments=pending_payments,
+                             **WEBSITE_CONFIG)
+    
+    except Exception as e:
+        print(f"Error in admin_dashboard: {e}")
+        return render_template('admin/admin_dashboard.html', **WEBSITE_CONFIG)
 
 @app.route('/admin/products')
 def admin_products():
-    """Admin products management - FIXED TO LOAD DATA"""
+    """Admin products management"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
     
@@ -337,7 +1072,7 @@ def admin_products():
         
         # Format prices in Naira
         for product in products:
-            product.formatted_price = f"₦{product.price:,.2f}"
+            product.formatted_price = format_price(product.price)
         
         # Pass data to template
         return render_template('admin/products.html', 
@@ -361,96 +1096,150 @@ def admin_orders():
         return redirect(url_for('admin'))
     
     try:
+        # Get status filter
+        status = request.args.get('status', '')
+        
+        # Build query
+        query = Order.query
+        
+        if status:
+            query = query.filter_by(status=status)
+        
         # Get orders
-        orders = Order.query.order_by(Order.created_at.desc()).all()
+        orders = query.order_by(Order.created_at.desc()).all()
         
         # Format total prices in Naira
         for order in orders:
-            order.formatted_total_price = f"₦{order.total_price:,.2f}"
+            order.formatted_total_price = format_price(order.total_price)
+            order.formatted_date = order.created_at.strftime('%b %d, %Y') if order.created_at else ''
             
-        return render_template('admin/order.html', orders=orders, **WEBSITE_CONFIG)
+        return render_template('admin/order.html', 
+                             orders=orders,
+                             selected_status=status,
+                             **WEBSITE_CONFIG)
     except Exception as e:
         print(f"Error in admin_orders: {e}")
-        return render_template('admin/order.html', orders=[], **WEBSITE_CONFIG)
+        return render_template('admin/order.html', 
+                             orders=[],
+                             selected_status='',
+                             **WEBSITE_CONFIG)
 
-@app.route('/admin/reviews')
-def admin_reviews():
-    """Admin reviews management"""
+@app.route('/admin/payments')
+def admin_payments():
+    """Admin payments management"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin'))
     
     try:
-        if HAS_REVIEW and Review:
-            reviews = Review.query.order_by(Review.created_at.desc()).all()
-            return render_template('admin/reviews.html', reviews=reviews, **WEBSITE_CONFIG)
-        else:
-            return render_template('admin/reviews.html', reviews=[], **WEBSITE_CONFIG)
+        if HAS_PAYMENT and Payment:
+            # Get status filter
+            status = request.args.get('status', '')
+            
+            # Build query
+            query = Payment.query.join(Order).add_entity(Order)
+            
+            if status:
+                query = query.filter(Payment.status == status)
+            
+            # Get payments with orders
+            payments_data = query.order_by(Payment.created_at.desc()).all()
+            
+            payments = []
+            for payment, order in payments_data:
+                payment.order = order
+                payment.formatted_amount = format_price(payment.amount)
+                payment.formatted_date = payment.created_at.strftime('%b %d, %Y') if payment.created_at else ''
+                payments.append(payment)
+            
+            return render_template('admin/payments.html',
+                                 payments=payments,
+                                 selected_status=status,
+                                 **WEBSITE_CONFIG)
+        
+        return render_template('admin/payments.html',
+                             payments=[],
+                             selected_status='',
+                             **WEBSITE_CONFIG)
+    
     except Exception as e:
-        print(f"Error in admin_reviews: {e}")
-        return render_template('admin/reviews.html', reviews=[], **WEBSITE_CONFIG)
+        print(f"Error in admin_payments: {e}")
+        return render_template('admin/payments.html',
+                             payments=[],
+                             selected_status='',
+                             **WEBSITE_CONFIG)
 
-@app.route('/admin/products/add')
-def add_product():
-    """Add product page - FIXED ROUTE"""
+@app.route('/admin/confirm-payment/<int:payment_id>', methods=['POST'])
+def admin_confirm_payment(payment_id):
+    """Admin confirms payment"""
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin'))
-    return render_template('admin/add_product.html', **WEBSITE_CONFIG)
-
-@app.route('/admin/products/edit/<int:product_id>')
-def edit_product(product_id):
-    """Edit product page"""
-    if not session.get('admin_logged_in'):
-        return redirect(url_for('admin'))
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     
     try:
-        product = Product.query.get_or_404(product_id)
-        product.formatted_price = f"₦{product.price:,.2f}"
-        return render_template('admin/edit_product.html', product=product, **WEBSITE_CONFIG)
+        if HAS_PAYMENT and Payment:
+            payment = Payment.query.get_or_404(payment_id)
+            order = Order.query.get(payment.order_id)
+            
+            # Update payment status
+            payment.status = 'completed'
+            payment.updated_at = datetime.utcnow()
+            
+            # Update order status
+            order.payment_status = 'completed'
+            order.status = 'processing'  # Move to processing/shipping
+            order.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Payment confirmed successfully'
+            })
+    
     except Exception as e:
-        print(f"Error loading product {product_id}: {e}")
-        return redirect(url_for('admin_products'))
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+    return jsonify({'success': False, 'message': 'Payment functionality not available'}), 500
 
-@app.route('/admin/logout')
-def admin_logout_route():
-    """Admin logout route"""
-    session.clear()
-    return redirect(url_for('admin'))
+@app.route('/admin/update-order-status/<int:order_id>', methods=['POST'])
+def admin_update_order_status(order_id):
+    """Admin updates order status"""
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        new_status = data.get('status')
+        
+        if not new_status:
+            return jsonify({'error': 'Status is required', 'success': False}), 400
+        
+        order = Order.query.get_or_404(order_id)
+        order.status = new_status
+        order.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Order status updated to {new_status}',
+            'order_id': order.id,
+            'status': new_status
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'success': False}), 500
 
 # ============ STATIC FILE SERVING ============
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
-    """Serve static files with fallback for missing images"""
+    """Serve static files"""
     try:
         return send_from_directory('static', filename)
     except:
-        # If file not found, try to serve from appropriate subdirectory
-        if filename.startswith('images/'):
-            try:
-                # Try to serve a default image
-                return send_from_directory('static/images', 'default-product.jpg')
-            except:
-                # Return 404 if default image also not found
-                return "Image not found", 404
         return "File not found", 404
-
-@app.route('/static/images/<path:filename>')
-def serve_images(filename):
-    """Serve images with fallback to default image"""
-    try:
-        return send_from_directory('static/images', filename)
-    except:
-        # Return default product image if file not found
-        try:
-            return send_from_directory('static/images', 'default-product.jpg')
-        except:
-            # Create a simple default image response
-            from flask import Response
-            return Response(
-                "Image not available",
-                status=200,
-                mimetype="text/plain"
-            )
 
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
@@ -460,158 +1249,7 @@ def serve_uploads(filename):
     except:
         return "File not found", 404
 
-@app.route('/uploads/images/<path:filename>')
-def serve_uploaded_images(filename):
-    """Serve uploaded images"""
-    try:
-        return send_from_directory('uploads/images', filename)
-    except:
-        return "Image not found", 404
-
-@app.route('/uploads/videos/<path:filename>')
-def serve_uploaded_videos(filename):
-    """Serve uploaded videos"""
-    try:
-        return send_from_directory('uploads/videos', filename)
-    except:
-        return "Video not found", 404
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-# ============ FILE UPLOAD ENDPOINTS ============
-
-@app.route('/api/upload/image', methods=['POST'])
-def upload_image():
-    """Upload product image"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            return jsonify({'success': False, 'message': 'No file selected'}), 400
-        
-        if not allowed_image_file(file.filename):
-            return jsonify({'success': False, 'message': 'File type not allowed. Use PNG, JPG, JPEG, GIF, or WEBP'}), 400
-        
-        # Generate unique filename
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        
-        # Save file
-        file_path = os.path.join(IMAGE_FOLDER, unique_filename)
-        file.save(file_path)
-        
-        # Return URL path
-        url_path = f"/uploads/images/{unique_filename}"
-        
-        return jsonify({
-            'success': True,
-            'message': 'Image uploaded successfully',
-            'url': url_path,
-            'filename': unique_filename
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/upload/video', methods=['POST'])
-def upload_video():
-    """Upload product video"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            return jsonify({'success': False, 'message': 'No file selected'}), 400
-        
-        if not allowed_video_file(file.filename):
-            return jsonify({'success': False, 'message': 'File type not allowed. Use MP4, MOV, AVI, MKV, or WEBM'}), 400
-        
-        # Generate unique filename
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        
-        # Save file
-        file_path = os.path.join(VIDEO_FOLDER, unique_filename)
-        file.save(file_path)
-        
-        # Return URL path
-        url_path = f"/uploads/videos/{unique_filename}"
-        
-        return jsonify({
-            'success': True,
-            'message': 'Video uploaded successfully',
-            'url': url_path,
-            'filename': unique_filename
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
 # ============ API ENDPOINTS ============
-
-@app.route('/api')
-def api_info():
-    """API documentation"""
-    return jsonify({
-        'app': 'NoraHairLine',
-        'version': '1.0.0',
-        'status': 'online',
-        'currency': 'NGN (₦)',
-        'contact': {
-            'phone': WEBSITE_CONFIG['phone'],
-            'whatsapp': WEBSITE_CONFIG['whatsapp'],
-            'instagram': WEBSITE_CONFIG['instagram'],
-            'address': WEBSITE_CONFIG['address']
-        },
-        'endpoints': {
-            'products': {
-                'GET /api/products': 'List all products',
-                'GET /api/products/<id>': 'Get single product',
-                'GET /api/products/featured': 'Get featured products'
-            },
-            'orders': {
-                'GET /api/orders': 'List all orders',
-                'POST /api/orders': 'Create new order'
-            },
-            'upload': {
-                'POST /api/upload/image': 'Upload image (admin only)',
-                'POST /api/upload/video': 'Upload video (admin only)'
-            },
-            'admin': {
-                'POST /api/admin/login': 'Admin login',
-                'POST /api/admin/logout': 'Admin logout',
-                'GET /api/admin/dashboard': 'Dashboard stats',
-                'GET /api/admin/check-auth': 'Check admin authentication',
-                'POST /api/admin/products': 'Create product',
-                'PUT /api/admin/products/<id>': 'Update product',
-                'DELETE /api/admin/products/<id>': 'Delete product',
-                'GET /api/admin/reviews': 'Get all reviews (admin only)',
-                'PUT /api/admin/reviews/<id>/approve': 'Approve review (admin only)',
-                'DELETE /api/admin/reviews/<id>': 'Delete review (admin only)'
-            },
-            'reviews': {
-                'GET /api/reviews': 'Get all reviews',
-                'POST /api/reviews': 'Create new review',
-                'GET /api/products/<id>/reviews': 'Get reviews for specific product'
-            },
-            'health': 'GET /health'
-        }
-    })
-
-# ============ PRODUCTS API ============
 
 @app.route('/api/products', methods=['GET'])
 def api_get_products():
@@ -637,7 +1275,7 @@ def api_get_products():
             'name': p.name,
             'description': p.description,
             'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
+            'formatted_price': format_price(p.price),
             'category': p.category,
             'image_url': p.image_url or '/static/images/default-product.jpg',
             'video_url': p.video_url or '',
@@ -649,162 +1287,6 @@ def api_get_products():
         } for p in products])
         
     except Exception as e:
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/products/<int:product_id>', methods=['GET'])
-def api_get_product(product_id):
-    """Get single product by ID"""
-    try:
-        product = Product.query.get_or_404(product_id)
-        return jsonify({
-            'id': product.id,
-            'name': product.name,
-            'description': product.description,
-            'price': float(product.price),
-            'formatted_price': f"₦{float(product.price):,.2f}",  # Naira format
-            'category': product.category,
-            'image_url': product.image_url or '/static/images/default-product.jpg',
-            'video_url': product.video_url or '',
-            'image_urls': json.loads(product.image_urls) if product.image_urls else [],
-            'stock': product.stock,
-            'featured': product.featured,
-            'created_at': product.created_at.isoformat() if product.created_at else None,
-            'updated_at': product.updated_at.isoformat() if product.updated_at else None
-        })
-    except Exception as e:
-        return jsonify({'error': str(e), 'success': False}), 404
-
-@app.route('/api/products/featured', methods=['GET'])
-def api_get_featured_products():
-    """Get featured products for homepage"""
-    try:
-        products = Product.query.filter_by(featured=True).order_by(Product.created_at.desc()).limit(6).all()
-        return jsonify([{
-            'id': p.id,
-            'name': p.name,
-            'description': p.description[:100] + '...' if len(p.description) > 100 else p.description,
-            'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
-            'category': p.category,
-            'image_url': p.image_url or '/static/images/default-product.jpg',
-            'video_url': p.video_url or '',
-            'image_urls': json.loads(p.image_urls) if p.image_urls else []
-        } for p in products])
-    except Exception as e:
-        return jsonify({'error': str(e), 'success': False}), 500
-
-# ============ ORDERS API ============
-
-@app.route('/api/orders', methods=['GET'])
-def api_get_orders():
-    """Get all orders"""
-    try:
-        orders = Order.query.order_by(Order.created_at.desc()).all()
-        return jsonify([{
-            'id': o.id,
-            'customer_name': o.customer_name,
-            'customer_email': o.customer_email,
-            'customer_phone': o.customer_phone,
-            'customer_address': o.customer_address,
-            'product_id': o.product_id,
-            'quantity': o.quantity,
-            'total_price': float(o.total_price),
-            'formatted_total_price': f"₦{float(o.total_price):,.2f}",  # Naira format
-            'status': o.status,
-            'payment_status': o.payment_status,
-            'notes': o.notes,
-            'created_at': o.created_at.isoformat() if o.created_at else None,
-            'updated_at': o.updated_at.isoformat() if o.updated_at else None
-        } for o in orders])
-    except Exception as e:
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/orders', methods=['POST'])
-def api_create_order():
-    """Create new order"""
-    try:
-        data = request.get_json()
-        
-        required_fields = ['customer_name', 'customer_email', 'product_id', 'quantity']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
-        
-        product = Product.query.get(data['product_id'])
-        if not product:
-            return jsonify({'error': 'Product not found', 'success': False}), 404
-        
-        # Calculate total price in Naira
-        total_price = float(product.price) * data['quantity']
-        
-        # Check stock
-        if product.stock < data['quantity']:
-            return jsonify({'error': f'Only {product.stock} items left in stock', 'success': False}), 400
-        
-        # Update stock
-        product.stock -= data['quantity']
-        
-        order = Order(
-            customer_name=data['customer_name'],
-            customer_email=data['customer_email'],
-            customer_phone=data.get('customer_phone', ''),
-            customer_address=data.get('customer_address', ''),
-            product_id=data['product_id'],
-            quantity=data['quantity'],
-            total_price=total_price,
-            status='Pending',
-            payment_status='Pending',
-            notes=data.get('notes', '')
-        )
-        
-        db.session.add(order)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Order created successfully',
-            'order_id': order.id,
-            'order': {
-                'id': order.id,
-                'customer_name': order.customer_name,
-                'total_price': float(order.total_price),
-                'formatted_total_price': f"₦{float(order.total_price):,.2f}",
-                'status': order.status
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/orders/<int:order_id>/status', methods=['PUT'])
-def api_update_order_status(order_id):
-    """Update order status"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        data = request.get_json()
-        new_status = data.get('status')
-        
-        if not new_status:
-            return jsonify({'error': 'Status is required', 'success': False}), 400
-        
-        order = Order.query.get_or_404(order_id)
-        order.status = new_status
-        order.updated_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Order status updated to {new_status}',
-            'order_id': order.id,
-            'status': new_status
-        })
-        
-    except Exception as e:
-        db.session.rollback()
         return jsonify({'error': str(e), 'success': False}), 500
 
 # ============ ADMIN API ============
@@ -843,399 +1325,19 @@ def api_admin_logout():
     session.pop('admin_username', None)
     return jsonify({'success': True, 'message': 'Logged out'})
 
-@app.route('/api/admin/check-auth', methods=['GET'])
-def api_check_admin_auth():
-    """Check if admin is logged in"""
-    return jsonify({
-        'logged_in': session.get('admin_logged_in', False),
-        'username': session.get('admin_username', '')
-    })
-
-@app.route('/api/admin/dashboard', methods=['GET'])
-def api_admin_dashboard():
-    """Admin dashboard statistics"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'error': 'Unauthorized', 'success': False}), 401
-        
-        total_sales = float(db.session.query(db.func.sum(Order.total_price)).scalar() or 0)
-        
-        stats = {
-            'total_products': Product.query.count(),
-            'total_orders': Order.query.count(),
-            'total_reviews': Review.query.count() if HAS_REVIEW and Review else 0,
-            'total_sales': total_sales,
-            'formatted_total_sales': f"₦{total_sales:,.2f}",  # Naira format
-            'pending_orders': Order.query.filter_by(status='Pending').count(),
-            'completed_orders': Order.query.filter_by(status='Completed').count(),
-            'low_stock': Product.query.filter(Product.stock < 10).count(),
-            'out_of_stock': Product.query.filter(Product.stock == 0).count()
-        }
-        
-        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
-        stats['recent_orders'] = [{
-            'id': o.id,
-            'customer_name': o.customer_name,
-            'product_id': o.product_id,
-            'total': float(o.total_price),
-            'formatted_total': f"₦{float(o.total_price):,.2f}",  # Naira format
-            'status': o.status,
-            'date': o.created_at.strftime('%Y-%m-%d') if o.created_at else ''
-        } for o in recent_orders]
-        
-        recent_products = Product.query.order_by(Product.created_at.desc()).limit(5).all()
-        stats['recent_products'] = [{
-            'id': p.id,
-            'name': p.name,
-            'price': float(p.price),
-            'formatted_price': f"₦{float(p.price):,.2f}",  # Naira format
-            'stock': p.stock
-        } for p in recent_products]
-        
-        return jsonify({'success': True, 'stats': stats})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ============ ADMIN PRODUCTS API ============
-
-@app.route('/api/admin/products', methods=['POST'])
-def api_create_product():
-    """Create new product (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        data = request.get_json()
-        
-        required_fields = ['name', 'description', 'price', 'category']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
-        
-        image_urls = data.get('image_urls', [])
-        if isinstance(image_urls, list):
-            image_urls_json = json.dumps(image_urls)
-        else:
-            image_urls_json = '[]'
-        
-        product = Product(
-            name=data['name'],
-            description=data['description'],
-            price=float(data['price']),
-            category=data['category'],
-            image_url=data.get('image_url', '/static/images/default-product.jpg'),
-            video_url=data.get('video_url', ''),
-            image_urls=image_urls_json,
-            stock=int(data.get('stock', 100)),
-            featured=bool(data.get('featured', False)),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
-        
-        db.session.add(product)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Product created successfully',
-            'product_id': product.id,
-            'product': {
-                'id': product.id,
-                'name': product.name,
-                'price': float(product.price),
-                'formatted_price': f"₦{float(product.price):,.2f}"  # Naira format
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/admin/products/<int:product_id>', methods=['PUT'])
-def api_update_product(product_id):
-    """Update product (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        product = Product.query.get_or_404(product_id)
-        data = request.get_json()
-        
-        if 'name' in data:
-            product.name = data['name']
-        if 'description' in data:
-            product.description = data['description']
-        if 'price' in data:
-            product.price = float(data['price'])
-        if 'category' in data:
-            product.category = data['category']
-        if 'image_url' in data:
-            product.image_url = data['image_url']
-        if 'video_url' in data:
-            product.video_url = data['video_url']
-        if 'image_urls' in data:
-            image_urls = data['image_urls']
-            if isinstance(image_urls, list):
-                product.image_urls = json.dumps(image_urls)
-        if 'stock' in data:
-            product.stock = int(data['stock'])
-        if 'featured' in data:
-            product.featured = bool(data['featured'])
-        
-        product.updated_at = datetime.utcnow()
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Product updated successfully'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
-def api_delete_product(product_id):
-    """Delete product (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        product = Product.query.get_or_404(product_id)
-        
-        db.session.delete(product)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Product deleted successfully'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-# ============ REVIEWS API ============
-
-if HAS_REVIEW and Review:
-    @app.route('/api/reviews', methods=['GET'])
-    def api_get_reviews():
-        """Get all reviews"""
-        try:
-            reviews = Review.query.all()
-            return jsonify([{
-                'id': r.id,
-                'product_id': r.product_id,
-                'customer_name': r.customer_name,
-                'customer_email': r.customer_email,
-                'rating': r.rating,
-                'comment': r.comment,
-                'approved': r.approved,
-                'created_at': r.created_at.isoformat() if r.created_at else None
-            } for r in reviews])
-        except Exception as e:
-            return jsonify({'error': str(e), 'success': False}), 500
-    
-    @app.route('/api/products/<int:product_id>/reviews', methods=['GET'])
-    def api_get_product_reviews(product_id):
-        """Get reviews for a specific product"""
-        try:
-            reviews = Review.query.filter_by(product_id=product_id, approved=True).all()
-            return jsonify([{
-                'id': r.id,
-                'customer_name': r.customer_name,
-                'rating': r.rating,
-                'comment': r.comment,
-                'created_at': r.created_at.isoformat() if r.created_at else None
-            } for r in reviews])
-        except Exception as e:
-            return jsonify({'error': str(e), 'success': False}), 500
-    
-    @app.route('/api/reviews', methods=['POST'])
-    def api_create_review():
-        """Create new review"""
-        try:
-            data = request.get_json()
-            
-            required_fields = ['product_id', 'customer_name', 'rating']
-            for field in required_fields:
-                if field not in data:
-                    return jsonify({'error': f'Missing field: {field}', 'success': False}), 400
-            
-            # Check if product exists
-            product = Product.query.get(data['product_id'])
-            if not product:
-                return jsonify({'error': 'Product not found', 'success': False}), 404
-            
-            # Validate rating (1-5)
-            rating = int(data['rating'])
-            if rating < 1 or rating > 5:
-                return jsonify({'error': 'Rating must be between 1 and 5', 'success': False}), 400
-            
-            review = Review(
-                product_id=data['product_id'],
-                customer_name=data['customer_name'],
-                customer_email=data.get('customer_email', ''),
-                rating=rating,
-                comment=data.get('comment', ''),
-                approved=False,  # Reviews need admin approval
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-            
-            db.session.add(review)
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Review submitted successfully. It will appear after approval.',
-                'review_id': review.id
-            })
-            
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e), 'success': False}), 500
-
-# ============ ADMIN REVIEWS API ============
-
-@app.route('/api/admin/reviews', methods=['GET'])
-def api_admin_get_reviews():
-    """Get all reviews (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        if not HAS_REVIEW or not Review:
-            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
-        
-        reviews = Review.query.order_by(Review.created_at.desc()).all()
-        
-        return jsonify([{
-            'id': r.id,
-            'product_id': r.product_id,
-            'customer_name': r.customer_name,
-            'customer_email': r.customer_email,
-            'rating': r.rating,
-            'comment': r.comment,
-            'approved': r.approved,
-            'created_at': r.created_at.isoformat() if r.created_at else None,
-            'updated_at': r.updated_at.isoformat() if r.updated_at else None
-        } for r in reviews])
-        
-    except Exception as e:
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/admin/reviews/<int:review_id>/approve', methods=['PUT'])
-def api_admin_approve_review(review_id):
-    """Approve review (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        if not HAS_REVIEW or not Review:
-            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
-        
-        review = Review.query.get_or_404(review_id)
-        review.approved = True
-        review.updated_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Review approved successfully'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-@app.route('/api/admin/reviews/<int:review_id>', methods=['DELETE'])
-def api_admin_delete_review(review_id):
-    """Delete review (admin only)"""
-    try:
-        if not session.get('admin_logged_in'):
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-        if not HAS_REVIEW or not Review:
-            return jsonify({'success': False, 'message': 'Reviews not available'}), 404
-        
-        review = Review.query.get_or_404(review_id)
-        
-        db.session.delete(review)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Review deleted successfully'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'success': False}), 500
-
-# ============ HEALTH & UTILITY ============
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'app': 'NoraHairLine',
-        'brand': 'NORA HAIR LINE - Luxury for less...',
-        'contact': WEBSITE_CONFIG['phone'],
-        'location': WEBSITE_CONFIG['address'],
-        'timestamp': datetime.utcnow().isoformat(),
-        'database': 'connected',
-        'version': '1.0.0',
-        'currency': 'NGN (₦)'
-    })
-
 # ============ ERROR HANDLERS ============
 
 @app.errorhandler(404)
 def page_not_found(e):
     """Custom 404 page"""
-    try:
-        return render_template('404.html', **WEBSITE_CONFIG), 404
-    except:
-        return "Page not found", 404
+    cart_count = get_cart_count()
+    return render_template('404.html', cart_count=cart_count, **WEBSITE_CONFIG), 404
 
 @app.errorhandler(500)
 def internal_error(e):
     """Custom 500 page"""
-    try:
-        return render_template('500.html', **WEBSITE_CONFIG), 500
-    except:
-        return "Internal server error", 500
-
-# ============ MIDDLEWARE FOR ADMIN PROTECTION ============
-
-@app.before_request
-def check_admin_access():
-    admin_routes = [
-        '/admin/dashboard',
-        '/admin/products',
-        '/admin/orders',
-        '/admin/reviews',
-        '/admin/products/add',
-        '/admin/products/edit/',
-        '/admin/logout',
-        '/api/upload/image',
-        '/api/upload/video',
-        '/api/admin/products',
-        '/api/admin/dashboard',
-        '/api/admin/reviews'
-    ]
-    
-    for route in admin_routes:
-        if request.path.startswith(route):
-            if not session.get('admin_logged_in'):
-                if request.path.startswith('/api/'):
-                    return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-                else:
-                    return redirect(url_for('admin'))
+    cart_count = get_cart_count()
+    return render_template('500.html', cart_count=cart_count, **WEBSITE_CONFIG), 500
 
 # ============ START APPLICATION ============
 
@@ -1246,19 +1348,18 @@ if __name__ == '__main__':
     ensure_directories()
     
     print(f"\n{'='*60}")
-    print(f"🚀 NORA HAIR LINE - LUXURY FOR LESS")
+    print(f"🚀 NORA HAIR LINE - COMPLETE E-COMMERCE")
     print(f"{'='*60}")
     print(f"🌐 Homepage:          http://localhost:{port}")
     print(f"🛍️  Shop:              http://localhost:{port}/shop")
+    print(f"💰 Payment Account:   {PAYMENT_CONFIG['account_number']}")
+    print(f"🏦 Bank:              {PAYMENT_CONFIG['bank_name']}")
+    print(f"👤 Account Name:      {PAYMENT_CONFIG['account_name']}")
     print(f"👑 Admin Login:       http://localhost:{port}/admin")
     print(f"📊 Admin Dashboard:   http://localhost:{port}/admin/dashboard")
-    print(f"🛍️  Admin Products:    http://localhost:{port}/admin/products")
-    print(f"➕ Add Product:        http://localhost:{port}/admin/products/add")
-    print(f"💰 Currency:          NGN (₦ - Nigerian Naira)")
+    print(f"💰 Currency:          {PAYMENT_CONFIG['currency']} ({PAYMENT_CONFIG['currency_symbol']})")
     print(f"📍 Address:           {WEBSITE_CONFIG['address']}")
     print(f"📞 Contact:           {WEBSITE_CONFIG['phone']}")
-    print(f"📸 Instagram:         {WEBSITE_CONFIG['instagram']}")
-    print(f"💬 WhatsApp:          {WEBSITE_CONFIG['whatsapp']}")
     print(f"{'='*60}")
     
     app.run(host='0.0.0.0', port=port, debug=True)
