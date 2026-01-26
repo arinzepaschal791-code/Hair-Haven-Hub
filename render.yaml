@@ -8,9 +8,7 @@ services:
     startCommand: gunicorn main:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18  # Use 3.9.x for better compatibility
-      - key: FLASK_ENV
-        value: production
+        value: 3.9.18
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
