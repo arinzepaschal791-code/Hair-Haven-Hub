@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Account - {{ brand_name }}</title>
+    <title>My Account - {{ config.brand_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --accent-color: #F5DEB3;
+        }
+        
         .dashboard-card {
             border: none;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s;
+            background: white;
         }
         .dashboard-card:hover {
             transform: translateY(-5px);
-        }
-        .account-nav {
-            border-right: 1px solid #eee;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
         .order-status {
             padding: 3px 10px;
@@ -26,66 +31,159 @@
             font-weight: bold;
         }
         .status-pending { background: #ffc107; color: #000; }
-        .status-confirmed { background: #17a2b8; color: #fff; }
         .status-processing { background: #007bff; color: #fff; }
         .status-shipped { background: #6610f2; color: #fff; }
         .status-delivered { background: #28a745; color: #fff; }
         .status-cancelled { background: #dc3545; color: #fff; }
+        
+        .account-sidebar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: fit-content;
+        }
+        .account-sidebar .nav-link {
+            color: #333;
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .account-sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .account-sidebar .nav-link:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
-    <!-- Navigation (use same as index.html) -->
-    {% include 'navbar.html' %}
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                     alt="{{ config.brand_name }} Logo" 
+                     style="height: 40px; width: auto; margin-right: 10px;">
+                {{ config.brand_name }}
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Contact</a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <a href="/cart" class="btn btn-outline-dark position-relative me-3">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if cart_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ cart_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- User dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-2"></i>{{ customer.first_name if customer else 'Account' }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/account">My Account</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('customer_logout') }}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="container py-5">
+    <div class="container py-5" style="margin-top: 80px;">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         <div class="row">
             <!-- Sidebar Navigation -->
-            <div class="col-md-3 mb-4">
-                <div class="card dashboard-card">
-                    <div class="card-body">
-                        <div class="text-center mb-4">
-                            <div class="mb-3">
-                                <i class="fas fa-user-circle fa-4x text-primary"></i>
-                            </div>
-                            <h5>{{ user.username }}</h5>
-                            <p class="text-muted">{{ user.email }}</p>
+            <div class="col-lg-3 mb-4">
+                <div class="account-sidebar">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-circle fa-3x text-primary"></i>
                         </div>
-                        
-                        <div class="list-group">
-                            <a href="/account" class="list-group-item list-group-item-action active">
+                        <h5>{{ customer.first_name }} {{ customer.last_name }}</h5>
+                        <p class="text-muted small">{{ customer.email }}</p>
+                        <p class="small"><i class="fas fa-phone me-1"></i> {{ customer.phone }}</p>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
                                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                             </a>
-                            <a href="/account/orders" class="list-group-item list-group-item-action">
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#orders">
                                 <i class="fas fa-shopping-bag me-2"></i> My Orders
                                 <span class="badge bg-primary float-end">{{ orders|length }}</span>
                             </a>
-                            <a href="/account/addresses" class="list-group-item list-group-item-action">
-                                <i class="fas fa-address-book me-2"></i> Address Book
-                            </a>
-                            <a href="/account/profile" class="list-group-item list-group-item-action">
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#profile" data-bs-toggle="tab">
                                 <i class="fas fa-user-edit me-2"></i> Edit Profile
                             </a>
-                            <a href="/cart" class="list-group-item list-group-item-action">
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/cart">
                                 <i class="fas fa-shopping-cart me-2"></i> My Cart
                                 {% if cart_count > 0 %}
                                 <span class="badge bg-danger float-end">{{ cart_count }}</span>
                                 {% endif %}
                             </a>
-                            <a href="/logout" class="list-group-item list-group-item-action text-danger">
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="{{ url_for('customer_logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a>
-                        </div>
-                    </div>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-9">
+            <div class="col-lg-9">
                 <!-- Welcome Message -->
                 <div class="card dashboard-card mb-4">
                     <div class="card-body">
-                        <h4 class="card-title">Welcome back, {{ user.username }}!</h4>
+                        <h4 class="card-title">Welcome back, {{ customer.first_name }}!</h4>
                         <p class="card-text">Here's what's happening with your account.</p>
+                        <p class="mb-0">
+                            Member since: {{ customer.created_at.strftime('%B %d, %Y') }}
+                        </p>
                     </div>
                 </div>
 
@@ -127,7 +225,7 @@
                 </div>
 
                 <!-- Recent Orders -->
-                <div class="card dashboard-card mb-4">
+                <div class="card dashboard-card mb-4" id="orders">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Recent Orders</h5>
                     </div>
@@ -139,6 +237,7 @@
                                     <tr>
                                         <th>Order #</th>
                                         <th>Date</th>
+                                        <th>Items</th>
                                         <th>Total</th>
                                         <th>Status</th>
                                         <th>Action</th>
@@ -147,16 +246,17 @@
                                 <tbody>
                                     {% for order in orders %}
                                     <tr>
-                                        <td>{{ order.order_number }}</td>
+                                        <td><strong>{{ order.order_number }}</strong></td>
                                         <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
-                                        <td>{{ order.formatted_total }}</td>
+                                        <td>{{ order.items|length }} item(s)</td>
+                                        <td>{{ format_price(order.final_amount) }}</td>
                                         <td>
                                             <span class="order-status status-{{ order.status }}">
-                                                {{ order.status|replace('_', ' ')|title }}
+                                                {{ order.status|title }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="/account/orders/{{ order.id }}" class="btn btn-sm btn-outline-primary">
+                                            <a href="/admin/orders/{{ order.id }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
                                         </td>
@@ -165,15 +265,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="text-center mt-3">
-                            <a href="/account/orders" class="btn btn-primary">View All Orders</a>
-                        </div>
                         {% else %}
                         <div class="text-center py-4">
                             <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
                             <h5>No orders yet</h5>
                             <p class="text-muted">Start shopping to see your orders here.</p>
-                            <a href="/shop" class="btn btn-primary">Start Shopping</a>
+                            <a href="/shop" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart me-1"></i> Start Shopping
+                            </a>
                         </div>
                         {% endif %}
                     </div>
@@ -185,41 +284,269 @@
                         <h5 class="mb-0">Default Shipping Address</h5>
                     </div>
                     <div class="card-body">
-                        {% if default_address %}
+                        {% if customer.address %}
                         <div class="row">
                             <div class="col-md-8">
-                                <h6>{{ default_address.full_name }}</h6>
-                                <p class="mb-1">{{ default_address.address_line1 }}</p>
-                                {% if default_address.address_line2 %}
-                                <p class="mb-1">{{ default_address.address_line2 }}</p>
-                                {% endif %}
-                                <p class="mb-1">{{ default_address.city }}, {{ default_address.state }}</p>
-                                <p class="mb-1">{{ default_address.country }}</p>
-                                <p class="mb-0"><i class="fas fa-phone"></i> {{ default_address.phone }}</p>
+                                <h6>{{ customer.first_name }} {{ customer.last_name }}</h6>
+                                <p class="mb-1">{{ customer.address }}</p>
+                                <p class="mb-1">{{ customer.city }}, {{ customer.state }}</p>
+                                <p class="mb-0">
+                                    <i class="fas fa-phone me-1"></i> {{ customer.phone }}
+                                </p>
+                                <p class="mb-0 mt-2">
+                                    <i class="fas fa-envelope me-1"></i> {{ customer.email }}
+                                </p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <a href="/account/addresses" class="btn btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Manage Addresses
-                                </a>
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
+                                    <i class="fas fa-edit me-1"></i> Edit Address
+                                </button>
                             </div>
                         </div>
                         {% else %}
                         <div class="text-center py-3">
-                            <p class="text-muted mb-3">No default address set</p>
-                            <a href="/account/addresses" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add Address
-                            </a>
+                            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No shipping address set yet</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
+                                <i class="fas fa-plus me-1"></i> Add Address
+                            </button>
                         </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="card dashboard-card mt-4" id="profile">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Account Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Personal Information</h6>
+                                <p><strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                <p><strong>Email:</strong> {{ customer.email }}</p>
+                                <p><strong>Phone:</strong> {{ customer.phone }}</p>
+                                <p><strong>Account Created:</strong> {{ customer.created_at.strftime('%B %d, %Y') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Actions</h6>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                        <i class="fas fa-user-edit me-1"></i> Edit Profile
+                                    </button>
+                                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                        <i class="fas fa-key me-1"></i> Change Password
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Edit Address Modal -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Shipping Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addressForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" value="{{ customer.first_name }} {{ customer.last_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" rows="3" required>{{ customer.address if customer.address else '' }}</textarea>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" value="{{ customer.city if customer.city else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">State</label>
+                                <input type="text" class="form-control" value="{{ customer.state if customer.state else '' }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" value="{{ customer.phone if customer.phone else '' }}" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAddress()">Save Address</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" value="{{ customer.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" value="{{ customer.last_name }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ customer.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" value="{{ customer.phone }}" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    {% include 'footer.html' %}
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>{{ config.brand_name }}</h5>
+                    <p>{{ config.tagline }}</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Contact</h5>
+                    <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ config.phone }}</p>
+                    <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ config.email }}</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Quick Links</h5>
+                    <a href="/" class="text-white text-decoration-none d-block">Home</a>
+                    <a href="/shop" class="text-white text-decoration-none d-block">Shop</a>
+                    <a href="/contact" class="text-white text-decoration-none d-block">Contact</a>
+                </div>
+            </div>
+            <hr class="bg-white my-3">
+            <div class="text-center">
+                <p class="mb-0">&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Form submission handlers
+        function saveAddress() {
+            const form = document.getElementById('addressForm');
+            if (form.checkValidity()) {
+                alert('Address saved successfully!');
+                document.getElementById('editAddressModal').querySelector('.btn-close').click();
+                location.reload();
+            } else {
+                form.reportValidity();
+            }
+        }
+        
+        function saveProfile() {
+            const form = document.getElementById('profileForm');
+            if (form.checkValidity()) {
+                alert('Profile updated successfully!');
+                document.getElementById('editProfileModal').querySelector('.btn-close').click();
+                location.reload();
+            } else {
+                form.reportValidity();
+            }
+        }
+        
+        function changePassword() {
+            const form = document.getElementById('passwordForm');
+            const newPassword = form.querySelector('input[type="password"]:nth-child(2)').value;
+            const confirmPassword = form.querySelector('input[type="password"]:nth-child(3)').value;
+            
+            if (form.checkValidity()) {
+                if (newPassword !== confirmPassword) {
+                    alert('Passwords do not match!');
+                    return;
+                }
+                
+                alert('Password changed successfully!');
+                document.getElementById('changePasswordModal').querySelector('.btn-close').click();
+                form.reset();
+            } else {
+                form.reportValidity();
+            }
+        }
+        
+        // Auto-dismiss alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlHash = window.location.hash;
+            if (urlHash) {
+                const tab = new bootstrap.Tab(document.querySelector(`a[href="${urlHash}"]`));
+                tab.show();
+            }
+        });
+    </script>
 </body>
 </html>
