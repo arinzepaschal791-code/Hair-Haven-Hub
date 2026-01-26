@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: norahairline
+    name: hair-haven-hub
     env: python
     buildCommand: |
       pip install --upgrade pip
@@ -12,7 +12,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
-        value: admin@example.com  # CHANGE THIS
+        value: admin@yourdomain.com  # CHANGE THIS
       - key: ADMIN_PASSWORD
-        value: AdminSecurePass123!  # CHANGE THIS
+        value: YourStrongPassword123!  # CHANGE THIS
     plan: free
