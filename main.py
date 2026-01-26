@@ -1,4 +1,4 @@
-# main.py - COMPLETE FIXED VERSION FOR NORA HAIR LINE
+# main.py - COMPLETE FIXED VERSION FOR NORA HAIR LINE (Render Compatible)
 import os
 import sys
 import traceback
@@ -16,7 +16,18 @@ app = Flask(__name__)
 
 # ========== CONFIGURATION ==========
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-2026-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+
+# Database configuration for Render
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Fix for Render's PostgreSQL URL format
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # Fallback to SQLite for local development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -161,6 +172,104 @@ BUSINESS_CONFIG = {
     'year': datetime.now().year
 }
 
+# ========== DATABASE INITIALIZATION ==========
+def init_db():
+    """Initialize database with tables and sample data - MUST RUN ON APP START"""
+    print("🔄 Initializing database...", file=sys.stderr)
+    
+    try:
+        with app.app_context():
+            # Create all tables
+            db.create_all()
+            print("✅ Database tables created", file=sys.stderr)
+            
+            # Check if data already exists
+            if Category.query.count() == 0:
+                # Add sample categories for hair business
+                categories = [
+                    Category(name='Lace Wigs', slug='lace-wigs', 
+                            description='Natural looking lace front wigs with HD lace'),
+                    Category(name='Hair Bundles', slug='hair-bundles',
+                            description='Premium 100% human hair bundles in various textures'),
+                    Category(name='Closures', slug='closures',
+                            description='Hair closures for protective styling'),
+                    Category(name='Frontals', slug='frontals',
+                            description='13x4 and 13x6 lace frontals'),
+                    Category(name='360 Wigs', slug='360-wigs',
+                            description='360 lace wigs for full perimeter styling'),
+                    Category(name='Hair Care', slug='hair-care',
+                            description='Products for hair maintenance and growth'),
+                ]
+                db.session.add_all(categories)
+                db.session.commit()
+                print("✅ Sample categories added", file=sys.stderr)
+            
+            if Product.query.count() == 0:
+                # Add sample hair products
+                categories = Category.query.all()
+                
+                sample_products = [
+                    ('Brazilian Body Wave 24"', 12999.99, 15999.99, 50, 'hair-bundles', 
+                     'Premium Brazilian body wave hair, 24 inches, 100% human hair', 'straight'),
+                    ('Peruvian Straight 22"', 14999.99, 17999.99, 30, 'hair-bundles',
+                     'Silky straight Peruvian hair, 22 inches, natural black', 'straight'),
+                    ('13x4 Lace Frontal Wig', 19999.99, 23999.99, 20, 'lace-wigs',
+                     'HD lace frontal wig with natural hairline', 'body-wave'),
+                    ('4x4 Lace Closure', 8999.99, 11999.99, 40, 'closures',
+                     '4x4 HD lace closure with bleached knots', 'straight'),
+                    ('13x6 Lace Frontal', 15999.99, 19999.99, 25, 'frontals',
+                     '13x6 lace frontal for natural look', 'curly'),
+                    ('Hair Growth Oil', 2999.99, 3999.99, 100, 'hair-care',
+                     'Essential oils for hair growth and thickness', None),
+                    ('360 Lace Frontal Wig', 22999.99, 27999.99, 10, '360-wigs',
+                     '360 lace wig for full perimeter styling', 'wavy'),
+                    ('Malaysian Straight 26"', 16999.99, 20999.99, 15, 'hair-bundles',
+                     'Premium Malaysian straight hair, 26 inches', 'straight'),
+                ]
+                
+                for i, (name, price, compare_price, quantity, category_slug, desc, texture) in enumerate(sample_products):
+                    category = Category.query.filter_by(slug=category_slug).first()
+                    if category:
+                        product = Product(
+                            name=name,
+                            slug=name.lower().replace(' ', '-').replace('"', ''),
+                            description=desc,
+                            price=price,
+                            compare_price=compare_price,
+                            quantity=quantity,
+                            sku=f'HAIR-{i+1:03d}',
+                            category_id=category.id,
+                            featured=(i < 6),
+                            texture=texture,
+                            image_url=f'product-{i+1}.jpg'
+                        )
+                        db.session.add(product)
+                
+                db.session.commit()
+                print("✅ Sample products added", file=sys.stderr)
+            
+            if User.query.count() == 0:
+                # Add default admin user
+                admin = User(
+                    username='admin',
+                    email='admin@norahairline.com',
+                    password=generate_password_hash('admin123'),
+                    is_admin=True
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("✅ Admin user created", file=sys.stderr)
+            
+            print("✅ Database initialization complete", file=sys.stderr)
+            return True
+    except Exception as e:
+        print(f"❌ Database initialization error: {str(e)}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return False
+
+# ========== INITIALIZE DATABASE ON APP START ==========
+init_db()
+
 # ========== HELPER FUNCTIONS ==========
 def format_price(value):
     """Safely format price value"""
@@ -213,8 +322,9 @@ def inject_global_vars():
     
     try:
         categories = Category.query.all()
-    except:
-        pass
+    except Exception as e:
+        print(f"❌ Context processor error (categories): {str(e)}", file=sys.stderr)
+        categories = []
     
     if 'cart' in session:
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
@@ -255,6 +365,8 @@ def index():
                              categories=categories)
     except Exception as e:
         print(f"❌ Homepage error: {str(e)}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        # Return a working homepage even if there's an error
         return render_template('index.html',
                              featured_products=[],
                              categories=[])
@@ -843,98 +955,32 @@ def admin_delete_review(id):
         flash('Error deleting review.', 'danger')
         return redirect(url_for('admin_reviews'))
 
-# ========== DATABASE INITIALIZATION ==========
-def init_db():
-    """Initialize database with tables and sample data"""
-    with app.app_context():
-        db.create_all()
-        print("✅ Database tables created", file=sys.stderr)
-        
-        # Check if data already exists
-        if Category.query.count() == 0:
-            # Add sample categories for hair business
-            categories = [
-                Category(name='Lace Wigs', slug='lace-wigs', 
-                        description='Natural looking lace front wigs with HD lace'),
-                Category(name='Hair Bundles', slug='hair-bundles',
-                        description='Premium 100% human hair bundles in various textures'),
-                Category(name='Closures', slug='closures',
-                        description='Hair closures for protective styling'),
-                Category(name='Frontals', slug='frontals',
-                        description='13x4 and 13x6 lace frontals'),
-                Category(name='360 Wigs', slug='360-wigs',
-                        description='360 lace wigs for full perimeter styling'),
-                Category(name='Hair Care', slug='hair-care',
-                        description='Products for hair maintenance and growth'),
-            ]
-            db.session.add_all(categories)
-            db.session.commit()
-            print("✅ Sample categories added", file=sys.stderr)
-        
-        if Product.query.count() == 0:
-            # Add sample hair products
-            categories = Category.query.all()
-            
-            sample_products = [
-                ('Brazilian Body Wave 24"', 129.99, 99.99, 50, 'hair-bundles', 
-                 'Premium Brazilian body wave hair, 24 inches, 100% human hair', 'straight'),
-                ('Peruvian Straight 22"', 149.99, 119.99, 30, 'hair-bundles',
-                 'Silky straight Peruvian hair, 22 inches, natural black', 'straight'),
-                ('13x4 Lace Frontal Wig', 199.99, 179.99, 20, 'lace-wigs',
-                 'HD lace frontal wig with natural hairline', 'body-wave'),
-                ('4x4 Lace Closure', 89.99, 79.99, 40, 'closures',
-                 '4x4 HD lace closure with bleached knots', 'straight'),
-                ('13x6 Lace Frontal', 159.99, 139.99, 25, 'frontals',
-                 '13x6 lace frontal for natural look', 'curly'),
-                ('Hair Growth Oil', 29.99, 24.99, 100, 'hair-care',
-                 'Essential oils for hair growth and thickness', None),
-                ('360 Lace Frontal Wig', 229.99, 199.99, 10, '360-wigs',
-                 '360 lace wig for full perimeter styling', 'wavy'),
-                ('Malaysian Straight 26"', 169.99, 139.99, 15, 'hair-bundles',
-                 'Premium Malaysian straight hair, 26 inches', 'straight'),
-            ]
-            
-            for i, (name, price, compare_price, quantity, category_slug, desc, texture) in enumerate(sample_products):
-                category = Category.query.filter_by(slug=category_slug).first()
-                if category:
-                    product = Product(
-                        name=name,
-                        slug=name.lower().replace(' ', '-').replace('"', ''),
-                        description=desc,
-                        price=price,
-                        compare_price=compare_price,
-                        quantity=quantity,
-                        sku=f'HAIR-{i+1:03d}',
-                        category_id=category.id,
-                        featured=(i < 6),
-                        texture=texture,
-                        image_url=f'product-{i+1}.jpg'
-                    )
-                    db.session.add(product)
-            
-            db.session.commit()
-            print("✅ Sample products added", file=sys.stderr)
-        
-        if User.query.count() == 0:
-            # Add default admin user
-            admin = User(
-                username='admin',
-                email='admin@norahairline.com',
-                password=generate_password_hash('admin123'),
-                is_admin=True
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ Admin user created", file=sys.stderr)
-        
-        print("✅ Database initialization complete", file=sys.stderr)
-        return True
+# ========== HEALTH CHECK FOR RENDER ==========
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Render"""
+    try:
+        # Try to query database
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
+
+# ========== APPLICATION FACTORY FOR GUNICORN ==========
+def create_app():
+    """Application factory for Gunicorn"""
+    return app
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    # Initialize database
-    init_db()
-    
     # Create required directories
     os.makedirs('static/uploads', exist_ok=True)
     
