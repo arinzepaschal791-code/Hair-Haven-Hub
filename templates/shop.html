@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}Shop - {{ brand_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .shop-header {
+        background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
+                    url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 80px 0 40px;
+        margin-top: 76px;
+    }
+    
+    .shop-filters {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .filter-section {
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-lg);
+        border-bottom: 1px solid var(--light-gray);
+    }
+    
+    .filter-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .filter-title {
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .category-filter {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .category-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .category-item:hover {
+        background: var(--light-color);
+    }
+    
+    .category-item.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .category-count {
+        margin-left: auto;
+        background: var(--light-gray);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+    
+    .category-item.active .category-count {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .price-filter {
+        padding: var(--spacing-md) 0;
+    }
+    
+    .price-range {
+        width: 100%;
+        margin: var(--spacing-md) 0;
+    }
+    
+    .price-values {
+        display: flex;
+        justify-content: space-between;
+        margin-top: var(--spacing-sm);
+    }
+    
+    .stock-filter .form-check {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .search-box input {
+        padding-left: 45px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-color);
+    }
+    
+    .sort-options {
+        display: flex;
+        gap: var(--spacing-sm);
+        flex-wrap: wrap;
+    }
+    
+    .sort-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--light-gray);
+        background: white;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .sort-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .sort-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .products-count {
+        color: var(--gray-color);
+    }
+    
+    .view-options {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .view-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--light-gray);
+        background: white;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .view-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .view-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-xl);
+    }
+    
+    .page-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--light-gray);
+        background: white;
+        border-radius: var(--border-radius-sm);
+        text-decoration: none;
+        color: var(--dark-color);
+        transition: all var(--transition-fast);
+    }
+    
+    .page-link:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .page-link.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .no-products {
+        text-align: center;
+        padding: var(--spacing-xxl) var(--spacing-md);
+    }
+    
+    @media (max-width: 768px) {
+        .shop-header {
+            padding: 60px 0 30px;
+        }
+        
+        .products-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .view-options {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Shop Header -->
+<section class="shop-header">
+    <div class="container">
+        <h1 class="text-center mb-3">Shop Premium Hair</h1>
+        <p class="text-center text-light mb-0">Discover our collection of 100% human hair products</p>
+        
+        <nav aria-label="breadcrumb" class="mt-4">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active">Shop</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Shop Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="shop-filters">
+                    <!-- Search Box -->
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" placeholder="Search products..." 
+                               value="{{ search }}" id="searchInput">
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="filter-section">
+                        <h5 class="filter-title">Categories</h5>
+                        <div class="category-filter">
+                            <div class="category-item {% if not category %}active{% endif %}" 
+                                 onclick="filterByCategory('')">
+                                <span>All Products</span>
+                                <span class="category-count">{{ total_products }}</span>
+                            </div>
+                            <div class="category-item {% if category == 'hair' %}active{% endif %}" 
+                                 onclick="filterByCategory('hair')">
+                                <span>Hair Extensions</span>
+                                <span class="category-count">{{ categories.hair }}</span>
+                            </div>
+                            <div class="category-item {% if category == 'wigs' %}active{% endif %}" 
+                                 onclick="filterByCategory('wigs')">
+                                <span>Wigs & Frontals</span>
+                                <span class="category-count">{{ categories.wigs }}</span>
+                            </div>
+                            <div class="category-item {% if category == 'care' %}active{% endif %}" 
+                                 onclick="filterByCategory('care')">
+                                <span>Hair Care</span>
+                                <span class="category-count">{{ categories.care }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Filter -->
+                    <div class="filter-section">
+                        <h5 class="filter-title">Price Range</h5>
+                        <div class="price-filter">
+                            <input type="range" class="price-range" min="0" max="500000" 
+                                   step="10000" value="250000" id="priceRange">
+                            <div class="price-values">
+                                <span>₦0</span>
+                                <span id="priceValue">₦250,000</span>
+                                <span>₦500,000+</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Filter -->
+                    <div class="filter-section">
+                        <h5 class="filter-title">Availability</h5>
+                        <div class="stock-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="inStock" checked>
+                                <label class="form-check-label" for="inStock">
+                                    In Stock Only
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="featuredOnly">
+                                <label class="form-check-label" for="featuredOnly">
+                                    Featured Products
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Clear Filters -->
+                    <button class="btn btn-outline-primary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-2"></i> Clear All Filters
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                <!-- Products Header -->
+                <div class="products-header">
+                    <div>
+                        <h2 class="mb-2">
+                            {% if category == 'hair' %}Hair Extensions
+                            {% elif category == 'wigs' %}Wigs & Frontals
+                            {% elif category == 'care' %}Hair Care
+                            {% else %}All Products{% endif %}
+                        </h2>
+                        <p class="products-count mb-0">{{ products|length }} products found</p>
+                    </div>
+                    
+                    <div class="view-options">
+                        <span class="me-2">Sort by:</span>
+                        <div class="sort-options">
+                            <button class="sort-btn active" onclick="sortProducts('newest')">Newest</button>
+                            <button class="sort-btn" onclick="sortProducts('price-low')">Price: Low to High</button>
+                            <button class="sort-btn" onclick="sortProducts('price-high')">Price: High to Low</button>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if products %}
+                <!-- Products Grid -->
+                <div class="products-grid">
+                    {% for product in products %}
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="{{ product.image_url or '/static/images/default-product.jpg' }}" 
+                                 alt="{{ product.name }}">
+                            <div class="product-badges">
+                                {% if product.featured %}
+                                <span class="product-badge featured">Featured</span>
+                                {% endif %}
+                                <span class="product-badge category">{{ product.category|title }}</span>
+                                {% if product.stock > 0 %}
+                                <span class="product-badge stock">In Stock</span>
+                                {% else %}
+                                <span class="product-badge out-of-stock">Out of Stock</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="product-content">
+                            <h3 class="product-title">{{ product.name }}</h3>
+                            <p class="product-description">
+                                {{ product.description[:80] }}{% if product.description|length > 80 %}...{% endif %}
+                            </p>
+                            
+                            <div class="product-price">
+                                <span class="price-amount">{{ product.formatted_price }}</span>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <a href="/product/{{ product.id }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> View
+                                </a>
+                                <button class="btn btn-primary add-to-cart-btn" 
+                                        data-product-id="{{ product.id }}"
+                                        {% if product.stock <= 0 %}disabled{% endif %}>
+                                    <i class="fas fa-cart-plus me-1"></i>
+                                    {% if product.stock > 0 %}Add to Cart{% else %}Out of Stock{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination">
+                    <a href="#" class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a href="#" class="page-link active">1</a>
+                    <a href="#" class="page-link">2</a>
+                    <a href="#" class="page-link">3</a>
+                    <a href="#" class="page-link">...</a>
+                    <a href="#" class="page-link">10</a>
+                    <a href="#" class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+                {% else %}
+                <!-- No Products Found -->
+                <div class="no-products">
+                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                    <h3>No Products Found</h3>
+                    <p class="text-muted mb-4">Try adjusting your search or filter criteria</p>
+                    <button class="btn btn-primary" onclick="clearFilters()">
+                        <i class="fas fa-redo me-2"></i> Reset Filters
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Price Range Slider
+    const priceRange = document.getElementById('priceRange');
+    const priceValue = document.getElementById('priceValue');
+    
+    priceRange.addEventListener('input', function() {
+        const value = parseInt(this.value);
+        priceValue.textContent = `₦${value.toLocaleString()}`;
+    });
+    
+    // Filter Functions
+    function filterByCategory(cat) {
+        let url = '/shop';
+        if (cat) {
+            url += `?category=${cat}`;
+        }
+        window.location.href = url;
+    }
+    
+    function sortProducts(sortBy) {
+        // Update active sort button
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Implement sorting logic here
+        // This would typically be done server-side with a page reload
+    }
+    
+    function clearFilters() {
+        window.location.href = '/shop';
+    }
+    
+    // Search Functionality
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = this.value.trim();
+            if (searchTerm) {
+                let url = '/shop?search=' + encodeURIComponent(searchTerm);
+                if ('{{ category }}') {
+                    url += '&category={{ category }}';
+                }
+                window.location.href = url;
+            }
+        }, 500);
+    });
+    
+    // Enter key for search
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const searchTerm = this.value.trim();
+            if (searchTerm) {
+                let url = '/shop?search=' + encodeURIComponent(searchTerm);
+                if ('{{ category }}') {
+                    url += '&category={{ category }}';
+                }
+                window.location.href = url;
+            }
+        }
+    });
+</script>
+{% endblock %}
