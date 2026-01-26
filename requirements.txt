@@ -2,14 +2,9 @@ flask==2.3.0
 werkzeug==2.3.0
 gunicorn==20.1.0
 flask-sqlalchemy==2.5.1
-flask-login==0.6.2
-flask-wtf==1.1.1
-whitenoise==6.5.0
-flask-cors==4.0.0
 sqlalchemy==1.4.51
-psycopg2-binary==2.9.9  # Use latest version
-pillow==10.1.0
-python-dotenv==1.0.0
+flask-cors==4.0.0
+flask-login==0.6.2
 flask-bcrypt==1.0.1
-email-validator==2.0.0
+python-dotenv==1.0.0
 pycryptodome==2.9.6
