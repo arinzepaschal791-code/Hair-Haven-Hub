@@ -1,1 +1,186 @@
+{% extends "admin/base.html" %}
 
+{% block title %}Order Details - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Order Details</h1>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-secondary">Back to Orders</a>
+    </div>
+
+    <!-- Order Information -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Order Items
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.parsed_items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.name }}</strong><br>
+                                        <small class="text-muted">ID: {{ item.product_id }}</small>
+                                    </td>
+                                    <td>${{ "%.2f"|format(item.price) }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ "%.2f"|format(item.price * item.quantity) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
+                                    <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-truck me-2"></i>
+                    Shipping Information
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded">{{ order.shipping_address }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Order Summary
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Order Number:</th>
+                            <td>{{ order.order_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Order Date:</th>
+                            <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Customer:</th>
+                            <td>{{ user.username if user else 'Guest' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ user.email if user else 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Method:</th>
+                            <td>{{ order.payment_method|title }}</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Status:</th>
+                            <td>
+                                <span class="badge bg-{{ 'success' if order.payment_status == 'paid' else 'warning' }}">
+                                    {{ order.payment_status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Status Update -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Update Status
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('update_order_status', id=order.id) }}" method="post">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Current Status:</label>
+                            <div class="mb-2">
+                                <span class="badge bg-{{ 
+                                    'warning' if order.status == 'pending' 
+                                    else 'info' if order.status == 'processing' 
+                                    else 'primary' if order.status == 'shipped' 
+                                    else 'success' if order.status == 'delivered' 
+                                    else 'danger' 
+                                }} fs-6">
+                                    {{ order.status|title }}
+                                </span>
+                            </div>
+                            
+                            <label for="newStatus" class="form-label">Change Status To:</label>
+                            <select name="status" id="newStatus" class="form-select" required>
+                                <option value="">Select Status</option>
+                                <option value="pending" {{ 'selected' if order.status == 'pending' }}>
+                                    Pending
+                                </option>
+                                <option value="processing" {{ 'selected' if order.status == 'processing' }}>
+                                    Processing
+                                </option>
+                                <option value="shipped" {{ 'selected' if order.status == 'shipped' }}>
+                                    Shipped
+                                </option>
+                                <option value="delivered" {{ 'selected' if order.status == 'delivered' }}>
+                                    Delivered
+                                </option>
+                                <option value="cancelled" {{ 'selected' if order.status == 'cancelled' }}>
+                                    Cancelled
+                                </option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save me-2"></i>Update Status
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-2"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-print me-2"></i>Print Invoice
+                        </a>
+                        <a href="mailto:{{ user.email if user else '#' }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope me-2"></i>Email Customer
+                        </a>
+                        {% if order.status != 'cancelled' %}
+                        <form action="{{ url_for('update_order_status', id=order.id) }}" method="post">
+                            <button type="submit" name="status" value="cancelled" 
+                                    class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Are you sure you want to cancel this order? This cannot be undone.');">
+                                <i class="fas fa-times-circle me-2"></i>Cancel Order
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
