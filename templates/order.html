@@ -1,26 +1,345 @@
-{% extends 'base.html' %}
+<!-- templates/order.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.order_number }} - {{ brand_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .order-status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .status-pending { background: #ffc107; color: #000; }
+        .status-confirmed { background: #17a2b8; color: #fff; }
+        .status-processing { background: #007bff; color: #fff; }
+        .status-shipped { background: #6610f2; color: #fff; }
+        .status-delivered { background: #28a745; color: #fff; }
+        .status-cancelled { background: #dc3545; color: #fff; }
+        .payment-status-paid { background: #28a745; color: #fff; }
+        .payment-status-pending { background: #ffc107; color: #000; }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #007bff;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 3px #007bff;
+        }
+        .timeline-item.completed::before {
+            background: #28a745;
+            box-shadow: 0 0 0 3px #28a745;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation (use your existing navbar) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">{{ brand_name }}</a>
+            <!-- Add your navbar links here -->
+        </div>
+    </nav>
 
-{% block content %}
-<h1>Order: {{ product.name }}</h1>
-<p>Price: ₦{{ product.price }}</p>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Order Header -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h1 class="h4 mb-0">Order #{{ order.order_number }}</h1>
+                            <div>
+                                <span class="order-status-badge status-{{ order.status }}">
+                                    {{ order.status|replace('_', ' ')|title }}
+                                </span>
+                                <span class="payment-status-paid ms-2">
+                                    {{ order.payment_status|title }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar"></i> 
+                            Placed on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </p>
+                    </div>
+                </div>
 
-<form method="POST" style="max-width: 500px;">
-    <div style="margin-bottom: 1rem;">
-        <label>Your Name:</label><br>
-        <input type="text" name="name" required style="width: 100%; padding: 0.5rem;">
+                <!-- Payment Status Alert -->
+                {% if order.payment_status == 'pending' and order.status == 'pending' %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Payment Required</h5>
+                    <p class="mb-2">Your order is waiting for payment. Please complete payment to proceed.</p>
+                    <div class="d-flex gap-2">
+                        <a href="/order/{{ order.id }}/payment" class="btn btn-success">
+                            <i class="fas fa-credit-card"></i> Make Payment
+                        </a>
+                        <a href="/account/orders" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Orders
+                        </a>
+                    </div>
+                </div>
+                {% elif order.status == 'pending_confirmation' %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <h5><i class="fas fa-clock"></i> Payment Under Review</h5>
+                    <p class="mb-0">Your payment proof has been submitted and is being reviewed by our team.</p>
+                </div>
+                {% endif %}
+
+                <!-- Order Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-history"></i> Order Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            {% set timeline_items = [
+                                {'status': 'pending', 'icon': 'fa-shopping-cart', 'title': 'Order Placed', 'desc': 'Your order has been placed'},
+                                {'status': 'pending_confirmation', 'icon': 'fa-clock', 'title': 'Payment Review', 'desc': 'Payment proof under review'},
+                                {'status': 'confirmed', 'icon': 'fa-check-circle', 'title': 'Order Confirmed', 'desc': 'Payment confirmed, order processing'},
+                                {'status': 'processing', 'icon': 'fa-cogs', 'title': 'Processing', 'desc': 'Preparing your order for shipment'},
+                                {'status': 'shipped', 'icon': 'fa-shipping-fast', 'title': 'Shipped', 'desc': 'Order has been shipped'},
+                                {'status': 'delivered', 'icon': 'fa-home', 'title': 'Delivered', 'desc': 'Order delivered successfully'}
+                            ] %}
+                            
+                            {% for item in timeline_items %}
+                            <div class="timeline-item {% if order.status == item.status or (order.status == 'pending' and item.status == 'pending') %}completed{% endif %}">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas {{ item.icon }} text-primary me-2"></i>
+                                    <h6 class="mb-0">{{ item.title }}</h6>
+                                    {% if order.status == item.status %}
+                                    <span class="badge bg-primary ms-2">Current</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted small mb-0">{{ item.desc }}</p>
+                                {% if order.status == item.status %}
+                                    {% if item.status == 'pending_confirmation' %}
+                                    <small class="text-info">
+                                        <i class="fas fa-info-circle"></i> Admin is reviewing your payment proof
+                                    </small>
+                                    {% elif item.status == 'confirmed' %}
+                                    <small class="text-info">
+                                        <i class="fas fa-info-circle"></i> Your order is being prepared
+                                    </small>
+                                    {% elif item.status == 'processing' %}
+                                    <small class="text-info">
+                                        <i class="fas fa-info-circle"></i> Packaging your items
+                                    </small>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-boxes"></i> Order Items</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-center">Price</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.image %}
+                                                <img src="/static/images/{{ item.product.image }}" 
+                                                     alt="{{ item.product.name }}" 
+                                                     class="me-3 rounded" 
+                                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                                {% else %}
+                                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                                     style="width: 60px; height: 60px;">
+                                                    <i class="fas fa-box text-muted"></i>
+                                                </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                    <small class="text-muted">{{ item.product.category }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">₦{{ "%.2f"|format(item.price) }}</td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">₦{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-receipt"></i> Order Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal:</span>
+                                    <span>₦{{ "%.2f"|format(order.subtotal) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Shipping Fee:</span>
+                                    <span>₦{{ "%.2f"|format(order.shipping_fee) }}</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total:</strong>
+                                    <strong class="text-primary">₦{{ "%.2f"|format(order.total_amount) }}</strong>
+                                </div>
+                                
+                                {% if order.payment_method %}
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span>Payment Method:</span>
+                                    <span>{{ order.payment_method|replace('_', ' ')|title }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-shipping-fast"></i> Shipping Address</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if order.address %}
+                                <p class="mb-1"><strong>{{ order.address.full_name }}</strong></p>
+                                <p class="mb-1">{{ order.address.address_line1 }}</p>
+                                {% if order.address.address_line2 %}
+                                <p class="mb-1">{{ order.address.address_line2 }}</p>
+                                {% endif %}
+                                <p class="mb-1">{{ order.address.city }}, {{ order.address.state }}</p>
+                                <p class="mb-1">{{ order.address.country }}</p>
+                                <p class="mb-0"><i class="fas fa-phone"></i> {{ order.address.phone }}</p>
+                                {% else %}
+                                <p class="text-muted">No shipping address provided</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                    <div>
+                        <a href="/account/orders" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Orders
+                        </a>
+                        <a href="/shop" class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-bag"></i> Continue Shopping
+                        </a>
+                    </div>
+                    
+                    {% if order.payment_status == 'pending' %}
+                    <a href="/order/{{ order.id }}/payment" class="btn btn-success">
+                        <i class="fas fa-credit-card"></i> Complete Payment
+                    </a>
+                    {% endif %}
+                    
+                    {% if current_user.is_admin %}
+                    <a href="/admin/orders/{{ order.id }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Admin View
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Help Section -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5><i class="fas fa-question-circle"></i> Need Help?</h5>
+                        <p>If you have questions about your order, contact our support team:</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><i class="fab fa-whatsapp text-success"></i> 
+                                    <a href="{{ whatsapp }}?text=Hi,%20I%20need%20help%20with%20Order%20%23{{ order.order_number }}" 
+                                       target="_blank" class="text-decoration-none">
+                                        WhatsApp Support
+                                    </a>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><i class="fas fa-envelope"></i> 
+                                    <a href="mailto:{{ email }}?subject=Help%20with%20Order%20%23{{ order.order_number }}" 
+                                       class="text-decoration-none">
+                                        {{ email }}
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                        <p class="mb-0 small text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Please mention your Order #{{ order.order_number }} when contacting support.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Email:</label><br>
-        <input type="email" name="email" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Phone:</label><br>
-        <input type="tel" name="phone" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <div style="margin-bottom: 1rem;">
-        <label>Quantity:</label><br>
-        <input type="number" name="quantity" value="1" min="1" required style="width: 100%; padding: 0.5rem;">
-    </div>
-    <button type="submit" style="background: #28a745; color: white; padding: 1rem 2rem; border: none; border-radius: 5px; cursor: pointer;">Place Order</button>
-</form>
-{% endblock %}
+
+    <!-- Footer (use your existing footer) -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; {{ year }} {{ brand_name }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update order status display
+        function updateStatusColors() {
+            const statusBadge = document.querySelector('.order-status-badge');
+            if (statusBadge) {
+                const status = statusBadge.classList[1].replace('status-', '');
+                // Status colors are handled by CSS classes
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateStatusColors);
+    </script>
+</body>
+</html>
