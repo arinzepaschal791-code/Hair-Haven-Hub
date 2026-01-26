@@ -7,8 +7,9 @@ flask-wtf==1.1.1
 whitenoise==6.5.0
 flask-cors==4.0.0
 sqlalchemy==1.4.51
-psycopg2-binary==2.9.7
+psycopg2-binary==2.9.9  # Use latest version
 pillow==10.1.0
 python-dotenv==1.0.0
 flask-bcrypt==1.0.1
 email-validator==2.0.0
+pycryptodome==2.9.6
