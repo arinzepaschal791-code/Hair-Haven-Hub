@@ -7,8 +7,18 @@ from datetime import datetime
 import json
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///store.db').replace('postgres://', 'postgresql://')
+
+# Configure database for Render compatibility
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Fix for Render's PostgreSQL URL format
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions
@@ -29,24 +39,11 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
     
-    # Flask-Login required properties
-    @property
-    def is_authenticated(self):
-        return True
-    
-    @property
-    def is_active(self):
-        return self.is_active
-    
-    @property
-    def is_anonymous(self):
-        return False
+    orders = db.relationship('Order', backref='user', lazy=True)
+    reviews = db.relationship('Review', backref='user', lazy=True)
     
     def get_id(self):
         return str(self.id)
-    
-    orders = db.relationship('Order', backref='user', lazy=True)
-    reviews = db.relationship('Review', backref='user', lazy=True)
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +71,7 @@ class Order(db.Model):
     order_number = db.Column(db.String(50), unique=True, nullable=False)
     items = db.Column(db.Text, nullable=False)  # JSON string of order items
     total_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), default='pending')  # pending, processing, shipped, delivered, cancelled
+    status = db.Column(db.String(50), default='pending')
     shipping_address = db.Column(db.Text, nullable=False)
     payment_method = db.Column(db.String(50), nullable=False)
     payment_status = db.Column(db.String(50), default='pending')
@@ -93,7 +90,7 @@ class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False)
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -106,7 +103,16 @@ def load_user(user_id):
     except:
         return None
 
-# Admin authentication decorator
+# Context processors
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
+
+@app.context_processor
+def inject_now():
+    return dict(now=datetime.now())
+
+# Admin decorator
 def admin_required(f):
     from functools import wraps
     @wraps(f)
@@ -122,34 +128,21 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Context processor to make current_user available in all templates
-@app.context_processor
-def inject_user():
-    return dict(current_user=current_user)
-
-# Context processor to make datetime available
-@app.context_processor
-def inject_now():
-    return dict(now=datetime.now())
-
-# Custom error handler for 500 errors
-@app.errorhandler(500)
-def internal_error(error):
-    return render_template('500.html', error=error), 500
-
-# Custom error handler for 404 errors
+# Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html', error=error), 500
 
 # Routes
 @app.route('/')
 def home():
     try:
-        # Test data or logic here
         return render_template('index.html')
     except Exception as e:
-        app.logger.error(f'Error in home route: {str(e)}')
         return render_template('500.html'), 500
 
 @app.route('/about')
@@ -171,7 +164,6 @@ def search():
 # Admin Routes
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    # If user is already logged in and is admin, redirect to dashboard
     if current_user.is_authenticated and current_user.is_admin:
         return redirect(url_for('admin_dashboard'))
     
@@ -203,23 +195,17 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     try:
-        # Calculate statistics
         total_products = Product.query.count()
         total_orders = Order.query.count()
         total_users = User.query.count()
         total_reviews = Review.query.count()
         
-        # Calculate total revenue (only from delivered orders)
         delivered_orders = Order.query.filter_by(status='delivered').all()
         total_revenue = sum(order.total_amount for order in delivered_orders)
         
-        # Get recent orders
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
-        
-        # Get low stock alerts (products with stock < 10)
         low_stock_products = Product.query.filter(Product.stock < 10).all()
         
-        # Parse order items for display
         for order in recent_orders:
             try:
                 order.parsed_items = json.loads(order.items)
@@ -235,7 +221,6 @@ def admin_dashboard():
                              recent_orders=recent_orders,
                              low_stock_products=low_stock_products)
     except Exception as e:
-        app.logger.error(f'Error in admin dashboard: {str(e)}')
         flash('An error occurred while loading the dashboard', 'error')
         return redirect(url_for('admin_login'))
 
@@ -316,7 +301,6 @@ def delete_product(id):
     try:
         product = Product.query.get_or_404(id)
         
-        # Check if product has orders
         if product.order_items:
             flash('Cannot delete product with existing orders', 'error')
             return redirect(url_for('admin_products'))
@@ -337,13 +321,11 @@ def admin_orders():
     per_page = 10
     status_filter = request.args.get('status', 'all')
     
-    # Build query based on status filter
     if status_filter == 'all':
         query = Order.query
     else:
         query = Order.query.filter_by(status=status_filter)
     
-    # Get search parameters
     search_order = request.args.get('search_order', '')
     if search_order:
         query = query.filter(Order.order_number.ilike(f'%{search_order}%'))
@@ -352,14 +334,12 @@ def admin_orders():
         page=page, per_page=per_page, error_out=False
     )
     
-    # Parse order items for each order
     for order in orders.items:
         try:
             order.parsed_items = json.loads(order.items)
         except:
             order.parsed_items = []
     
-    # Get order statistics
     order_stats = {
         'pending': Order.query.filter_by(status='pending').count(),
         'processing': Order.query.filter_by(status='processing').count(),
@@ -385,7 +365,6 @@ def view_order(id):
     except:
         order.parsed_items = []
     
-    # Get user details
     user = User.query.get(order.user_id)
     
     return render_template('admin/order_detail.html', order=order, user=user)
@@ -397,16 +376,13 @@ def update_order_status(id):
         order = Order.query.get_or_404(id)
         new_status = request.form.get('status')
         
-        # Validate status
         valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
         if new_status not in valid_statuses:
             flash('Invalid status', 'error')
             return redirect(url_for('admin_orders'))
         
-        # Update status
         order.status = new_status
         
-        # If cancelled, restore stock
         if new_status == 'cancelled' and order.status != 'cancelled':
             try:
                 items = json.loads(order.items)
@@ -433,7 +409,6 @@ def admin_reviews():
     per_page = 10
     filter_type = request.args.get('filter', 'all')
     
-    # Build query based on filter
     if filter_type == 'pending':
         query = Review.query.filter_by(is_approved=False)
     elif filter_type == 'approved':
@@ -441,7 +416,6 @@ def admin_reviews():
     else:
         query = Review.query
     
-    # Get search parameters
     search_product = request.args.get('search_product', '')
     if search_product:
         query = query.join(Product).filter(Product.name.ilike(f'%{search_product}%'))
@@ -450,7 +424,6 @@ def admin_reviews():
         page=page, per_page=per_page, error_out=False
     )
     
-    # Get review statistics
     review_stats = {
         'total': Review.query.count(),
         'approved': Review.query.filter_by(is_approved=True).count(),
@@ -494,7 +467,6 @@ def delete_review(id):
 @app.route('/admin/api/dashboard_stats')
 @admin_required
 def dashboard_stats():
-    """API endpoint for dashboard statistics (for AJAX updates)"""
     stats = {
         'total_products': Product.query.count(),
         'total_orders': Order.query.count(),
@@ -506,20 +478,33 @@ def dashboard_stats():
     }
     return jsonify(stats)
 
-# Helper function to create admin user (run once)
 def create_admin_user():
     with app.app_context():
-        # Check if admin exists
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        
         admin = User.query.filter_by(email=admin_email).first()
         if not admin:
             admin = User(
                 username='admin',
                 email=admin_email,
-                password=generate_password_hash(os.environ.get('ADMIN_PASSWORD', 'admin123')),
+                password=generate_password_hash(admin_password),
                 is_admin=True
             )
             db.session.add(admin)
+            
+            # Create default categories
+            if Category.query.count() == 0:
+                categories = [
+                    ('Electronics', 'electronics'),
+                    ('Clothing', 'clothing'),
+                    ('Books', 'books'),
+                    ('Home & Garden', 'home-garden')
+                ]
+                for name, slug in categories:
+                    category = Category(name=name, slug=slug)
+                    db.session.add(category)
+            
             db.session.commit()
             print(f'Admin user created: {admin_email}')
 
