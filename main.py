@@ -1,74 +1,150 @@
-# main.py - COMPLETE FIXED VERSION
+# main.py - COMPLETE WORKING VERSION WITH HOMEPAGE & ADMIN
 import os
 import sys
 from flask import Flask, jsonify, request, render_template, send_from_directory, session, redirect, url_for, flash
-from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import json
-import uuid
-import secrets
 import logging
-
-# Fix path for imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import models
-try:
-    from models import db, Admin, Product, Order, Review, User, Cart, CartItem, Payment, OrderItem
-    MODELS_AVAILABLE = True
-    logger.info("✓ All models imported successfully")
-except ImportError as e:
-    logger.error(f"Models import error: {e}")
-    MODELS_AVAILABLE = False
+# Initialize extensions
+db = SQLAlchemy()
+login_manager = LoginManager()
 
 app = Flask(__name__, 
            static_folder='static',
-           template_folder='templates')
-CORS(app)
+           template_folder='templates',
+           static_url_path='/static')
 
-# Configure for Render - FORCE SQLITE
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+# Configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-2026')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///norahairline.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-# Initialize database
-if MODELS_AVAILABLE:
-    db.init_app(app)
+# Initialize extensions with app
+db.init_app(app)
+login_manager.init_app(app)
 
-# Business configuration
-PAYMENT_CONFIG = {
-    'account_number': '2059311531',
-    'bank_name': 'UBA',
-    'account_name': 'CHUKWUNEKE CHIAMAKA',
-    'currency': 'NGN',
-    'currency_symbol': '₦',
-    'shipping_fee': 2000.00,
-}
+# ========== MODELS ==========
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20))
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    image = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    products = db.relationship('Product', backref='category_ref', lazy=True)
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(200), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    old_price = db.Column(db.Float)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    category = db.Column(db.String(100), nullable=False)  # Keep for easy access
+    image = db.Column(db.String(500))
+    stock = db.Column(db.Integer, default=0)
+    featured = db.Column(db.Boolean, default=False)
+    tags = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_number = db.Column(db.String(50), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='orders')
+    items = db.Column(db.Text, nullable=False)  # JSON string
+    total_amount = db.Column(db.Float, nullable=False)
+    shipping_address = db.Column(db.Text)
+    phone = db.Column(db.String(20))
+    status = db.Column(db.String(50), default='pending')
+    payment_method = db.Column(db.String(50))
+    payment_status = db.Column(db.String(50), default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Cart:
+    def __init__(self):
+        self.items = []
+    
+    def add_item(self, product_id, quantity=1):
+        for item in self.items:
+            if item['product_id'] == product_id:
+                item['quantity'] += quantity
+                return
+        self.items.append({'product_id': product_id, 'quantity': quantity})
+    
+    def remove_item(self, product_id):
+        self.items = [item for item in self.items if item['product_id'] != product_id]
+    
+    def update_quantity(self, product_id, quantity):
+        for item in self.items:
+            if item['product_id'] == product_id:
+                item['quantity'] = quantity
+                break
+    
+    def get_items(self):
+        return self.items
+    
+    def clear(self):
+        self.items = []
+    
+    def get_total(self):
+        total = 0
+        for item in self.items:
+            product = Product.query.get(item['product_id'])
+            if product:
+                total += product.price * item['quantity']
+        return total
+
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
+
+# Website configuration
 WEBSITE_CONFIG = {
     'brand_name': 'NORA HAIR LINE',
-    'tagline': 'Luxury for less...',
-    'wholesale': 'STRICTLY WHOLESALE DEAL IN: Closure | Frontals | 360 illusion frontal | Wigs | Bundles',
-    'address': 'No 5 Veet gold plaza, directly opposite Abia gate @ Tradefair Shopping Center Badagry Express Way, Lagos State.',
+    'tagline': 'Premium 100% Human Hair',
+    'slogan': 'Luxury for less...',
+    'description': 'Premium 100% human hair extensions, wigs, and hair products at wholesale prices.',
+    'address': 'No 5 Veet Gold Plaza, opposite Abia gate @ Tradefair Shopping Center, Badagry Express Way, Lagos State.',
     'phone': '08038707795',
     'whatsapp': 'https://wa.me/2348038707795',
-    'instagram': '@norahairline',
-    'instagram_url': 'https://instagram.com/norahairline',
+    'instagram': 'norahairline',
+    'email': 'info@norahairline.com',
     'currency': 'NGN',
     'currency_symbol': '₦',
-    'contact_email': 'info@norahairline.com',
-    'support_email': 'support@norahairline.com',
-    'logo_url': '/static/images/logo.png',
-    'favicon_url': '/static/images/favicon.ico',
     'year': datetime.now().year,
-    'payment_config': PAYMENT_CONFIG
+    'payment_account': '2059311531',
+    'payment_bank': 'UBA',
+    'payment_name': 'CHUKWUNEKE CHIAMAKA'
 }
 
 # Helper functions
@@ -76,712 +152,664 @@ def format_price(price):
     """Format price as Nigerian Naira"""
     try:
         return f"₦{float(price):,.2f}"
-    except (ValueError, TypeError):
+    except:
         return "₦0.00"
 
-def generate_order_number():
-    """Generate unique order number"""
-    import random
-    import string
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    return f'NORA-{timestamp}-{random_str}'
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Admin access required.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-def create_directories():
-    """Create required directories"""
-    directories = [
-        'static',
-        'static/images',
-        'static/css',
-        'static/js',
-        'templates',
-        'templates/admin',
-        'uploads',
-        'uploads/images',
-        'uploads/videos'
-    ]
-    
-    for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory, exist_ok=True)
-            logger.info(f"Created directory: {directory}")
+def get_cart():
+    """Get or create cart in session"""
+    if 'cart' not in session:
+        session['cart'] = []
+    return session['cart']
 
 def get_cart_count():
-    """Get cart item count for current user"""
-    try:
-        if MODELS_AVAILABLE and session.get('user_id'):
-            cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
-            if cart:
-                return CartItem.query.filter_by(cart_id=cart.id).count()
-    except Exception as e:
-        logger.error(f"Error getting cart count: {e}")
-    return 0
+    """Get total items in cart"""
+    cart = get_cart()
+    return sum(item.get('quantity', 0) for item in cart)
 
-def get_or_create_cart():
-    """Get or create active cart for current user"""
-    if not MODELS_AVAILABLE or not session.get('user_id'):
-        return None
-    
-    try:
-        cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
-        if not cart:
-            cart = Cart(user_id=session['user_id'])
-            db.session.add(cart)
-            db.session.commit()
-        return cart
-    except Exception as e:
-        logger.error(f"Error getting cart: {e}")
-        return None
-
-# Database initialization
-def init_database():
-    """Initialize database with sample data"""
-    if not MODELS_AVAILABLE:
-        return
-    
-    with app.app_context():
-        try:
-            db.create_all()
-            logger.info("✅ Database tables created successfully")
-            
-            # Create default admin
-            if not Admin.query.first():
-                admin = Admin(
-                    username='admin',
-                    password=generate_password_hash('admin123'),
-                    email='admin@norahairline.com',
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(admin)
-                logger.info("👑 Created default admin: username='admin', password='admin123'")
-            
-            # Create sample products if none exist
-            if not Product.query.first():
-                products = [
-                    Product(
-                        name="Premium Bone Straight Hair 24\"",
-                        description="24-inch premium quality 100% human hair, bone straight texture. Perfect for everyday wear. Easy to install and maintain.",
-                        price=134985.0,
-                        category="hair",
-                        image_url="/static/images/hair1.jpg",
-                        stock=50,
-                        featured=True,
-                        product_code=f"HAIR-{uuid.uuid4().hex[:8].upper()}",
-                        created_at=datetime.utcnow()
-                    ),
-                    Product(
-                        name="Curly Brazilian Hair 22\"",
-                        description="22-inch natural Brazilian curly hair, soft and bouncy. Perfect for Afro-centric styles.",
-                        price=149985.0,
-                        category="hair",
-                        image_url="/static/images/hair2.jpg",
-                        stock=30,
-                        featured=True,
-                        product_code=f"HAIR-{uuid.uuid4().hex[:8].upper()}",
-                        created_at=datetime.utcnow()
-                    ),
-                    Product(
-                        name="Lace Front Wig - Natural Black",
-                        description="13x4 lace front wig, natural black color, pre-plucked hairline. Looks 100% natural.",
-                        price=194985.0,
-                        category="wigs",
-                        image_url="/static/images/wig1.jpg",
-                        stock=20,
-                        featured=True,
-                        product_code=f"WIG-{uuid.uuid4().hex[:8].upper()}",
-                        created_at=datetime.utcnow()
-                    ),
-                    Product(
-                        name="Hair Growth Oil 8oz",
-                        description="Organic hair growth oil with rosemary and castor oil. Promotes hair growth and thickness.",
-                        price=37485.0,
-                        category="care",
-                        image_url="/static/images/oil1.jpg",
-                        stock=100,
-                        featured=False,
-                        product_code=f"CARE-{uuid.uuid4().hex[:8].upper()}",
-                        created_at=datetime.utcnow()
-                    )
-                ]
-                
-                for product in products:
-                    db.session.add(product)
-                
-                logger.info(f"🛍️ Created {len(products)} sample products")
-            
-            db.session.commit()
-            logger.info("✅ Database initialization completed")
-            
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"❌ Database initialization error: {str(e)}")
-
-def reset_database():
-    """Reset database if there are schema issues"""
-    if not MODELS_AVAILABLE:
-        return
-    
-    with app.app_context():
-        try:
-            # Drop all tables
-            db.drop_all()
-            logger.info("🗑️ Dropped all tables")
-            
-            # Recreate tables
-            db.create_all()
-            logger.info("✅ Recreated all tables")
-            
-            # Re-initialize data
-            init_database()
-            
-        except Exception as e:
-            logger.error(f"❌ Database reset error: {str(e)}")
+def get_cart_total():
+    """Calculate cart total"""
+    cart = get_cart()
+    total = 0
+    for item in cart:
+        product = Product.query.get(item['product_id'])
+        if product:
+            total += product.price * item['quantity']
+    return total
 
 # Context processor
 @app.context_processor
 def inject_globals():
-    """Inject variables into all templates"""
-    cart_count = get_cart_count()
-    
     return {
         **WEBSITE_CONFIG,
-        'cart_count': cart_count,
-        'user_id': session.get('user_id'),
-        'user_name': session.get('user_name'),
-        'user_email': session.get('user_email'),
-        'admin_logged_in': session.get('admin_logged_in'),
-        'current_year': datetime.now().year,
-        'now': datetime.now()
+        'now': datetime.now(),
+        'cart_count': get_cart_count(),
+        'cart_total': format_price(get_cart_total())
     }
 
-# ============ ROUTES ============
+# Initialize database
+def init_database():
+    with app.app_context():
+        try:
+            db.create_all()
+            
+            # Create admin user if not exists
+            if not User.query.filter_by(is_admin=True).first():
+                admin = User(
+                    username='admin',
+                    email='admin@norahairline.com',
+                    phone='08038707795',
+                    is_admin=True
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+            
+            # Create sample categories
+            categories_data = [
+                {'name': 'Hair Extensions', 'slug': 'hair-extensions', 'description': '100% Human Hair Extensions'},
+                {'name': 'Wigs', 'slug': 'wigs', 'description': 'Lace Frontals & Wigs'},
+                {'name': 'Closures', 'slug': 'closures', 'description': 'Hair Closures'},
+                {'name': 'Frontals', 'slug': 'frontals', 'description': '13x4, 13x6 Frontals'},
+                {'name': 'Hair Care', 'slug': 'hair-care', 'description': 'Hair Products & Care'}
+            ]
+            
+            for cat_data in categories_data:
+                if not Category.query.filter_by(slug=cat_data['slug']).first():
+                    category = Category(**cat_data)
+                    db.session.add(category)
+            
+            # Create sample products
+            if Product.query.count() == 0:
+                sample_products = [
+                    Product(
+                        name="Brazilian Straight Hair 24''",
+                        slug="brazilian-straight-hair-24",
+                        description="Premium 100% Brazilian Virgin Hair, Straight Texture, 24 inches",
+                        price=25000.00,
+                        old_price=30000.00,
+                        category="Hair Extensions",
+                        image="hair1.jpg",
+                        stock=50,
+                        featured=True,
+                        tags="brazilian,straight,virgin hair"
+                    ),
+                    Product(
+                        name="Peruvian Curly Hair 22''",
+                        slug="peruvian-curly-hair-22",
+                        description="100% Peruvian Human Hair, Natural Curly Pattern, 22 inches",
+                        price=28000.00,
+                        old_price=35000.00,
+                        category="Hair Extensions",
+                        image="hair2.jpg",
+                        stock=30,
+                        featured=True,
+                        tags="peruvian,curly,human hair"
+                    ),
+                    Product(
+                        name="13x4 Lace Frontal Wig",
+                        slug="13x4-lace-frontal-wig",
+                        description="HD Lace Frontal Wig, Pre-plucked, Natural Hairline",
+                        price=45000.00,
+                        old_price=55000.00,
+                        category="Wigs",
+                        image="wig1.jpg",
+                        stock=20,
+                        featured=True,
+                        tags="wig,frontal,hd lace"
+                    ),
+                    Product(
+                        name="360 Lace Frontal",
+                        slug="360-lace-frontal",
+                        description="360 Lace Frontal, Full Perimeter, 180% Density",
+                        price=38000.00,
+                        old_price=45000.00,
+                        category="Frontals",
+                        image="frontal1.jpg",
+                        stock=25,
+                        featured=True,
+                        tags="360,frontal,lace"
+                    ),
+                    Product(
+                        name="4x4 Lace Closure",
+                        slug="4x4-lace-closure",
+                        description="4x4 HD Lace Closure, Swiss Lace, Bleached Knots",
+                        price=18000.00,
+                        old_price=22000.00,
+                        category="Closures",
+                        image="closure1.jpg",
+                        stock=40,
+                        featured=True,
+                        tags="closure,lace,4x4"
+                    ),
+                    Product(
+                        name="Hair Growth Oil",
+                        slug="hair-growth-oil",
+                        description="Organic Hair Growth Oil with Rosemary & Castor Oil",
+                        price=5000.00,
+                        category="Hair Care",
+                        image="oil1.jpg",
+                        stock=100,
+                        featured=False,
+                        tags="oil,hair care,growth"
+                    )
+                ]
+                
+                for product in sample_products:
+                    db.session.add(product)
+            
+            db.session.commit()
+            print("✅ Database initialized successfully")
+            print("👑 Admin: admin@norahairline.com / admin123")
+            
+        except Exception as e:
+            print(f"❌ Database error: {e}")
+            db.session.rollback()
+
+# ========== ROUTES ==========
 
 @app.route('/')
-def index():
+def home():
     """Homepage"""
     try:
-        featured_products = []
-        categories = []  # FIX: Add categories variable
+        featured_products = Product.query.filter_by(featured=True).limit(6).all()
+        categories = Category.query.limit(5).all()
         
-        if MODELS_AVAILABLE:
-            featured_products = Product.query.filter_by(featured=True).order_by(
-                Product.created_at.desc()
-            ).limit(8).all()
-            
-            # Get unique categories for navigation
-            category_results = db.session.query(Product.category).distinct().all()
-            categories = [cat[0] for cat in category_results if cat[0]]
-            
-            # Format prices
-            for product in featured_products:
-                product.formatted_price = format_price(product.price)
+        # Format prices
+        for product in featured_products:
+            product.formatted_price = format_price(product.price)
+            if product.old_price:
+                product.formatted_old_price = format_price(product.old_price)
         
-        return render_template('index.html', 
+        return render_template('index.html',
                              featured_products=featured_products,
-                             categories=categories)  # FIX: Pass categories
+                             categories=categories)
     except Exception as e:
-        logger.error(f"Error in index: {e}")
-        return render_template('index.html', 
+        print(f"Home error: {e}")
+        return render_template('index.html',
                              featured_products=[],
-                             categories=[])  # FIX: Pass empty categories
+                             categories=[])
 
 @app.route('/shop')
-@app.route('/products')
-def products_page():
-    """Products page"""
-    try:
-        category = request.args.get('category', '')
-        search = request.args.get('search', '')
-        
-        products = []
-        categories = []
-        
-        if MODELS_AVAILABLE:
-            query = Product.query
-            
-            if category:
-                query = query.filter_by(category=category)
-            
-            if search:
-                query = query.filter(Product.name.ilike(f'%{search}%'))
-            
-            products = query.order_by(Product.created_at.desc()).all()
-            
-            # Get categories for filter
-            category_results = db.session.query(Product.category).distinct().all()
-            categories = [cat[0] for cat in category_results if cat[0]]
-            
-            # Format prices
-            for product in products:
-                product.formatted_price = format_price(product.price)
-        
-        return render_template('products.html',
-                             products=products,
-                             categories=categories,
-                             category=category,
-                             search=search)
-    except Exception as e:
-        logger.error(f"Error in products_page: {e}")
-        return render_template('products.html',
-                             products=[],
-                             categories=[],
-                             category=category,
-                             search=search)
-
-@app.route('/product/<int:product_id>')
-def product_detail(product_id):
-    """Product detail page"""
-    try:
-        if not MODELS_AVAILABLE:
-            flash('Product not found.', 'error')
-            return redirect(url_for('products_page'))
-        
-        product = Product.query.get_or_404(product_id)
+def shop():
+    """Shop page"""
+    category = request.args.get('category', '')
+    search = request.args.get('search', '')
+    
+    query = Product.query
+    
+    if category:
+        query = query.filter_by(category=category)
+    
+    if search:
+        query = query.filter(Product.name.ilike(f'%{search}%'))
+    
+    products = query.order_by(Product.created_at.desc()).all()
+    categories = Category.query.all()
+    
+    # Format prices
+    for product in products:
         product.formatted_price = format_price(product.price)
-        
-        # Get related products
-        related_products = Product.query.filter(
-            Product.category == product.category,
-            Product.id != product_id
-        ).limit(4).all()
-        
-        for p in related_products:
-            p.formatted_price = format_price(p.price)
-        
-        return render_template('product_detail.html',
-                             product=product,
-                             related_products=related_products)
-    except Exception as e:
-        logger.error(f"Error in product_detail: {e}")
-        flash('Product not found.', 'error')
-        return redirect(url_for('products_page'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Login page"""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-        
-        if not email or not password:
-            flash('Please enter email and password.', 'error')
-            return render_template('login.html')
-        
-        # Demo login for testing
-        if email == 'customer@example.com' and password == 'password':
-            session['user_id'] = 1
-            session['user_name'] = 'Demo Customer'
-            session['user_email'] = email
-            flash('Login successful!', 'success')
-            return redirect(url_for('index'))
-        
-        # Admin login
-        if email == 'admin@norahairline.com' and password == 'admin123':
-            session['admin_logged_in'] = True
-            session['user_id'] = 999
-            session['user_name'] = 'Admin'
-            session['user_email'] = email
-            flash('Admin login successful!', 'success')
-            return redirect(url_for('admin_dashboard'))
-        
-        # Check database
-        if MODELS_AVAILABLE:
-            user = User.query.filter_by(email=email).first()
-            if user and check_password_hash(user.password, password):
-                session['user_id'] = user.id
-                session['user_name'] = user.name
-                session['user_email'] = user.email
-                flash('Login successful!', 'success')
-                return redirect(url_for('index'))
-        
-        flash('Invalid email or password.', 'error')
+        if product.old_price:
+            product.formatted_old_price = format_price(product.old_price)
     
-    return render_template('login.html')
+    return render_template('shop.html',
+                         products=products,
+                         categories=categories,
+                         category=category,
+                         search=search)
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """Registration page"""
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
-        password = request.form.get('password', '')
-        confirm = request.form.get('confirm_password', '')
-        
-        if not name or not email or not password:
-            flash('All fields are required.', 'error')
-        elif password != confirm:
-            flash('Passwords do not match.', 'error')
-        else:
-            try:
-                if MODELS_AVAILABLE:
-                    # Check if user exists
-                    existing = User.query.filter_by(email=email).first()
-                    if existing:
-                        flash('Email already registered.', 'error')
-                    else:
-                        # Create user
-                        user = User(
-                            name=name,
-                            email=email,
-                            phone=phone,
-                            password=generate_password_hash(password)
-                        )
-                        db.session.add(user)
-                        db.session.commit()
-                        
-                        # Auto login
-                        session['user_id'] = user.id
-                        session['user_name'] = user.name
-                        session['user_email'] = user.email
-                        
-                        flash('Registration successful!', 'success')
-                        return redirect(url_for('index'))
-                else:
-                    flash('Registration temporarily unavailable.', 'error')
-                    
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Registration error: {e}")
-                flash('Registration failed. Please try again.', 'error')
+@app.route('/product/<slug>')
+def product_detail(slug):
+    """Product detail page"""
+    product = Product.query.filter_by(slug=slug).first_or_404()
+    related_products = Product.query.filter(
+        Product.category == product.category,
+        Product.id != product.id
+    ).limit(4).all()
     
-    return render_template('register.html')
+    # Format prices
+    product.formatted_price = format_price(product.price)
+    if product.old_price:
+        product.formatted_old_price = format_price(product.old_price)
+    
+    for p in related_products:
+        p.formatted_price = format_price(p.price)
+    
+    return render_template('product_detail.html',
+                         product=product,
+                         related_products=related_products)
 
-@app.route('/logout')
-def logout():
-    """Logout"""
-    session.clear()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('index'))
+@app.route('/category/<slug>')
+def category_page(slug):
+    """Category page"""
+    category = Category.query.filter_by(slug=slug).first_or_404()
+    products = Product.query.filter_by(category=category.name).all()
+    
+    for product in products:
+        product.formatted_price = format_price(product.price)
+    
+    return render_template('category.html',
+                         category=category,
+                         products=products)
+
+@app.route('/about')
+def about():
+    """About page"""
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    """Contact page"""
+    return render_template('contact.html')
 
 @app.route('/cart')
 def cart():
     """Cart page"""
     cart_items = []
-    cart_total = 0
+    cart_data = get_cart()
     
-    if MODELS_AVAILABLE and session.get('user_id'):
-        cart = Cart.query.filter_by(user_id=session['user_id'], status='active').first()
-        if cart:
-            cart_items = CartItem.query.filter_by(cart_id=cart.id).all()
-            for item in cart_items:
-                item.formatted_price = format_price(item.product.price)
-                item.item_total = item.product.price * item.quantity
-                item.formatted_item_total = format_price(item.item_total)
-                cart_total += item.item_total
+    for item in cart_data:
+        product = Product.query.get(item['product_id'])
+        if product:
+            product.formatted_price = format_price(product.price)
+            product.quantity = item['quantity']
+            product.subtotal = product.price * product.quantity
+            product.formatted_subtotal = format_price(product.subtotal)
+            cart_items.append(product)
     
-    return render_template('cart.html', 
+    total = sum(item.subtotal for item in cart_items)
+    
+    return render_template('cart.html',
                          cart_items=cart_items,
-                         cart_total=cart_total,
-                         formatted_cart_total=format_price(cart_total))
+                         total=format_price(total))
+
+@app.route('/add-to-cart/<int:product_id>')
+def add_to_cart(product_id):
+    """Add item to cart"""
+    cart = get_cart()
+    
+    # Check if product exists
+    product = Product.query.get_or_404(product_id)
+    
+    # Check if already in cart
+    found = False
+    for item in cart:
+        if item['product_id'] == product_id:
+            item['quantity'] += 1
+            found = True
+            break
+    
+    if not found:
+        cart.append({'product_id': product_id, 'quantity': 1})
+    
+    session['cart'] = cart
+    flash(f'{product.name} added to cart!', 'success')
+    return redirect(request.referrer or url_for('cart'))
+
+@app.route('/remove-from-cart/<int:product_id>')
+def remove_from_cart(product_id):
+    """Remove item from cart"""
+    cart = get_cart()
+    cart = [item for item in cart if item['product_id'] != product_id]
+    session['cart'] = cart
+    flash('Item removed from cart', 'info')
+    return redirect(url_for('cart'))
+
+@app.route('/update-cart/<int:product_id>', methods=['POST'])
+def update_cart(product_id):
+    """Update cart quantity"""
+    quantity = int(request.form.get('quantity', 1))
+    
+    cart = get_cart()
+    for item in cart:
+        if item['product_id'] == product_id:
+            if quantity <= 0:
+                cart.remove(item)
+            else:
+                item['quantity'] = quantity
+            break
+    
+    session['cart'] = cart
+    return redirect(url_for('cart'))
 
 @app.route('/checkout')
+@login_required
 def checkout():
     """Checkout page"""
-    if not session.get('user_id'):
-        flash('Please login to checkout.', 'error')
-        return redirect(url_for('login'))
+    cart_items = []
+    cart_data = get_cart()
     
-    return render_template('checkout.html')
-
-@app.route('/orders')
-def orders():
-    """Orders page"""
-    orders_list = []
+    if not cart_data:
+        flash('Your cart is empty!', 'warning')
+        return redirect(url_for('cart'))
     
-    if MODELS_AVAILABLE and session.get('user_id'):
-        orders_list = Order.query.filter_by(user_id=session['user_id']).order_by(
-            Order.created_at.desc()
-        ).all()
-        
-        for order in orders_list:
-            order.formatted_total = format_price(order.total_price)
+    for item in cart_data:
+        product = Product.query.get(item['product_id'])
+        if product:
+            product.quantity = item['quantity']
+            product.subtotal = product.price * product.quantity
+            cart_items.append(product)
     
-    return render_template('orders.html', orders=orders_list)
+    total = sum(item.subtotal for item in cart_items)
+    
+    return render_template('checkout.html',
+                         cart_items=cart_items,
+                         total=format_price(total))
 
-# ============ ADMIN ROUTES ============
-
-@app.route('/admin')
-def admin_redirect():
-    """Redirect to admin login"""
-    return redirect(url_for('admin_login'))
-
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
-    """Admin login handler"""
-    if session.get('admin_logged_in'):
-        return redirect(url_for('admin_dashboard'))
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
+        email = request.form.get('email')
+        password = request.form.get('password')
         
-        # Demo admin login
-        if email == 'admin@norahairline.com' and password == 'admin123':
-            session['admin_logged_in'] = True
-            session['user_id'] = 999
-            session['user_name'] = 'Admin'
-            session['user_email'] = email
-            flash('Admin login successful!', 'success')
-            return redirect(url_for('admin_dashboard'))
+        user = User.query.filter_by(email=email).first()
         
-        # Check database for admin
-        if MODELS_AVAILABLE:
-            admin = Admin.query.filter_by(email=email).first()
-            if admin and check_password_hash(admin.password, password):
-                session['admin_logged_in'] = True
-                session['user_id'] = admin.id
-                session['user_name'] = 'Admin'
-                session['user_email'] = admin.email
-                flash('Admin login successful!', 'success')
-                return redirect(url_for('admin_dashboard'))
-        
-        flash('Invalid admin credentials.', 'error')
+        if user and user.check_password(password):
+            login_user(user)
+            next_page = request.args.get('next')
+            flash('Login successful!', 'success')
+            return redirect(next_page or url_for('home'))
+        else:
+            flash('Invalid email or password', 'danger')
     
-    return render_template('admin/login.html')
+    return render_template('login.html')
 
-@app.route('/admin/dashboard')
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Register page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validation
+        if password != confirm_password:
+            flash('Passwords do not match!', 'danger')
+            return redirect(url_for('register'))
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered!', 'danger')
+            return redirect(url_for('register'))
+        
+        if User.query.filter_by(username=username).first():
+            flash('Username already taken!', 'danger')
+            return redirect(url_for('register'))
+        
+        # Create user
+        user = User(
+            username=username,
+            email=email,
+            phone=phone,
+            is_admin=False
+        )
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        login_user(user)
+        flash('Registration successful! Welcome!', 'success')
+        return redirect(url_for('home'))
+    
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout"""
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('home'))
+
+# ========== ADMIN ROUTES ==========
+
+@app.route('/admin')
+@admin_required
 def admin_dashboard():
     """Admin dashboard"""
-    if not session.get('admin_logged_in'):
-        flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login'))
+    # Get stats
+    total_products = Product.query.count()
+    total_orders = Order.query.count()
+    total_users = User.query.count()
+    total_revenue = db.session.query(db.func.sum(Order.total_amount)).scalar() or 0
     
-    try:
-        stats = {}
-        recent_products = []
-        recent_orders = []
-        
-        if MODELS_AVAILABLE:
-            stats = {
-                'products': Product.query.count(),
-                'orders': Order.query.count(),
-                'users': User.query.count(),
-                'revenue': db.session.query(db.func.sum(Order.total_price)).scalar() or 0
-            }
-            
-            recent_products = Product.query.order_by(
-                Product.created_at.desc()
-            ).limit(5).all()
-            
-            recent_orders = Order.query.order_by(
-                Order.created_at.desc()
-            ).limit(5).all()
-            
-            for product in recent_products:
-                product.formatted_price = format_price(product.price)
-            
-            for order in recent_orders:
-                order.formatted_total = format_price(order.total_price)
-        
-        return render_template('admin/dashboard.html',
-                             stats=stats,
-                             recent_products=recent_products,
-                             recent_orders=recent_orders)
-    except Exception as e:
-        logger.error(f"Admin dashboard error: {e}")
-        return render_template('admin/dashboard.html',
-                             stats={'products': 0, 'orders': 0, 'users': 0, 'revenue': 0},
-                             recent_products=[],
-                             recent_orders=[])
+    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
+    recent_products = Product.query.order_by(Product.created_at.desc()).limit(5).all()
+    
+    return render_template('admin/dashboard.html',
+                         total_products=total_products,
+                         total_orders=total_orders,
+                         total_users=total_users,
+                         total_revenue=format_price(total_revenue),
+                         recent_orders=recent_orders,
+                         recent_products=recent_products)
 
 @app.route('/admin/products')
+@admin_required
 def admin_products():
     """Admin products management"""
-    if not session.get('admin_logged_in'):
-        flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login'))
+    products = Product.query.order_by(Product.created_at.desc()).all()
+    categories = Category.query.all()
     
-    try:
-        products = []
-        if MODELS_AVAILABLE:
-            products = Product.query.order_by(Product.created_at.desc()).all()
-            for product in products:
-                product.formatted_price = format_price(product.price)
-        
-        return render_template('admin/products.html', products=products)
-    except Exception as e:
-        logger.error(f"Admin products error: {e}")
-        return render_template('admin/products.html', products=[])
-
-@app.route('/admin/orders')
-def admin_orders():
-    """Admin orders management"""
-    if not session.get('admin_logged_in'):
-        flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login'))
+    for product in products:
+        product.formatted_price = format_price(product.price)
     
-    try:
-        orders_list = []
-        if MODELS_AVAILABLE:
-            orders_list = Order.query.order_by(Order.created_at.desc()).all()
-            for order in orders_list:
-                order.formatted_total = format_price(order.total_price)
-        
-        return render_template('admin/orders.html', orders=orders_list)
-    except Exception as e:
-        logger.error(f"Admin orders error: {e}")
-        return render_template('admin/orders.html', orders=[])
+    return render_template('admin/products.html',
+                         products=products,
+                         categories=categories)
 
-@app.route('/admin/users')
-def admin_users():
-    """Admin users management"""
-    if not session.get('admin_logged_in'):
-        flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login'))
+@app.route('/admin/products/add', methods=['GET', 'POST'])
+@admin_required
+def admin_add_product():
+    """Add product"""
+    categories = Category.query.all()
     
-    try:
-        users = []
-        if MODELS_AVAILABLE:
-            users = User.query.order_by(User.created_at.desc()).all()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        slug = request.form.get('slug')
+        description = request.form.get('description')
+        price = float(request.form.get('price', 0))
+        old_price = float(request.form.get('old_price', 0)) or None
+        category_id = request.form.get('category_id')
+        stock = int(request.form.get('stock', 0))
+        featured = 'featured' in request.form
+        tags = request.form.get('tags', '')
         
-        return render_template('admin/users.html', users=users)
-    except Exception as e:
-        logger.error(f"Admin users error: {e}")
-        return render_template('admin/users.html', users=[])
-
-@app.route('/admin/logout')
-def admin_logout():
-    """Admin logout"""
-    session.pop('admin_logged_in', None)
-    flash('Admin logged out successfully.', 'info')
-    return redirect(url_for('admin_login'))
-
-# ============ API ROUTES ============
-
-@app.route('/api/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'database': MODELS_AVAILABLE,
-        'time': datetime.now().isoformat(),
-        'version': '1.0.0'
-    })
-
-@app.route('/api/products')
-def api_products():
-    """Products API"""
-    try:
-        if not MODELS_AVAILABLE:
-            return jsonify([])
+        # Get category name
+        category = Category.query.get(category_id)
         
-        products = Product.query.limit(20).all()
-        return jsonify([{
-            'id': p.id,
-            'name': p.name,
-            'price': p.price,
-            'formatted_price': format_price(p.price),
-            'category': p.category,
-            'image_url': p.image_url or '/static/images/default-product.jpg',
-            'stock': p.stock,
-            'featured': p.featured
-        } for p in products])
-    except Exception as e:
-        logger.error(f"API error: {e}")
-        return jsonify([]), 500
-
-@app.route('/api/cart/add', methods=['POST'])
-def api_add_to_cart():
-    """Add item to cart"""
-    if not session.get('user_id'):
-        return jsonify({'success': False, 'message': 'Please login first'}), 401
+        product = Product(
+            name=name,
+            slug=slug,
+            description=description,
+            price=price,
+            old_price=old_price,
+            category_id=category_id,
+            category=category.name if category else '',
+            stock=stock,
+            featured=featured,
+            tags=tags
+        )
+        
+        db.session.add(product)
+        db.session.commit()
+        
+        flash('Product added successfully!', 'success')
+        return redirect(url_for('admin_products'))
     
-    try:
-        data = request.get_json()
-        product_id = data.get('product_id')
-        quantity = data.get('quantity', 1)
+    return render_template('admin/add_product.html',
+                         categories=categories)
+
+@app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_product(id):
+    """Edit product"""
+    product = Product.query.get_or_404(id)
+    categories = Category.query.all()
+    
+    if request.method == 'POST':
+        product.name = request.form.get('name')
+        product.slug = request.form.get('slug')
+        product.description = request.form.get('description')
+        product.price = float(request.form.get('price', 0))
+        old_price = request.form.get('old_price')
+        product.old_price = float(old_price) if old_price else None
+        product.category_id = request.form.get('category_id')
+        product.stock = int(request.form.get('stock', 0))
+        product.featured = 'featured' in request.form
+        product.tags = request.form.get('tags', '')
         
-        if not product_id:
-            return jsonify({'success': False, 'message': 'Product ID required'}), 400
-        
-        if not MODELS_AVAILABLE:
-            return jsonify({'success': False, 'message': 'System temporarily unavailable'}), 500
-        
-        # Get or create cart
-        cart = get_or_create_cart()
-        if not cart:
-            return jsonify({'success': False, 'message': 'Cart not available'}), 500
-        
-        # Check if product exists
-        product = Product.query.get(product_id)
-        if not product:
-            return jsonify({'success': False, 'message': 'Product not found'}), 404
-        
-        # Check stock
-        if product.stock < quantity:
-            return jsonify({'success': False, 'message': 'Insufficient stock'}), 400
-        
-        # Check if item already in cart
-        existing_item = CartItem.query.filter_by(cart_id=cart.id, product_id=product_id).first()
-        if existing_item:
-            existing_item.quantity += quantity
-        else:
-            cart_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=quantity)
-            db.session.add(cart_item)
+        # Update category name
+        category = Category.query.get(product.category_id)
+        if category:
+            product.category = category.name
         
         db.session.commit()
         
-        return jsonify({
-            'success': True,
-            'message': 'Item added to cart',
-            'cart_count': get_cart_count()
-        })
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Add to cart error: {e}")
-        return jsonify({'success': False, 'message': 'Server error'}), 500
+        flash('Product updated successfully!', 'success')
+        return redirect(url_for('admin_products'))
+    
+    return render_template('admin/edit_product.html',
+                         product=product,
+                         categories=categories)
 
-# ============ STATIC FILES ============
+@app.route('/admin/products/delete/<int:id>')
+@admin_required
+def admin_delete_product(id):
+    """Delete product"""
+    product = Product.query.get_or_404(id)
+    db.session.delete(product)
+    db.session.commit()
+    
+    flash('Product deleted successfully!', 'success')
+    return redirect(url_for('admin_products'))
 
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    """Serve static files"""
-    return send_from_directory('static', filename)
+@app.route('/admin/orders')
+@admin_required
+def admin_orders():
+    """Admin orders management"""
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    
+    for order in orders:
+        order.formatted_total = format_price(order.total_amount)
+    
+    return render_template('admin/orders.html', orders=orders)
 
-@app.route('/uploads/<path:filename>')
-def serve_uploads(filename):
-    """Serve uploaded files"""
-    return send_from_directory('uploads', filename)
+@app.route('/admin/orders/<int:id>')
+@admin_required
+def admin_order_detail(id):
+    """Order detail"""
+    order = Order.query.get_or_404(id)
+    order.formatted_total = format_price(order.total_amount)
+    
+    # Parse items JSON
+    items = json.loads(order.items)
+    
+    return render_template('admin/order_detail.html',
+                         order=order,
+                         items=items)
 
-# ============ ERROR HANDLERS ============
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    """Admin users management"""
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('admin/users.html', users=users)
+
+@app.route('/admin/categories')
+@admin_required
+def admin_categories():
+    """Admin categories management"""
+    categories = Category.query.all()
+    return render_template('admin/categories.html', categories=categories)
+
+@app.route('/admin/settings')
+@admin_required
+def admin_settings():
+    """Admin settings"""
+    return render_template('admin/settings.html')
+
+# ========== API ENDPOINTS ==========
+
+@app.route('/api/products')
+def api_products():
+    """API: Get all products"""
+    products = Product.query.all()
+    return jsonify([{
+        'id': p.id,
+        'name': p.name,
+        'price': p.price,
+        'formatted_price': format_price(p.price),
+        'category': p.category,
+        'image': p.image,
+        'stock': p.stock,
+        'featured': p.featured
+    } for p in products])
+
+@app.route('/api/categories')
+def api_categories():
+    """API: Get all categories"""
+    categories = Category.query.all()
+    return jsonify([{
+        'id': c.id,
+        'name': c.name,
+        'slug': c.slug,
+        'product_count': len(c.products)
+    } for c in categories])
+
+# ========== ERROR HANDLERS ==========
 
 @app.errorhandler(404)
-def not_found(e):
-    """404 error handler"""
+def page_not_found(e):
     return render_template('404.html'), 404
 
 @app.errorhandler(500)
 def server_error(e):
-    """500 error handler"""
-    logger.error(f"Server error: {e}")
     return render_template('500.html'), 500
 
-# ============ APPLICATION START ============
+# ========== START APPLICATION ==========
 
 if __name__ == '__main__':
-    # Create directories
-    create_directories()
+    # Create necessary directories
+    os.makedirs('static/uploads', exist_ok=True)
+    os.makedirs('templates/admin', exist_ok=True)
     
     # Initialize database
-    reset_database()  # Use reset instead of init
+    init_database()
     
-    # Start application
+    # Run app
     port = int(os.environ.get('PORT', 10000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     print(f"\n{'='*60}")
-    print(f"🚀 NORA HAIR LINE")
+    print(f"🚀 NORA HAIR LINE E-COMMERCE")
     print(f"{'='*60}")
     print(f"🌐 Homepage: http://localhost:{port}")
-    print(f"👤 Customer login: customer@example.com / password")
-    print(f"👑 Admin login: admin@norahairline.com / admin123")
-    print(f"🔧 Admin Dashboard: http://localhost:{port}/admin/login")
-    print(f"📊 Health check: http://localhost:{port}/api/health")
+    print(f"🛍️  Shop: http://localhost:{port}/shop")
+    print(f"👤 Login: http://localhost:{port}/login")
+    print(f"👑 Admin: http://localhost:{port}/admin")
+    print(f"📧 Admin Login: admin@norahairline.com / admin123")
     print(f"{'='*60}")
-    print(f"📁 Template folder: {app.template_folder}")
-    print(f"📁 Static folder: {app.static_folder}")
-    print(f"📁 Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    print(f"📊 Products: {Product.query.count()}")
+    print(f"📦 Categories: {Category.query.count()}")
+    print(f"👥 Users: {User.query.count()}")
     print(f"{'='*60}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
