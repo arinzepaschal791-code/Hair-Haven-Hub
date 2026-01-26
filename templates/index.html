@@ -1,158 +1,684 @@
-{% extends "layout.html" %}
-
-{% block title %}Home - {{ config.brand_name }}{% endblock %}
-
-{% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
-        <h1 class="display-4 mb-4">Premium 100% Human Hair</h1>
-        <p class="lead mb-4">{{ config.slogan }}</p>
-        <p class="mb-4">{{ config.description }}</p>
-        <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <a href="/shop" class="btn btn-primary btn-lg px-5">
-                <i class="fas fa-shopping-bag"></i> Shop Now
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.brand_name }} - {{ config.tagline }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --accent-color: #F5DEB3;
+            --dark-color: #2C1810;
+            --light-color: #FFF8F0;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        
+        h1, h2, h3, h4, h5 {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.8rem;
+            color: var(--primary-color) !important;
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(44, 24, 16, 0.7), rgba(44, 24, 16, 0.7)),
+                        url('https://images.unsplash.com/photo-1522338242990-8f6c3e1534c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0;
+            margin-top: -76px;
+            padding-top: 200px;
+        }
+        
+        .section-title {
+            position: relative;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+        }
+        
+        .section-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background-color: var(--secondary-color);
+        }
+        
+        .section-title.text-center:after {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .product-card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .product-img {
+            height: 250px;
+            object-fit: cover;
+            width: 100%;
+        }
+        
+        .badge-featured {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .price {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .old-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary-custom {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .category-card {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .category-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .category-card:hover .category-img {
+            transform: scale(1.1);
+        }
+        
+        .category-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            color: white;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            padding: 60px 0 30px;
+        }
+        
+        .social-icons a {
+            color: var(--accent-color);
+            margin-right: 15px;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .social-icons a:hover {
+            color: var(--secondary-color);
+        }
+        
+        .stats-section {
+            background-color: var(--accent-color);
+            padding: 60px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: var(--dark-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .testimonial-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin: 15px;
+        }
+        
+        .testimonial-img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+        
+        .rating {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-crown me-2"></i>{{ config.brand_name }}
             </a>
-            <a href="{{ config.whatsapp }}" target="_blank" class="btn btn-success btn-lg px-5">
-                <i class="fab fa-whatsapp"></i> Order on WhatsApp
-            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Contact</a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <a href="/cart" class="btn btn-outline-dark position-relative me-3">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if cart_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ cart_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    
+                    {% if session.user_id %}
+                    <a href="/account" class="btn btn-outline-primary">
+                        <i class="fas fa-user me-2"></i>Account
+                    </a>
+                    {% else %}
+                    <a href="/admin" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Admin
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </nav>
 
-<!-- Featured Categories -->
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Shop by Category</h2>
-        <div class="row">
-            {% for category in categories %}
-            <div class="col-md-4 mb-4">
-                <div class="card category-card text-center h-100">
-                    <div class="card-body">
-                        <i class="fas fa-star fa-3x text-warning mb-3"></i>
-                        <h4>{{ category.name }}</h4>
-                        <p class="text-muted">{{ category.description }}</p>
-                        <a href="/shop?category={{ category.slug }}" class="btn btn-outline-primary">
-                            Browse {{ category.name }}
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">{{ config.slogan }}</h1>
+                    <p class="lead mb-4">{{ config.description }}</p>
+                    <div class="d-flex gap-3">
+                        <a href="/shop" class="btn btn-primary-custom">
+                            Shop Now <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                        <a href="#featured" class="btn btn-outline-light">
+                            View Collections
                         </a>
                     </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="col-12 text-center">
-                <p class="text-muted">No categories available yet.</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Featured Products -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5">Featured Products</h2>
-        <div class="row">
-            {% for product in featured_products %}
-            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                <div class="card product-card h-100">
-                    <img src="/static/images/{{ product.image }}" 
-                         class="card-img-top" 
-                         alt="{{ product.name }}"
-                         style="height: 250px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ product.name }}</h5>
-                        <p class="card-text text-muted small">{{ product.short_description|default(product.description[:60]) }}...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="price">{{ config.currency_symbol }}{{ product.display_price|format(',.2f') }}</span>
-                                {% if product.sale_price %}
-                                <small class="old-price ms-2">{{ config.currency_symbol }}{{ product.price|format(',.2f') }}</small>
-                                {% endif %}
+                <div class="col-lg-6 text-center">
+                    <div class="position-relative d-inline-block">
+                        <div class="position-absolute top-0 start-100 translate-middle">
+                            <div class="bg-white rounded-circle p-3 shadow">
+                                <i class="fas fa-truck text-primary fs-4"></i>
                             </div>
-                            <span class="badge bg-secondary">{{ product.category_rel.name }}</span>
                         </div>
-                        {% if product.stock > 0 %}
-                        <small class="text-success"><i class="fas fa-check-circle"></i> In Stock</small>
-                        {% else %}
-                        <small class="text-danger"><i class="fas fa-times-circle"></i> Out of Stock</small>
-                        {% endif %}
+                        <div class="position-absolute bottom-0 start-0 translate-middle">
+                            <div class="bg-white rounded-circle p-3 shadow">
+                                <i class="fas fa-shield-alt text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1591369822092-854d5b88e5de?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                             alt="Premium Hair" class="img-fluid rounded-3 shadow-lg" style="max-height: 400px;">
                     </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <div class="d-grid gap-2">
-                            <a href="/product/{{ product.slug }}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye"></i> View Details
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 col-6">
+                    <div class="text-center">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <h5>100% Human Hair</h5>
+                        <p class="text-muted small">Premium quality guaranteed</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <h5>Free Shipping</h5>
+                        <p class="text-muted small">On orders over ₦50,000</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-undo"></i>
+                        </div>
+                        <h5>30-Day Return</h5>
+                        <p class="text-muted small">Hassle-free returns</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h5>24/7 Support</h5>
+                        <p class="text-muted small">Dedicated customer service</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section id="featured" class="py-5">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h2 class="section-title">Featured Products</h2>
+                    <p class="text-muted">Handpicked selection of our premium hair collections</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                {% for product in featured_products %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="product-card h-100">
+                        <div class="position-relative">
+                            <img src="{{ url_for('static', filename='uploads/' + product.image_url) if product.image_url else 'https://via.placeholder.com/300x300' }}" 
+                                 alt="{{ product.name }}" class="product-img">
+                            {% if product.featured %}
+                            <span class="badge-featured">Featured</span>
+                            {% endif %}
+                            <div class="position-absolute bottom-0 end-0 m-3">
+                                <a href="/add-to-cart/{{ product.id }}" class="btn btn-primary-custom btn-sm">
+                                    <i class="fas fa-cart-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <small class="text-muted">{{ product.category.name if product.category else 'Hair' }}</small>
+                            <h5 class="mt-2 mb-3">{{ product.name }}</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="price">₦{{ "{:,.2f}".format(product.display_price) }}</span>
+                                    {% if product.compare_price and product.compare_price > product.price %}
+                                    <br><span class="old-price">₦{{ "{:,.2f}".format(product.compare_price) }}</span>
+                                    {% endif %}
+                                </div>
+                                <a href="/product/{{ product.id }}" class="btn btn-outline-primary btn-sm">
+                                    View <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h4>No featured products available</h4>
+                    <p class="text-muted">Check back soon for our latest collections</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="/shop" class="btn btn-primary-custom px-5">
+                    View All Products <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h2 class="section-title text-center">Shop By Category</h2>
+                    <p class="text-muted">Explore our wide range of premium hair products</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                {% for category in categories[:6] %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="category-card">
+                        <img src="{{ url_for('static', filename='uploads/' + category.image_url) if category.image_url else 'https://via.placeholder.com/400x200' }}" 
+                             alt="{{ category.name }}" class="category-img">
+                        <div class="category-overlay">
+                            <div>
+                                <h4 class="mb-2">{{ category.name }}</h4>
+                                <p class="mb-0">{{ category.products|length }} products</p>
+                                <a href="/shop?category={{ category.id }}" class="btn btn-light btn-sm mt-2">
+                                    Shop Now <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                    <h4>No categories available</h4>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-item">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Happy Clients</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ featured_products|length }}+</div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-item">
+                        <div class="stat-number">5+</div>
+                        <div class="stat-label">Years Experience</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-4">
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Support</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h2 class="section-title text-center">What Our Clients Say</h2>
+                    <p class="text-muted">Real reviews from satisfied customers</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Client" class="testimonial-img">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="mb-3">"The Brazilian hair I purchased is absolutely stunning! It's been 6 months and still looks brand new. Best quality I've ever had!"</p>
+                        <h6>Chiamaka Okeke</h6>
+                        <small class="text-muted">Lagos</small>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="testimonial-img">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="mb-3">"The lace frontal wig is so natural looking! I've received countless compliments. The customer service was excellent too!"</p>
+                        <h6>Bisi Adeyemi</h6>
+                        <small class="text-muted">Abuja</small>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Client" class="testimonial-img">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <p class="mb-3">"Fast delivery and premium quality hair. I'll definitely be ordering again. The Peruvian straight is my new favorite!"</p>
+                        <h6>Fatima Bello</h6>
+                        <small class="text-muted">Port Harcourt</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h4 class="mb-4">
+                        <i class="fas fa-crown me-2"></i>{{ config.brand_name }}
+                    </h4>
+                    <p class="mb-4">{{ config.description }}</p>
+                    <div class="social-icons">
+                        <a href="{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                        <a href="{{ config.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="tel:{{ config.phone }}"><i class="fas fa-phone"></i></a>
+                        <a href="mailto:{{ config.email }}"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-light">Home</a></li>
+                        <li class="mb-2"><a href="/shop" class="text-light">Shop</a></li>
+                        <li class="mb-2"><a href="/about" class="text-light">About Us</a></li>
+                        <li class="mb-2"><a href="/contact" class="text-light">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="mb-4">Categories</h5>
+                    <ul class="list-unstyled">
+                        {% for category in categories[:4] %}
+                        <li class="mb-2">
+                            <a href="/shop?category={{ category.id }}" class="text-light">
+                                {{ category.name }}
                             </a>
-                            <form action="/add-to-cart/{{ product.id }}" method="POST" class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-cart-plus"></i> Add to Cart
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 mb-4">
+                    <h5 class="mb-4">Contact Info</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            {{ config.address }}
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-phone me-2"></i>
+                            {{ config.phone }}
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-envelope me-2"></i>
+                            {{ config.email }}
+                        </li>
+                        <li>
+                            <i class="fas fa-clock me-2"></i>
+                            Mon - Sat: 9AM - 7PM
+                        </li>
+                    </ul>
                 </div>
             </div>
-            {% else %}
-            <div class="col-12 text-center">
-                <p class="text-muted">No featured products available.</p>
+            
+            <hr class="bg-light my-4">
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">Premium 100% Human Hair | Luxury for Less</p>
+                </div>
             </div>
-            {% endfor %}
         </div>
-        <div class="text-center mt-4">
-            <a href="/shop" class="btn btn-primary btn-lg">
-                View All Products <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-    </div>
-</section>
+    </footer>
 
-<!-- Why Choose Us -->
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Why Choose {{ config.brand_name }}</h2>
-        <div class="row">
-            <div class="col-md-3 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-certificate fa-3x text-primary"></i>
-                </div>
-                <h5>100% Human Hair</h5>
-                <p class="text-muted">Premium quality virgin hair, no synthetic mixtures</p>
-            </div>
-            <div class="col-md-3 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-truck fa-3x text-primary"></i>
-                </div>
-                <h5>Nationwide Delivery</h5>
-                <p class="text-muted">Fast shipping across Nigeria</p>
-            </div>
-            <div class="col-md-3 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-headset fa-3x text-primary"></i>
-                </div>
-                <h5>24/7 Support</h5>
-                <p class="text-muted">We're always here to help you</p>
-            </div>
-            <div class="col-md-3 text-center mb-4">
-                <div class="mb-3">
-                    <i class="fas fa-shield-alt fa-3x text-primary"></i>
-                </div>
-                <h5>Quality Guarantee</h5>
-                <p class="text-muted">30-day return policy on all products</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Payment Information -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="card border-primary">
-            <div class="card-body text-center">
-                <h4><i class="fas fa-university"></i> Payment Information</h4>
-                <p class="mb-1"><strong>Bank:</strong> {{ config.payment_bank }}</p>
-                <p class="mb-1"><strong>Account Number:</strong> {{ config.payment_account }}</p>
-                <p class="mb-0"><strong>Account Name:</strong> {{ config.payment_name }}</p>
-            </div>
-        </div>
-    </div>
-</section>
-{% endblock %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Simple animation for scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation to product cards on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe product cards
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(card);
+            });
+            
+            // Observe category cards
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(card);
+            });
+        });
+        
+        // Flash message auto-dismiss
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
