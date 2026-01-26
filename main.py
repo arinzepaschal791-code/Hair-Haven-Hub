@@ -1,5 +1,6 @@
 # main.py - COMPLETE FIXED VERSION
 import os
+import sys
 from flask import Flask, jsonify, request, render_template, send_from_directory, session, redirect, url_for, flash
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,6 +9,9 @@ import json
 import uuid
 import secrets
 import logging
+
+# Fix path for imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -413,8 +417,42 @@ def orders():
 # ============ ADMIN ROUTES ============
 
 @app.route('/admin')
-def admin_login_page():
-    """Admin login page"""
+def admin_redirect():
+    """Redirect to admin login"""
+    return redirect(url_for('admin_login'))
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Admin login handler"""
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        
+        # Demo admin login
+        if email == 'admin@norahairline.com' and password == 'admin123':
+            session['admin_logged_in'] = True
+            session['user_id'] = 999
+            session['user_name'] = 'Admin'
+            session['user_email'] = email
+            flash('Admin login successful!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        
+        # Check database for admin
+        if MODELS_AVAILABLE:
+            admin = Admin.query.filter_by(email=email).first()
+            if admin and check_password_hash(admin.password, password):
+                session['admin_logged_in'] = True
+                session['user_id'] = admin.id
+                session['user_name'] = 'Admin'
+                session['user_email'] = admin.email
+                flash('Admin login successful!', 'success')
+                return redirect(url_for('admin_dashboard'))
+        
+        flash('Invalid admin credentials.', 'error')
+    
     return render_template('admin/login.html')
 
 @app.route('/admin/dashboard')
@@ -422,7 +460,7 @@ def admin_dashboard():
     """Admin dashboard"""
     if not session.get('admin_logged_in'):
         flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login_page'))
+        return redirect(url_for('admin_login'))
     
     try:
         stats = {}
@@ -438,6 +476,9 @@ def admin_dashboard():
             recent_products = Product.query.order_by(
                 Product.created_at.desc()
             ).limit(5).all()
+            
+            for product in recent_products:
+                product.formatted_price = format_price(product.price)
         
         return render_template('admin/dashboard.html',
                              stats=stats,
@@ -453,7 +494,7 @@ def admin_products():
     """Admin products management"""
     if not session.get('admin_logged_in'):
         flash('Please login as admin.', 'warning')
-        return redirect(url_for('admin_login_page'))
+        return redirect(url_for('admin_login'))
     
     try:
         products = []
@@ -466,6 +507,13 @@ def admin_products():
     except Exception as e:
         logger.error(f"Admin products error: {e}")
         return render_template('admin/products.html', products=[])
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Admin logout"""
+    session.pop('admin_logged_in', None)
+    flash('Admin logged out successfully.', 'info')
+    return redirect(url_for('admin_login'))
 
 # ============ API ROUTES ============
 
@@ -544,6 +592,7 @@ if __name__ == '__main__':
     print(f"🌐 Homepage: http://localhost:{port}")
     print(f"👤 Customer login: customer@example.com / password")
     print(f"👑 Admin login: admin@norahairline.com / admin123")
+    print(f"🔧 Admin Dashboard: http://localhost:{port}/admin/login")
     print(f"{'='*60}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
