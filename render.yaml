@@ -3,9 +3,11 @@ services:
     name: norahairline
     env: python
     buildCommand: |
-      pip install --upgrade pip
+      apt-get update
+      apt-get install -y libpq-dev gcc
+      pip install --upgrade pip setuptools wheel
+      pip install psycopg2-binary --no-binary psycopg2-binary
       pip install -r requirements.txt
-      mkdir -p static/uploads
     startCommand: gunicorn main:app
     envVars:
       - key: PYTHON_VERSION
@@ -15,12 +17,5 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: norahairline-db
-          property: connectionString
-    plan: free
-    autoDeploy: true
-
-databases:
-  - name: norahairline-db
+        value: sqlite:///norahairline.db  # Use SQLite first, change later
     plan: free
