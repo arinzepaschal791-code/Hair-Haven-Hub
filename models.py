@@ -29,11 +29,6 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    carts = db.relationship('Cart', backref='user', lazy=True, cascade='all, delete-orphan')
-    orders = db.relationship('Order', backref='user', lazy=True)
-    reviews = db.relationship('Review', backref='user', lazy=True)
-
     def __repr__(self):
         return f'<User {self.email}>'
 
@@ -45,18 +40,13 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(50))
     image_url = db.Column(db.String(500))
-    video_url = db.Column(db.String(500))
-    image_urls = db.Column(db.Text, default='[]')
+    video_url = db.Column(db.String(500), nullable=True)  # Fixed: added nullable=True
+    image_urls = db.Column(db.Text, nullable=True)  # Fixed: removed default
     stock = db.Column(db.Integer, default=0)
     featured = db.Column(db.Boolean, default=False)
     product_code = db.Column(db.String(50), unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    cart_items = db.relationship('CartItem', backref='product', lazy=True, cascade='all, delete-orphan')
-    order_items = db.relationship('OrderItem', backref='product', lazy=True)
-    reviews = db.relationship('Review', backref='product', lazy=True)
 
     def __repr__(self):
         return f'<Product {self.name}>'
@@ -76,22 +66,8 @@ class Cart(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    items = db.relationship('CartItem', backref='cart', lazy=True, cascade='all, delete-orphan')
-
     def __repr__(self):
         return f'<Cart {self.id}>'
-
-    def total_price(self):
-        """Calculate total price of all items in cart"""
-        total = 0
-        for item in self.items:
-            total += item.product.price * item.quantity
-        return total
-
-    def item_count(self):
-        """Get total number of items in cart"""
-        return sum(item.quantity for item in self.items)
 
 class CartItem(db.Model):
     __tablename__ = 'cart_items'
@@ -101,19 +77,13 @@ class CartItem(db.Model):
     quantity = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships already defined by backrefs
-
     def __repr__(self):
         return f'<CartItem {self.id}>'
-
-    def item_price(self):
-        """Calculate price for this cart item"""
-        return self.product.price * self.quantity
 
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     order_number = db.Column(db.String(50), unique=True)
     customer_name = db.Column(db.String(100), nullable=False)
     customer_email = db.Column(db.String(100), nullable=False)
@@ -129,16 +99,8 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
-    payments = db.relationship('Payment', backref='order', lazy=True, cascade='all, delete-orphan')
-
     def __repr__(self):
         return f'<Order {self.order_number or self.id}>'
-
-    def formatted_total(self):
-        """Format total price with currency"""
-        return f"₦{self.total_price:,.2f}"
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'
@@ -151,8 +113,6 @@ class OrderItem(db.Model):
     total_price = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships already defined by backrefs
-
     def __repr__(self):
         return f'<OrderItem {self.id}>'
 
@@ -164,13 +124,11 @@ class Payment(db.Model):
     payment_method = db.Column(db.String(50), default='bank_transfer')
     status = db.Column(db.String(20), default='pending')
     reference = db.Column(db.String(100), unique=True)
-    payment_proof = db.Column(db.String(500))
-    notes = db.Column(db.Text)
+    payment_proof = db.Column(db.String(500), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships already defined by backrefs
-
     def __repr__(self):
         return f'<Payment {self.reference}>'
 
@@ -178,15 +136,13 @@ class Review(db.Model):
     __tablename__ = 'reviews'
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     customer_name = db.Column(db.String(100), nullable=False)
-    customer_email = db.Column(db.String(100))
+    customer_email = db.Column(db.String(100), nullable=True)
     rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text)
+    comment = db.Column(db.Text, nullable=True)
     approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships already defined by backrefs
-
     def __repr__(self):
         return f'<Review {self.id}>'
