@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
@@ -16,6 +21,7 @@ if database_url:
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    # Fallback to SQLite for local development
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -28,8 +34,10 @@ login_manager.login_view = 'admin_login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'error'
 
-# Models
+# ========== MODELS ==========
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -39,37 +47,44 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
     
+    # Relationships
     orders = db.relationship('Order', backref='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
-    
-    def get_id(self):
-        return str(self.id)
 
 class Category(db.Model):
+    __tablename__ = 'categories'
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Relationships
     products = db.relationship('Product', backref='category', lazy=True)
 
 class Product(db.Model):
+    __tablename__ = 'products'
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False, default=0)
     image = db.Column(db.String(300), nullable=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relationships
     reviews = db.relationship('Review', backref='product', lazy=True)
     order_items = db.relationship('OrderItem', backref='product', lazy=True)
 
 class Order(db.Model):
+    __tablename__ = 'orders'
+    
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     order_number = db.Column(db.String(50), unique=True, nullable=False)
-    items = db.Column(db.Text, nullable=False)  # JSON string of order items
+    items = db.Column(db.Text, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default='pending')
     shipping_address = db.Column(db.Text, nullable=False)
@@ -77,25 +92,32 @@ class Order(db.Model):
     payment_status = db.Column(db.String(50), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    order_items = db.relationship('OrderItem', backref='order', lazy=True)
 
 class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
 
 class Review(db.Model):
+    __tablename__ = 'reviews'
+    
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False)
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Flask-Login user loader
+# ========== FLASK-LOGIN SETUP ==========
 @login_manager.user_loader
 def load_user(user_id):
     try:
@@ -103,7 +125,7 @@ def load_user(user_id):
     except:
         return None
 
-# Context processors
+# ========== CONTEXT PROCESSORS ==========
 @app.context_processor
 def inject_user():
     return dict(current_user=current_user)
@@ -112,7 +134,7 @@ def inject_user():
 def inject_now():
     return dict(now=datetime.now())
 
-# Admin decorator
+# ========== DECORATORS ==========
 def admin_required(f):
     from functools import wraps
     @wraps(f)
@@ -128,7 +150,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Error handlers
+# ========== ERROR HANDLERS ==========
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
@@ -137,7 +159,7 @@ def not_found_error(error):
 def internal_error(error):
     return render_template('500.html', error=error), 500
 
-# Routes
+# ========== ROUTES ==========
 @app.route('/')
 def home():
     try:
@@ -161,7 +183,7 @@ def search():
         products = []
     return render_template('products.html', products=products, query=query)
 
-# Admin Routes
+# ========== ADMIN ROUTES ==========
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if current_user.is_authenticated and current_user.is_admin:
@@ -478,8 +500,13 @@ def dashboard_stats():
     }
     return jsonify(stats)
 
-def create_admin_user():
+# ========== INITIALIZATION ==========
+def init_database():
     with app.app_context():
+        # Create all tables
+        db.create_all()
+        
+        # Create admin user
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
         admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
         
@@ -492,30 +519,36 @@ def create_admin_user():
                 is_admin=True
             )
             db.session.add(admin)
-            
-            # Create default categories
-            if Category.query.count() == 0:
-                categories = [
-                    ('Electronics', 'electronics'),
-                    ('Clothing', 'clothing'),
-                    ('Books', 'books'),
-                    ('Home & Garden', 'home-garden')
-                ]
-                for name, slug in categories:
-                    category = Category(name=name, slug=slug)
-                    db.session.add(category)
-            
+        
+        # Create default categories if none exist
+        if Category.query.count() == 0:
+            categories = [
+                ('Electronics', 'electronics'),
+                ('Clothing', 'clothing'),
+                ('Books', 'books'),
+                ('Home & Garden', 'home-garden'),
+                ('Beauty', 'beauty'),
+                ('Sports', 'sports')
+            ]
+            for name, slug in categories:
+                category = Category(name=name, slug=slug)
+                db.session.add(category)
+        
+        try:
             db.session.commit()
-            print(f'Admin user created: {admin_email}')
+            print("Database initialized successfully")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error initializing database: {e}")
 
-# Application factory for Gunicorn
+# ========== APPLICATION FACTORY ==========
 def create_app():
+    # Initialize database
+    init_database()
     return app
 
+# ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        create_admin_user()
-    
+    init_database()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_ENV') == 'development')
