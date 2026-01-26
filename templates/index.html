@@ -34,8 +34,14 @@
         .navbar-brand {
             font-family: 'Playfair Display', serif;
             font-weight: 600;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: var(--primary-color) !important;
+        }
+        
+        .site-logo {
+            height: 45px;
+            width: auto;
+            margin-right: 10px;
         }
         
         .hero-section {
@@ -214,34 +220,71 @@
             color: var(--primary-color);
         }
         
+        /* UPDATED: Testimonials without images */
         .testimonial-card {
             background: white;
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            height: 100%;
         }
         
-        .testimonial-img {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 20px;
+        .testimonial-card:hover {
+            transform: translateY(-5px);
         }
         
         .rating {
             color: #FFD700;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .review-text {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .customer-info {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        
+        .customer-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .customer-location {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        /* Delivery info styling */
+        .delivery-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Navigation - UPDATED WITH LOGO -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <i class="fas fa-crown me-2"></i>{{ config.brand_name }}
+                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                     alt="{{ config.brand_name }} Logo" 
+                     class="site-logo">
+                {{ config.brand_name }}
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -274,14 +317,38 @@
                         {% endif %}
                     </a>
                     
-                    {% if session.user_id %}
-                    <a href="/account" class="btn btn-outline-primary">
-                        <i class="fas fa-user me-2"></i>Account
-                    </a>
+                    <!-- UPDATED: Correct session variables from main.py -->
+                    {% if session.customer_id %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-2"></i>{{ session.customer_name.split(' ')[0] }}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/account">My Account</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('customer_logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
+                    {% elif session.admin_id %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-shield me-2"></i>Admin
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/admin/dashboard">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
                     {% else %}
-                    <a href="/admin" class="btn btn-outline-primary">
-                        <i class="fas fa-sign-in-alt me-2"></i>Admin
-                    </a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="loginDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/login">Customer Login</a></li>
+                                <li><a class="dropdown-item" href="/admin">Admin Login</a></li>
+                                <li><a class="dropdown-item" href="/register">Register</a></li>
+                            </ul>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -295,6 +362,15 @@
                 <div class="col-lg-6">
                     <h1 class="display-4 fw-bold mb-4">{{ config.slogan }}</h1>
                     <p class="lead mb-4">{{ config.description }}</p>
+                    
+                    <!-- Delivery Info -->
+                    <div class="delivery-info mb-4">
+                        <h5><i class="fas fa-truck me-2"></i>Delivery Information</h5>
+                        <p class="mb-1">🚚 <strong>Lagos Areas:</strong> ₦3,000</p>
+                        <p class="mb-1">📍 <strong>Outside Lagos:</strong> ₦5,000</p>
+                        <p class="mb-0">🎉 <strong>Free Delivery:</strong> Orders over ₦150,000</p>
+                    </div>
+                    
                     <div class="d-flex gap-3">
                         <a href="/shop" class="btn btn-primary-custom">
                             Shop Now <i class="fas fa-arrow-right ms-2"></i>
@@ -324,6 +400,20 @@
         </div>
     </section>
 
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
     <!-- Features Section -->
     <section class="py-5 bg-white">
         <div class="container">
@@ -342,8 +432,8 @@
                         <div class="feature-icon mx-auto">
                             <i class="fas fa-shipping-fast"></i>
                         </div>
-                        <h5>Free Shipping</h5>
-                        <p class="text-muted small">On orders over ₦50,000</p>
+                        <h5>Nationwide Delivery</h5>
+                        <p class="text-muted small">Fast & reliable shipping</p>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
@@ -383,15 +473,18 @@
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="product-card h-100">
                         <div class="position-relative">
-                            <img src="{{ url_for('static', filename='uploads/' + product.image_url) if product.image_url else 'https://via.placeholder.com/300x300' }}" 
+                            <img src="{{ url_for('static', filename='uploads/' + product.image_url) if product.image_url else 'https://via.placeholder.com/300x300?text=Hair+Product' }}" 
                                  alt="{{ product.name }}" class="product-img">
                             {% if product.featured %}
                             <span class="badge-featured">Featured</span>
                             {% endif %}
                             <div class="position-absolute bottom-0 end-0 m-3">
-                                <a href="/add-to-cart/{{ product.id }}" class="btn btn-primary-custom btn-sm">
-                                    <i class="fas fa-cart-plus"></i>
-                                </a>
+                                <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" class="d-inline">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-primary-custom btn-sm">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         <div class="p-3">
@@ -442,7 +535,7 @@
                 {% for category in categories[:6] %}
                 <div class="col-lg-4 col-md-6">
                     <div class="category-card">
-                        <img src="{{ url_for('static', filename='uploads/' + category.image_url) if category.image_url else 'https://via.placeholder.com/400x200' }}" 
+                        <img src="{{ url_for('static', filename='uploads/' + category.image_url) if category.image_url else 'https://via.placeholder.com/400x200?text=' + category.name }}" 
                              alt="{{ category.name }}" class="category-img">
                         <div class="category-overlay">
                             <div>
@@ -478,7 +571,7 @@
                 <div class="col-md-3 col-6 mb-4">
                     <div class="stat-item">
                         <div class="stat-number">{{ featured_products|length }}+</div>
-                        <div class="stat-label">Products</div>
+                        <div class="stat-label">Premium Products</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-4">
@@ -497,62 +590,91 @@
         </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="py-5">
+    <!-- UPDATED: Testimonials Section (Without Images) -->
+    <section class="testimonials py-5">
         <div class="container">
             <div class="row mb-5">
                 <div class="col-12 text-center">
-                    <h2 class="section-title text-center">What Our Clients Say</h2>
-                    <p class="text-muted">Real reviews from satisfied customers</p>
+                    <h2 class="section-title">What Our Customers Say</h2>
+                    <p class="text-muted">Real feedback from satisfied clients</p>
                 </div>
             </div>
             
             <div class="row">
-                <div class="col-lg-4">
-                    <div class="testimonial-card">
-                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Client" class="testimonial-img">
+                {% for review in reviews %}
+                <div class="col-lg-4 mb-4">
+                    <div class="testimonial-card h-100">
+                        <!-- Star Rating (NO IMAGE) -->
                         <div class="rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
+                            {% for i in range(review.rating) %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - review.rating) %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endfor %}
                         </div>
-                        <p class="mb-3">"The Brazilian hair I purchased is absolutely stunning! It's been 6 months and still looks brand new. Best quality I've ever had!"</p>
-                        <h6>Chiamaka Okeke</h6>
-                        <small class="text-muted">Lagos</small>
+                        
+                        <!-- Review Text -->
+                        <p class="review-text">"{{ review.comment }}"</p>
+                        
+                        <!-- Customer Info (TEXT ONLY) -->
+                        <div class="customer-info">
+                            <p class="customer-name">{{ review.customer_name }}</p>
+                            <p class="customer-location">{{ review.location }}</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="testimonial-card">
-                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="testimonial-img">
+                {% else %}
+                <!-- Fallback testimonials if no reviews in database -->
+                <div class="col-lg-4 mb-4">
+                    <div class="testimonial-card h-100">
                         <div class="rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
                         </div>
-                        <p class="mb-3">"The lace frontal wig is so natural looking! I've received countless compliments. The customer service was excellent too!"</p>
-                        <h6>Bisi Adeyemi</h6>
-                        <small class="text-muted">Abuja</small>
+                        <p class="review-text">"The Brazilian hair I purchased is absolutely stunning! It's been 6 months and still looks brand new. Best quality I've ever had!"</p>
+                        <div class="customer-info">
+                            <p class="customer-name">Chiamaka Okeke</p>
+                            <p class="customer-location">Lagos</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="testimonial-card">
-                        <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Client" class="testimonial-img">
+                <div class="col-lg-4 mb-4">
+                    <div class="testimonial-card h-100">
                         <div class="rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
                         </div>
-                        <p class="mb-3">"Fast delivery and premium quality hair. I'll definitely be ordering again. The Peruvian straight is my new favorite!"</p>
-                        <h6>Fatima Bello</h6>
-                        <small class="text-muted">Port Harcourt</small>
+                        <p class="review-text">"The lace frontal wig is so natural looking! I've received countless compliments. The customer service was excellent too!"</p>
+                        <div class="customer-info">
+                            <p class="customer-name">Bisi Adeyemi</p>
+                            <p class="customer-location">Abuja</p>
+                        </div>
                     </div>
                 </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="testimonial-card h-100">
+                        <div class="rating">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                        <p class="review-text">"Fast delivery and premium quality hair. I'll definitely be ordering again. The Peruvian straight is my new favorite!"</p>
+                        <div class="customer-info">
+                            <p class="customer-name">Fatima Bello</p>
+                            <p class="customer-location">Port Harcourt</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </section>
@@ -563,14 +685,17 @@
             <div class="row">
                 <div class="col-lg-4 mb-4">
                     <h4 class="mb-4">
-                        <i class="fas fa-crown me-2"></i>{{ config.brand_name }}
+                        <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                             alt="{{ config.brand_name }} Logo" 
+                             style="height: 40px; width: auto; margin-right: 10px;">
+                        {{ config.brand_name }}
                     </h4>
                     <p class="mb-4">{{ config.description }}</p>
                     <div class="social-icons">
-                        <a href="{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                        <a href="{{ config.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="tel:{{ config.phone }}"><i class="fas fa-phone"></i></a>
-                        <a href="mailto:{{ config.email }}"><i class="fas fa-envelope"></i></a>
+                        <a href="{{ config.whatsapp }}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="{{ config.instagram_url }}" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="tel:{{ config.phone }}" title="Call Us"><i class="fas fa-phone"></i></a>
+                        <a href="mailto:{{ config.email }}" title="Email Us"><i class="fas fa-envelope"></i></a>
                     </div>
                 </div>
                 
@@ -594,6 +719,9 @@
                             </a>
                         </li>
                         {% endfor %}
+                        <li class="mb-2">
+                            <a href="/shop" class="text-light">View All Categories</a>
+                        </li>
                     </ul>
                 </div>
                 
@@ -664,6 +792,14 @@
             
             // Observe category cards
             document.querySelectorAll('.category-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(card);
+            });
+            
+            // Observe testimonial cards
+            document.querySelectorAll('.testimonial-card').forEach(card => {
                 card.style.opacity = '0';
                 card.style.transform = 'translateY(20px)';
                 card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
