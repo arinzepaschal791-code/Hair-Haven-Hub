@@ -3,122 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NoraHairLine - Premium Hair Products{% endblock %}</title>
+    <title>{% block title %}{{ brand_name }} - {{ tagline }}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    {% block extra_css %}{% endblock %}
+    
+    {% block styles %}{% endblock %}
+    
+    <style>
+        :root {
+            --primary-color: #8a6d3b;
+            --primary-dark: #6b552d;
+            --accent-gold: #d4af37;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+        }
+        
+        /* Page-specific adjustments */
+        .page-header {
+            background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
+                        url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0 60px;
+            margin-top: 76px;
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--accent-gold);
+        }
+        
+        .breadcrumb-item.active {
+            color: white;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <nav class="navbar">
-            <a href="/" class="logo">Nora<span>HairLine</span></a>
-            <ul class="nav-links">
-                <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a></li>
-                <li><a href="/shop" {% if request.path.startswith('/shop') or request.path.startswith('/products') %}class="active"{% endif %}>Shop</a></li>
-                <li><a href="/about" {% if request.path == '/about' %}class="active"{% endif %}>About</a></li>
-                <li><a href="/contact" {% if request.path == '/contact' %}class="active"{% endif %}>Contact</a></li>
-                {% if session.get('admin_logged_in') %}
-                <li><a href="/admin/dashboard" {% if request.path.startswith('/admin') %}class="active"{% endif %}>Admin</a></li>
-                {% endif %}
-            </ul>
-            <div class="nav-icons">
-                <a href="/account" {% if request.path == '/account' %}class="active"{% endif %}>
-                    <i class="fas fa-user"></i>
-                </a>
-                <a href="/cart" {% if request.path == '/cart' %}class="active"{% endif %}>
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-count" id="cart-count">0</span>
-                </a>
-                {% if session.get('admin_logged_in') %}
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i></a>
-                {% else %}
-                <a href="/login" {% if request.path == '/login' %}class="active"{% endif %}>
-                    <i class="fas fa-sign-in-alt"></i>
-                </a>
-                {% endif %}
-            </div>
-        </nav>
-    </header>
+    <!-- WhatsApp Float Button -->
+    <a href="{{ whatsapp }}" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <!-- Back to Top Button -->
+    <div class="back-to-top" id="backToTop">
+        <i class="fas fa-chevron-up"></i>
+    </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for message in messages %}
-                    <div class="flash-message">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Main Content -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>NoraHairLine</h3>
-                <p>Your destination for premium quality hair products and accessories.</p>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul class="footer-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/shop">Shop</a></li>
-                    <li><a href="/about">About Us</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/admin">Admin Login</a></li>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-container">
+                <button class="navbar-toggler d-lg-none" id="navbarToggler">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <a class="navbar-brand" href="/">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" alt="{{ brand_name }} Logo">
+                    {% endif %}
+                    <span>{{ brand_name }}</span>
+                </a>
+                
+                <ul class="navbar-nav" id="navbarNav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/shop') or request.path.startswith('/products') %}active{% endif %}" href="/shop">
+                            <i class="fas fa-shopping-bag"></i> Shop
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-th-large"></i> Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/shop?category=hair">
+                                <i class="fas fa-user"></i> Hair Extensions
+                            </a></li>
+                            <li><a class="dropdown-item" href="/shop?category=wigs">
+                                <i class="fas fa-hat-cowboy"></i> Wigs
+                            </a></li>
+                            <li><a class="dropdown-item" href="/shop?category=care">
+                                <i class="fas fa-spa"></i> Hair Care
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/shop">
+                                <i class="fas fa-store"></i> All Products
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">
+                            <i class="fas fa-info-circle"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/contact' %}active{% endif %}" href="/contact">
+                            <i class="fas fa-envelope"></i> Contact
+                        </a>
+                    </li>
                 </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Contact Info</h3>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, Hair City</p>
-                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                <p><i class="fas fa-envelope"></i> info@norahairline.com</p>
-            </div>
-            <div class="footer-section">
-                <h3>Newsletter</h3>
-                <p>Subscribe for exclusive offers and hair care tips</p>
-                <form class="newsletter-form" id="newsletter-form">
-                    <input type="email" placeholder="Your email address" required>
-                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
-                </form>
+                
+                <div class="d-flex align-items-center gap-3">
+                    {% if session.user_id %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i> {{ session.user_name[:15] }}{% if session.user_name|length > 15 %}...{% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/account"><i class="fas fa-user-circle me-2"></i> My Account</a></li>
+                            <li><a class="dropdown-item" href="/orders"><i class="fas fa-history me-2"></i> My Orders</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="/login" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                    </a>
+                    {% endif %}
+                    
+                    <a href="/cart" class="nav-cart position-relative">
+                        <i class="fas fa-shopping-cart fs-5"></i>
+                        {% if cart_count > 0 %}
+                        <span class="cart-badge">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
             </div>
         </div>
-        <div class="copyright">
-            <p>&copy; 2024 NoraHairLine. All rights reserved.</p>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="content-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        {% if logo_url %}
+                        <img src="{{ logo_url }}" alt="{{ brand_name }} Logo">
+                        {% endif %}
+                        <div class="footer-logo-text">{{ brand_name }}</div>
+                    </div>
+                    <p class="footer-tagline">{{ tagline }}</p>
+                    <p class="small text-light opacity-75">{{ wholesale }}</p>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/"><i class="fas fa-chevron-right me-2"></i> Home</a></li>
+                        <li><a href="/shop"><i class="fas fa-chevron-right me-2"></i> Shop All</a></li>
+                        <li><a href="/about"><i class="fas fa-chevron-right me-2"></i> About Us</a></li>
+                        <li><a href="/contact"><i class="fas fa-chevron-right me-2"></i> Contact</a></li>
+                        <li><a href="/account"><i class="fas fa-chevron-right me-2"></i> My Account</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contact Info</h4>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Address:</strong>
+                            <p>{{ address }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Phone:</strong>
+                            <p>{{ phone }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fab fa-instagram"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Instagram:</strong>
+                            <p>{{ instagram }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-social">
+                        <a href="{{ whatsapp }}" target="_blank" class="social-link">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="{{ instagram_url }}" target="_blank" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="tel:{{ phone }}" class="social-link">
+                            <i class="fas fa-phone"></i>
+                        </a>
+                        <a href="mailto:{{ contact_email }}" class="social-link">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; {{ year }} {{ brand_name }}. All rights reserved. | Luxury Hair at Wholesale Prices</p>
+                <p class="small mt-2">
+                    <a href="/privacy" class="text-light opacity-75 me-3">Privacy Policy</a> | 
+                    <a href="/terms" class="text-light opacity-75 ms-3">Terms of Service</a>
+                </p>
+            </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Base JavaScript -->
     <script>
-        // Update cart count
-        function updateCartCount() {
-            const cart = JSON.parse(localStorage.getItem('norahair_cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cart-count').textContent = totalItems;
+        // Mobile Navigation Toggle
+        document.getElementById('navbarToggler')?.addEventListener('click', function() {
+            document.getElementById('navbarNav').classList.toggle('open');
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navbarNav = document.getElementById('navbarNav');
+            const navbarToggler = document.getElementById('navbarToggler');
+            
+            if (navbarNav && navbarToggler && 
+                !navbarNav.contains(event.target) && 
+                !navbarToggler.contains(event.target) &&
+                window.innerWidth < 992) {
+                navbarNav.classList.remove('open');
+            }
+        });
+
+        // Back to Top Button
+        const backToTop = document.getElementById('backToTop');
+        
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Toast Notification System
+        function showToast(title, message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                      type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : 
+                      type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : 
+                      '<i class="fas fa-info-circle"></i>'}
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            const container = document.querySelector('.toast-container') || createToastContainer();
+            container.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCartCount();
-            
-            // Newsletter form
-            document.getElementById('newsletter-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const email = this.querySelector('input[type="email"]').value;
-                if (email) {
-                    alert('Thank you for subscribing!');
-                    this.reset();
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Add to Cart Function
+        async function addToCart(productId, quantity = 1) {
+            try {
+                const formData = new FormData();
+                formData.append('quantity', quantity);
+                
+                const response = await fetch(`/add-to-cart/${productId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update cart count
+                    updateCartCount(result.cart_count);
+                    showToast('Success', 'Product added to cart!', 'success');
+                    return true;
+                } else {
+                    showToast('Error', result.message, 'error');
+                    return false;
                 }
+            } catch (error) {
+                showToast('Error', 'Failed to add to cart', 'error');
+                return false;
+            }
+        }
+
+        function updateCartCount(count) {
+            const cartBadge = document.querySelector('.cart-badge');
+            if (cartBadge) {
+                cartBadge.textContent = count;
+                cartBadge.style.display = count > 0 ? 'flex' : 'none';
+            } else if (count > 0) {
+                // Create cart badge if it doesn't exist
+                const cartIcon = document.querySelector('.nav-cart i');
+                if (cartIcon) {
+                    const badge = document.createElement('span');
+                    badge.className = 'cart-badge';
+                    badge.textContent = count;
+                    cartIcon.parentElement.appendChild(badge);
+                }
+            }
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
     </script>
     
-    {% block extra_js %}{% endblock %}
+    {% block scripts %}{% endblock %}
 </body>
 </html>
