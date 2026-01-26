@@ -1,4 +1,4 @@
-# main.py - COMPLETE WORKING VERSION WITH ACCOUNT, ADMIN, AND PAYMENT SYSTEMS
+# main.py - COMPLETE UPDATED VERSION WITH PAYMENT SYSTEM
 import os
 import sys
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, g
@@ -62,7 +62,7 @@ class User(db.Model, UserMixin):
     phone = db.Column(db.String(20))
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    first_login = db.Column(db.Boolean, default=True)  # For admin password change
+    first_login = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -70,13 +70,6 @@ class User(db.Model, UserMixin):
     addresses = db.relationship('Address', backref='user', lazy=True)
     orders = db.relationship('Order', backref='user', lazy=True)
     cart = db.relationship('Cart', backref='user', uselist=False, lazy=True)
-    wishlist_items = db.relationship('Wishlist', backref='user', lazy=True)
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
 
 class Address(db.Model):
     __tablename__ = 'addresses'
@@ -106,11 +99,6 @@ class Product(db.Model):
     stock = db.Column(db.Integer, default=0)
     featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    cart_items = db.relationship('CartItem', backref='product', lazy=True)
-    order_items = db.relationship('OrderItem', backref='product', lazy=True)
-    wishlists = db.relationship('Wishlist', backref='product', lazy=True)
 
 class Cart(db.Model):
     __tablename__ = 'carts'
@@ -119,7 +107,6 @@ class Cart(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationship
     items = db.relationship('CartItem', backref='cart', lazy=True, cascade="all, delete-orphan")
     
     def get_total(self):
@@ -153,18 +140,15 @@ class Order(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     
     # Status tracking
-    status = db.Column(db.String(50), default='pending')  # pending, processing, confirmed, shipped, delivered, cancelled
-    payment_status = db.Column(db.String(50), default='pending')  # pending, paid, failed
+    status = db.Column(db.String(50), default='pending')
+    payment_status = db.Column(db.String(50), default='pending')
     payment_method = db.Column(db.String(50))
-    payment_proof = db.Column(db.String(500))  # URL to payment proof image
+    payment_proof = db.Column(db.String(500))
     admin_notes = db.Column(db.Text)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    confirmed_at = db.Column(db.DateTime)
-    shipped_at = db.Column(db.DateTime)
-    delivered_at = db.Column(db.DateTime)
     
     # Relationships
     items = db.relationship('OrderItem', backref='order', lazy=True)
@@ -175,14 +159,7 @@ class OrderItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)  # Price at time of purchase
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class Wishlist(db.Model):
-    __tablename__ = 'wishlist'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    price = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Initialize Login Manager
@@ -266,7 +243,7 @@ def init_database():
                     is_admin=True,
                     first_login=True
                 )
-                admin.set_password('admin123')  # One-time password
+                admin.set_password('admin123')
                 db.session.add(admin)
                 logger.info("✅ Created admin user with one-time password: admin123")
             
@@ -276,7 +253,7 @@ def init_database():
                     Product(
                         name="Brazilian Straight Hair 24''",
                         slug="brazilian-straight-hair-24",
-                        description="Premium 100% Brazilian Virgin Hair, Straight Texture, 24 inches. Perfect for everyday wear.",
+                        description="Premium 100% Brazilian Virgin Hair, Straight Texture, 24 inches",
                         price=25000.00,
                         old_price=30000.00,
                         category="Hair Extensions",
@@ -287,34 +264,12 @@ def init_database():
                     Product(
                         name="Peruvian Curly Hair 22''",
                         slug="peruvian-curly-hair-22",
-                        description="100% Peruvian Human Hair, Natural Curly Pattern, 22 inches. Soft and bouncy.",
+                        description="100% Peruvian Human Hair, Natural Curly Pattern, 22 inches",
                         price=28000.00,
                         old_price=35000.00,
                         category="Hair Extensions",
                         image="hair2.jpg",
                         stock=30,
-                        featured=True
-                    ),
-                    Product(
-                        name="13x4 Lace Frontal Wig",
-                        slug="13x4-lace-frontal-wig",
-                        description="HD Lace Frontal Wig, Pre-plucked, Natural Hairline. Looks 100% natural.",
-                        price=45000.00,
-                        old_price=55000.00,
-                        category="Wigs",
-                        image="wig1.jpg",
-                        stock=20,
-                        featured=True
-                    ),
-                    Product(
-                        name="4x4 Lace Closure",
-                        slug="4x4-lace-closure",
-                        description="4x4 HD Lace Closure, Swiss Lace, Bleached Knots. Perfect for protective styles.",
-                        price=18000.00,
-                        old_price=22000.00,
-                        category="Closures",
-                        image="closure1.jpg",
-                        stock=40,
                         featured=True
                     ),
                 ]
@@ -331,10 +286,7 @@ def init_database():
             print("="*60)
             print("👑 ADMIN LOGIN:")
             print(f"📧 Email: admin@norahairline.com")
-            print(f"🔑 Password: admin123 (CHANGE THIS ON FIRST LOGIN!)")
-            print("="*60)
-            print(f"📊 Total Products: {Product.query.count()}")
-            print(f"👥 Total Users: {User.query.count()}")
+            print(f"🔑 Password: admin123")
             print("="*60)
             
         except Exception as e:
@@ -344,6 +296,16 @@ def init_database():
 
 # Initialize database
 init_database()
+
+# ========== TEMPLATE FILTERS ==========
+
+@app.template_filter('format')
+def format_number(value):
+    """Format number with commas"""
+    try:
+        return "{:,.2f}".format(float(value))
+    except:
+        return value
 
 # ========== CONTEXT PROCESSOR ==========
 
@@ -453,12 +415,6 @@ def account():
         # Get user's addresses
         addresses = Address.query.filter_by(user_id=current_user.id).all()
         
-        # Get default address
-        default_address = Address.query.filter_by(
-            user_id=current_user.id,
-            is_default=True
-        ).first()
-        
         # Format order totals
         for order in orders:
             order.formatted_total = format_price(order.total_amount)
@@ -466,16 +422,14 @@ def account():
         return render_template('account.html',
                              user=current_user,
                              orders=orders,
-                             addresses=addresses,
-                             default_address=default_address)
+                             addresses=addresses)
     except Exception as e:
         logger.error(f"Account error: {e}")
         flash('Error loading account information.', 'error')
         return render_template('account.html',
                              user=current_user,
                              orders=[],
-                             addresses=[],
-                             default_address=None)
+                             addresses=[])
 
 @app.route('/account/orders')
 @login_required
@@ -509,68 +463,76 @@ def order_detail(order_id):
         item.subtotal = item.price * item.quantity
         item.formatted_subtotal = format_price(item.subtotal)
     
-    return render_template('order_detail.html', order=order)
+    return render_template('order.html', order=order)
 
-@app.route('/account/addresses')
-@login_required
-def account_addresses():
-    """Customer address book"""
-    addresses = Address.query.filter_by(user_id=current_user.id).all()
-    return render_template('account_addresses.html', addresses=addresses)
+# ========== PAYMENT ROUTES ==========
 
-@app.route('/account/addresses/add', methods=['GET', 'POST'])
+@app.route('/order/<int:order_id>/payment')
 @login_required
-def add_address():
-    """Add new address"""
-    if request.method == 'POST':
-        # Check if this should be default
-        is_default = 'is_default' in request.form
+def order_payment(order_id):
+    """Payment instructions page - RENDERS YOUR payment.html"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verify order belongs to current user
+    if order.user_id != current_user.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('account'))
+    
+    # Format the total amount
+    order.formatted_total = format_price(order.total_amount)
+    order.formatted_subtotal = format_price(order.subtotal)
+    order.formatted_shipping = format_price(order.shipping_fee)
+    
+    return render_template('payment.html', order=order)
+
+@app.route('/order/<int:order_id>/upload-proof', methods=['POST'])
+@login_required
+def upload_payment_proof(order_id):
+    """Handle payment proof upload"""
+    try:
+        order = Order.query.get_or_404(order_id)
         
-        # If setting as default, unset other defaults
-        if is_default:
-            Address.query.filter_by(user_id=current_user.id, is_default=True).update({'is_default': False})
+        # Verify order belongs to current user
+        if order.user_id != current_user.id:
+            flash('Access denied.', 'danger')
+            return redirect(url_for('account'))
         
-        address = Address(
-            user_id=current_user.id,
-            full_name=request.form['full_name'],
-            phone=request.form['phone'],
-            address_line1=request.form['address_line1'],
-            address_line2=request.form.get('address_line2', ''),
-            city=request.form['city'],
-            state=request.form['state'],
-            postal_code=request.form.get('postal_code', ''),
-            is_default=is_default
-        )
+        # Get form data
+        transaction_id = request.form.get('transaction_id', '').strip()
         
-        db.session.add(address)
+        # Handle file upload
+        if 'proof' in request.files:
+            proof_file = request.files['proof']
+            if proof_file.filename != '':
+                # Generate unique filename
+                import uuid
+                filename = f"payment_proof_{order_id}_{uuid.uuid4().hex[:8]}_{proof_file.filename}"
+                # Save file (in production, save to disk/S3)
+                # For now, just store the filename
+                order.payment_proof = filename
+        
+        # Update order status
+        order.payment_status = 'paid'
+        order.status = 'pending_confirmation'
+        order.updated_at = datetime.utcnow()
+        order.payment_method = 'bank_transfer'
+        
+        # Store transaction ID
+        if transaction_id:
+            order.admin_notes = f"Transaction ID: {transaction_id}\n{order.admin_notes or ''}"
+        
         db.session.commit()
         
-        flash('Address added successfully!', 'success')
-        return redirect(url_for('account_addresses'))
-    
-    return render_template('add_address.html')
-
-@app.route('/account/profile', methods=['GET', 'POST'])
-@login_required
-def account_profile():
-    """Edit profile"""
-    if request.method == 'POST':
-        current_user.username = request.form['username']
-        current_user.email = request.form['email']
-        current_user.phone = request.form['phone']
+        flash('Payment proof uploaded successfully! Admin will review your order.', 'success')
+        return redirect(url_for('order_detail', order_id=order.id))
         
-        # Check if password change is requested
-        new_password = request.form.get('new_password')
-        if new_password:
-            current_user.set_password(new_password)
-        
-        db.session.commit()
-        flash('Profile updated successfully!', 'success')
-        return redirect(url_for('account_profile'))
-    
-    return render_template('account_profile.html', user=current_user)
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Payment proof upload error: {e}")
+        flash('Error uploading payment proof. Please try again.', 'error')
+        return redirect(url_for('order_payment', order_id=order_id))
 
-# ========== CART ROUTES ==========
+# ========== CART & CHECKOUT ROUTES ==========
 
 @app.route('/cart')
 @login_required
@@ -612,46 +574,6 @@ def add_to_cart(product_id):
     db.session.commit()
     flash(f'{product.name} added to cart!', 'success')
     return redirect(request.referrer or url_for('cart'))
-
-@app.route('/cart/update/<int:item_id>', methods=['POST'])
-@login_required
-def update_cart(item_id):
-    """Update cart item quantity"""
-    cart_item = CartItem.query.get_or_404(item_id)
-    
-    # Verify cart belongs to current user
-    if cart_item.cart.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('cart'))
-    
-    quantity = int(request.form['quantity'])
-    
-    if quantity <= 0:
-        db.session.delete(cart_item)
-    else:
-        cart_item.quantity = quantity
-    
-    db.session.commit()
-    flash('Cart updated!', 'success')
-    return redirect(url_for('cart'))
-
-@app.route('/cart/remove/<int:item_id>')
-@login_required
-def remove_from_cart(item_id):
-    """Remove item from cart"""
-    cart_item = CartItem.query.get_or_404(item_id)
-    
-    # Verify cart belongs to current user
-    if cart_item.cart.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('cart'))
-    
-    db.session.delete(cart_item)
-    db.session.commit()
-    flash('Item removed from cart.', 'info')
-    return redirect(url_for('cart'))
-
-# ========== CHECKOUT & PAYMENT ROUTES ==========
 
 @app.route('/checkout')
 @login_required
@@ -733,7 +655,7 @@ def process_checkout():
         
         db.session.commit()
         
-        flash('Order created successfully! Please make payment and upload proof.', 'success')
+        flash('Order created successfully! Please make payment.', 'success')
         return redirect(url_for('order_payment', order_id=order.id))
         
     except Exception as e:
@@ -741,43 +663,6 @@ def process_checkout():
         logger.error(f"Checkout error: {e}")
         flash('Error processing checkout. Please try again.', 'error')
         return redirect(url_for('checkout'))
-
-@app.route('/order/<int:order_id>/payment')
-@login_required
-def order_payment(order_id):
-    """Payment instructions page"""
-    order = Order.query.get_or_404(order_id)
-    
-    # Verify order belongs to current user
-    if order.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('account'))
-    
-    order.formatted_total = format_price(order.total_amount)
-    
-    return render_template('order_payment.html', order=order)
-
-@app.route('/order/<int:order_id>/upload-proof', methods=['POST'])
-@login_required
-def upload_payment_proof(order_id):
-    """Upload payment proof"""
-    order = Order.query.get_or_404(order_id)
-    
-    # Verify order belongs to current user
-    if order.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return jsonify({'success': False, 'message': 'Access denied'})
-    
-    # In production, handle file upload properly
-    # For now, just mark as paid
-    order.payment_status = 'paid'
-    order.status = 'pending_confirmation'
-    order.updated_at = datetime.utcnow()
-    
-    db.session.commit()
-    
-    flash('Payment proof uploaded! Admin will review your order.', 'success')
-    return jsonify({'success': True, 'redirect': url_for('order_detail', order_id=order.id)})
 
 # ========== AUTHENTICATION ROUTES ==========
 
@@ -801,11 +686,6 @@ def login():
                 return redirect(url_for('login'))
             
             login_user(user)
-            
-            # Admin password change on first login
-            if user.is_admin and user.first_login:
-                flash('Please change your password.', 'warning')
-                return redirect(url_for('admin_change_password'))
             
             flash('Login successful!', 'success')
             
@@ -880,10 +760,6 @@ def logout():
 @admin_required
 def admin_dashboard():
     """Admin dashboard"""
-    # Force password change on first login
-    if current_user.first_login:
-        return redirect(url_for('admin_change_password'))
-    
     # Get stats
     stats = {
         'total_products': Product.query.count(),
@@ -907,32 +783,6 @@ def admin_dashboard():
                          recent_orders=recent_orders,
                          recent_products=recent_products)
 
-@app.route('/admin/change-password', methods=['GET', 'POST'])
-@admin_required
-def admin_change_password():
-    """Admin password change (first login)"""
-    if request.method == 'POST':
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if not current_user.check_password(current_password):
-            flash('Current password is incorrect.', 'danger')
-            return redirect(url_for('admin_change_password'))
-        
-        if new_password != confirm_password:
-            flash('New passwords do not match.', 'danger')
-            return redirect(url_for('admin_change_password'))
-        
-        current_user.set_password(new_password)
-        current_user.first_login = False
-        db.session.commit()
-        
-        flash('Password changed successfully!', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('admin/change_password.html')
-
 @app.route('/admin/orders')
 @admin_required
 def admin_orders():
@@ -948,26 +798,8 @@ def admin_orders():
     
     for order in orders:
         order.formatted_total = format_price(order.total_amount)
-        order.user_email = order.user.email
     
     return render_template('admin/orders.html', orders=orders, status=status)
-
-@app.route('/admin/orders/<int:order_id>')
-@admin_required
-def admin_order_detail(order_id):
-    """Admin order detail"""
-    order = Order.query.get_or_404(order_id)
-    
-    order.formatted_subtotal = format_price(order.subtotal)
-    order.formatted_shipping = format_price(order.shipping_fee)
-    order.formatted_total = format_price(order.total_amount)
-    
-    for item in order.items:
-        item.formatted_price = format_price(item.price)
-        item.subtotal = item.price * item.quantity
-        item.formatted_subtotal = format_price(item.subtotal)
-    
-    return render_template('admin/order_detail.html', order=order)
 
 @app.route('/admin/orders/<int:order_id>/update-status', methods=['POST'])
 @admin_required
@@ -975,44 +807,15 @@ def admin_update_order_status(order_id):
     """Update order status"""
     order = Order.query.get_or_404(order_id)
     new_status = request.form.get('status')
-    admin_notes = request.form.get('admin_notes', '')
     
     valid_statuses = ['pending_confirmation', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
     
     if new_status in valid_statuses:
         order.status = new_status
-        order.admin_notes = admin_notes
-        
-        # Set timestamps
-        if new_status == 'confirmed':
-            order.confirmed_at = datetime.utcnow()
-        elif new_status == 'shipped':
-            order.shipped_at = datetime.utcnow()
-        elif new_status == 'delivered':
-            order.delivered_at = datetime.utcnow()
-        
         db.session.commit()
         flash(f'Order status updated to {new_status}.', 'success')
     
-    return redirect(url_for('admin_order_detail', order_id=order_id))
-
-@app.route('/admin/products')
-@admin_required
-def admin_products():
-    """Admin product management"""
-    products = Product.query.order_by(Product.created_at.desc()).all()
-    
-    for product in products:
-        product.formatted_price = format_price(product.price)
-    
-    return render_template('admin/products.html', products=products)
-
-@app.route('/admin/customers')
-@admin_required
-def admin_customers():
-    """Admin customer management"""
-    customers = User.query.filter_by(is_admin=False).order_by(User.created_at.desc()).all()
-    return render_template('admin/customers.html', customers=customers)
+    return redirect(url_for('admin_orders'))
 
 # ========== ERROR HANDLERS ==========
 
@@ -1041,9 +844,8 @@ if __name__ == '__main__':
     print(f"{'='*60}")
     print(f"🌐 Homepage: http://localhost:{port}")
     print(f"👑 Admin: admin@norahairline.com / admin123")
-    print(f"👤 Customer: Register at /register")
-    print(f"🛒 Shop: http://localhost:{port}/shop")
     print(f"👤 Account: http://localhost:{port}/account")
+    print(f"💳 Payment: /order/<id>/payment")
     print(f"{'='*60}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
