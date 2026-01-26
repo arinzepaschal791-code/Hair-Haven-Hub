@@ -5,10 +5,11 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
+      mkdir -p static/uploads
     startCommand: gunicorn main:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.9.0
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
@@ -18,6 +19,7 @@ services:
           name: norahairline-db
           property: connectionString
     plan: free
+    autoDeploy: true
 
 databases:
   - name: norahairline-db
