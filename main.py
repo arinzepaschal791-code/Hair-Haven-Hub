@@ -4,7 +4,6 @@ import sys
 from flask import Flask, jsonify, request, render_template, send_from_directory, session, redirect, url_for, flash
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-# Remove any import of pycryptodome/cryptography if present
 from datetime import datetime
 import json
 import uuid
@@ -32,10 +31,8 @@ app = Flask(__name__,
            template_folder='templates')
 CORS(app)
 
-# Configure for Render - FORCE SQLITE FOR NOW
-# Change this line to force SQLite:
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'  # ← FIXED LINE
-
+# Configure for Render - FORCE SQLITE
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -167,7 +164,6 @@ def init_database():
                         price=134985.0,
                         category="hair",
                         image_url="/static/images/hair1.jpg",
-                        image_urls=json.dumps(["/static/images/hair1.jpg"]),
                         stock=50,
                         featured=True,
                         product_code=f"HAIR-{uuid.uuid4().hex[:8].upper()}",
@@ -179,7 +175,6 @@ def init_database():
                         price=149985.0,
                         category="hair",
                         image_url="/static/images/hair2.jpg",
-                        image_urls=json.dumps(["/static/images/hair2.jpg"]),
                         stock=30,
                         featured=True,
                         product_code=f"HAIR-{uuid.uuid4().hex[:8].upper()}",
@@ -191,7 +186,6 @@ def init_database():
                         price=194985.0,
                         category="wigs",
                         image_url="/static/images/wig1.jpg",
-                        image_urls=json.dumps(["/static/images/wig1.jpg"]),
                         stock=20,
                         featured=True,
                         product_code=f"WIG-{uuid.uuid4().hex[:8].upper()}",
@@ -203,7 +197,6 @@ def init_database():
                         price=37485.0,
                         category="care",
                         image_url="/static/images/oil1.jpg",
-                        image_urls=json.dumps(["/static/images/oil1.jpg"]),
                         stock=100,
                         featured=False,
                         product_code=f"CARE-{uuid.uuid4().hex[:8].upper()}",
@@ -222,6 +215,27 @@ def init_database():
         except Exception as e:
             db.session.rollback()
             logger.error(f"❌ Database initialization error: {str(e)}")
+
+def reset_database():
+    """Reset database if there are schema issues"""
+    if not MODELS_AVAILABLE:
+        return
+    
+    with app.app_context():
+        try:
+            # Drop all tables
+            db.drop_all()
+            logger.info("🗑️ Dropped all tables")
+            
+            # Recreate tables
+            db.create_all()
+            logger.info("✅ Recreated all tables")
+            
+            # Re-initialize data
+            init_database()
+            
+        except Exception as e:
+            logger.error(f"❌ Database reset error: {str(e)}")
 
 # Context processor
 @app.context_processor
@@ -247,19 +261,29 @@ def index():
     """Homepage"""
     try:
         featured_products = []
+        categories = []  # FIX: Add categories variable
+        
         if MODELS_AVAILABLE:
             featured_products = Product.query.filter_by(featured=True).order_by(
                 Product.created_at.desc()
             ).limit(8).all()
             
+            # Get unique categories for navigation
+            category_results = db.session.query(Product.category).distinct().all()
+            categories = [cat[0] for cat in category_results if cat[0]]
+            
             # Format prices
             for product in featured_products:
                 product.formatted_price = format_price(product.price)
         
-        return render_template('index.html', featured_products=featured_products)
+        return render_template('index.html', 
+                             featured_products=featured_products,
+                             categories=categories)  # FIX: Pass categories
     except Exception as e:
         logger.error(f"Error in index: {e}")
-        return render_template('index.html', featured_products=[])
+        return render_template('index.html', 
+                             featured_products=[],
+                             categories=[])  # FIX: Pass empty categories
 
 @app.route('/shop')
 @app.route('/products')
@@ -270,6 +294,8 @@ def products_page():
         search = request.args.get('search', '')
         
         products = []
+        categories = []
+        
         if MODELS_AVAILABLE:
             query = Product.query
             
@@ -281,18 +307,24 @@ def products_page():
             
             products = query.order_by(Product.created_at.desc()).all()
             
+            # Get categories for filter
+            category_results = db.session.query(Product.category).distinct().all()
+            categories = [cat[0] for cat in category_results if cat[0]]
+            
             # Format prices
             for product in products:
                 product.formatted_price = format_price(product.price)
         
         return render_template('products.html',
                              products=products,
+                             categories=categories,
                              category=category,
                              search=search)
     except Exception as e:
         logger.error(f"Error in products_page: {e}")
         return render_template('products.html',
                              products=[],
+                             categories=[],
                              category=category,
                              search=search)
 
@@ -732,7 +764,7 @@ if __name__ == '__main__':
     create_directories()
     
     # Initialize database
-    init_database()
+    reset_database()  # Use reset instead of init
     
     # Start application
     port = int(os.environ.get('PORT', 10000))
