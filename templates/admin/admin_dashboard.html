@@ -1,59 +1,173 @@
-{% extends "admin/base.html" %}
+{% extends "layout.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Admin Dashboard - {{ config.brand_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-sidebar {
+        background: #343a40;
+        min-height: calc(100vh - 76px);
+    }
+    
+    .admin-sidebar .nav-link {
+        color: rgba(255,255,255,.8);
+        padding: 10px 20px;
+        border-left: 3px solid transparent;
+    }
+    
+    .admin-sidebar .nav-link:hover {
+        color: #fff;
+        background: rgba(255,255,255,.1);
+        border-left-color: #007bff;
+    }
+    
+    .admin-sidebar .nav-link.active {
+        background: rgba(255,255,255,.1);
+        color: #fff;
+        border-left-color: #007bff;
+    }
+    
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        color: white;
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .bg-stat-1 { background: linear-gradient(45deg, #007bff, #6610f2); }
+    .bg-stat-2 { background: linear-gradient(45deg, #28a745, #20c997); }
+    .bg-stat-3 { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+    .bg-stat-4 { background: linear-gradient(45deg, #dc3545, #e83e8c); }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="mt-4">Dashboard</h1>
-    
-    <!-- Statistics Cards -->
-    <div class="row mt-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-primary text-white mb-4">
-                <div class="card-body">
-                    <h5>Total Revenue</h5>
-                    <h2>${{ "%.2f"|format(total_revenue) }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-warning text-white mb-4">
-                <div class="card-body">
-                    <h5>Total Orders</h5>
-                    <h2>{{ total_orders }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-success text-white mb-4">
-                <div class="card-body">
-                    <h5>Total Products</h5>
-                    <h2>{{ total_products }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-info text-white mb-4">
-                <div class="card-body">
-                    <h5>Total Users</h5>
-                    <h2>{{ total_users }}</h2>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Orders & Low Stock Alerts -->
     <div class="row">
-        <!-- Recent Orders -->
-        <div class="col-xl-8">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar p-0">
+            <div class="p-3">
+                <h5 class="text-white mb-4"><i class="fas fa-crown"></i> Admin Panel</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/products">
+                            <i class="fas fa-box me-2"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/categories">
+                            <i class="fas fa-tags me-2"></i> Categories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/orders">
+                            <i class="fas fa-shopping-bag me-2"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/messages">
+                            <i class="fas fa-envelope me-2"></i> Messages
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-store me-2"></i> View Store
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="/admin/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-10 p-4">
+            <h1 class="h3 mb-4">Dashboard</h1>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card bg-stat-1 h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Products</h5>
+                                    <h2 class="mb-0">{{ total_products }}</h2>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-box fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card bg-stat-2 h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Orders</h5>
+                                    <h2 class="mb-0">{{ total_orders }}</h2>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-shopping-bag fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card bg-stat-3 h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Revenue</h5>
+                                    <h2 class="mb-0">{{ config.currency_symbol }}{{ total_revenue|format(',.2f') }}</h2>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card bg-stat-4 h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Low Stock</h5>
+                                    <h2 class="mb-0">{{ low_stock }}</h2>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-shopping-cart me-1"></i>
-                    Recent Orders
+                    <h5 class="mb-0">Recent Orders</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-hover">
                             <thead>
                                 <tr>
                                     <th>Order #</th>
@@ -61,75 +175,71 @@
                                     <th>Date</th>
                                     <th>Amount</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for order in recent_orders %}
                                 <tr>
                                     <td>{{ order.order_number }}</td>
-                                    <td>{{ order.user.username if order.user else 'N/A' }}</td>
+                                    <td>{{ order.customer_name }}</td>
                                     <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
-                                    <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                                    <td>{{ config.currency_symbol }}{{ order.final_amount|format(',.2f') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ 'warning' if order.status == 'pending' else 'info' if order.status == 'processing' else 'primary' if order.status == 'shipped' else 'success' if order.status == 'delivered' else 'danger' }}">
+                                        <span class="badge bg-{{ 'warning' if order.status == 'pending' else 'primary' if order.status == 'processing' else 'info' if order.status == 'shipped' else 'success' if order.status == 'delivered' else 'secondary' }}">
                                             {{ order.status|title }}
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ url_for('view_order', id=order.id) }}" class="btn btn-sm btn-info">
-                                            View
+                                        <a href="/admin/orders/{{ order.id }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
                                         </a>
                                     </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No orders yet</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    <a href="{{ url_for('admin_orders') }}" class="btn btn-primary">View All Orders</a>
                 </div>
             </div>
-        </div>
 
-        <!-- Low Stock Alerts -->
-        <div class="col-xl-4">
-            <div class="card mb-4">
-                <div class="card-header bg-danger text-white">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    Low Stock Alerts
+            <!-- Recent Messages -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Messages</h5>
                 </div>
                 <div class="card-body">
-                    {% if low_stock_products %}
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Stock</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in low_stock_products %}
-                                <tr class="{{ 'table-danger' if product.stock < 5 else 'table-warning' }}">
-                                    <td>{{ product.name }}</td>
-                                    <td>{{ product.stock }}</td>
-                                    <td>
-                                        <a href="{{ url_for('edit_product', id=product.id) }}" class="btn btn-sm btn-warning">
-                                            Restock
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="list-group">
+                        {% for message in recent_messages %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ message.name }}</h6>
+                                <small>{{ message.created_at.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.subject }}</p>
+                            <small class="text-muted">{{ message.message[:100] }}...</small>
+                            <div class="mt-2">
+                                <a href="mailto:{{ message.email }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-reply"></i> Reply
+                                </a>
+                                <a href="/admin/messages/{{ message.id }}/read" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-check"></i> Mark Read
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item text-center">
+                            <p class="mb-0 text-muted">No messages yet</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% else %}
-                    <p class="text-center text-muted">No low stock alerts</p>
-                    {% endif %}
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </div>
 {% endblock %}
