@@ -158,6 +158,19 @@ BUSINESS_CONFIG = {
     'year': datetime.now().year
 }
 
+# ========== HELPER FUNCTIONS ==========
+def format_price(value):
+    """Safely format price value"""
+    try:
+        if value is None:
+            return "₦0.00"
+        # Ensure value is float
+        if isinstance(value, str):
+            value = float(value)
+        return f"₦{value:,.2f}"
+    except (ValueError, TypeError):
+        return "₦0.00"
+
 # ========== DATABASE INITIALIZATION ==========
 def init_database():
     """Initialize database with default data"""
@@ -284,10 +297,10 @@ def inject_global_vars():
         cart_total=cart_total,
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
-        format_price=lambda x: f"₦{x:,.2f}" if x else "₦0.00"
+        format_price=format_price  # Use the safe function
     )
 
-# ========== HELPER FUNCTIONS ==========
+# ========== HELPER FUNCTIONS (continued) ==========
 def generate_order_number():
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -302,7 +315,11 @@ def calculate_cart_total():
 
 def get_featured_products():
     try:
-        return Product.query.filter_by(featured=True, active=True).limit(8).all()
+        products = Product.query.filter_by(featured=True, active=True).limit(8).all()
+        # Pre-calculate display prices to avoid template errors
+        for product in products:
+            product.display_price = product.sale_price if product.sale_price else product.price
+        return products
     except:
         return []
 
@@ -347,16 +364,13 @@ def home():
         featured_products = get_featured_products()
         categories = get_all_categories()
         
-        # Format prices
-        for product in featured_products:
-            product.display_price = product.sale_price if product.sale_price else product.price
-        
         return render_template('index.html',
                              featured_products=featured_products,
                              categories=categories,
                              category_count=len(categories))
     except Exception as e:
         print(f"❌ Homepage error: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         # Fallback homepage
         return render_template('index.html',
                              featured_products=[],
@@ -429,6 +443,10 @@ def shop():
         products = query.order_by(Product.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
+        
+        # Pre-calculate display prices for template
+        for product in products.items:
+            product.display_price = product.sale_price if product.sale_price else product.price
         
         categories = get_all_categories()
         
