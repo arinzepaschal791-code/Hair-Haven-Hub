@@ -1,0 +1,42 @@
+<footer class="bg-dark text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h4><i class="fas fa-crown"></i> {{ brand_name }}</h4>
+                <p>{{ description }}</p>
+                <div class="social-links mt-3">
+                    <a href="{{ whatsapp }}" target="_blank" class="text-white me-3">
+                        <i class="fab fa-whatsapp fa-2x"></i>
+                    </a>
+                    <a href="https://instagram.com/{{ instagram }}" target="_blank" class="text-white me-3">
+                        <i class="fab fa-instagram fa-2x"></i>
+                    </a>
+                    <a href="mailto:{{ email }}" class="text-white">
+                        <i class="fas fa-envelope fa-2x"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="/" class="text-white-50">Home</a></li>
+                    <li><a href="/shop" class="text-white-50">Shop</a></li>
+                    <li><a href="/about" class="text-white-50">About Us</a></li>
+                    <li><a href="/contact" class="text-white-50">Contact</a></li>
+                    <li><a href="/account" class="text-white-50">My Account</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5>Contact Info</h5>
+                <p><i class="fas fa-map-marker-alt me-2"></i> {{ address }}</p>
+                <p><i class="fas fa-phone me-2"></i> {{ phone }}</p>
+                <p><i class="fas fa-envelope me-2"></i> {{ email }}</p>
+                <p><i class="fab fa-instagram me-2"></i> @{{ instagram }}</p>
+            </div>
+        </div>
+        <hr class="bg-white">
+        <div class="text-center pt-3">
+            <p class="mb-0">&copy; {{ year }} {{ brand_name }}. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
