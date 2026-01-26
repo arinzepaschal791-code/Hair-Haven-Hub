@@ -1,25 +1,49 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import json
-import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///store.db').replace('postgres://', 'postgresql://')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize extensions
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'admin_login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'error'
 
 # Models
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
+    
+    # Flask-Login required properties
+    @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_active(self):
+        return self.is_active
+    
+    @property
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        return str(self.id)
     
     orders = db.relationship('Order', backref='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
@@ -74,27 +98,59 @@ class Review(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Flask-Login user loader
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User.query.get(int(user_id))
+    except:
+        return None
+
 # Admin authentication decorator
 def admin_required(f):
     from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        if not current_user.is_authenticated:
             flash('Please login first', 'error')
             return redirect(url_for('admin_login'))
         
-        user = User.query.get(session['user_id'])
-        if not user or not user.is_admin:
+        if not current_user.is_admin:
             flash('Admin access required', 'error')
             return redirect(url_for('admin_login'))
         
         return f(*args, **kwargs)
     return decorated_function
 
+# Context processor to make current_user available in all templates
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
+
+# Context processor to make datetime available
+@app.context_processor
+def inject_now():
+    return dict(now=datetime.now())
+
+# Custom error handler for 500 errors
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html', error=error), 500
+
+# Custom error handler for 404 errors
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
 # Routes
 @app.route('/')
 def home():
-    return render_template('index.html')
+    try:
+        # Test data or logic here
+        return render_template('index.html')
+    except Exception as e:
+        app.logger.error(f'Error in home route: {str(e)}')
+        return render_template('500.html'), 500
 
 @app.route('/about')
 def about():
@@ -115,6 +171,10 @@ def search():
 # Admin Routes
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    # If user is already logged in and is admin, redirect to dashboard
+    if current_user.is_authenticated and current_user.is_admin:
+        return redirect(url_for('admin_dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -122,7 +182,9 @@ def admin_login():
         user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password, password) and user.is_admin:
-            session['user_id'] = user.id
+            login_user(user)
+            user.last_login = datetime.utcnow()
+            db.session.commit()
             flash('Login successful', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -131,45 +193,51 @@ def admin_login():
     return render_template('admin/admin_login.html')
 
 @app.route('/admin/logout')
+@login_required
 def admin_logout():
-    session.pop('user_id', None)
+    logout_user()
     flash('Logged out successfully', 'success')
     return redirect(url_for('admin_login'))
 
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    # Calculate statistics
-    total_products = Product.query.count()
-    total_orders = Order.query.count()
-    total_users = User.query.count()
-    total_reviews = Review.query.count()
-    
-    # Calculate total revenue (only from delivered orders)
-    delivered_orders = Order.query.filter_by(status='delivered').all()
-    total_revenue = sum(order.total_amount for order in delivered_orders)
-    
-    # Get recent orders
-    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
-    
-    # Get low stock alerts (products with stock < 10)
-    low_stock_products = Product.query.filter(Product.stock < 10).all()
-    
-    # Parse order items for display
-    for order in recent_orders:
-        try:
-            order.parsed_items = json.loads(order.items)
-        except:
-            order.parsed_items = []
-    
-    return render_template('admin/admin_dashboard.html',
-                         total_products=total_products,
-                         total_orders=total_orders,
-                         total_users=total_users,
-                         total_reviews=total_reviews,
-                         total_revenue=total_revenue,
-                         recent_orders=recent_orders,
-                         low_stock_products=low_stock_products)
+    try:
+        # Calculate statistics
+        total_products = Product.query.count()
+        total_orders = Order.query.count()
+        total_users = User.query.count()
+        total_reviews = Review.query.count()
+        
+        # Calculate total revenue (only from delivered orders)
+        delivered_orders = Order.query.filter_by(status='delivered').all()
+        total_revenue = sum(order.total_amount for order in delivered_orders)
+        
+        # Get recent orders
+        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
+        
+        # Get low stock alerts (products with stock < 10)
+        low_stock_products = Product.query.filter(Product.stock < 10).all()
+        
+        # Parse order items for display
+        for order in recent_orders:
+            try:
+                order.parsed_items = json.loads(order.items)
+            except:
+                order.parsed_items = []
+        
+        return render_template('admin/admin_dashboard.html',
+                             total_products=total_products,
+                             total_orders=total_orders,
+                             total_users=total_users,
+                             total_reviews=total_reviews,
+                             total_revenue=total_revenue,
+                             recent_orders=recent_orders,
+                             low_stock_products=low_stock_products)
+    except Exception as e:
+        app.logger.error(f'Error in admin dashboard: {str(e)}')
+        flash('An error occurred while loading the dashboard', 'error')
+        return redirect(url_for('admin_login'))
 
 @app.route('/admin/products')
 @admin_required
@@ -438,34 +506,31 @@ def dashboard_stats():
     }
     return jsonify(stats)
 
-# Error handlers
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
-
 # Helper function to create admin user (run once)
 def create_admin_user():
     with app.app_context():
         # Check if admin exists
-        admin = User.query.filter_by(email='admin@example.com').first()
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+        admin = User.query.filter_by(email=admin_email).first()
         if not admin:
             admin = User(
                 username='admin',
-                email='admin@example.com',
-                password=generate_password_hash('admin123'),
+                email=admin_email,
+                password=generate_password_hash(os.environ.get('ADMIN_PASSWORD', 'admin123')),
                 is_admin=True
             )
             db.session.add(admin)
             db.session.commit()
-            print('Admin user created: admin@example.com / admin123')
+            print(f'Admin user created: {admin_email}')
+
+# Application factory for Gunicorn
+def create_app():
+    return app
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_admin_user()
     
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_ENV') == 'development')
