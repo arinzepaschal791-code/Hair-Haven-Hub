@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | NoraHairLine</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -13,8 +13,8 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -25,10 +25,11 @@
         .login-container {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             padding: 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
         .logo {
@@ -37,10 +38,11 @@
         }
         
         .logo h1 {
-            color: #333;
+            color: #1a1a2e;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 5px;
+            font-family: 'Playfair Display', serif;
         }
         
         .logo p {
@@ -49,8 +51,8 @@
         }
         
         .admin-icon {
-            background: #667eea;
-            color: white;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #d4af37;
             width: 80px;
             height: 80px;
             border-radius: 50%;
@@ -59,125 +61,80 @@
             justify-content: center;
             margin: 0 auto 20px;
             font-size: 36px;
+            border: 3px solid #d4af37;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
+            color: #1a1a2e;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 18px;
         }
         
         .form-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 15px 15px 15px 50px;
             border: 2px solid #e1e5e9;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background: #f8f9fa;
         }
         
         .form-group input:focus {
-            border-color: #667eea;
+            border-color: #1a1a2e;
+            background: white;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.1);
         }
         
         .login-btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
             position: relative;
-            height: 48px;
+            overflow: hidden;
+            margin-top: 10px;
         }
         
-        .login-btn:hover:not(:disabled) {
+        .login-btn:hover {
+            background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(26, 26, 46, 0.3);
         }
         
-        .login-btn:active:not(:disabled) {
+        .login-btn:active {
             transform: translateY(0);
         }
         
         .login-btn:disabled {
-            opacity: 0.7;
+            opacity: 0.6;
             cursor: not-allowed;
-        }
-        
-        .error-message {
-            background: #fee;
-            color: #c33;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: none;
-            text-align: center;
-            font-size: 14px;
-        }
-        
-        .error-message.show {
-            display: block;
-        }
-        
-        .success-message {
-            background: #e8f7ee;
-            color: #2a8356;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: none;
-            text-align: center;
-            font-size: 14px;
-        }
-        
-        .success-message.show {
-            display: block;
-        }
-        
-        .default-credentials {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .default-credentials h4 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        
-        .default-credentials p {
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .back-link a:hover {
-            text-decoration: underline;
         }
         
         .spinner {
@@ -198,10 +155,146 @@
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
         
+        .error-message {
+            background: #fee;
+            color: #dc3545;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border-left: 4px solid #dc3545;
+            font-size: 14px;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border-left: 4px solid #28a745;
+            font-size: 14px;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .default-credentials {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #d4af37;
+        }
+        
+        .default-credentials h4 {
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .default-credentials p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .default-credentials .warning {
+            color: #856404;
+            background: #fff3cd;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+            border-left: 3px solid #ffc107;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+        
+        .back-link a {
+            color: #1a1a2e;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .back-link a:hover {
+            color: #d4af37;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
             }
+            
+            .logo h1 {
+                font-size: 24px;
+            }
+            
+            .admin-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+        }
+        
+        /* Shake animation for errors */
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
     </style>
 </head>
@@ -209,41 +302,57 @@
     <div class="login-container">
         <div class="logo">
             <div class="admin-icon">👑</div>
-            <h1>NoraHairLine</h1>
-            <p>Admin Dashboard</p>
+            <h1>NORA HAIR LINE</h1>
+            <p>Admin Dashboard Login</p>
         </div>
         
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                    <div class="error-message show" id="flashMessage">
+                        {{ message }}
+                    </div>
+                    {% elif category == 'success' %}
+                    <div class="success-message show" id="flashMessage">
+                        {{ message }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Dynamic Error Message -->
         <div class="error-message" id="errorMessage"></div>
+        
+        <!-- Success Message -->
         <div class="success-message" id="successMessage"></div>
         
-        <!-- Show success message if redirected from password change -->
-        {% if request.args.get('password_changed') %}
-        <div class="success-message show" id="autoSuccessMessage">
-            Password changed successfully! Please login with your new password.
-        </div>
-        {% endif %}
-        
-        <!-- Show logout message if redirected from logout -->
-        {% if request.args.get('logged_out') %}
-        <div class="success-message show" id="autoSuccessMessage">
-            Successfully logged out.
-        </div>
-        {% endif %}
-        
-        <form id="loginForm" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
+        <!-- Login Form -->
+        <form id="loginForm" method="POST" action="{{ url_for('admin_login') }}">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required 
-                       placeholder="Enter admin username" 
-                       value="{{ username or '' }}">
+                <div class="input-with-icon">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Enter admin username" 
+                           autocomplete="username"
+                           value="{{ request.form.username if request.form else '' }}">
+                </div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required 
-                       placeholder="Enter password">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Enter password"
+                           autocomplete="current-password">
+                    <button type="button" class="password-toggle" id="passwordToggle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             
             <button type="submit" class="login-btn" id="loginBtn">
@@ -252,133 +361,158 @@
             </button>
         </form>
         
+        <!-- Default Credentials -->
         <div class="default-credentials">
-            <h4>Default Admin Credentials:</h4>
-            <p><strong>Username:</strong> admin</p>
-            <p><strong>Password:</strong> admin123</p>
-            <p><small>Change these after first login!</small></p>
+            <h4>
+                <i class="fas fa-key"></i>
+                Default Admin Credentials:
+            </h4>
+            <p>
+                <i class="fas fa-user"></i>
+                <strong>Username:</strong> admin
+            </p>
+            <p>
+                <i class="fas fa-lock"></i>
+                <strong>Password:</strong> admin123
+            </p>
+            <div class="warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Important:</strong> Change these credentials after first login!
+            </div>
         </div>
         
+        <!-- Back Link -->
         <div class="back-link">
-            <a href="{{ url_for('index') }}">← Back to Store</a>
+            <a href="{{ url_for('index') }}">
+                <i class="fas fa-arrow-left"></i>
+                Back to Store
+            </a>
         </div>
     </div>
 
     <script>
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const passwordToggle = document.getElementById('passwordToggle');
             const loginBtn = document.getElementById('loginBtn');
             const btnText = document.getElementById('btnText');
             const btnSpinner = document.getElementById('btnSpinner');
-            const form = this;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const flashMessage = document.getElementById('flashMessage');
             
-            // Reset messages
-            errorMessage.classList.remove('show');
-            successMessage.classList.remove('show');
+            // Auto-focus username field
+            usernameInput.focus();
             
-            // Validate inputs
-            if (!username.trim() || !password.trim()) {
-                errorMessage.textContent = 'Please enter both username and password';
-                errorMessage.classList.add('show');
-                return;
-            }
-            
-            // Show loading
-            btnText.style.display = 'none';
-            btnSpinner.style.display = 'block';
-            loginBtn.disabled = true;
-            
-            try {
-                // Submit the form via fetch API
-                const formData = new FormData(form);
-                const response = await fetch('{{ url_for("admin_login") }}', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Show success message
-                    successMessage.textContent = data.message || 'Login successful!';
-                    successMessage.classList.add('show');
-                    
-                    // Redirect to admin dashboard after short delay
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url || '{{ url_for("admin_dashboard") }}';
-                    }, 1000);
-                } else {
-                    // Show error
-                    errorMessage.textContent = data.message || 'Invalid credentials';
-                    errorMessage.classList.add('show');
-                    
-                    // Shake animation for error
-                    form.classList.add('shake');
-                    setTimeout(() => form.classList.remove('shake'), 500);
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                errorMessage.textContent = 'Network error. Please try again.';
-                errorMessage.classList.add('show');
-            } finally {
-                // Reset button
-                btnText.style.display = 'block';
-                btnSpinner.style.display = 'none';
-                loginBtn.disabled = false;
-            }
-        });
-        
-        // Auto-focus username field
-        document.getElementById('username').focus();
-        
-        // Clear error when user starts typing
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', () => {
-                document.getElementById('errorMessage').classList.remove('show');
-                document.getElementById('successMessage').classList.remove('show');
+            // Password toggle functionality
+            passwordToggle.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
             });
-        });
-        
-        // Add shake animation CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            .shake {
-                animation: shake 0.5s;
+            
+            // Clear error when user starts typing
+            [usernameInput, passwordInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    errorMessage.classList.remove('show');
+                    successMessage.classList.remove('show');
+                    if (flashMessage) flashMessage.style.display = 'none';
+                });
+            });
+            
+            // Enter key to submit form
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !loginBtn.disabled) {
+                    loginForm.requestSubmit();
+                }
+            });
+            
+            // Form submission handler
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+                
+                // Reset messages
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
+                loginForm.classList.remove('shake');
+                
+                // Validate inputs
+                if (!username || !password) {
+                    showError('Please enter both username and password');
+                    loginForm.classList.add('shake');
+                    return;
+                }
+                
+                // Show loading state
+                btnText.style.display = 'none';
+                btnSpinner.style.display = 'block';
+                loginBtn.disabled = true;
+                
+                try {
+                    // Submit form data
+                    const formData = new FormData(loginForm);
+                    
+                    const response = await fetch('{{ url_for("admin_login") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    // Handle response
+                    if (response.redirected) {
+                        // Success - redirected to dashboard
+                        window.location.href = response.url;
+                    } else {
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Show success message and redirect
+                            showSuccess(data.message || 'Login successful! Redirecting...');
+                            setTimeout(() => {
+                                window.location.href = data.redirect_url || '{{ url_for("admin_dashboard") }}';
+                            }, 1500);
+                        } else {
+                            // Show error
+                            showError(data.message || 'Invalid credentials');
+                            loginForm.classList.add('shake');
+                            usernameInput.focus();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError('Network error. Please check your connection and try again.');
+                    loginForm.classList.add('shake');
+                } finally {
+                    // Reset button state
+                    btnText.style.display = 'block';
+                    btnSpinner.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
+            });
+            
+            // Helper functions
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
             }
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.classList.add('show');
             }
-        `;
-        document.head.appendChild(style);
-        
-        // Check URL for messages
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('error')) {
-            document.getElementById('errorMessage').textContent = 
-                decodeURIComponent(urlParams.get('error'));
-            document.getElementById('errorMessage').classList.add('show');
-        }
-        if (urlParams.get('message')) {
-            document.getElementById('successMessage').textContent = 
-                decodeURIComponent(urlParams.get('message'));
-            document.getElementById('successMessage').classList.add('show');
-        }
-        
-        // Enter key to submit form
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
-                document.getElementById('loginForm').requestSubmit();
+            
+            // Auto-hide flash messages after 5 seconds
+            if (flashMessage) {
+                setTimeout(() => {
+                    flashMessage.style.display = 'none';
+                }, 5000);
             }
         });
     </script>
