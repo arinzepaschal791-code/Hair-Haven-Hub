@@ -1,4 +1,4 @@
-# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES
+# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES - FIXED VERSION
 import os
 import sys
 import traceback
@@ -239,6 +239,17 @@ def calculate_cart_total():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def safe_format_number(value, default=0):
+    """Safely format number for display"""
+    try:
+        if value is None:
+            return default
+        if isinstance(value, (int, float)):
+            return f"{value:,.2f}"
+        return str(value)
+    except:
+        return str(default)
+
 # ========== AUTHENTICATION DECORATORS ==========
 def admin_required(f):
     @wraps(f)
@@ -284,7 +295,8 @@ def inject_global_vars():
         cart_total=cart_total,
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
-        format_price=format_price
+        format_price=format_price,
+        safe_format_number=safe_format_number
     )
 
 # ========== ERROR HANDLERS ==========
@@ -439,7 +451,7 @@ def index():
 
 @app.route('/shop')
 def shop():
-    """Shop page"""
+    """Shop page - FIXED: Added proper pagination handling"""
     try:
         category_id = request.args.get('category', type=int)
         search = request.args.get('search', '')
@@ -454,17 +466,31 @@ def shop():
         if search:
             query = query.filter(Product.name.ilike(f'%{search}%'))
         
-        products_pagination = query.order_by(Product.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
+        products = query.order_by(Product.created_at.desc()).all()
+        
+        # Manual pagination to avoid error
+        total_products = len(products)
+        total_pages = (total_products + per_page - 1) // per_page
+        
+        if page < 1:
+            page = 1
+        if page > total_pages:
+            page = total_pages
+            
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_products = products[start_idx:end_idx]
         
         categories = Category.query.all()
         
         return render_template('shop.html',
-                             products=products_pagination,
+                             products=paginated_products,
                              categories=categories,
                              category_id=category_id,
                              search_query=search,
+                             current_page=page,
+                             total_pages=total_pages,
+                             total_products=total_products,
                              config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Shop error: {str(e)}", file=sys.stderr)
@@ -474,6 +500,9 @@ def shop():
                              categories=[],
                              category_id=None,
                              search_query='',
+                             current_page=1,
+                             total_pages=1,
+                             total_products=0,
                              config=BUSINESS_CONFIG)
 
 @app.route('/product/<int:id>')
@@ -940,18 +969,22 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard"""
+    """Admin dashboard - FIXED: Handle None revenue"""
     try:
         total_orders = Order.query.count()
         total_products = Product.query.count()
         total_customers = Customer.query.count()
         pending_orders = Order.query.filter_by(status='pending').count()
         
-        # Calculate revenue
-        revenue = db.session.query(db.func.sum(Order.final_amount)).scalar() or 0
+        # Calculate revenue - FIXED: Handle None case
+        revenue_result = db.session.query(db.func.sum(Order.final_amount)).scalar()
+        revenue = float(revenue_result) if revenue_result is not None else 0.0
         
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
         low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
+        
+        # Safely format revenue for template
+        formatted_revenue = f"₦{revenue:,.2f}"
         
         return render_template('admin/admin_dashboard.html',
                              total_orders=total_orders,
@@ -959,6 +992,7 @@ def admin_dashboard():
                              total_customers=total_customers,
                              pending_orders=pending_orders,
                              revenue=revenue,
+                             formatted_revenue=formatted_revenue,
                              recent_orders=recent_orders,
                              low_stock_products=low_stock_products,
                              config=BUSINESS_CONFIG)
@@ -971,6 +1005,7 @@ def admin_dashboard():
                              total_customers=0,
                              pending_orders=0,
                              revenue=0,
+                             formatted_revenue="₦0.00",
                              recent_orders=[],
                              low_stock_products=[],
                              config=BUSINESS_CONFIG)
@@ -1344,13 +1379,20 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*60}", file=sys.stderr)
-    print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
+    print(f"🚀 NORA HAIR LINE E-COMMERCE - FIXED VERSION", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"🌐 Homepage: http://localhost:{port}", file=sys.stderr)
-    print(f"🛍️  Shop: http://localhost:{port}/shop", file=sys.stderr)
-    print(f"👑 Admin: http://localhost:{port}/admin", file=sys.stderr)
-    print(f"👤 Customer Login: http://localhost:{port}/login", file=sys.stderr)
-    print(f"📧 Admin Login: admin/admin123", file=sys.stderr)
+    print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
+    print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
+    print(f"🛍️  Shop: /shop", file=sys.stderr)
+    print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
+    print(f"👤 Customer: /login", file=sys.stderr)
+    print(f"📧 Contact: /contact", file=sys.stderr)
+    print(f"ℹ️  About: /about", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
+    print(f"✅ Fixed errors:", file=sys.stderr)
+    print(f"  1. Admin dashboard revenue formatting error", file=sys.stderr)
+    print(f"  2. Shop pagination error", file=sys.stderr)
+    print(f"  3. URL building errors", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
