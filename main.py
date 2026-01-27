@@ -1,4 +1,4 @@
-# main.py - COMPLETE VERSION WITH ALL FIXES - READY FOR PRODUCTION
+# main.py - COMPLETE FIXED VERSION WITH WORKING UPLOADS - READY FOR PRODUCTION
 import os
 import sys
 import traceback
@@ -31,23 +31,21 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-# ========== FIX FOR UPLOADS FOLDER - CREATE IMMEDIATELY ==========
-# CREATE UPLOADS FOLDER IMMEDIATELY AFTER CONFIG
-UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
+# ========== FIXED UPLOAD FOLDER CONFIG ==========
+# Get absolute path to project root
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+
+# Create folder immediately
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     print(f"✅ Created uploads folder: {UPLOAD_FOLDER}", file=sys.stderr)
 else:
     print(f"✅ Uploads folder exists: {UPLOAD_FOLDER}", file=sys.stderr)
 
-# Check if folder is writable
-upload_path = os.path.abspath(UPLOAD_FOLDER)
-is_writable = os.access(upload_path, os.W_OK) if os.path.exists(upload_path) else False
-print(f"📁 Uploads path: {upload_path}", file=sys.stderr)
-print(f"📝 Writable: {is_writable}", file=sys.stderr)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 # ========== END FIX ==========
 
 # Allowed upload extensions
@@ -274,48 +272,52 @@ def safe_format_number(value, default=0):
     except:
         return str(default)
 
-# ========== FILE UPLOAD FUNCTION - FIXED VERSION ==========
+# ========== FILE UPLOAD FUNCTION - COMPLETELY FIXED ==========
 def save_uploaded_file(file):
-    """Save uploaded file to uploads folder"""
-    if file and file.filename != '' and allowed_file(file.filename):
-        try:
-            # Secure the filename
-            filename = secure_filename(file.filename)
-            # Add timestamp to make filename unique
-            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            unique_filename = f"{timestamp}_{filename}"
-            
-            # Get absolute upload path
-            upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
-            
-            # Ensure upload folder exists with proper permissions
-            if not os.path.exists(upload_folder):
-                os.makedirs(upload_folder, mode=0o755)
-                print(f"📁 Created uploads folder at save time: {upload_folder}", file=sys.stderr)
-            
-            # Full path to save file
-            upload_path = os.path.join(upload_folder, unique_filename)
-            
-            # Save file
-            file.save(upload_path)
-            
-            # Set file permissions
-            os.chmod(upload_path, 0o644)
-            
-            print(f"✅ File uploaded successfully: {unique_filename}", file=sys.stderr)
-            print(f"📁 Saved to: {upload_path}", file=sys.stderr)
-            return unique_filename
-            
-        except Exception as e:
-            print(f"❌ Error saving uploaded file: {str(e)}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            return None
-    else:
-        print(f"⚠️ Invalid file upload attempt", file=sys.stderr)
-        if file:
-            print(f"   Filename: {file.filename}", file=sys.stderr)
-            print(f"   Allowed: {allowed_file(file.filename) if file.filename else 'No filename'}", file=sys.stderr)
-    return None
+    """Save uploaded file to uploads folder - FIXED FOR RENDER"""
+    if not file or file.filename == '':
+        print(f"⚠️ No file provided for upload", file=sys.stderr)
+        return None
+    
+    if not allowed_file(file.filename):
+        print(f"⚠️ File type not allowed: {file.filename}", file=sys.stderr)
+        return None
+    
+    try:
+        # Secure the filename
+        filename = secure_filename(file.filename)
+        # Add timestamp to make filename unique
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        unique_filename = f"{timestamp}_{filename}"
+        
+        # Get the upload folder from config
+        upload_folder = app.config['UPLOAD_FOLDER']
+        
+        print(f"📁 Using upload folder: {upload_folder}", file=sys.stderr)
+        print(f"📁 Folder exists: {os.path.exists(upload_folder)}", file=sys.stderr)
+        
+        # Double-check folder exists
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder, exist_ok=True)
+            print(f"📁 Created uploads folder: {upload_folder}", file=sys.stderr)
+        
+        # Create the full path
+        upload_path = os.path.join(upload_folder, unique_filename)
+        print(f"📁 Full upload path: {upload_path}", file=sys.stderr)
+        
+        # Save the file
+        file.save(upload_path)
+        
+        print(f"✅ File saved successfully: {unique_filename}", file=sys.stderr)
+        
+        # Return just the filename (not the full path) for database storage
+        return unique_filename
+        
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR saving file: {str(e)}", file=sys.stderr)
+        print(f"❌ Error type: {type(e).__name__}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return None
 
 # ========== AUTHENTICATION DECORATORS ==========
 def admin_required(f):
@@ -1153,7 +1155,7 @@ def admin_products():
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product with image upload - FIXED VERSION"""
+    """Add product with image upload - COMPLETELY FIXED"""
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -1183,6 +1185,7 @@ def admin_add_product():
                         print(f"✅ File uploaded successfully: {image_url}", file=sys.stderr)
                     else:
                         print(f"❌ File upload failed", file=sys.stderr)
+                        flash('Failed to upload image. Please try again.', 'warning')
             
             # If no file uploaded, use the image_url field
             if not image_url:
@@ -1536,8 +1539,14 @@ def debug_uploads():
 
 @app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
-    """Serve uploaded files"""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    """Serve uploaded files - FIXED"""
+    try:
+        upload_folder = app.config['UPLOAD_FOLDER']
+        return send_from_directory(upload_folder, filename)
+    except Exception as e:
+        print(f"❌ Error serving file {filename}: {str(e)}", file=sys.stderr)
+        # Try to serve from relative path if absolute fails
+        return send_from_directory('static/uploads', filename)
 
 # ========== HEALTH CHECK ==========
 @app.route('/health')
@@ -1572,8 +1581,9 @@ if __name__ == '__main__':
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"📁 Uploads folder: {os.path.abspath('static/uploads')}", file=sys.stderr)
-    print(f"📝 Writable: {os.access('static/uploads', os.W_OK) if os.path.exists('static/uploads') else False}", file=sys.stderr)
+    print(f"📁 Uploads folder: {app.config['UPLOAD_FOLDER']}", file=sys.stderr)
+    print(f"📁 Folder exists: {os.path.exists(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
+    print(f"📁 Writable: {os.access(app.config['UPLOAD_FOLDER'], os.W_OK) if os.path.exists(app.config['UPLOAD_FOLDER']) else False}", file=sys.stderr)
     print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
     print(f"🔧 Debug: http://localhost:{port}/debug/uploads", file=sys.stderr)
