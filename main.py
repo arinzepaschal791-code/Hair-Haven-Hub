@@ -1,4 +1,4 @@
-# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES - FIXED SESSION ISSUES
+# main.py - COMPLETE VERSION WITH ALL FIXES - READY FOR PRODUCTION
 import os
 import sys
 import traceback
@@ -83,7 +83,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     compare_price = db.Column(db.Float)
     sku = db.Column(db.String(100))
-    quantity = db.Column(db.Integer, default=0)
+    quantity = db.Column(db.Integer, default=0)  # FIXED: This is quantity, not stock
     featured = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -92,7 +92,16 @@ class Product(db.Model):
     texture = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    category = db.relationship('Category', backref='products', lazy='joined')  # FIXED: Changed to eager loading
+    category = db.relationship('Category', backref='products', lazy='joined')
+    
+    # Add stock property for backward compatibility
+    @property
+    def stock(self):
+        return self.quantity
+    
+    @stock.setter
+    def stock(self, value):
+        self.quantity = value
     
     @property
     def display_price(self):
@@ -438,6 +447,25 @@ with app.app_context():
         print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
+
+# ========== FILE UPLOAD FUNCTION ==========
+def save_uploaded_file(file):
+    """Save uploaded file to uploads folder"""
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Add timestamp to make filename unique
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        filename = f"{timestamp}_{filename}"
+        
+        # Create uploads folder if it doesn't exist
+        upload_folder = app.config['UPLOAD_FOLDER']
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+        return filename
+    return None
 
 # ========== PUBLIC ROUTES ==========
 
@@ -1086,7 +1114,7 @@ def admin_products():
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product"""
+    """Add product with image upload"""
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -1104,6 +1132,19 @@ def admin_add_product():
             slug = name.lower().replace(' ', '-').replace('"', '').replace("'", '')
             sku = f"HAIR-{random.randint(1000, 9999)}"
             
+            # Handle image upload
+            image_url = None
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename != '':
+                    uploaded_filename = save_uploaded_file(file)
+                    if uploaded_filename:
+                        image_url = uploaded_filename
+            
+            # If no file uploaded, use the image_url field
+            if not image_url:
+                image_url = request.form.get('image_url')
+            
             product = Product(
                 name=name,
                 slug=slug,
@@ -1116,7 +1157,8 @@ def admin_add_product():
                 featured=featured,
                 active=active,
                 length=length,
-                texture=texture
+                texture=texture,
+                image_url=image_url
             )
             
             db.session.add(product)
@@ -1136,7 +1178,7 @@ def admin_add_product():
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(id):
-    """Edit product"""
+    """Edit product with image upload"""
     product = Product.query.options(joinedload(Product.category)).get_or_404(id)
     
     if request.method == 'POST':
@@ -1155,6 +1197,16 @@ def admin_edit_product(id):
             
             # Update slug
             product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
+            
+            # Handle image upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename != '':
+                    uploaded_filename = save_uploaded_file(file)
+                    if uploaded_filename:
+                        product.image_url = uploaded_filename
+                elif request.form.get('image_url'):
+                    product.image_url = request.form.get('image_url')
             
             db.session.commit()
             
@@ -1270,14 +1322,34 @@ def admin_customers():
 @app.route('/admin/reviews')
 @admin_required
 def admin_reviews():
-    """Admin reviews"""
+    """Admin reviews - FIXED: Added review_stats"""
     try:
         reviews = Review.query.order_by(Review.created_at.desc()).all()
-        return render_template('admin/reviews.html', reviews=reviews, config=BUSINESS_CONFIG)
+        
+        # Calculate review stats
+        total_reviews = len(reviews)
+        approved_reviews = len([r for r in reviews if r.approved])
+        pending_reviews = len([r for r in reviews if not r.approved])
+        avg_rating = sum([r.rating for r in reviews]) / total_reviews if total_reviews > 0 else 0
+        
+        review_stats = {
+            'total': total_reviews,
+            'approved': approved_reviews,
+            'pending': pending_reviews,
+            'avg_rating': round(avg_rating, 1)
+        }
+        
+        return render_template('admin/reviews.html', 
+                             reviews=reviews, 
+                             review_stats=review_stats,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
         flash('Error loading reviews.', 'danger')
-        return render_template('admin/reviews.html', reviews=[], config=BUSINESS_CONFIG)
+        return render_template('admin/reviews.html', 
+                             reviews=[], 
+                             review_stats={'total': 0, 'approved': 0, 'pending': 0, 'avg_rating': 0},
+                             config=BUSINESS_CONFIG)
 
 @app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
 @admin_required
