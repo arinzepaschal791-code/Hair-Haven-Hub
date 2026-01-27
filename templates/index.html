@@ -4,673 +4,563 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config.brand_name }} - {{ config.tagline }}</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #8B4513;
-            --secondary-color: #D2691E;
-            --accent-color: #F5DEB3;
-            --dark-color: #2C1810;
-            --light-color: #FFF8F0;
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-gold: #d4af37;
+            --light-gray: #f8f9fa;
+            --text-dark: #333333;
+            --text-light: #6c757d;
+            --success: #2a8356;
+            --white: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            font-family: 'Poppins', sans-serif;
-            color: var(--dark-color);
-            background-color: var(--light-color);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--white);
         }
         
         h1, h2, h3, h4, h5 {
             font-family: 'Playfair Display', serif;
-        }
-        
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
             font-weight: 600;
-            font-size: 1.5rem;
-            color: var(--primary-color) !important;
+            color: var(--primary-dark);
         }
         
-        .site-logo {
-            height: 45px;
-            width: auto;
-            margin-right: 10px;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
         
-        .hero-section {
-            background: linear-gradient(rgba(44, 24, 16, 0.7), rgba(44, 24, 16, 0.7)),
-                        url('https://images.unsplash.com/photo-1522338242990-8f6c3e1534c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 120px 0;
-            margin-top: -76px;
-            padding-top: 200px;
-        }
-        
-        .section-title {
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--white);
+            padding: 100px 0 80px;
             position: relative;
-            margin-bottom: 3rem;
-            padding-bottom: 1rem;
+            overflow: hidden;
         }
         
-        .section-title:after {
+        .hero::before {
             content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background-color: var(--secondary-color);
-        }
-        
-        .section-title.text-center:after {
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .product-card {
-            border: none;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-        
-        .product-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-        
-        .product-img {
-            height: 250px;
-            object-fit: cover;
-            width: 100%;
-        }
-        
-        .badge-featured {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        
-        .price {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-        
-        .old-price {
-            text-decoration: line-through;
-            color: #999;
-            font-size: 0.9rem;
-        }
-        
-        .btn-primary-custom {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            padding: 10px 25px;
-            border-radius: 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary-custom:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-        
-        .category-card {
-            position: relative;
-            border-radius: 15px;
-            overflow: hidden;
-            height: 200px;
-            margin-bottom: 20px;
-        }
-        
-        .category-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        
-        .category-card:hover .category-img {
-            transform: scale(1.1);
-        }
-        
-        .category-overlay {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7));
-            display: flex;
-            align-items: flex-end;
-            padding: 20px;
-            color: white;
+            background: url('/static/images/pattern.png') repeat;
+            opacity: 0.05;
         }
         
-        .footer {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-            padding: 60px 0 30px;
-        }
-        
-        .social-icons a {
-            color: var(--accent-color);
-            margin-right: 15px;
-            font-size: 1.2rem;
-            transition: color 0.3s ease;
-        }
-        
-        .social-icons a:hover {
-            color: var(--secondary-color);
-        }
-        
-        .stats-section {
-            background-color: var(--accent-color);
-            padding: 60px 0;
-        }
-        
-        .stat-item {
+        .hero-content {
+            position: relative;
+            z-index: 1;
             text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
         }
         
-        .stat-number {
-            font-size: 2.5rem;
+        .brand-name {
+            font-size: 3.5rem;
             font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-        
-        .stat-label {
-            font-size: 1rem;
-            color: var(--dark-color);
-            text-transform: uppercase;
+            margin-bottom: 15px;
             letter-spacing: 1px;
         }
         
+        .tagline {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .slogan {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 35px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            background: #e6c158;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        /* Featured Products */
+        .section-title {
+            text-align: center;
+            margin: 60px 0 40px;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .section-title p {
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .product-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #eef2f7;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .product-img {
+            height: 250px;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .product-img img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .product-card:hover .product-img img {
+            transform: scale(1.05);
+        }
+        
+        .product-info {
+            padding: 25px;
+        }
+        
+        .product-category {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .product-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+        }
+        
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        
+        .old-price {
+            color: var(--text-light);
+            text-decoration: line-through;
+            font-size: 1rem;
+            margin-right: 8px;
+        }
+        
+        /* Features Section */
+        .features {
+            background: var(--light-gray);
+            padding: 80px 0;
+            margin: 60px 0;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
         .feature-icon {
-            width: 60px;
-            height: 60px;
-            background-color: var(--accent-color);
+            width: 70px;
+            height: 70px;
+            background: var(--primary-dark);
+            color: var(--white);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            color: var(--primary-color);
+            margin: 0 auto 20px;
+            font-size: 1.8rem;
         }
         
-        /* UPDATED: Testimonials without images */
-        .testimonial-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+        
+        /* Reviews Section */
+        .reviews {
+            padding: 80px 0;
+            background: var(--white);
+        }
+        
+        .review-slider {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .review-card {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: transform 0.3s ease;
-            height: 100%;
+            margin: 20px;
+            position: relative;
         }
         
-        .testimonial-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .rating {
-            color: #FFD700;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
+        .review-card::before {
+            content: '"';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 4rem;
+            color: var(--accent-gold);
+            opacity: 0.3;
+            font-family: serif;
         }
         
         .review-text {
-            font-style: italic;
-            color: #555;
-            line-height: 1.6;
+            font-size: 1.1rem;
+            line-height: 1.8;
             margin-bottom: 20px;
-            font-size: 1rem;
+            color: var(--text-dark);
         }
         
-        .customer-info {
-            border-top: 1px solid #eee;
-            padding-top: 15px;
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
-        .customer-name {
-            font-weight: bold;
-            color: #333;
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-dark);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .author-info h4 {
             margin-bottom: 5px;
-            font-size: 1rem;
         }
         
-        .customer-location {
-            color: #888;
+        .author-location {
+            color: var(--text-light);
             font-size: 0.9rem;
         }
         
-        /* Delivery info styling */
-        .delivery-info {
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
+        .stars {
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+        }
+        
+        /* Newsletter */
+        .newsletter {
+            background: var(--primary-dark);
+            color: var(--white);
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .newsletter-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .newsletter h3 {
+            color: var(--white);
+            margin-bottom: 15px;
+        }
+        
+        .newsletter p {
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .newsletter-form {
+            display: flex;
+            gap: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .newsletter-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+        
+        .newsletter-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .brand-name {
+                font-size: 2.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .hero {
+                padding: 70px 0 50px;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .newsletter-form {
+                flex-direction: column;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .brand-name {
+                font-size: 2rem;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .review-card {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation - UPDATED WITH LOGO -->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                     alt="{{ config.brand_name }} Logo" 
-                     class="site-logo">
-                {{ config.brand_name }}
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/shop">Shop</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex align-items-center">
-                    <a href="/cart" class="btn btn-outline-dark position-relative me-3">
-                        <i class="fas fa-shopping-cart"></i>
-                        {% if cart_count > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ cart_count }}
-                        </span>
-                        {% endif %}
-                    </a>
-                    
-                    <!-- UPDATED: Correct session variables from main.py -->
-                    {% if session.customer_id %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-2"></i>{{ session.customer_name.split(' ')[0] }}
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/account">My Account</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('customer_logout') }}">Logout</a></li>
-                            </ul>
-                        </div>
-                    {% elif session.admin_id %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-shield me-2"></i>Admin
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/admin/dashboard">Dashboard</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">Logout</a></li>
-                            </ul>
-                        </div>
-                    {% else %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="loginDropdown" data-bs-toggle="dropdown">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/login">Customer Login</a></li>
-                                <li><a class="dropdown-item" href="/admin">Admin Login</a></li>
-                                <li><a class="dropdown-item" href="/register">Register</a></li>
-                            </ul>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </nav>
-
+    {% include 'header.html' %}
+    
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">{{ config.slogan }}</h1>
-                    <p class="lead mb-4">{{ config.description }}</p>
-                    
-                    <!-- Delivery Info -->
-                    <div class="delivery-info mb-4">
-                        <h5><i class="fas fa-truck me-2"></i>Delivery Information</h5>
-                        <p class="mb-1">🚚 <strong>Lagos Areas:</strong> ₦3,000</p>
-                        <p class="mb-1">📍 <strong>Outside Lagos:</strong> ₦5,000</p>
-                        <p class="mb-0">🎉 <strong>Free Delivery:</strong> Orders over ₦150,000</p>
-                    </div>
-                    
-                    <div class="d-flex gap-3">
-                        <a href="/shop" class="btn btn-primary-custom">
-                            Shop Now <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                        <a href="#featured" class="btn btn-outline-light">
-                            View Collections
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-6 text-center">
-                    <div class="position-relative d-inline-block">
-                        <div class="position-absolute top-0 start-100 translate-middle">
-                            <div class="bg-white rounded-circle p-3 shadow">
-                                <i class="fas fa-truck text-primary fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="position-absolute bottom-0 start-0 translate-middle">
-                            <div class="bg-white rounded-circle p-3 shadow">
-                                <i class="fas fa-shield-alt text-primary fs-4"></i>
-                            </div>
-                        </div>
-                        <img src="https://images.unsplash.com/photo-1591369822092-854d5b88e5de?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                             alt="Premium Hair" class="img-fluid rounded-3 shadow-lg" style="max-height: 400px;">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="container mt-3">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Features Section -->
-    <section class="py-5 bg-white">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="feature-icon mx-auto">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <h5>100% Human Hair</h5>
-                        <p class="text-muted small">Premium quality guaranteed</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="feature-icon mx-auto">
-                            <i class="fas fa-shipping-fast"></i>
-                        </div>
-                        <h5>Nationwide Delivery</h5>
-                        <p class="text-muted small">Fast & reliable shipping</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="feature-icon mx-auto">
-                            <i class="fas fa-undo"></i>
-                        </div>
-                        <h5>30-Day Return</h5>
-                        <p class="text-muted small">Hassle-free returns</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="feature-icon mx-auto">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        <h5>24/7 Support</h5>
-                        <p class="text-muted small">Dedicated customer service</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Featured Products -->
-    <section id="featured" class="py-5">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col-12">
-                    <h2 class="section-title">Featured Products</h2>
-                    <p class="text-muted">Handpicked selection of our premium hair collections</p>
-                </div>
-            </div>
+    <section class="hero">
+        <div class="hero-content container">
+            <h1 class="brand-name">NORA HAIR LINE</h1>
+            <p class="tagline">Premium 100% Human Hair</p>
+            <p class="slogan">Luxury for less... Premium 100% human hair extensions, wigs, and hair products at wholesale prices.</p>
             
-            <div class="row g-4">
-                {% for product in featured_products %}
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="product-card h-100">
-                        <div class="position-relative">
-                            <img src="{{ url_for('static', filename='uploads/' + product.image_url) if product.image_url else 'https://via.placeholder.com/300x300?text=Hair+Product' }}" 
-                                 alt="{{ product.name }}" class="product-img">
-                            {% if product.featured %}
-                            <span class="badge-featured">Featured</span>
-                            {% endif %}
-                            <div class="position-absolute bottom-0 end-0 m-3">
-                                <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" class="d-inline">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-primary-custom btn-sm">
-                                        <i class="fas fa-cart-plus"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="p-3">
-                            <small class="text-muted">{{ product.category.name if product.category else 'Hair' }}</small>
-                            <h5 class="mt-2 mb-3">{{ product.name }}</h5>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="price">₦{{ "{:,.2f}".format(product.display_price) }}</span>
-                                    {% if product.compare_price and product.compare_price > product.price %}
-                                    <br><span class="old-price">₦{{ "{:,.2f}".format(product.compare_price) }}</span>
-                                    {% endif %}
-                                </div>
-                                <a href="/product/{{ product.id }}" class="btn btn-outline-primary btn-sm">
-                                    View <i class="fas fa-arrow-right ms-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                    <h4>No featured products available</h4>
-                    <p class="text-muted">Check back soon for our latest collections</p>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <div class="text-center mt-5">
-                <a href="/shop" class="btn btn-primary-custom px-5">
-                    View All Products <i class="fas fa-arrow-right ms-2"></i>
+            <div class="cta-buttons">
+                <a href="/shop" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> Shop Now
+                </a>
+                <a href="#featured" class="btn btn-secondary">
+                    <i class="fas fa-star"></i> View Collections
                 </a>
             </div>
         </div>
     </section>
-
-    <!-- Categories -->
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col-12 text-center">
-                    <h2 class="section-title text-center">Shop By Category</h2>
-                    <p class="text-muted">Explore our wide range of premium hair products</p>
-                </div>
-            </div>
-            
-            <div class="row g-4">
-                {% for category in categories[:6] %}
-                <div class="col-lg-4 col-md-6">
-                    <div class="category-card">
-                        <img src="{{ url_for('static', filename='uploads/' + category.image_url) if category.image_url else 'https://via.placeholder.com/400x200?text=' + category.name }}" 
-                             alt="{{ category.name }}" class="category-img">
-                        <div class="category-overlay">
-                            <div>
-                                <h4 class="mb-2">{{ category.name }}</h4>
-                                <p class="mb-0">{{ category.products|length }} products</p>
-                                <a href="/shop?category={{ category.id }}" class="btn btn-light btn-sm mt-2">
-                                    Shop Now <i class="fas fa-arrow-right ms-1"></i>
-                                </a>
-                            </div>
+    
+    <!-- Featured Products -->
+    <section id="featured" class="container">
+        <div class="section-title">
+            <h2>Featured Collections</h2>
+            <p>Discover our premium selection of 100% human hair products</p>
+        </div>
+        
+        <div class="product-grid">
+            {% for product in featured_products %}
+            <a href="/product/{{ product.id }}" style="text-decoration: none;">
+                <div class="product-card">
+                    <div class="product-img">
+                        <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">{{ product.category.name }}</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        {% if product.compare_price and product.compare_price > product.price %}
+                        <div class="product-price">
+                            <span class="old-price">{{ format_price(product.compare_price) }}</span>
+                            {{ product.formatted_price }}
                         </div>
+                        {% else %}
+                        <div class="product-price">{{ product.formatted_price }}</div>
+                        {% endif %}
                     </div>
                 </div>
-                {% else %}
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
-                    <h4>No categories available</h4>
-                </div>
-                {% endfor %}
-            </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="/shop" class="btn btn-primary">
+                <i class="fas fa-store"></i> View All Products
+            </a>
         </div>
     </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section">
+    
+    <!-- Features Section -->
+    <section class="features">
         <div class="container">
-            <div class="row text-center">
-                <div class="col-md-3 col-6 mb-4">
-                    <div class="stat-item">
-                        <div class="stat-number">500+</div>
-                        <div class="stat-label">Happy Clients</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ featured_products|length }}+</div>
-                        <div class="stat-label">Premium Products</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div class="stat-item">
-                        <div class="stat-number">5+</div>
-                        <div class="stat-label">Years Experience</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div class="stat-item">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">Support</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- UPDATED: Testimonials Section (Without Images) -->
-    <section class="testimonials py-5">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col-12 text-center">
-                    <h2 class="section-title">What Our Customers Say</h2>
-                    <p class="text-muted">Real feedback from satisfied clients</p>
-                </div>
+            <div class="section-title">
+                <h2>Why Choose Nora Hair Line</h2>
+                <p>Experience premium quality and exceptional service</p>
             </div>
             
-            <div class="row">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="feature-title">100% Human Hair</h3>
+                    <p>Premium quality virgin hair with natural texture and longevity.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="feature-title">Nationwide Delivery</h3>
+                    <p>Fast and reliable shipping across Nigeria with tracking.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Quality Guarantee</h3>
+                    <p>30-day return policy and quality assurance on all products.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="feature-title">Expert Support</h3>
+                    <p>Professional consultation and customer support available.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Customer Reviews -->
+    <section class="reviews">
+        <div class="container">
+            <div class="section-title">
+                <h2>Customer Reviews</h2>
+                <p>See what our satisfied customers are saying</p>
+            </div>
+            
+            <div class="review-slider">
                 {% for review in reviews %}
-                <div class="col-lg-4 mb-4">
-                    <div class="testimonial-card h-100">
-                        <!-- Star Rating (NO IMAGE) -->
-                        <div class="rating">
-                            {% for i in range(review.rating) %}
-                                <i class="fas fa-star text-warning"></i>
-                            {% endfor %}
-                            {% for i in range(5 - review.rating) %}
-                                <i class="far fa-star text-warning"></i>
-                            {% endfor %}
-                        </div>
-                        
-                        <!-- Review Text -->
-                        <p class="review-text">"{{ review.comment }}"</p>
-                        
-                        <!-- Customer Info (TEXT ONLY) -->
-                        <div class="customer-info">
-                            <p class="customer-name">{{ review.customer_name }}</p>
-                            <p class="customer-location">{{ review.location }}</p>
-                        </div>
+                <div class="review-card">
+                    <div class="stars">
+                        {% for i in range(review.rating) %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
                     </div>
-                </div>
-                {% else %}
-                <!-- Fallback testimonials if no reviews in database -->
-                <div class="col-lg-4 mb-4">
-                    <div class="testimonial-card h-100">
-                        <div class="rating">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
+                    <p class="review-text">{{ review.comment }}</p>
+                    <div class="review-author">
+                        <div class="author-avatar">
+                            {{ review.customer_name[0] }}
                         </div>
-                        <p class="review-text">"The Brazilian hair I purchased is absolutely stunning! It's been 6 months and still looks brand new. Best quality I've ever had!"</p>
-                        <div class="customer-info">
-                            <p class="customer-name">Chiamaka Okeke</p>
-                            <p class="customer-location">Lagos</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 mb-4">
-                    <div class="testimonial-card h-100">
-                        <div class="rating">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="review-text">"The lace frontal wig is so natural looking! I've received countless compliments. The customer service was excellent too!"</p>
-                        <div class="customer-info">
-                            <p class="customer-name">Bisi Adeyemi</p>
-                            <p class="customer-location">Abuja</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 mb-4">
-                    <div class="testimonial-card h-100">
-                        <div class="rating">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star-half-alt text-warning"></i>
-                        </div>
-                        <p class="review-text">"Fast delivery and premium quality hair. I'll definitely be ordering again. The Peruvian straight is my new favorite!"</p>
-                        <div class="customer-info">
-                            <p class="customer-name">Fatima Bello</p>
-                            <p class="customer-location">Port Harcourt</p>
+                        <div class="author-info">
+                            <h4>{{ review.customer_name }}</h4>
+                            <div class="author-location">{{ review.location }}</div>
                         </div>
                     </div>
                 </div>
@@ -678,143 +568,53 @@
             </div>
         </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="footer">
+    
+    <!-- Newsletter -->
+    <section class="newsletter">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h4 class="mb-4">
-                        <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                             alt="{{ config.brand_name }} Logo" 
-                             style="height: 40px; width: auto; margin-right: 10px;">
-                        {{ config.brand_name }}
-                    </h4>
-                    <p class="mb-4">{{ config.description }}</p>
-                    <div class="social-icons">
-                        <a href="{{ config.whatsapp }}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                        <a href="{{ config.instagram_url }}" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="tel:{{ config.phone }}" title="Call Us"><i class="fas fa-phone"></i></a>
-                        <a href="mailto:{{ config.email }}" title="Email Us"><i class="fas fa-envelope"></i></a>
-                    </div>
-                </div>
+            <div class="newsletter-content">
+                <h3>Stay Updated</h3>
+                <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h5 class="mb-4">Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="/" class="text-light">Home</a></li>
-                        <li class="mb-2"><a href="/shop" class="text-light">Shop</a></li>
-                        <li class="mb-2"><a href="/about" class="text-light">About Us</a></li>
-                        <li class="mb-2"><a href="/contact" class="text-light">Contact</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5 class="mb-4">Categories</h5>
-                    <ul class="list-unstyled">
-                        {% for category in categories[:4] %}
-                        <li class="mb-2">
-                            <a href="/shop?category={{ category.id }}" class="text-light">
-                                {{ category.name }}
-                            </a>
-                        </li>
-                        {% endfor %}
-                        <li class="mb-2">
-                            <a href="/shop" class="text-light">View All Categories</a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-3 mb-4">
-                    <h5 class="mb-4">Contact Info</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-3">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            {{ config.address }}
-                        </li>
-                        <li class="mb-3">
-                            <i class="fas fa-phone me-2"></i>
-                            {{ config.phone }}
-                        </li>
-                        <li class="mb-3">
-                            <i class="fas fa-envelope me-2"></i>
-                            {{ config.email }}
-                        </li>
-                        <li>
-                            <i class="fas fa-clock me-2"></i>
-                            Mon - Sat: 9AM - 7PM
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <hr class="bg-light my-4">
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="mb-0">&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">Premium 100% Human Hair | Luxury for Less</p>
-                </div>
+                <form class="newsletter-form">
+                    <input type="email" class="newsletter-input" placeholder="Your email address" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Subscribe
+                    </button>
+                </form>
             </div>
         </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    </section>
+    
+    {% include 'footer.html' %}
     
     <script>
-        // Simple animation for scroll
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add animation to product cards on scroll
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, observerOptions);
-            
-            // Observe product cards
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                observer.observe(card);
-            });
-            
-            // Observe category cards
-            document.querySelectorAll('.category-card').forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                observer.observe(card);
-            });
-            
-            // Observe testimonial cards
-            document.querySelectorAll('.testimonial-card').forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                observer.observe(card);
-            });
+        // Newsletter form submission
+        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('.newsletter-input').value;
+            if (email) {
+                alert('Thank you for subscribing to our newsletter!');
+                this.querySelector('.newsletter-input').value = '';
+            }
         });
         
-        // Flash message auto-dismiss
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
             });
-        }, 5000);
+        });
     </script>
 </body>
 </html>
