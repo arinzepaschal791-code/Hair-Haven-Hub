@@ -16,6 +16,7 @@
     
     .cart-container {
         padding: 40px 0;
+        min-height: 500px;
     }
     
     .cart-empty {
@@ -269,7 +270,7 @@
 <!-- Cart Content -->
 <section class="cart-container">
     <div class="container">
-        {% if cart_items %}
+        {% if cart_items and cart_items|length > 0 %}
         <div class="row">
             <!-- Cart Items -->
             <div class="col-lg-8">
@@ -289,21 +290,21 @@
                         <!-- Product -->
                         <div class="cart-product">
                             <div class="cart-product-image">
-                                <img src="{{ item.product.image_url or '/static/images/default-product.jpg' }}" 
+                                <img src="{{ item.product.image_url if item.product.image_url else '/static/images/default-product.jpg' }}" 
                                      alt="{{ item.product.name }}">
                             </div>
                             <div class="cart-product-details">
                                 <h4>{{ item.product.name }}</h4>
-                                <div class="cart-product-category">{{ item.product.category|title }}</div>
+                                <div class="cart-product-category">{{ item.product.category|title if item.product.category else 'Uncategorized' }}</div>
                                 <div class="d-lg-none mt-2">
-                                    <span class="cart-price">{{ item.product.formatted_price }}</span>
+                                    <span class="cart-price">{{ "${:,.2f}".format(item.product.price) if item.product.price else '$0.00' }}</span>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Price -->
                         <div class="cart-price d-none d-lg-block">
-                            {{ item.product.formatted_price }}
+                            {{ "${:,.2f}".format(item.product.price) if item.product.price else '$0.00' }}
                         </div>
                         
                         <!-- Quantity -->
@@ -313,7 +314,7 @@
                             <input type="number" class="quantity-input" 
                                    value="{{ item.quantity }}" 
                                    min="1" 
-                                   max="{{ item.product.stock }}"
+                                   max="{{ item.product.stock if item.product.stock else 99 }}"
                                    onchange="updateQuantity({{ item.id }}, this.value)">
                             <button class="quantity-btn" 
                                     onclick="updateQuantity({{ item.id }}, {{ item.quantity + 1 }})">+</button>
@@ -321,7 +322,7 @@
                         
                         <!-- Total -->
                         <div class="cart-total">
-                            {{ item.formatted_total }}
+                            ${% if item.product.price %}{{ "%.2f"|format(item.product.price * item.quantity) }}{% else %}0.00{% endif %}
                         </div>
                         
                         <!-- Remove -->
@@ -339,32 +340,38 @@
                 <div class="cart-summary">
                     <h3 class="summary-title">Order Summary</h3>
                     
+                    {% set subtotal = namespace(value=0) %}
+                    {% for item in cart_items %}
+                        {% set subtotal.value = subtotal.value + (item.product.price * item.quantity) if item.product.price else subtotal.value %}
+                    {% endfor %}
+                    
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <span>{{ formatted_subtotal }}</span>
+                        <span>${{ "%.2f"|format(subtotal.value) }}</span>
                     </div>
                     
                     <div class="summary-row">
                         <span>Shipping</span>
-                        <span>{{ formatted_shipping }}</span>
+                        <span>${{ "%.2f"|format(5.00 if subtotal.value < 50 else 0.00) }}</span>
                     </div>
                     
                     <div class="summary-row">
                         <span>Tax</span>
-                        <span>₦0.00</span>
+                        <span>${{ "%.2f"|format(subtotal.value * 0.08) }}</span>
                     </div>
                     
+                    {% set total = subtotal.value + (5.00 if subtotal.value < 50 else 0.00) + (subtotal.value * 0.08) %}
                     <div class="summary-row total">
                         <span>Total</span>
-                        <span>{{ formatted_total }}</span>
+                        <span>${{ "%.2f"|format(total) }}</span>
                     </div>
                     
                     <!-- Promo Code -->
                     <div class="promo-code">
                         <label class="form-label">Promo Code</label>
                         <div class="promo-input">
-                            <input type="text" class="form-control" placeholder="Enter code">
-                            <button class="btn btn-outline-primary">Apply</button>
+                            <input type="text" class="form-control" placeholder="Enter code" id="promoCode">
+                            <button class="btn btn-outline-primary" onclick="applyPromoCode()">Apply</button>
                         </div>
                     </div>
                     
@@ -388,6 +395,9 @@
                             <span class="badge bg-light text-dark p-2">
                                 <i class="fab fa-whatsapp me-1 text-success"></i> WhatsApp Payment
                             </span>
+                            <span class="badge bg-light text-dark p-2">
+                                <i class="fab fa-cc-paypal me-1 text-primary"></i> PayPal
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -405,9 +415,11 @@
                 <a href="/shop" class="btn btn-primary">
                     <i class="fas fa-store me-2"></i> Start Shopping
                 </a>
-                <a href="{{ whatsapp }}" target="_blank" class="btn btn-whatsapp">
+                {% if whatsapp %}
+                <a href="{{ whatsapp }}" target="_blank" class="btn btn-success">
                     <i class="fab fa-whatsapp me-2"></i> WhatsApp Order
                 </a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -417,6 +429,36 @@
 
 {% block scripts %}
 <script>
+    // Toast notification function
+    function showToast(title, message, type = 'info') {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${type} border-0 position-fixed`;
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+        toast.style.zIndex = '1050';
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>${title}:</strong> ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', function () {
+            document.body.removeChild(toast);
+        });
+    }
+    
     // Update Quantity
     async function updateQuantity(itemId, newQuantity) {
         newQuantity = parseInt(newQuantity);
@@ -427,30 +469,22 @@
         }
         
         try {
-            const formData = new FormData();
-            formData.append('quantity', newQuantity);
-            
-            const response = await fetch(`/update-cart/${itemId}`, {
+            const response = await fetch(`/cart/update/${itemId}`, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
             });
             
             const result = await response.json();
             
             if (result.success) {
-                // Update the UI
-                const itemElement = document.getElementById(`cartItem${itemId}`);
-                if (itemElement) {
-                    const totalElement = itemElement.querySelector('.cart-total');
-                    if (totalElement) {
-                        totalElement.textContent = result.formatted_item_total;
-                    }
-                }
-                
-                // Update cart summary
-                updateCartSummary();
-                showToast('Success', 'Cart updated successfully', 'success');
-                
+                // Reload page to get updated totals
+                location.reload();
             } else {
                 showToast('Error', result.message, 'error');
             }
@@ -467,33 +501,17 @@
         }
         
         try {
-            const response = await fetch(`/remove-from-cart/${itemId}`, {
-                method: 'POST'
+            const response = await fetch(`/cart/remove/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
             });
             
             const result = await response.json();
             
             if (result.success) {
-                // Remove item from UI
-                const itemElement = document.getElementById(`cartItem${itemId}`);
-                if (itemElement) {
-                    itemElement.remove();
-                }
-                
-                // Update cart count
-                updateCartCount({{ cart_count }} - 1);
-                
-                // Update cart summary or show empty cart
-                updateCartSummary();
-                showToast('Success', 'Item removed from cart', 'success');
-                
-                // If cart is empty, reload page to show empty cart message
-                if ({{ cart_count }} <= 1) {
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                }
-                
+                location.reload();
             } else {
                 showToast('Error', result.message, 'error');
             }
@@ -503,13 +521,52 @@
         }
     }
     
-    // Update Cart Summary (simplified version - would need actual API call)
-    function updateCartSummary() {
-        // This would typically make an API call to get updated totals
-        // For now, we'll just reload the page to get fresh data
-        setTimeout(() => {
-            location.reload();
-        }, 500);
+    // Apply Promo Code
+    async function applyPromoCode() {
+        const promoCode = document.getElementById('promoCode').value;
+        
+        if (!promoCode.trim()) {
+            showToast('Info', 'Please enter a promo code', 'info');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/cart/apply-promo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    promo_code: promoCode
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Success', result.message, 'success');
+                location.reload();
+            } else {
+                showToast('Error', result.message, 'error');
+            }
+            
+        } catch (error) {
+            showToast('Error', 'Failed to apply promo code', 'error');
+        }
+    }
+    
+    // Update cart count in navbar
+    function updateCartCount(count) {
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(el => {
+            el.textContent = count;
+            if (count === 0) {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'flex';
+            }
+        });
     }
 </script>
 {% endblock %}
