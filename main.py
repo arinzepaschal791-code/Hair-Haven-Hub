@@ -34,6 +34,22 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
+# ========== FIX FOR UPLOADS FOLDER - CREATE IMMEDIATELY ==========
+# CREATE UPLOADS FOLDER IMMEDIATELY AFTER CONFIG
+UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    print(f"✅ Created uploads folder: {UPLOAD_FOLDER}", file=sys.stderr)
+else:
+    print(f"✅ Uploads folder exists: {UPLOAD_FOLDER}", file=sys.stderr)
+
+# Check if folder is writable
+upload_path = os.path.abspath(UPLOAD_FOLDER)
+is_writable = os.access(upload_path, os.W_OK) if os.path.exists(upload_path) else False
+print(f"📁 Uploads path: {upload_path}", file=sys.stderr)
+print(f"📝 Writable: {is_writable}", file=sys.stderr)
+# ========== END FIX ==========
+
 # Allowed upload extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
@@ -83,7 +99,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     compare_price = db.Column(db.Float)
     sku = db.Column(db.String(100))
-    quantity = db.Column(db.Integer, default=0)  # FIXED: This is quantity, not stock
+    quantity = db.Column(db.Integer, default=0)
     featured = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -94,7 +110,6 @@ class Product(db.Model):
     
     category = db.relationship('Category', backref='products', lazy='joined')
     
-    # Add stock property for backward compatibility
     @property
     def stock(self):
         return self.quantity
@@ -258,6 +273,49 @@ def safe_format_number(value, default=0):
         return str(value)
     except:
         return str(default)
+
+# ========== FILE UPLOAD FUNCTION - FIXED VERSION ==========
+def save_uploaded_file(file):
+    """Save uploaded file to uploads folder"""
+    if file and file.filename != '' and allowed_file(file.filename):
+        try:
+            # Secure the filename
+            filename = secure_filename(file.filename)
+            # Add timestamp to make filename unique
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            unique_filename = f"{timestamp}_{filename}"
+            
+            # Get absolute upload path
+            upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
+            
+            # Ensure upload folder exists with proper permissions
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder, mode=0o755)
+                print(f"📁 Created uploads folder at save time: {upload_folder}", file=sys.stderr)
+            
+            # Full path to save file
+            upload_path = os.path.join(upload_folder, unique_filename)
+            
+            # Save file
+            file.save(upload_path)
+            
+            # Set file permissions
+            os.chmod(upload_path, 0o644)
+            
+            print(f"✅ File uploaded successfully: {unique_filename}", file=sys.stderr)
+            print(f"📁 Saved to: {upload_path}", file=sys.stderr)
+            return unique_filename
+            
+        except Exception as e:
+            print(f"❌ Error saving uploaded file: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            return None
+    else:
+        print(f"⚠️ Invalid file upload attempt", file=sys.stderr)
+        if file:
+            print(f"   Filename: {file.filename}", file=sys.stderr)
+            print(f"   Allowed: {allowed_file(file.filename) if file.filename else 'No filename'}", file=sys.stderr)
+    return None
 
 # ========== AUTHENTICATION DECORATORS ==========
 def admin_required(f):
@@ -447,25 +505,6 @@ with app.app_context():
         print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
-
-# ========== FILE UPLOAD FUNCTION ==========
-def save_uploaded_file(file):
-    """Save uploaded file to uploads folder"""
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        # Add timestamp to make filename unique
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        filename = f"{timestamp}_{filename}"
-        
-        # Create uploads folder if it doesn't exist
-        upload_folder = app.config['UPLOAD_FOLDER']
-        if not os.path.exists(upload_folder):
-            os.makedirs(upload_folder)
-        
-        file_path = os.path.join(upload_folder, filename)
-        file.save(file_path)
-        return filename
-    return None
 
 # ========== PUBLIC ROUTES ==========
 
@@ -1114,7 +1153,7 @@ def admin_products():
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product with image upload"""
+    """Add product with image upload - FIXED VERSION"""
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -1137,13 +1176,18 @@ def admin_add_product():
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename != '':
+                    print(f"📤 Processing file upload: {file.filename}", file=sys.stderr)
                     uploaded_filename = save_uploaded_file(file)
                     if uploaded_filename:
                         image_url = uploaded_filename
+                        print(f"✅ File uploaded successfully: {image_url}", file=sys.stderr)
+                    else:
+                        print(f"❌ File upload failed", file=sys.stderr)
             
             # If no file uploaded, use the image_url field
             if not image_url:
                 image_url = request.form.get('image_url')
+                print(f"📝 Using manual image URL: {image_url}", file=sys.stderr)
             
             product = Product(
                 name=name,
@@ -1165,11 +1209,13 @@ def admin_add_product():
             db.session.commit()
             
             flash(f'Product "{name}" added successfully!', 'success')
+            print(f"✅ Product '{name}' added to database", file=sys.stderr)
             return redirect(url_for('admin_products'))
             
         except Exception as e:
             db.session.rollback()
             print(f"❌ Add product error: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             flash('Error adding product. Please try again.', 'danger')
     
     categories = Category.query.all()
@@ -1467,6 +1513,25 @@ def admin_settings():
     
     return render_template('admin/settings.html', config=BUSINESS_CONFIG)
 
+# ========== DEBUG ROUTES ==========
+@app.route('/debug/uploads')
+def debug_uploads():
+    """Debug uploads folder status"""
+    import os
+    UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
+    folder_exists = os.path.exists(UPLOAD_FOLDER)
+    full_path = os.path.abspath(UPLOAD_FOLDER)
+    
+    return jsonify({
+        'folder': UPLOAD_FOLDER,
+        'exists': folder_exists,
+        'full_path': full_path,
+        'writable': os.access(UPLOAD_FOLDER, os.W_OK) if folder_exists else False,
+        'files': os.listdir(UPLOAD_FOLDER) if folder_exists else [],
+        'app_root': os.getcwd(),
+        'config_upload_folder': app.config['UPLOAD_FOLDER']
+    })
+
 # ========== STATIC FILE SERVING ==========
 
 @app.route('/static/uploads/<filename>')
@@ -1499,7 +1564,7 @@ def create_app():
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    # Create required directories
+    # Create required directories (redundant but safe)
     os.makedirs('static/uploads', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
     
@@ -1507,8 +1572,11 @@ if __name__ == '__main__':
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
+    print(f"📁 Uploads folder: {os.path.abspath('static/uploads')}", file=sys.stderr)
+    print(f"📝 Writable: {os.access('static/uploads', os.W_OK) if os.path.exists('static/uploads') else False}", file=sys.stderr)
     print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
+    print(f"🔧 Debug: http://localhost:{port}/debug/uploads", file=sys.stderr)
     print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
     print(f"👤 Customer: /login", file=sys.stderr)
@@ -1516,6 +1584,7 @@ if __name__ == '__main__':
     print(f"ℹ️  About: /about", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     print(f"✅ Database initialized at startup", file=sys.stderr)
+    print(f"✅ Uploads folder ready", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
