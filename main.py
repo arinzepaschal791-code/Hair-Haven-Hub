@@ -1,4 +1,4 @@
-# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES - FIXED DATABASE INITIALIZATION
+# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES - FIXED SESSION ISSUES
 import os
 import sys
 import traceback
@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import joinedload
 
 # ========== CREATE APP ==========
 app = Flask(__name__)
@@ -91,7 +92,7 @@ class Product(db.Model):
     texture = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    category = db.relationship('Category', backref='products')
+    category = db.relationship('Category', backref='products', lazy='joined')  # FIXED: Changed to eager loading
     
     @property
     def display_price(self):
@@ -278,9 +279,8 @@ def inject_global_vars():
     cart_total = 0
     
     try:
-        # Use a wrapper to handle database errors
-        with app.app_context():
-            categories = Category.query.all()
+        # Use separate session for context processor
+        categories = Category.query.all()
     except Exception as e:
         print(f"⚠️ Context processor error (categories): {str(e)}", file=sys.stderr)
         categories = []
@@ -426,7 +426,6 @@ def init_db():
         return False
 
 # ========== INITIALIZE DATABASE ON STARTUP ==========
-# FIXED: Using with app.app_context() instead of @app.before_first_request
 print("🚀 Initializing database on application startup...", file=sys.stderr)
 with app.app_context():
     try:
@@ -444,13 +443,17 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    """Homepage"""
+    """Homepage - FIXED SESSION ISSUE"""
     try:
-        with app.app_context():
-            featured_products = Product.query.filter_by(featured=True, active=True).limit(8).all()
-            categories = Category.query.limit(6).all()
-            reviews = Review.query.filter_by(approved=True).limit(5).all()
+        # Use joinedload to load category relationship in the same query
+        featured_products = Product.query.filter_by(featured=True, active=True)\
+            .options(joinedload(Product.category))\
+            .limit(8)\
+            .all()
         
+        categories = Category.query.limit(6).all()
+        reviews = Review.query.filter_by(approved=True).limit(5).all()
+    
         return render_template('index.html',
                              featured_products=featured_products,
                              categories=categories,
@@ -458,6 +461,7 @@ def index():
                              config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Homepage error: {str(e)}", file=sys.stderr)
+        # Return empty lists with proper structure
         return render_template('index.html',
                              featured_products=[],
                              categories=[],
@@ -466,39 +470,41 @@ def index():
 
 @app.route('/shop')
 def shop():
-    """Shop page"""
+    """Shop page - FIXED SESSION ISSUE"""
     try:
-        with app.app_context():
-            category_id = request.args.get('category', type=int)
-            search = request.args.get('search', '')
-            page = request.args.get('page', 1, type=int)
-            per_page = 12
-            
-            query = Product.query.filter_by(active=True)
-            
-            if category_id:
-                query = query.filter_by(category_id=category_id)
-            
-            if search:
-                query = query.filter(Product.name.ilike(f'%{search}%'))
-            
-            products = query.order_by(Product.created_at.desc()).all()
-            
-            # Manual pagination
-            total_products = len(products)
-            total_pages = (total_products + per_page - 1) // per_page
-            
-            if page < 1:
-                page = 1
-            if page > total_pages:
-                page = total_pages
-                
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            paginated_products = products[start_idx:end_idx]
-            
-            categories = Category.query.all()
+        category_id = request.args.get('category', type=int)
+        search = request.args.get('search', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 12
         
+        # Start with base query
+        query = Product.query.filter_by(active=True)\
+            .options(joinedload(Product.category))
+        
+        if category_id:
+            query = query.filter_by(category_id=category_id)
+        
+        if search:
+            query = query.filter(Product.name.ilike(f'%{search}%'))
+        
+        # Get all products with categories loaded
+        products = query.order_by(Product.created_at.desc()).all()
+        
+        # Manual pagination
+        total_products = len(products)
+        total_pages = (total_products + per_page - 1) // per_page
+        
+        if page < 1:
+            page = 1
+        if page > total_pages:
+            page = total_pages
+            
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_products = products[start_idx:end_idx]
+        
+        categories = Category.query.all()
+    
         return render_template('shop.html',
                              products=paginated_products,
                              categories=categories,
@@ -523,18 +529,22 @@ def shop():
 
 @app.route('/product/<int:id>')
 def product_detail(id):
-    """Product detail page"""
+    """Product detail page - FIXED SESSION ISSUE"""
     try:
-        with app.app_context():
-            product = Product.query.get_or_404(id)
-            related_products = Product.query.filter(
+        product = Product.query\
+            .options(joinedload(Product.category))\
+            .get_or_404(id)
+        
+        related_products = Product.query\
+            .options(joinedload(Product.category))\
+            .filter(
                 Product.category_id == product.category_id,
                 Product.id != product.id,
                 Product.active == True
             ).limit(4).all()
-            
-            reviews = Review.query.filter_by(product_id=id, approved=True).all()
         
+        reviews = Review.query.filter_by(product_id=id, approved=True).all()
+    
         return render_template('product_detail.html',
                              product=product,
                              related_products=related_products,
@@ -567,9 +577,8 @@ def cart():
 def add_to_cart(product_id):
     """Add product to cart"""
     try:
-        with app.app_context():
-            product = Product.query.get_or_404(product_id)
-        
+        product = Product.query.get_or_404(product_id)
+    
         if not product.active or product.quantity <= 0:
             flash('Product is not available.', 'warning')
             return redirect(request.referrer or url_for('shop'))
@@ -633,8 +642,7 @@ def update_cart(product_id):
                 if quantity <= 0:
                     cart.remove(item)
                 else:
-                    with app.app_context():
-                        product = Product.query.get(product_id)
+                    product = Product.query.get(product_id)
                     if product and quantity > product.quantity:
                         flash(f'Only {product.quantity} items available in stock.', 'warning')
                         return redirect(url_for('cart'))
@@ -678,8 +686,7 @@ def customer_register():
             phone = request.form.get('phone')
             
             # Check if customer exists
-            with app.app_context():
-                existing_customer = Customer.query.filter_by(email=email).first()
+            existing_customer = Customer.query.filter_by(email=email).first()
             
             if existing_customer:
                 flash('Email already registered. Please login.', 'danger')
@@ -694,9 +701,8 @@ def customer_register():
             )
             customer.set_password(password)
             
-            with app.app_context():
-                db.session.add(customer)
-                db.session.commit()
+            db.session.add(customer)
+            db.session.commit()
             
             # Auto login after registration
             session['customer_id'] = customer.id
@@ -721,8 +727,7 @@ def customer_login():
             email = request.form.get('email')
             password = request.form.get('password')
             
-            with app.app_context():
-                customer = Customer.query.filter_by(email=email).first()
+            customer = Customer.query.filter_by(email=email).first()
             
             if customer and customer.check_password(password):
                 session['customer_id'] = customer.id
@@ -758,10 +763,9 @@ def customer_logout():
 def account():
     """Customer account page"""
     try:
-        with app.app_context():
-            customer = Customer.query.get(session['customer_id'])
-            orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
-        
+        customer = Customer.query.get(session['customer_id'])
+        orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
+    
         return render_template('account.html', customer=customer, orders=orders, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Account error: {str(e)}", file=sys.stderr)
@@ -832,25 +836,24 @@ def checkout():
                 notes=notes
             )
             
-            with app.app_context():
-                db.session.add(order)
-                db.session.flush()
-                
-                # Add order items
-                for item in cart_items:
-                    product = Product.query.get(item['id'])
-                    if product:
-                        order_item = OrderItem(
-                            order_id=order.id,
-                            product_id=product.id,
-                            product_name=product.name,
-                            quantity=item['quantity'],
-                            unit_price=item['price'],
-                            total_price=item['price'] * item['quantity']
-                        )
-                        db.session.add(order_item)
-                
-                db.session.commit()
+            db.session.add(order)
+            db.session.flush()
+            
+            # Add order items
+            for item in cart_items:
+                product = Product.query.get(item['id'])
+                if product:
+                    order_item = OrderItem(
+                        order_id=order.id,
+                        product_id=product.id,
+                        product_name=product.name,
+                        quantity=item['quantity'],
+                        unit_price=item['price'],
+                        total_price=item['price'] * item['quantity']
+                    )
+                    db.session.add(order_item)
+            
+            db.session.commit()
             
             # Clear cart
             session.pop('cart', None)
@@ -870,8 +873,7 @@ def checkout():
     # GET request - show checkout form
     customer = None
     if 'customer_id' in session:
-        with app.app_context():
-            customer = Customer.query.get(session['customer_id'])
+        customer = Customer.query.get(session['customer_id'])
     
     return render_template('checkout.html',
                          cart_items=cart_items,
@@ -917,9 +919,8 @@ def contact():
 def add_review(product_id):
     """Add product review"""
     try:
-        with app.app_context():
-            product = Product.query.get_or_404(product_id)
-        
+        product = Product.query.get_or_404(product_id)
+    
         rating = int(request.form.get('rating', 5))
         comment = request.form.get('comment', '')
         
@@ -927,8 +928,7 @@ def add_review(product_id):
             flash('Please provide a review comment.', 'warning')
             return redirect(url_for('product_detail', id=product_id))
         
-        with app.app_context():
-            customer = Customer.query.get(session['customer_id'])
+        customer = Customer.query.get(session['customer_id'])
         
         review = Review(
             product_id=product_id,
@@ -940,9 +940,8 @@ def add_review(product_id):
             approved=False  # Admin needs to approve reviews
         )
         
-        with app.app_context():
-            db.session.add(review)
-            db.session.commit()
+        db.session.add(review)
+        db.session.commit()
         
         flash('Thank you for your review! It will be visible after approval.', 'success')
         return redirect(url_for('product_detail', id=product_id))
@@ -969,8 +968,7 @@ def admin_login():
             password = request.form.get('password', '').strip()
             
             # Query admin user
-            with app.app_context():
-                admin = User.query.filter_by(username=username, is_admin=True).first()
+            admin = User.query.filter_by(username=username, is_admin=True).first()
             
             if admin and admin.check_password(password):
                 session['admin_id'] = admin.id
@@ -1000,34 +998,33 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard"""
+    """Admin dashboard - FIXED SESSION ISSUE"""
     try:
-        with app.app_context():
-            total_orders = Order.query.count()
-            total_products = Product.query.count()
-            total_customers = Customer.query.count()
-            pending_orders = Order.query.filter_by(status='pending').count()
-            
-            # Calculate revenue
-            revenue_result = db.session.query(db.func.sum(Order.final_amount)).scalar()
-            revenue = float(revenue_result) if revenue_result is not None else 0.0
-            
-            # Get recent data
-            recent_orders = Order.query.order_by(Order.created_at.desc()).limit(8).all()
-            recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
-            low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
-            
-            # Get reviews count
-            total_reviews = Review.query.count()
-            
-            # Sample top products
-            top_products = Product.query.filter_by(featured=True).limit(5).all()
-            
-            # Add sales count and revenue to each product (sample data - implement properly)
-            for product in top_products:
-                product.sales_count = random.randint(10, 100)
-                product.revenue = product.sales_count * product.price
+        total_orders = Order.query.count()
+        total_products = Product.query.count()
+        total_customers = Customer.query.count()
+        pending_orders = Order.query.filter_by(status='pending').count()
         
+        # Calculate revenue
+        revenue_result = db.session.query(db.func.sum(Order.final_amount)).scalar()
+        revenue = float(revenue_result) if revenue_result is not None else 0.0
+        
+        # Get recent data with joinedload for product relationships
+        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(8).all()
+        recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
+        low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
+        
+        # Get reviews count
+        total_reviews = Review.query.count()
+        
+        # Sample top products
+        top_products = Product.query.filter_by(featured=True).limit(5).all()
+        
+        # Add sales count and revenue to each product (sample data - implement properly)
+        for product in top_products:
+            product.sales_count = random.randint(10, 100)
+            product.revenue = product.sales_count * product.price
+    
         return render_template('admin/admin_dashboard.html',
                              total_orders=total_orders,
                              total_products=total_products,
@@ -1069,12 +1066,11 @@ def admin_dashboard():
 @app.route('/admin/products')
 @admin_required
 def admin_products():
-    """Admin products list"""
+    """Admin products list - FIXED SESSION ISSUE"""
     try:
-        with app.app_context():
-            products = Product.query.order_by(Product.created_at.desc()).all()
-            categories = Category.query.all()
-        
+        products = Product.query.options(joinedload(Product.category)).order_by(Product.created_at.desc()).all()
+        categories = Category.query.all()
+    
         return render_template('admin/products.html',
                              products=products,
                              categories=categories,
@@ -1123,9 +1119,8 @@ def admin_add_product():
                 texture=texture
             )
             
-            with app.app_context():
-                db.session.add(product)
-                db.session.commit()
+            db.session.add(product)
+            db.session.commit()
             
             flash(f'Product "{name}" added successfully!', 'success')
             return redirect(url_for('admin_products'))
@@ -1135,16 +1130,14 @@ def admin_add_product():
             print(f"❌ Add product error: {str(e)}", file=sys.stderr)
             flash('Error adding product. Please try again.', 'danger')
     
-    with app.app_context():
-        categories = Category.query.all()
+    categories = Category.query.all()
     return render_template('admin/add_product.html', categories=categories, config=BUSINESS_CONFIG)
 
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(id):
     """Edit product"""
-    with app.app_context():
-        product = Product.query.get_or_404(id)
+    product = Product.query.options(joinedload(Product.category)).get_or_404(id)
     
     if request.method == 'POST':
         try:
@@ -1163,8 +1156,7 @@ def admin_edit_product(id):
             # Update slug
             product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
             
-            with app.app_context():
-                db.session.commit()
+            db.session.commit()
             
             flash(f'Product "{product.name}" updated successfully!', 'success')
             return redirect(url_for('admin_products'))
@@ -1174,8 +1166,7 @@ def admin_edit_product(id):
             print(f"❌ Edit product error: {str(e)}", file=sys.stderr)
             flash('Error updating product. Please try again.', 'danger')
     
-    with app.app_context():
-        categories = Category.query.all()
+    categories = Category.query.all()
     return render_template('admin/edit_product.html', product=product, categories=categories, config=BUSINESS_CONFIG)
 
 @app.route('/admin/products/delete/<int:id>', methods=['POST'])
@@ -1183,13 +1174,12 @@ def admin_edit_product(id):
 def admin_delete_product(id):
     """Delete product"""
     try:
-        with app.app_context():
-            product = Product.query.get_or_404(id)
-            product_name = product.name
-            
-            db.session.delete(product)
-            db.session.commit()
+        product = Product.query.get_or_404(id)
+        product_name = product.name
         
+        db.session.delete(product)
+        db.session.commit()
+    
         flash(f'Product "{product_name}" deleted successfully!', 'success')
         return redirect(url_for('admin_products'))
         
@@ -1206,14 +1196,13 @@ def admin_orders():
     try:
         status = request.args.get('status', 'all')
         
-        with app.app_context():
-            query = Order.query
-            
-            if status != 'all':
-                query = query.filter_by(status=status)
-            
-            orders = query.order_by(Order.created_at.desc()).all()
+        query = Order.query
         
+        if status != 'all':
+            query = query.filter_by(status=status)
+        
+        orders = query.order_by(Order.created_at.desc()).all()
+    
         return render_template('admin/orders.html',
                              orders=orders,
                              status=status,
@@ -1231,10 +1220,9 @@ def admin_orders():
 def admin_order_detail(id):
     """Order detail"""
     try:
-        with app.app_context():
-            order = Order.query.get_or_404(id)
-            order_items = OrderItem.query.filter_by(order_id=order.id).all()
-        
+        order = Order.query.get_or_404(id)
+        order_items = OrderItem.query.filter_by(order_id=order.id).all()
+    
         return render_template('admin/order_detail.html',
                              order=order,
                              order_items=order_items,
@@ -1249,17 +1237,16 @@ def admin_order_detail(id):
 def admin_update_order_status(id):
     """Update order status"""
     try:
-        with app.app_context():
-            order = Order.query.get_or_404(id)
-            new_status = request.form.get('status')
-            
-            if new_status:
-                order.status = new_status
-                order.updated_at = datetime.utcnow()
-                db.session.commit()
-            
-            flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
+        order = Order.query.get_or_404(id)
+        new_status = request.form.get('status')
         
+        if new_status:
+            order.status = new_status
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+        
+        flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
+    
         return redirect(url_for('admin_order_detail', id=id))
         
     except Exception as e:
@@ -1273,8 +1260,7 @@ def admin_update_order_status(id):
 def admin_customers():
     """Admin customers list"""
     try:
-        with app.app_context():
-            customers = Customer.query.order_by(Customer.created_at.desc()).all()
+        customers = Customer.query.order_by(Customer.created_at.desc()).all()
         return render_template('admin/customers.html', customers=customers, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
@@ -1286,8 +1272,7 @@ def admin_customers():
 def admin_reviews():
     """Admin reviews"""
     try:
-        with app.app_context():
-            reviews = Review.query.order_by(Review.created_at.desc()).all()
+        reviews = Review.query.order_by(Review.created_at.desc()).all()
         return render_template('admin/reviews.html', reviews=reviews, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
@@ -1299,11 +1284,10 @@ def admin_reviews():
 def admin_approve_review(id):
     """Approve review"""
     try:
-        with app.app_context():
-            review = Review.query.get_or_404(id)
-            review.approved = True
-            db.session.commit()
-        
+        review = Review.query.get_or_404(id)
+        review.approved = True
+        db.session.commit()
+    
         flash('Review approved successfully!', 'success')
         return redirect(url_for('admin_reviews'))
         
@@ -1317,11 +1301,10 @@ def admin_approve_review(id):
 def admin_delete_review(id):
     """Delete review"""
     try:
-        with app.app_context():
-            review = Review.query.get_or_404(id)
-            db.session.delete(review)
-            db.session.commit()
-        
+        review = Review.query.get_or_404(id)
+        db.session.delete(review)
+        db.session.commit()
+    
         flash('Review deleted successfully!', 'success')
         return redirect(url_for('admin_reviews'))
         
@@ -1335,8 +1318,7 @@ def admin_delete_review(id):
 def admin_categories():
     """Admin categories"""
     try:
-        with app.app_context():
-            categories = Category.query.order_by(Category.name).all()
+        categories = Category.query.order_by(Category.name).all()
         return render_template('admin/categories.html', categories=categories, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin categories error: {str(e)}", file=sys.stderr)
@@ -1362,9 +1344,8 @@ def admin_add_category():
                 description=description
             )
             
-            with app.app_context():
-                db.session.add(category)
-                db.session.commit()
+            db.session.add(category)
+            db.session.commit()
             
             flash(f'Category "{name}" added successfully!', 'success')
             return redirect(url_for('admin_categories'))
@@ -1386,8 +1367,7 @@ def admin_settings():
             new_password = request.form.get('new_password')
             confirm_password = request.form.get('confirm_password')
             
-            with app.app_context():
-                admin = User.query.get(session['admin_id'])
+            admin = User.query.get(session['admin_id'])
             
             if not admin.check_password(current_password):
                 flash('Current password is incorrect', 'danger')
@@ -1403,8 +1383,7 @@ def admin_settings():
             
             admin.set_password(new_password)
             
-            with app.app_context():
-                db.session.commit()
+            db.session.commit()
             
             flash('Password changed successfully!', 'success')
             return redirect(url_for('admin_settings'))
@@ -1428,8 +1407,7 @@ def uploaded_file(filename):
 def health_check():
     """Health check endpoint for Render"""
     try:
-        with app.app_context():
-            db.session.execute('SELECT 1')
+        db.session.execute('SELECT 1')
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
