@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - {{ config.brand_name }} Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #9d4edd;
+            --primary-dark: #7b2cbf;
+            --secondary: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --success: #38b000;
+            --danger: #e63946;
+            --warning: #ffba08;
+            --info: #4361ee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 3px solid white;
+        }
+
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 3px solid white;
+            font-weight: 600;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #c1121f;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* File Upload */
+        .file-upload-container {
+            margin-top: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--light-gray);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: #f5f0ff;
+        }
+
+        .file-upload-area i {
+            font-size: 48px;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .file-upload-area p {
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+
+        .file-upload-area .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .file-upload-area .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        #imagePreview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* Additional Product Fields */
+        .form-group small {
+            display: block;
+            color: var(--gray);
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+
+        .sku-generate {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .sku-generate button {
+            padding: 8px 15px;
+            background: var(--light-gray);
+            border: 1px solid var(--gray);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .sku-generate button:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.2);
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2d9100;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: var(--success);
+        }
+
+        .toast-error {
+            background: var(--danger);
+        }
+
+        .toast-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error States */
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .has-error .form-control {
+            border-color: var(--danger);
+        }
+
+        .has-error .error-message {
+            display: block;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header h2,
+            .nav-links span,
+            .sidebar-header p {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+
+            .nav-links i {
+                margin-right: 0;
+                font-size: 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .user-info {
+                justify-content: center;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>{{ config.brand_name }}</h2>
+                <p>Admin Panel</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
+                <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
+                <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
+                <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+                <li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
+                <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1>Add New Product</h1>
+                    <p>Add new hair products to your store inventory</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
+                    <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Form Container -->
+            <div class="form-container">
+                <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}">
+                    <!-- Product Basic Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Product Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" 
+                                   placeholder="e.g., Premium Bone Straight Hair 24''" required>
+                            <small>Use descriptive names that customers can easily understand</small>
+                            <div class="error-message" id="nameError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="category_id">Category *</label>
+                            <select id="category_id" name="category_id" class="form-control" required>
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small>Select the main category for this product</small>
+                            <div class="error-message" id="categoryError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sku">SKU (Stock Keeping Unit)</label>
+                            <div class="sku-generate">
+                                <input type="text" id="sku" name="sku" class="form-control" 
+                                       placeholder="e.g., NHR-24BS-BLK">
+                                <button type="button" id="generateSKU">Generate</button>
+                            </div>
+                            <small>Leave empty to auto-generate</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="image_url">Image URL</label>
+                            <input type="text" id="image_url" name="image_url" class="form-control" 
+                                   placeholder="e.g., product-image.jpg">
+                            <small>Filename of product image (upload to static/uploads folder)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description *</label>
+                        <textarea id="description" name="description" class="form-control" 
+                                  placeholder="Describe the product features, quality, length, texture, etc." 
+                                  rows="4" required></textarea>
+                        <small>Include details about texture, length, quality, and care instructions</small>
+                        <div class="error-message" id="descriptionError"></div>
+                    </div>
+
+                    <!-- Pricing and Stock -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="price">Price (₦) *</label>
+                            <input type="number" id="price" name="price" class="form-control" 
+                                   placeholder="0.00" min="0" step="0.01" required>
+                            <small>Selling price in Nigerian Naira</small>
+                            <div class="error-message" id="priceError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="compare_price">Compare Price (₦)</label>
+                            <input type="number" id="compare_price" name="compare_price" class="form-control" 
+                                   placeholder="0.00" min="0" step="0.01">
+                            <small>Original price to show discount (optional)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Stock Quantity *</label>
+                            <input type="number" id="quantity" name="quantity" class="form-control" 
+                                   placeholder="100" min="0" required>
+                            <small>Available quantity in inventory</small>
+                            <div class="error-message" id="quantityError"></div>
+                        </div>
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="length">Length</label>
+                            <input type="text" id="length" name="length" class="form-control" 
+                                   placeholder="e.g., 24 inches">
+                            <small>Hair length if applicable</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="texture">Texture</label>
+                            <input type="text" id="texture" name="texture" class="form-control" 
+                                   placeholder="e.g., Bone Straight, Body Wave, Curly">
+                            <small>Hair texture type</small>
+                        </div>
+                    </div>
+
+                    <!-- Product Status -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Featured Product</label>
+                            <div style="margin-top: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="featured" name="featured">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <div style="margin-top: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="active" name="active" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload (Simple version for now) -->
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">
+                            For now, manually upload images to the <code>static/uploads/</code> folder and enter the filename above.
+                            Advanced image upload will be added in future updates.
+                        </p>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Product
+                        </button>
+                        <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="button" class="btn btn-outline" onclick="previewProduct()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toastMessage">Product added successfully!</span>
+        <button class="toast-close" onclick="hideToast()">&times;</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const addProductForm = document.getElementById('addProductForm');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const generateSKUBtn = document.getElementById('generateSKU');
+        const skuInput = document.getElementById('sku');
+
+        // Generate SKU
+        generateSKUBtn.addEventListener('click', function() {
+            const name = document.getElementById('name').value;
+            const categorySelect = document.getElementById('category_id');
+            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+            
+            if (!name || !categoryText) {
+                showToast('Please enter product name and select category first', 'warning');
+                return;
+            }
+            
+            // Generate SKU from name and category
+            const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
+            const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
+            
+            skuInput.value = sku;
+            showToast('SKU generated successfully', 'success');
+        });
+
+        // Form Validation
+        function validateForm() {
+            let isValid = true;
+            
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+                el.textContent = '';
+            });
+            
+            document.querySelectorAll('.form-group').forEach(el => {
+                el.classList.remove('has-error');
+            });
+
+            // Validate required fields
+            const requiredFields = [
+                { id: 'name', message: 'Product name is required' },
+                { id: 'category_id', message: 'Category is required' },
+                { id: 'description', message: 'Description is required' },
+                { id: 'price', message: 'Price is required' },
+                { id: 'quantity', message: 'Stock quantity is required' }
+            ];
+
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                const errorElement = document.getElementById(field.id + 'Error');
+                
+                if (!element.value.trim()) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = field.message;
+                    errorElement.style.display = 'block';
+                } else if (field.id === 'price' && parseFloat(element.value) <= 0) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = 'Price must be greater than 0';
+                    errorElement.style.display = 'block';
+                } else if (field.id === 'quantity' && parseInt(element.value) < 0) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = 'Stock cannot be negative';
+                    errorElement.style.display = 'block';
+                }
+            });
+
+            return isValid;
+        }
+
+        // Form Submission
+        addProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                showToast('Please fix the errors in the form', 'error');
+                return;
+            }
+            
+            // Show loading
+            loadingOverlay.classList.add('active');
+
+            // Submit form
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Form submitted successfully, redirecting
+                    window.location.href = response.url;
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadingOverlay.classList.remove('active');
+                
+                if (data && data.success) {
+                    showToast('Product added successfully!', 'success');
+                    
+                    // Clear form after successful submission
+                    setTimeout(() => {
+                        addProductForm.reset();
+                        
+                        // Redirect to products page
+                        setTimeout(() => {
+                            window.location.href = '/admin/products';
+                        }, 2000);
+                    }, 1500);
+                } else if (data && data.error) {
+                    // Display errors
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            const errorElement = document.getElementById(field + 'Error');
+                            const formGroup = document.getElementById(field).parentElement;
+                            if (errorElement && formGroup) {
+                                formGroup.classList.add('has-error');
+                                errorElement.textContent = data.errors[field][0];
+                                errorElement.style.display = 'block';
+                            }
+                        });
+                    }
+                    showToast(data.error || 'Failed to add product', 'error');
+                }
+            })
+            .catch(error => {
+                loadingOverlay.classList.remove('active');
+                // Standard form submission will handle redirects
+                this.submit();
+            });
+        });
+
+        // Preview Product
+        function previewProduct() {
+            if (!validateForm()) {
+                showToast('Please fix errors before previewing', 'error');
+                return;
+            }
+            
+            // Get form values
+            const name = document.getElementById('name').value;
+            const price = document.getElementById('price').value;
+            const description = document.getElementById('description').value;
+            const categorySelect = document.getElementById('category_id');
+            const category = categorySelect.options[categorySelect.selectedIndex].text;
+            const quantity = document.getElementById('quantity').value;
+            
+            // Create preview window
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(`
+                <html>
+                <head>
+                    <title>Product Preview - {{ config.brand_name }}</title>
+                    <style>
+                        body { 
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                            padding: 20px;
+                            background: #f5f5f5;
+                        }
+                        .preview-container { 
+                            max-width: 800px; 
+                            margin: 0 auto;
+                            background: white;
+                            padding: 30px;
+                            border-radius: 10px;
+                            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+                        }
+                        .product-header {
+                            border-bottom: 2px solid #f0f0f0;
+                            padding-bottom: 20px;
+                            margin-bottom: 20px;
+                        }
+                        .product-images { 
+                            text-align: center;
+                            margin: 20px 0;
+                        }
+                        .product-images img { 
+                            max-width: 100%; 
+                            height: 300px;
+                            object-fit: contain;
+                            border-radius: 10px;
+                        }
+                        .product-info { margin-top: 20px; }
+                        .price { 
+                            color: #2a8356; 
+                            font-size: 32px; 
+                            font-weight: bold;
+                            margin: 10px 0;
+                        }
+                        .compare-price {
+                            color: #6c757d;
+                            text-decoration: line-through;
+                            font-size: 20px;
+                            margin-left: 10px;
+                        }
+                        .product-meta {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 15px;
+                            margin: 20px 0;
+                            padding: 20px;
+                            background: #f8f9fa;
+                            border-radius: 10px;
+                        }
+                        .meta-item {
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .meta-label {
+                            font-weight: 600;
+                            color: #6c757d;
+                            font-size: 0.9rem;
+                            margin-bottom: 5px;
+                        }
+                        .meta-value {
+                            color: #212529;
+                            font-size: 1rem;
+                        }
+                        .product-description {
+                            line-height: 1.8;
+                            color: #495057;
+                            margin: 20px 0;
+                        }
+                        .back-btn {
+                            display: inline-block;
+                            margin-top: 20px;
+                            padding: 10px 20px;
+                            background: #9d4edd;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            font-weight: 600;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-container">
+                        <div class="product-header">
+                            <h1>Product Preview</h1>
+                            <p>This is how customers will see your product</p>
+                        </div>
+                        
+                        <div class="product-images">
+                            <img src="https://via.placeholder.com/600x400/9d4edd/ffffff?text=Product+Image" 
+                                 alt="Product Preview">
+                        </div>
+                        
+                        <div class="product-info">
+                            <h2>${name}</h2>
+                            <div>
+                                <span class="price">₦${parseFloat(price).toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="product-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Category</span>
+                                    <span class="meta-value">${category}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Stock</span>
+                                    <span class="meta-value">${quantity} units available</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Status</span>
+                                    <span class="meta-value">Available</span>
+                                </div>
+                            </div>
+                            
+                            <div class="product-description">
+                                ${description.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                        
+                        <a href="javascript:window.close()" class="back-btn">Close Preview</a>
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+        }
+
+        // Toast Functions
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            
+            setTimeout(() => {
+                hideToast();
+            }, 5000);
+        }
+
+        function hideToast() {
+            toast.classList.remove('show');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default stock
+            document.getElementById('quantity').value = 100;
+            
+            // Add currency formatting to price field
+            const priceInput = document.getElementById('price');
+            priceInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+            });
+            
+            // Auto-generate SKU on name/category change
+            document.getElementById('name').addEventListener('blur', autoGenerateSKU);
+            document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
+        });
+
+        function autoGenerateSKU() {
+            const name = document.getElementById('name').value;
+            const categorySelect = document.getElementById('category_id');
+            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+            const currentSKU = document.getElementById('sku').value;
+            
+            // Only auto-generate if SKU is empty
+            if (!currentSKU && name && categoryText) {
+                const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
+                const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
+                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
+                document.getElementById('sku').value = sku;
+            }
+        }
+    </script>
+</body>
+</html>
