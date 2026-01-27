@@ -1,748 +1,43 @@
-# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES - FIXED VERSION
-import os
-import sys
-import traceback
-from datetime import datetime, timedelta
-import random
-import string
-from functools import wraps
-import json
-from werkzeug.utils import secure_filename
+# ========== CONTINUATION FROM WHERE YOUR CODE WAS CUT OFF ==========
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-
-# ========== CREATE APP ==========
-app = Flask(__name__)
-
-# ========== CONFIGURATION ==========
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-2026-change-in-production')
-
-# Database configuration for Render
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.config['SITE_LOGO'] = 'logo.png'
-
-# Allowed upload extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-# ========== INITIALIZE EXTENSIONS ==========
-db = SQLAlchemy(app)
-
-# ========== DATABASE MODELS ==========
-class User(db.Model):
-    __tablename__ = 'admin_user'
+@app.route('/account/edit', methods=['GET', 'POST'])
+@customer_required
+def edit_account():
+    """Edit customer account"""
+    customer = Customer.query.get(session['customer_id'])
     
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    is_admin = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def __repr__(self):
-        return f'<User {self.username}>'
-
-class Category(db.Model):
-    __tablename__ = 'category'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    slug = db.Column(db.String(100), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    image_url = db.Column(db.String(500), default='default-category.jpg')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<Category {self.name}>'
-
-class Product(db.Model):
-    __tablename__ = 'product'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    slug = db.Column(db.String(200), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    price = db.Column(db.Float, nullable=False)
-    compare_price = db.Column(db.Float)
-    sku = db.Column(db.String(100))
-    quantity = db.Column(db.Integer, default=0)
-    featured = db.Column(db.Boolean, default=False)
-    active = db.Column(db.Boolean, default=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    image_url = db.Column(db.String(500), default='default-product.jpg')
-    length = db.Column(db.String(50))
-    texture = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    category = db.relationship('Category', backref='products')
-    
-    @property
-    def display_price(self):
-        return float(self.price)
-    
-    @property
-    def formatted_price(self):
-        return f"₦{self.display_price:,.2f}"
-    
-    def __repr__(self):
-        return f'<Product {self.name}>'
-
-class Customer(db.Model):
-    __tablename__ = 'customer'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    address = db.Column(db.Text)
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    orders = db.relationship('Order', backref='customer', lazy=True)
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def __repr__(self):
-        return f'<Customer {self.email}>'
-
-class Order(db.Model):
-    __tablename__ = 'order'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    order_number = db.Column(db.String(50), unique=True, nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=True)
-    customer_name = db.Column(db.String(100), nullable=False)
-    customer_email = db.Column(db.String(120), nullable=False)
-    customer_phone = db.Column(db.String(20), nullable=False)
-    shipping_address = db.Column(db.Text, nullable=False)
-    shipping_city = db.Column(db.String(100), nullable=False)
-    shipping_state = db.Column(db.String(100), nullable=False)
-    total_amount = db.Column(db.Float, nullable=False)
-    shipping_amount = db.Column(db.Float, default=0.0)
-    final_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), default='pending')
-    payment_method = db.Column(db.String(50), default='bank_transfer')
-    payment_status = db.Column(db.String(50), default='pending')
-    notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    items = db.relationship('OrderItem', backref='order', lazy=True)
-    
-    def __repr__(self):
-        return f'<Order {self.order_number}>'
-
-class OrderItem(db.Model):
-    __tablename__ = 'order_item'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    product_name = db.Column(db.String(200), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    unit_price = db.Column(db.Float, nullable=False)
-    total_price = db.Column(db.Float, nullable=False)
-    
-    product = db.relationship('Product')
-
-class Review(db.Model):
-    __tablename__ = 'review'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    customer_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120))
-    rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text)
-    location = db.Column(db.String(100))
-    approved = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    product = db.relationship('Product')
-    
-    def __repr__(self):
-        return f'<Review {self.id}>'
-
-# ========== BUSINESS CONFIGURATION ==========
-BUSINESS_CONFIG = {
-    'brand_name': 'NORA HAIR LINE',
-    'tagline': 'Premium 100% Human Hair',
-    'slogan': 'Luxury for less...',
-    'description': 'Premium 100% human hair extensions, wigs, and hair products at wholesale prices.',
-    'address': 'No 5 Veet Gold Plaza, opposite Abia gate @ Tradefair Shopping Center, Badagry Express Way, Lagos State.',
-    'phone': '08038707795',
-    'whatsapp': 'https://wa.me/2348038707795',
-    'instagram': 'norahairline',
-    'instagram_url': 'https://instagram.com/norahairline',
-    'email': 'info@norahairline.com',
-    'support_email': 'support@norahairline.com',
-    'currency': 'NGN',
-    'currency_symbol': '₦',
-    'payment_account': '2059311531',
-    'payment_bank': 'UBA',
-    'payment_name': 'CHUKWUNEKE CHIAMAKA',
-    'year': datetime.now().year,
-    'site_logo': 'logo.png'
-}
-
-# ========== HELPER FUNCTIONS ==========
-def format_price(value):
-    """Safely format price value"""
-    try:
-        if value is None:
-            return "₦0.00"
-        if isinstance(value, str):
-            value = float(value)
-        return f"₦{value:,.2f}"
-    except (ValueError, TypeError):
-        return "₦0.00"
-
-def generate_order_number():
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    return f'NORA-{timestamp}-{random_str}'
-
-def calculate_cart_total():
-    total = 0
-    if 'cart' in session:
-        for item in session['cart']:
-            price = item.get('price', 0)
-            quantity = item.get('quantity', 1)
-            total += float(price) * quantity
-    return total
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def safe_format_number(value, default=0):
-    """Safely format number for display"""
-    try:
-        if value is None:
-            return default
-        if isinstance(value, (int, float)):
-            return f"{value:,.2f}"
-        return str(value)
-    except:
-        return str(default)
-
-# ========== AUTHENTICATION DECORATORS ==========
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'admin_id' not in session or not session.get('is_admin'):
-            flash('Admin access required. Please login first.', 'danger')
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def customer_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'customer_id' not in session:
-            flash('Please login to access this page', 'warning')
-            session['pending_checkout'] = True
-            return redirect(url_for('customer_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# ========== CONTEXT PROCESSOR ==========
-@app.context_processor
-def inject_global_vars():
-    """Make variables available to all templates"""
-    categories = []
-    cart_count = 0
-    cart_total = 0
-    
-    try:
-        categories = Category.query.all()
-    except Exception as e:
-        print(f"❌ Context processor error (categories): {str(e)}", file=sys.stderr)
-        categories = []
-    
-    if 'cart' in session:
-        cart_count = sum(item.get('quantity', 1) for item in session['cart'])
-        cart_total = calculate_cart_total()
-    
-    return dict(
-        now=datetime.now(),
-        categories=categories,
-        cart_count=cart_count,
-        cart_total=cart_total,
-        current_year=datetime.now().year,
-        config=BUSINESS_CONFIG,
-        format_price=format_price,
-        safe_format_number=safe_format_number
-    )
-
-# ========== ERROR HANDLERS ==========
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html', config=BUSINESS_CONFIG), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    print(f"❌ 500 Error: {str(error)}", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    return render_template('500.html', config=BUSINESS_CONFIG), 500
-
-# ========== DATABASE INITIALIZATION ==========
-def init_db():
-    """Initialize database with tables and sample data"""
-    print("🔄 Initializing database...", file=sys.stderr)
-    
-    try:
-        with app.app_context():
-            # Create all tables
-            db.create_all()
-            print("✅ Database tables created", file=sys.stderr)
-            
-            # Create admin user if not exists
-            if User.query.count() == 0:
-                admin = User(
-                    username='admin',
-                    email='admin@norahairline.com',
-                    is_admin=True
-                )
-                admin.set_password('admin123')
-                db.session.add(admin)
-                print("✅ Admin user created: admin/admin123", file=sys.stderr)
-            
-            # Create default categories if none exist
-            if Category.query.count() == 0:
-                categories = [
-                    ('Lace Wigs', 'lace-wigs', 'Natural looking lace front wigs with HD lace'),
-                    ('Hair Bundles', 'hair-bundles', 'Premium 100% human hair bundles in various textures'),
-                    ('Closures', 'closures', 'Hair closures for protective styling'),
-                    ('Frontals', 'frontals', '13x4 and 13x6 lace frontals'),
-                    ('360 Wigs', '360-wigs', '360 lace wigs for full perimeter styling'),
-                    ('Hair Care', 'hair-care', 'Products for hair maintenance and growth'),
-                ]
-                
-                for name, slug, desc in categories:
-                    category = Category(name=name, slug=slug, description=desc)
-                    db.session.add(category)
-                
-                print("✅ Sample categories added", file=sys.stderr)
-            
-            # Create sample products if none exist
-            if Product.query.count() == 0:
-                categories = Category.query.all()
-                
-                sample_products = [
-                    ('Brazilian Body Wave 24"', 12999.99, 15999.99, 50, 'hair-bundles', 
-                     'Premium Brazilian body wave hair, 24 inches, 100% human hair', 'default-product.jpg', 'body wave'),
-                    ('Peruvian Straight 22"', 14999.99, 17999.99, 30, 'hair-bundles',
-                     'Silky straight Peruvian hair, 22 inches, natural black', 'default-product.jpg', 'straight'),
-                    ('13x4 Lace Frontal Wig', 19999.99, 23999.99, 20, 'lace-wigs',
-                     'HD lace frontal wig with natural hairline', 'default-product.jpg', 'straight'),
-                    ('4x4 Lace Closure', 8999.99, 11999.99, 40, 'closures',
-                     '4x4 HD lace closure with bleached knots', 'default-product.jpg', 'straight'),
-                    ('13x6 Lace Frontal', 15999.99, 19999.99, 25, 'frontals',
-                     '13x6 lace frontal for natural look', 'default-product.jpg', 'curly'),
-                    ('Hair Growth Oil', 2999.99, 3999.99, 100, 'hair-care',
-                     'Essential oils for hair growth and thickness', 'default-product.jpg', None),
-                    ('360 Lace Frontal Wig', 22999.99, 27999.99, 10, '360-wigs',
-                     '360 lace wig for full perimeter styling', 'default-product.jpg', 'wavy'),
-                    ('Malaysian Straight 26"', 16999.99, 20999.99, 15, 'hair-bundles',
-                     'Premium Malaysian straight hair, 26 inches', 'default-product.jpg', 'straight'),
-                ]
-                
-                for i, (name, price, compare_price, quantity, category_slug, desc, image, texture) in enumerate(sample_products):
-                    category = Category.query.filter_by(slug=category_slug).first()
-                    if category:
-                        product = Product(
-                            name=name,
-                            slug=name.lower().replace(' ', '-').replace('"', ''),
-                            description=desc,
-                            price=price,
-                            compare_price=compare_price,
-                            quantity=quantity,
-                            sku=f'HAIR-{i+1:03d}',
-                            category_id=category.id,
-                            featured=(i < 6),
-                            texture=texture,
-                            image_url=image
-                        )
-                        db.session.add(product)
-                
-                print("✅ Sample products added", file=sys.stderr)
-            
-            # Create sample reviews if none exist
-            if Review.query.count() == 0:
-                reviews = [
-                    (1, 'Chiamaka Okeke', 5, 'The Brazilian hair I purchased is absolutely stunning! It\'s been 6 months and still looks brand new. Best quality I\'ve ever had!', 'Lagos'),
-                    (2, 'Bisi Adeyemi', 5, 'The lace frontal wig is so natural looking! I\'ve received countless compliments. The customer service was excellent too!', 'Abuja'),
-                    (3, 'Fatima Bello', 4, 'Fast delivery and premium quality hair. I\'ll definitely be ordering again. The Peruvian straight is my new favorite!', 'Port Harcourt'),
-                    (4, 'Amaka Nwosu', 5, 'The closure is perfect! So natural and easy to install. Will definitely buy from Nora Hair Line again.', 'Enugu'),
-                    (5, 'Jennifer Musa', 5, 'Hair growth oil works wonders! My edges are growing back after just 2 months of use.', 'Kano'),
-                ]
-                
-                for product_id, name, rating, comment, location in reviews:
-                    review = Review(
-                        product_id=product_id,
-                        customer_name=name,
-                        rating=rating,
-                        comment=comment,
-                        location=location,
-                        approved=True
-                    )
-                    db.session.add(review)
-                
-                print("✅ Sample reviews added", file=sys.stderr)
-            
-            db.session.commit()
-            print("✅ Database initialization complete", file=sys.stderr)
-            return True
-    except Exception as e:
-        print(f"❌ Database initialization error: {str(e)}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
-        return False
-
-# ========== INITIALIZE DATABASE ==========
-init_db()
-
-# ========== PUBLIC ROUTES ==========
-
-@app.route('/')
-def index():
-    """Homepage"""
-    try:
-        featured_products = Product.query.filter_by(featured=True, active=True).limit(8).all()
-        categories = Category.query.limit(6).all()
-        reviews = Review.query.filter_by(approved=True).limit(5).all()
-        
-        return render_template('index.html',
-                             featured_products=featured_products,
-                             categories=categories,
-                             reviews=reviews,
-                             config=BUSINESS_CONFIG)
-    except Exception as e:
-        print(f"❌ Homepage error: {str(e)}", file=sys.stderr)
-        return render_template('index.html',
-                             featured_products=[],
-                             categories=[],
-                             reviews=[],
-                             config=BUSINESS_CONFIG)
-
-@app.route('/shop')
-def shop():
-    """Shop page - FIXED: Added proper pagination handling"""
-    try:
-        category_id = request.args.get('category', type=int)
-        search = request.args.get('search', '')
-        page = request.args.get('page', 1, type=int)
-        per_page = 12
-        
-        query = Product.query.filter_by(active=True)
-        
-        if category_id:
-            query = query.filter_by(category_id=category_id)
-        
-        if search:
-            query = query.filter(Product.name.ilike(f'%{search}%'))
-        
-        products = query.order_by(Product.created_at.desc()).all()
-        
-        # Manual pagination to avoid error
-        total_products = len(products)
-        total_pages = (total_products + per_page - 1) // per_page
-        
-        if page < 1:
-            page = 1
-        if page > total_pages:
-            page = total_pages
-            
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        paginated_products = products[start_idx:end_idx]
-        
-        categories = Category.query.all()
-        
-        return render_template('shop.html',
-                             products=paginated_products,
-                             categories=categories,
-                             category_id=category_id,
-                             search_query=search,
-                             current_page=page,
-                             total_pages=total_pages,
-                             total_products=total_products,
-                             config=BUSINESS_CONFIG)
-    except Exception as e:
-        print(f"❌ Shop error: {str(e)}", file=sys.stderr)
-        flash('Error loading products.', 'danger')
-        return render_template('shop.html',
-                             products=[],
-                             categories=[],
-                             category_id=None,
-                             search_query='',
-                             current_page=1,
-                             total_pages=1,
-                             total_products=0,
-                             config=BUSINESS_CONFIG)
-
-@app.route('/product/<int:id>')
-def product_detail(id):
-    """Product detail page"""
-    try:
-        product = Product.query.get_or_404(id)
-        related_products = Product.query.filter(
-            Product.category_id == product.category_id,
-            Product.id != product.id,
-            Product.active == True
-        ).limit(4).all()
-        
-        reviews = Review.query.filter_by(product_id=id, approved=True).all()
-        
-        return render_template('product_detail.html',
-                             product=product,
-                             related_products=related_products,
-                             reviews=reviews,
-                             config=BUSINESS_CONFIG)
-    except Exception as e:
-        print(f"❌ Product detail error: {str(e)}", file=sys.stderr)
-        flash('Product not found.', 'danger')
-        return redirect(url_for('shop'))
-
-@app.route('/cart')
-def cart():
-    """Shopping cart page"""
-    cart_items = session.get('cart', [])
-    subtotal = calculate_cart_total()
-    delivery_fee = 3000  # Default delivery fee
-    if subtotal >= 150000:
-        delivery_fee = 0
-    total = subtotal + delivery_fee
-    
-    return render_template('cart.html',
-                         cart_items=cart_items,
-                         subtotal=subtotal,
-                         delivery_fee=delivery_fee,
-                         total=total,
-                         free_delivery_threshold=150000,
-                         config=BUSINESS_CONFIG)
-
-@app.route('/add-to-cart/<int:product_id>', methods=['POST'])
-def add_to_cart(product_id):
-    """Add product to cart"""
-    try:
-        product = Product.query.get_or_404(product_id)
-        
-        if not product.active or product.quantity <= 0:
-            flash('Product is not available.', 'warning')
-            return redirect(request.referrer or url_for('shop'))
-        
-        quantity = int(request.form.get('quantity', 1))
-        
-        if quantity > product.quantity:
-            flash(f'Only {product.quantity} items available in stock.', 'warning')
-            return redirect(request.referrer or url_for('product_detail', id=product.id))
-        
-        if 'cart' not in session:
-            session['cart'] = []
-        
-        cart = session['cart']
-        
-        # Check if product already in cart
-        for item in cart:
-            if item['id'] == product_id:
-                new_quantity = item['quantity'] + quantity
-                if new_quantity > product.quantity:
-                    flash(f'Cannot add more. Only {product.quantity - item["quantity"]} more available.', 'warning')
-                    return redirect(request.referrer or url_for('cart'))
-                
-                item['quantity'] = new_quantity
-                session.modified = True
-                flash(f'Added {quantity} more of {product.name} to cart.', 'success')
-                return redirect(request.referrer or url_for('cart'))
-        
-        # Add new item to cart
-        cart.append({
-            'id': product_id,
-            'name': product.name,
-            'price': float(product.price),
-            'quantity': quantity,
-            'image_url': product.image_url,
-            'stock': product.quantity,
-            'slug': product.slug
-        })
-        session.modified = True
-        
-        flash(f'{product.name} added to cart!', 'success')
-        return redirect(request.referrer or url_for('cart'))
-        
-    except Exception as e:
-        print(f"❌ Add to cart error: {str(e)}", file=sys.stderr)
-        flash('Error adding to cart. Please try again.', 'danger')
-        return redirect(request.referrer or url_for('shop'))
-
-@app.route('/update-cart/<int:product_id>', methods=['POST'])
-def update_cart(product_id):
-    """Update cart item quantity"""
-    try:
-        if 'cart' not in session:
-            return redirect(url_for('cart'))
-        
-        cart = session['cart']
-        quantity = int(request.form.get('quantity', 1))
-        
-        for item in cart:
-            if item['id'] == product_id:
-                if quantity <= 0:
-                    cart.remove(item)
-                else:
-                    product = Product.query.get(product_id)
-                    if product and quantity > product.quantity:
-                        flash(f'Only {product.quantity} items available in stock.', 'warning')
-                        return redirect(url_for('cart'))
-                    item['quantity'] = quantity
-                break
-        
-        session.modified = True
-        flash('Cart updated successfully!', 'success')
-        return redirect(url_for('cart'))
-        
-    except Exception as e:
-        flash('Error updating cart.', 'danger')
-        return redirect(url_for('cart'))
-
-@app.route('/remove-from-cart/<int:product_id>')
-def remove_from_cart(product_id):
-    """Remove item from cart"""
-    try:
-        if 'cart' in session:
-            cart = session['cart']
-            session['cart'] = [item for item in cart if item['id'] != product_id]
-            session.modified = True
-            flash('Item removed from cart.', 'info')
-        
-        return redirect(url_for('cart'))
-    except Exception as e:
-        flash('Error removing item from cart.', 'danger')
-        return redirect(url_for('cart'))
-
-# ========== CUSTOMER AUTHENTICATION ROUTES ==========
-
-@app.route('/register', methods=['GET', 'POST'])
-def customer_register():
-    """Customer registration"""
     if request.method == 'POST':
         try:
-            email = request.form.get('email')
-            password = request.form.get('password')
-            first_name = request.form.get('first_name')
-            last_name = request.form.get('last_name')
-            phone = request.form.get('phone')
+            customer.first_name = request.form.get('first_name', customer.first_name)
+            customer.last_name = request.form.get('last_name', customer.last_name)
+            customer.phone = request.form.get('phone', customer.phone)
+            customer.address = request.form.get('address', customer.address)
+            customer.city = request.form.get('city', customer.city)
+            customer.state = request.form.get('state', customer.state)
             
-            # Check if customer exists
-            existing_customer = Customer.query.filter_by(email=email).first()
-            if existing_customer:
-                flash('Email already registered. Please login.', 'danger')
-                return redirect(url_for('customer_login'))
+            # Check if password change is requested
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
             
-            # Create new customer
-            customer = Customer(
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-                phone=phone
-            )
-            customer.set_password(password)
+            if current_password and new_password:
+                if customer.check_password(current_password):
+                    customer.set_password(new_password)
+                    flash('Password changed successfully!', 'success')
+                else:
+                    flash('Current password is incorrect', 'danger')
+                    return redirect(url_for('edit_account'))
             
-            db.session.add(customer)
             db.session.commit()
-            
-            # Auto login after registration
-            session['customer_id'] = customer.id
-            session['customer_name'] = f"{customer.first_name} {customer.last_name}"
-            session.pop('pending_checkout', None)
-            
-            flash('Registration successful! Welcome!', 'success')
+            session['customer_name'] = customer.full_name
+            flash('Account updated successfully!', 'success')
             return redirect(url_for('account'))
-        
+            
         except Exception as e:
             db.session.rollback()
-            print(f"❌ Registration error: {str(e)}", file=sys.stderr)
-            flash('Error during registration. Please try again.', 'danger')
+            print(f"❌ Edit account error: {str(e)}", file=sys.stderr)
+            flash('Error updating account. Please try again.', 'danger')
     
-    return render_template('register.html', config=BUSINESS_CONFIG)
-
-@app.route('/login', methods=['GET', 'POST'])
-def customer_login():
-    """Customer login"""
-    if request.method == 'POST':
-        try:
-            email = request.form.get('email')
-            password = request.form.get('password')
-            
-            customer = Customer.query.filter_by(email=email).first()
-            
-            if customer and customer.check_password(password):
-                session['customer_id'] = customer.id
-                session['customer_name'] = f"{customer.first_name} {customer.last_name}"
-                session.pop('pending_checkout', None)
-                
-                flash('Login successful!', 'success')
-                
-                # Redirect to checkout if there's a pending order
-                if 'pending_checkout' in session:
-                    return redirect(url_for('checkout'))
-                return redirect(url_for('account'))
-            else:
-                flash('Invalid email or password', 'danger')
-        
-        except Exception as e:
-            print(f"❌ Login error: {str(e)}", file=sys.stderr)
-            flash('Login error. Please try again.', 'danger')
-    
-    return render_template('login.html', config=BUSINESS_CONFIG)
-
-@app.route('/logout')
-def customer_logout():
-    """Customer logout"""
-    session.pop('customer_id', None)
-    session.pop('customer_name', None)
-    session.pop('pending_checkout', None)
-    flash('You have been logged out', 'info')
-    return redirect(url_for('index'))
-
-@app.route('/account')
-@customer_required
-def account():
-    """Customer account page"""
-    try:
-        customer = Customer.query.get(session['customer_id'])
-        orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
-        
-        return render_template('account.html', customer=customer, orders=orders, config=BUSINESS_CONFIG)
-    except Exception as e:
-        print(f"❌ Account error: {str(e)}", file=sys.stderr)
-        flash('Error loading account information.', 'danger')
-        return redirect(url_for('index'))
+    return render_template('edit_account.html', customer=customer, config=BUSINESS_CONFIG)
 
 # ========== CHECKOUT ROUTES ==========
 
@@ -815,6 +110,13 @@ def checkout():
             for item in cart_items:
                 product = Product.query.get(item['id'])
                 if product:
+                    # Update product quantity
+                    if product.quantity < item['quantity']:
+                        flash(f'Insufficient stock for {product.name}. Only {product.quantity} left.', 'danger')
+                        return redirect(url_for('cart'))
+                    
+                    product.quantity -= item['quantity']
+                    
                     order_item = OrderItem(
                         order_id=order.id,
                         product_id=product.id,
@@ -856,6 +158,31 @@ def checkout():
                          customer=customer,
                          config=BUSINESS_CONFIG)
 
+@app.route('/order/<int:id>')
+@customer_required
+def view_order(id):
+    """View order details"""
+    try:
+        order = Order.query.get_or_404(id)
+        
+        # Check if order belongs to current customer
+        if order.customer_id != session['customer_id'] and not session.get('is_admin'):
+            flash('You do not have permission to view this order.', 'danger')
+            return redirect(url_for('account'))
+        
+        order_items = OrderItem.query.filter_by(order_id=order.id).all()
+        
+        return render_template('order_detail.html',
+                             order=order,
+                             order_items=order_items,
+                             config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ View order error: {str(e)}", file=sys.stderr)
+        flash('Error loading order details.', 'danger')
+        return redirect(url_for('account'))
+
+# ========== ABOUT & CONTACT ROUTES ==========
+
 @app.route('/about')
 def about():
     """About page"""
@@ -875,11 +202,23 @@ def contact():
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('contact'))
             
-            # In a real app, you would save to database or send email
+            # Save contact message to database
+            contact_msg = ContactMessage(
+                name=name,
+                email=email,
+                subject=subject,
+                message=message
+            )
+            
+            db.session.add(contact_msg)
+            db.session.commit()
+            
             flash('Your message has been sent successfully! We will contact you soon.', 'success')
             return redirect(url_for('contact'))
             
         except Exception as e:
+            db.session.rollback()
+            print(f"❌ Contact form error: {str(e)}", file=sys.stderr)
             flash('Error sending message. Please try again.', 'danger')
     
     return render_template('contact.html', config=BUSINESS_CONFIG)
@@ -901,9 +240,19 @@ def add_review(product_id):
         
         customer = Customer.query.get(session['customer_id'])
         
+        # Check if customer already reviewed this product
+        existing_review = Review.query.filter_by(
+            product_id=product_id,
+            email=customer.email
+        ).first()
+        
+        if existing_review:
+            flash('You have already reviewed this product.', 'warning')
+            return redirect(url_for('product_detail', id=product_id))
+        
         review = Review(
             product_id=product_id,
-            customer_name=f"{customer.first_name} {customer.last_name}",
+            customer_name=customer.full_name,
             email=customer.email,
             rating=rating,
             comment=comment,
@@ -922,6 +271,40 @@ def add_review(product_id):
         print(f"❌ Add review error: {str(e)}", file=sys.stderr)
         flash('Error submitting review. Please try again.', 'danger')
         return redirect(url_for('product_detail', id=product_id))
+
+# ========== NEWSLETTER ROUTES ==========
+
+@app.route('/subscribe-newsletter', methods=['POST'])
+def subscribe_newsletter():
+    """Subscribe to newsletter"""
+    try:
+        email = request.form.get('email')
+        
+        if not email:
+            flash('Please enter your email address.', 'warning')
+            return redirect(request.referrer or url_for('index'))
+        
+        # Check if already subscribed
+        existing = NewsletterSubscriber.query.filter_by(email=email).first()
+        if existing:
+            if existing.subscribed:
+                flash('You are already subscribed to our newsletter.', 'info')
+            else:
+                existing.subscribed = True
+                db.session.commit()
+                flash('Successfully resubscribed to our newsletter!', 'success')
+        else:
+            subscriber = NewsletterSubscriber(email=email)
+            db.session.add(subscriber)
+            db.session.commit()
+            flash('Successfully subscribed to our newsletter!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Newsletter subscription error: {str(e)}", file=sys.stderr)
+        flash('Error subscribing to newsletter. Please try again.', 'danger')
+    
+    return redirect(request.referrer or url_for('index'))
 
 # ========== ADMIN ROUTES ==========
 
@@ -945,6 +328,7 @@ def admin_login():
                 session['admin_id'] = admin.id
                 session['admin_name'] = admin.username
                 session['is_admin'] = True
+                session.permanent = True
                 
                 flash('Admin login successful!', 'success')
                 return redirect(url_for('admin_dashboard'))
@@ -969,58 +353,137 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard - FIXED: Handle None revenue"""
+    """Admin dashboard"""
     try:
-        total_orders = Order.query.count()
-        total_products = Product.query.count()
-        total_customers = Customer.query.count()
-        pending_orders = Order.query.filter_by(status='pending').count()
+        stats = get_dashboard_stats()
         
-        # Calculate revenue - FIXED: Handle None case
-        revenue_result = db.session.query(db.func.sum(Order.final_amount)).scalar()
-        revenue = float(revenue_result) if revenue_result is not None else 0.0
+        # Get recent orders
+        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
         
-        recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
-        low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
+        # Get low stock products
+        low_stock_products = Product.query.filter(
+            Product.quantity > 0,
+            Product.quantity <= 5
+        ).order_by(Product.quantity).limit(5).all()
         
-        # Safely format revenue for template
-        formatted_revenue = f"₦{revenue:,.2f}"
+        # Get top products
+        top_products = Product.query.order_by(Product.quantity.desc()).limit(5).all()
+        
+        # Get recent customers
+        recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
+        
+        # Get recent reviews
+        recent_reviews = Review.query.filter_by(approved=False).order_by(Review.created_at.desc()).limit(5).all()
+        
+        # Get today's date for display
+        now = datetime.now()
         
         return render_template('admin/admin_dashboard.html',
-                             total_orders=total_orders,
-                             total_products=total_products,
-                             total_customers=total_customers,
-                             pending_orders=pending_orders,
-                             revenue=revenue,
-                             formatted_revenue=formatted_revenue,
+                             stats=stats,
                              recent_orders=recent_orders,
                              low_stock_products=low_stock_products,
+                             top_products=top_products,
+                             recent_customers=recent_customers,
+                             recent_reviews=recent_reviews,
+                             now=now,
                              config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin dashboard error: {str(e)}", file=sys.stderr)
         flash('Error loading dashboard.', 'danger')
         return render_template('admin/admin_dashboard.html',
-                             total_orders=0,
-                             total_products=0,
-                             total_customers=0,
-                             pending_orders=0,
-                             revenue=0,
-                             formatted_revenue="₦0.00",
+                             stats=get_dashboard_stats(),
                              recent_orders=[],
                              low_stock_products=[],
+                             top_products=[],
+                             recent_customers=[],
+                             recent_reviews=[],
+                             now=datetime.now(),
                              config=BUSINESS_CONFIG)
+
+# ========== ADMIN API ENDPOINTS ==========
+
+@app.route('/admin/api/dashboard-data')
+@admin_required
+def admin_api_dashboard_data():
+    """API endpoint for dashboard data"""
+    try:
+        stats = get_dashboard_stats()
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        print(f"❌ Dashboard API error: {str(e)}", file=sys.stderr)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/api/update-order-status/<int:id>', methods=['POST'])
+@admin_required
+def admin_api_update_order_status(id):
+    """API endpoint to update order status"""
+    try:
+        order = Order.query.get_or_404(id)
+        data = request.get_json()
+        
+        if 'status' in data:
+            order.status = data['status']
+            order.updated_at = datetime.utcnow()
+            
+            # Update payment status if order is delivered
+            if data['status'] == 'delivered' and order.payment_status == 'pending':
+                order.payment_status = 'paid'
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Order status updated to {order.status}',
+                'order': {
+                    'id': order.id,
+                    'order_number': order.order_number,
+                    'status': order.status,
+                    'payment_status': order.payment_status
+                }
+            })
+        
+        return jsonify({'success': False, 'error': 'Status not provided'}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Update order status API error: {str(e)}", file=sys.stderr)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ========== ADMIN PRODUCTS ROUTES ==========
 
 @app.route('/admin/products')
 @admin_required
 def admin_products():
     """Admin products list"""
     try:
-        products = Product.query.order_by(Product.created_at.desc()).all()
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        search = request.args.get('search', '')
+        category_id = request.args.get('category_id', type=int)
+        
+        query = Product.query
+        
+        if search:
+            query = query.filter(Product.name.ilike(f'%{search}%'))
+        
+        if category_id:
+            query = query.filter_by(category_id=category_id)
+        
+        products = query.order_by(Product.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
         categories = Category.query.all()
         
         return render_template('admin/products.html',
                              products=products,
                              categories=categories,
+                             search=search,
+                             category_id=category_id,
                              config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin products error: {str(e)}", file=sys.stderr)
@@ -1036,35 +499,69 @@ def admin_add_product():
     """Add product"""
     if request.method == 'POST':
         try:
+            # Handle form data
             name = request.form.get('name')
             description = request.form.get('description')
             price = float(request.form.get('price', 0))
             compare_price = request.form.get('compare_price')
+            cost_price = request.form.get('cost_price')
             quantity = int(request.form.get('quantity', 0))
             category_id = int(request.form.get('category_id'))
+            sku = request.form.get('sku')
+            length = request.form.get('length')
+            weight = request.form.get('weight')
+            texture = request.form.get('texture')
+            color = request.form.get('color')
+            colors = request.form.get('colors')
+            specifications = request.form.get('specifications')
+            care_instructions = request.form.get('care_instructions')
             featured = 'featured' in request.form
             active = 'active' in request.form
-            length = request.form.get('length')
-            texture = request.form.get('texture')
             
-            # Generate slug and SKU
+            # Generate slug and SKU if not provided
             slug = name.lower().replace(' ', '-').replace('"', '').replace("'", '')
-            sku = f"HAIR-{random.randint(1000, 9999)}"
+            if not sku:
+                sku = f"NHL-{random.randint(1000, 9999)}"
             
+            # Create product
             product = Product(
                 name=name,
                 slug=slug,
                 description=description,
                 price=price,
                 compare_price=float(compare_price) if compare_price else None,
+                cost_price=float(cost_price) if cost_price else None,
                 quantity=quantity,
                 sku=sku,
                 category_id=category_id,
                 featured=featured,
                 active=active,
                 length=length,
-                texture=texture
+                weight=weight,
+                texture=texture,
+                color=color,
+                colors=colors,
+                specifications=specifications,
+                care_instructions=care_instructions
             )
+            
+            # Handle image upload
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file and allowed_file(image_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{image_file.filename.split('.')[-1]}")
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    image_file.save(image_path)
+                    product.image_url = f"uploads/{filename}"
+            
+            # Handle video upload
+            if 'video' in request.files:
+                video_file = request.files['video']
+                if video_file and allowed_file(video_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{video_file.filename.split('.')[-1]}")
+                    video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    video_file.save(video_path)
+                    product.video_url = f"uploads/{filename}"
             
             db.session.add(product)
             db.session.commit()
@@ -1088,20 +585,50 @@ def admin_edit_product(id):
     
     if request.method == 'POST':
         try:
+            # Update product data
             product.name = request.form.get('name')
             product.description = request.form.get('description')
             product.price = float(request.form.get('price', 0))
+            
             compare_price = request.form.get('compare_price')
             product.compare_price = float(compare_price) if compare_price else None
+            
+            cost_price = request.form.get('cost_price')
+            product.cost_price = float(cost_price) if cost_price else None
+            
             product.quantity = int(request.form.get('quantity', 0))
             product.category_id = int(request.form.get('category_id'))
+            product.sku = request.form.get('sku')
+            product.length = request.form.get('length')
+            product.weight = request.form.get('weight')
+            product.texture = request.form.get('texture')
+            product.color = request.form.get('color')
+            product.colors = request.form.get('colors')
+            product.specifications = request.form.get('specifications')
+            product.care_instructions = request.form.get('care_instructions')
             product.featured = 'featured' in request.form
             product.active = 'active' in request.form
-            product.length = request.form.get('length')
-            product.texture = request.form.get('texture')
             
             # Update slug
             product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
+            
+            # Handle image upload
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file and allowed_file(image_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{image_file.filename.split('.')[-1]}")
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    image_file.save(image_path)
+                    product.image_url = f"uploads/{filename}"
+            
+            # Handle video upload
+            if 'video' in request.files:
+                video_file = request.files['video']
+                if video_file and allowed_file(video_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{video_file.filename.split('.')[-1]}")
+                    video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    video_file.save(video_path)
+                    product.video_url = f"uploads/{filename}"
             
             db.session.commit()
             
@@ -1124,6 +651,12 @@ def admin_delete_product(id):
         product = Product.query.get_or_404(id)
         product_name = product.name
         
+        # Check if product has orders
+        order_items = OrderItem.query.filter_by(product_id=id).count()
+        if order_items > 0:
+            flash(f'Cannot delete "{product_name}" because it has {order_items} order(s) associated with it.', 'danger')
+            return redirect(url_for('admin_products'))
+        
         db.session.delete(product)
         db.session.commit()
         
@@ -1136,30 +669,71 @@ def admin_delete_product(id):
         flash('Error deleting product. Please try again.', 'danger')
         return redirect(url_for('admin_products'))
 
+# ========== ADMIN ORDERS ROUTES ==========
+
 @app.route('/admin/orders')
 @admin_required
 def admin_orders():
     """Admin orders"""
     try:
         status = request.args.get('status', 'all')
+        payment_status = request.args.get('payment_status', 'all')
+        search = request.args.get('search', '')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
         
         query = Order.query
         
         if status != 'all':
             query = query.filter_by(status=status)
         
-        orders = query.order_by(Order.created_at.desc()).all()
+        if payment_status != 'all':
+            query = query.filter_by(payment_status=payment_status)
+        
+        if search:
+            query = query.filter(
+                (Order.order_number.ilike(f'%{search}%')) |
+                (Order.customer_name.ilike(f'%{search}%')) |
+                (Order.customer_email.ilike(f'%{search}%'))
+            )
+        
+        if start_date:
+            query = query.filter(Order.created_at >= start_date)
+        
+        if end_date:
+            query = query.filter(Order.created_at <= end_date + ' 23:59:59')
+        
+        orders = query.order_by(Order.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        # Get order statistics
+        order_stats = {
+            'total': Order.query.count(),
+            'pending': Order.query.filter_by(status='pending').count(),
+            'processing': Order.query.filter_by(status='processing').count(),
+            'shipped': Order.query.filter_by(status='shipped').count(),
+            'delivered': Order.query.filter_by(status='delivered').count(),
+            'cancelled': Order.query.filter_by(status='cancelled').count()
+        }
         
         return render_template('admin/orders.html',
                              orders=orders,
+                             order_stats=order_stats,
                              status=status,
+                             payment_status=payment_status,
+                             search=search,
+                             start_date=start_date,
+                             end_date=end_date,
                              config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin orders error: {str(e)}", file=sys.stderr)
         flash('Error loading orders.', 'danger')
         return render_template('admin/orders.html',
                              orders=[],
-                             status='all',
+                             order_stats={},
                              config=BUSINESS_CONFIG)
 
 @app.route('/admin/orders/<int:id>')
@@ -1190,6 +764,11 @@ def admin_update_order_status(id):
         if new_status:
             order.status = new_status
             order.updated_at = datetime.utcnow()
+            
+            # If status is delivered, mark payment as paid
+            if new_status == 'delivered' and order.payment_status == 'pending':
+                order.payment_status = 'paid'
+            
             db.session.commit()
             
             flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
@@ -1202,29 +781,162 @@ def admin_update_order_status(id):
         flash('Error updating order status.', 'danger')
         return redirect(url_for('admin_order_detail', id=id))
 
+@app.route('/admin/orders/update-payment-status/<int:id>', methods=['POST'])
+@admin_required
+def admin_update_payment_status(id):
+    """Update payment status"""
+    try:
+        order = Order.query.get_or_404(id)
+        new_status = request.form.get('payment_status')
+        
+        if new_status:
+            order.payment_status = new_status
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            flash(f'Order #{order.order_number} payment status updated to {new_status}', 'success')
+        
+        return redirect(url_for('admin_order_detail', id=id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Update payment status error: {str(e)}", file=sys.stderr)
+        flash('Error updating payment status.', 'danger')
+        return redirect(url_for('admin_order_detail', id=id))
+
+@app.route('/admin/orders/add-tracking/<int:id>', methods=['POST'])
+@admin_required
+def admin_add_tracking(id):
+    """Add tracking number"""
+    try:
+        order = Order.query.get_or_404(id)
+        tracking_number = request.form.get('tracking_number')
+        
+        if tracking_number:
+            order.tracking_number = tracking_number
+            order.status = 'shipped'
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            flash(f'Tracking number added for Order #{order.order_number}', 'success')
+        
+        return redirect(url_for('admin_order_detail', id=id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Add tracking error: {str(e)}", file=sys.stderr)
+        flash('Error adding tracking number.', 'danger')
+        return redirect(url_for('admin_order_detail', id=id))
+
+@app.route('/admin/orders/delete/<int:id>', methods=['POST'])
+@admin_required
+def admin_delete_order(id):
+    """Delete order"""
+    try:
+        order = Order.query.get_or_404(id)
+        order_number = order.order_number
+        
+        # Delete order items first (cascade should handle this)
+        OrderItem.query.filter_by(order_id=id).delete()
+        
+        # Delete order
+        db.session.delete(order)
+        db.session.commit()
+        
+        flash(f'Order #{order_number} deleted successfully!', 'success')
+        return redirect(url_for('admin_orders'))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Delete order error: {str(e)}", file=sys.stderr)
+        flash('Error deleting order.', 'danger')
+        return redirect(url_for('admin_orders'))
+
+# ========== ADMIN CUSTOMERS ROUTES ==========
+
 @app.route('/admin/customers')
 @admin_required
 def admin_customers():
     """Admin customers list"""
     try:
-        customers = Customer.query.order_by(Customer.created_at.desc()).all()
-        return render_template('admin/customers.html', customers=customers, config=BUSINESS_CONFIG)
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        search = request.args.get('search', '')
+        
+        query = Customer.query
+        
+        if search:
+            query = query.filter(
+                (Customer.email.ilike(f'%{search}%')) |
+                (Customer.first_name.ilike(f'%{search}%')) |
+                (Customer.last_name.ilike(f'%{search}%')) |
+                (Customer.phone.ilike(f'%{search}%'))
+            )
+        
+        customers = query.order_by(Customer.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        return render_template('admin/customers.html',
+                             customers=customers,
+                             search=search,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
         flash('Error loading customers.', 'danger')
-        return render_template('admin/customers.html', customers=[], config=BUSINESS_CONFIG)
+        return render_template('admin/customers.html',
+                             customers=[],
+                             config=BUSINESS_CONFIG)
+
+@app.route('/admin/customers/<int:id>')
+@admin_required
+def admin_customer_detail(id):
+    """Customer detail"""
+    try:
+        customer = Customer.query.get_or_404(id)
+        orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
+        
+        return render_template('admin/customer_detail.html',
+                             customer=customer,
+                             orders=orders,
+                             config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Admin customer detail error: {str(e)}", file=sys.stderr)
+        flash('Error loading customer details.', 'danger')
+        return redirect(url_for('admin_customers'))
+
+# ========== ADMIN REVIEWS ROUTES ==========
 
 @app.route('/admin/reviews')
 @admin_required
 def admin_reviews():
     """Admin reviews"""
     try:
-        reviews = Review.query.order_by(Review.created_at.desc()).all()
-        return render_template('admin/reviews.html', reviews=reviews, config=BUSINESS_CONFIG)
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        approved = request.args.get('approved', 'all')
+        
+        query = Review.query
+        
+        if approved == 'pending':
+            query = query.filter_by(approved=False)
+        elif approved == 'approved':
+            query = query.filter_by(approved=True)
+        
+        reviews = query.order_by(Review.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        return render_template('admin/reviews.html',
+                             reviews=reviews,
+                             approved=approved,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
         flash('Error loading reviews.', 'danger')
-        return render_template('admin/reviews.html', reviews=[], config=BUSINESS_CONFIG)
+        return render_template('admin/reviews.html',
+                             reviews=[],
+                             config=BUSINESS_CONFIG)
 
 @app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
 @admin_required
@@ -1260,6 +972,8 @@ def admin_delete_review(id):
         flash('Error deleting review.', 'danger')
         return redirect(url_for('admin_reviews'))
 
+# ========== ADMIN CATEGORIES ROUTES ==========
+
 @app.route('/admin/categories')
 @admin_required
 def admin_categories():
@@ -1285,11 +999,26 @@ def admin_add_category():
             if not slug:
                 slug = name.lower().replace(' ', '-')
             
+            # Check if slug already exists
+            existing_category = Category.query.filter_by(slug=slug).first()
+            if existing_category:
+                flash('Category with this slug already exists. Please use a different slug.', 'danger')
+                return redirect(url_for('admin_add_category'))
+            
             category = Category(
                 name=name,
                 slug=slug,
                 description=description
             )
+            
+            # Handle image upload
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file and allowed_file(image_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{image_file.filename.split('.')[-1]}")
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    image_file.save(image_path)
+                    category.image_url = f"uploads/{filename}"
             
             db.session.add(category)
             db.session.commit()
@@ -1303,6 +1032,74 @@ def admin_add_category():
             flash('Error adding category. Please try again.', 'danger')
     
     return render_template('admin/add_category.html', config=BUSINESS_CONFIG)
+
+@app.route('/admin/categories/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_category(id):
+    """Edit category"""
+    category = Category.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            category.name = request.form.get('name')
+            category.description = request.form.get('description')
+            slug = request.form.get('slug', '').lower().replace(' ', '-')
+            
+            if slug and slug != category.slug:
+                # Check if new slug already exists
+                existing_category = Category.query.filter_by(slug=slug).first()
+                if existing_category and existing_category.id != id:
+                    flash('Category with this slug already exists. Please use a different slug.', 'danger')
+                    return redirect(url_for('admin_edit_category', id=id))
+                category.slug = slug
+            
+            # Handle image upload
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file and allowed_file(image_file.filename):
+                    filename = secure_filename(f"{uuid.uuid4()}.{image_file.filename.split('.')[-1]}")
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    image_file.save(image_path)
+                    category.image_url = f"uploads/{filename}"
+            
+            db.session.commit()
+            
+            flash(f'Category "{category.name}" updated successfully!', 'success')
+            return redirect(url_for('admin_categories'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Edit category error: {str(e)}", file=sys.stderr)
+            flash('Error updating category. Please try again.', 'danger')
+    
+    return render_template('admin/edit_category.html', category=category, config=BUSINESS_CONFIG)
+
+@app.route('/admin/categories/delete/<int:id>', methods=['POST'])
+@admin_required
+def admin_delete_category(id):
+    """Delete category"""
+    try:
+        category = Category.query.get_or_404(id)
+        category_name = category.name
+        
+        # Check if category has products
+        if category.products.count() > 0:
+            flash(f'Cannot delete "{category_name}" because it has products associated with it.', 'danger')
+            return redirect(url_for('admin_categories'))
+        
+        db.session.delete(category)
+        db.session.commit()
+        
+        flash(f'Category "{category_name}" deleted successfully!', 'success')
+        return redirect(url_for('admin_categories'))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Delete category error: {str(e)}", file=sys.stderr)
+        flash('Error deleting category. Please try again.', 'danger')
+        return redirect(url_for('admin_categories'))
+
+# ========== ADMIN SETTINGS ROUTES ==========
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @admin_required
@@ -1341,6 +1138,157 @@ def admin_settings():
     
     return render_template('admin/settings.html', config=BUSINESS_CONFIG)
 
+@app.route('/admin/profile', methods=['GET', 'POST'])
+@admin_required
+def admin_profile():
+    """Admin profile"""
+    admin = User.query.get(session['admin_id'])
+    
+    if request.method == 'POST':
+        try:
+            admin.username = request.form.get('username', admin.username)
+            admin.email = request.form.get('email', admin.email)
+            
+            db.session.commit()
+            session['admin_name'] = admin.username
+            
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('admin_profile'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Update profile error: {str(e)}", file=sys.stderr)
+            flash('Error updating profile. Please try again.', 'danger')
+    
+    return render_template('admin/profile.html', admin=admin, config=BUSINESS_CONFIG)
+
+# ========== ADMIN CONTACT MESSAGES ==========
+
+@app.route('/admin/messages')
+@admin_required
+def admin_messages():
+    """Admin contact messages"""
+    try:
+        messages = ContactMessage.query.order_by(ContactMessage.created_at.desc()).all()
+        return render_template('admin/messages.html', messages=messages, config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Admin messages error: {str(e)}", file=sys.stderr)
+        flash('Error loading messages.', 'danger')
+        return render_template('admin/messages.html', messages=[], config=BUSINESS_CONFIG)
+
+@app.route('/admin/messages/<int:id>')
+@admin_required
+def admin_message_detail(id):
+    """Contact message detail"""
+    try:
+        message = ContactMessage.query.get_or_404(id)
+        
+        # Mark as read
+        if not message.read:
+            message.read = True
+            db.session.commit()
+        
+        return render_template('admin/message_detail.html', message=message, config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Admin message detail error: {str(e)}", file=sys.stderr)
+        flash('Error loading message.', 'danger')
+        return redirect(url_for('admin_messages'))
+
+@app.route('/admin/messages/delete/<int:id>', methods=['POST'])
+@admin_required
+def admin_delete_message(id):
+    """Delete contact message"""
+    try:
+        message = ContactMessage.query.get_or_404(id)
+        db.session.delete(message)
+        db.session.commit()
+        
+        flash('Message deleted successfully!', 'success')
+        return redirect(url_for('admin_messages'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting message.', 'danger')
+        return redirect(url_for('admin_messages'))
+
+# ========== ADMIN INVENTORY ==========
+
+@app.route('/admin/inventory')
+@admin_required
+def admin_inventory():
+    """Admin inventory management"""
+    try:
+        status = request.args.get('status', 'all')
+        
+        query = Product.query
+        
+        if status == 'low':
+            query = query.filter(Product.quantity <= 5, Product.quantity > 0)
+        elif status == 'out':
+            query = query.filter(Product.quantity == 0)
+        elif status == 'in':
+            query = query.filter(Product.quantity > 5)
+        
+        products = query.order_by(Product.quantity, Product.name).all()
+        
+        # Calculate inventory value
+        inventory_value = db.session.query(
+            func.sum(Product.cost_price * Product.quantity)
+        ).scalar() or 0
+        
+        total_products = len(products)
+        low_stock = Product.query.filter(Product.quantity <= 5, Product.quantity > 0).count()
+        out_of_stock = Product.query.filter_by(quantity=0).count()
+        in_stock = Product.query.filter(Product.quantity > 5).count()
+        
+        return render_template('admin/inventory.html',
+                             products=products,
+                             status=status,
+                             inventory_value=inventory_value,
+                             total_products=total_products,
+                             low_stock=low_stock,
+                             out_of_stock=out_of_stock,
+                             in_stock=in_stock,
+                             config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Admin inventory error: {str(e)}", file=sys.stderr)
+        flash('Error loading inventory.', 'danger')
+        return render_template('admin/inventory.html',
+                             products=[],
+                             config=BUSINESS_CONFIG)
+
+@app.route('/admin/inventory/update-stock/<int:id>', methods=['POST'])
+@admin_required
+def admin_update_stock(id):
+    """Update product stock"""
+    try:
+        product = Product.query.get_or_404(id)
+        action = request.form.get('action')
+        quantity = int(request.form.get('quantity', 0))
+        
+        if action == 'add':
+            product.quantity += quantity
+            message = f'Added {quantity} units to {product.name}. New stock: {product.quantity}'
+        elif action == 'remove':
+            if quantity > product.quantity:
+                flash(f'Cannot remove more than available stock ({product.quantity})', 'danger')
+                return redirect(url_for('admin_inventory'))
+            product.quantity -= quantity
+            message = f'Removed {quantity} units from {product.name}. New stock: {product.quantity}'
+        elif action == 'set':
+            product.quantity = quantity
+            message = f'Set stock for {product.name} to {quantity} units'
+        
+        db.session.commit()
+        flash(message, 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Update stock error: {str(e)}", file=sys.stderr)
+        flash('Error updating stock.', 'danger')
+    
+    return redirect(url_for('admin_inventory'))
+
 # ========== STATIC FILE SERVING ==========
 
 @app.route('/static/uploads/<filename>')
@@ -1357,7 +1305,9 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.utcnow().isoformat(),
+            'app': 'Nora Hair Line E-commerce',
+            'version': '2.0.0'
         }), 200
     except Exception as e:
         return jsonify({
@@ -1378,10 +1328,11 @@ if __name__ == '__main__':
     os.makedirs('static/images', exist_ok=True)
     
     port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
+    
     print(f"\n{'='*60}", file=sys.stderr)
-    print(f"🚀 NORA HAIR LINE E-COMMERCE - FIXED VERSION", file=sys.stderr)
+    print(f"🚀 NORA HAIR LINE E-COMMERCE - COMPLETE VERSION", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
     print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
@@ -1389,10 +1340,19 @@ if __name__ == '__main__':
     print(f"📧 Contact: /contact", file=sys.stderr)
     print(f"ℹ️  About: /about", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"✅ Fixed errors:", file=sys.stderr)
-    print(f"  1. Admin dashboard revenue formatting error", file=sys.stderr)
-    print(f"  2. Shop pagination error", file=sys.stderr)
-    print(f"  3. URL building errors", file=sys.stderr)
+    print(f"✅ Features included:", file=sys.stderr)
+    print(f"  1. Complete admin dashboard with statistics", file=sys.stderr)
+    print(f"  2. Product management with image uploads", file=sys.stderr)
+    print(f"  3. Order management with status tracking", file=sys.stderr)
+    print(f"  4. Customer management", file=sys.stderr)
+    print(f"  5. Review moderation", file=sys.stderr)
+    print(f"  6. Category management", file=sys.stderr)
+    print(f"  7. Inventory management", file=sys.stderr)
+    print(f"  8. Contact message management", file=sys.stderr)
+    print(f"  9. Newsletter subscription", file=sys.stderr)
+    print(f"  10. File upload handling", file=sys.stderr)
+    print(f"  11. API endpoints for AJAX", file=sys.stderr)
+    print(f"  12. Health check endpoint", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=debug)
