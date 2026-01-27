@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import random
 import string
 from functools import wraps
+import json
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -391,7 +392,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_id' not in session or not session.get('is_admin'):
-            flash('Admin access required', 'danger')
+            flash('Admin access required. Please login first.', 'danger')
             return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -528,7 +529,7 @@ def product_detail(id):
 
 @app.route('/cart')
 def cart():
-    """Shopping cart page - FIXED 404"""
+    """Shopping cart page"""
     cart_items = session.get('cart', [])
     subtotal = calculate_cart_total()
     delivery_fee = DeliveryCalculator.calculate_delivery_fee(subtotal)
@@ -870,35 +871,63 @@ def contact():
 
 # ========== ADMIN ROUTES ==========
 
-@app.route('/admin')
-@app.route('/admin/login')
+@app.route('/admin', methods=['GET', 'POST'])
+@app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login - FIXED NETWORK ERROR"""
+    """Admin login - COMPLETE FIXED VERSION"""
+    # If already logged in, redirect to dashboard
     if 'admin_id' in session and session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
     
     if request.method == 'POST':
         try:
-            username = request.form.get('username')
-            password = request.form.get('password')
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+            
+            # Check for empty fields
+            if not username or not password:
+                flash('Please enter both username and password', 'danger')
+                return render_template('admin/admin_login.html')
             
             # Query admin user
             admin = User.query.filter_by(username=username, is_admin=True).first()
             
             if admin and admin.check_password(password):
+                # Set session variables
                 session['admin_id'] = admin.id
                 session['admin_name'] = admin.username
                 session['is_admin'] = True
+                session.permanent = True
                 
                 flash('Admin login successful!', 'success')
+                
+                # Handle AJAX requests
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': 'Login successful!',
+                        'redirect_url': url_for('admin_dashboard')
+                    })
+                
                 return redirect(url_for('admin_dashboard'))
             else:
-                flash('Invalid admin credentials', 'danger')
+                flash('Invalid admin credentials. Try admin/admin123', 'danger')
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': False,
+                        'message': 'Invalid admin credentials'
+                    })
                 
         except Exception as e:
             print(f"❌ Admin login error: {str(e)}", file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'success': False,
+                    'message': 'Server error. Please try again.'
+                })
     
+    # GET request - show login form
     return render_template('admin/admin_login.html')
 
 @app.route('/admin/logout')
@@ -920,14 +949,20 @@ def admin_dashboard():
         total_customers = Customer.query.count()
         pending_orders = Order.query.filter_by(status='pending').count()
         
+        # Calculate revenue
+        revenue = db.session.query(db.func.sum(Order.final_amount)).scalar() or 0
+        
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
+        low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
         
         return render_template('admin/admin_dashboard.html',
                              total_orders=total_orders,
                              total_products=total_products,
                              total_customers=total_customers,
                              pending_orders=pending_orders,
-                             recent_orders=recent_orders)
+                             revenue=revenue,
+                             recent_orders=recent_orders,
+                             low_stock_products=low_stock_products)
     except Exception as e:
         print(f"❌ Admin dashboard error: {str(e)}", file=sys.stderr)
         flash('Error loading dashboard.', 'danger')
@@ -936,7 +971,9 @@ def admin_dashboard():
                              total_products=0,
                              total_customers=0,
                              pending_orders=0,
-                             recent_orders=[])
+                             revenue=0,
+                             recent_orders=[],
+                             low_stock_products=[])
 
 @app.route('/admin/products')
 @admin_required
@@ -970,6 +1007,8 @@ def admin_add_product():
             category_id = int(request.form.get('category_id'))
             featured = 'featured' in request.form
             active = 'active' in request.form
+            length = request.form.get('length')
+            texture = request.form.get('texture')
             
             # Generate slug and SKU
             slug = name.lower().replace(' ', '-').replace('"', '').replace("'", '')
@@ -985,7 +1024,9 @@ def admin_add_product():
                 sku=sku,
                 category_id=category_id,
                 featured=featured,
-                active=active
+                active=active,
+                length=length,
+                texture=texture
             )
             
             db.session.add(product)
@@ -1001,6 +1042,62 @@ def admin_add_product():
     
     categories = Category.query.all()
     return render_template('admin/add_product.html', categories=categories)
+
+@app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_product(id):
+    """Edit product"""
+    product = Product.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            product.name = request.form.get('name')
+            product.description = request.form.get('description')
+            product.price = float(request.form.get('price', 0))
+            compare_price = request.form.get('compare_price')
+            product.compare_price = float(compare_price) if compare_price else None
+            product.quantity = int(request.form.get('quantity', 0))
+            product.category_id = int(request.form.get('category_id'))
+            product.featured = 'featured' in request.form
+            product.active = 'active' in request.form
+            product.length = request.form.get('length')
+            product.texture = request.form.get('texture')
+            
+            # Update slug
+            product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
+            
+            db.session.commit()
+            
+            flash(f'Product "{product.name}" updated successfully!', 'success')
+            return redirect(url_for('admin_products'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Edit product error: {str(e)}", file=sys.stderr)
+            flash('Error updating product. Please try again.', 'danger')
+    
+    categories = Category.query.all()
+    return render_template('admin/edit_product.html', product=product, categories=categories)
+
+@app.route('/admin/products/delete/<int:id>', methods=['POST'])
+@admin_required
+def admin_delete_product(id):
+    """Delete product"""
+    try:
+        product = Product.query.get_or_404(id)
+        product_name = product.name
+        
+        db.session.delete(product)
+        db.session.commit()
+        
+        flash(f'Product "{product_name}" deleted successfully!', 'success')
+        return redirect(url_for('admin_products'))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Delete product error: {str(e)}", file=sys.stderr)
+        flash('Error deleting product. Please try again.', 'danger')
+        return redirect(url_for('admin_products'))
 
 @app.route('/admin/orders')
 @admin_required
@@ -1042,6 +1139,41 @@ def admin_order_detail(id):
         flash('Error loading order details.', 'danger')
         return redirect(url_for('admin_orders'))
 
+@app.route('/admin/orders/update-status/<int:id>', methods=['POST'])
+@admin_required
+def admin_update_order_status(id):
+    """Update order status"""
+    try:
+        order = Order.query.get_or_404(id)
+        new_status = request.form.get('status')
+        
+        if new_status:
+            order.status = new_status
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
+        
+        return redirect(url_for('admin_order_detail', id=id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Update order status error: {str(e)}", file=sys.stderr)
+        flash('Error updating order status.', 'danger')
+        return redirect(url_for('admin_order_detail', id=id))
+
+@app.route('/admin/customers')
+@admin_required
+def admin_customers():
+    """Admin customers list"""
+    try:
+        customers = Customer.query.order_by(Customer.created_at.desc()).all()
+        return render_template('admin/customers.html', customers=customers)
+    except Exception as e:
+        print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
+        flash('Error loading customers.', 'danger')
+        return render_template('admin/customers.html', customers=[])
+
 @app.route('/admin/reviews')
 @admin_required
 def admin_reviews():
@@ -1053,6 +1185,115 @@ def admin_reviews():
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
         flash('Error loading reviews.', 'danger')
         return render_template('admin/reviews.html', reviews=[])
+
+@app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
+@admin_required
+def admin_approve_review(id):
+    """Approve review"""
+    try:
+        review = Review.query.get_or_404(id)
+        review.approved = True
+        db.session.commit()
+        
+        flash('Review approved successfully!', 'success')
+        return redirect(url_for('admin_reviews'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error approving review.', 'danger')
+        return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/reviews/delete/<int:id>', methods=['POST'])
+@admin_required
+def admin_delete_review(id):
+    """Delete review"""
+    try:
+        review = Review.query.get_or_404(id)
+        db.session.delete(review)
+        db.session.commit()
+        
+        flash('Review deleted successfully!', 'success')
+        return redirect(url_for('admin_reviews'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting review.', 'danger')
+        return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@admin_required
+def admin_settings():
+    """Admin settings - change password"""
+    if request.method == 'POST':
+        try:
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            admin = User.query.get(session['admin_id'])
+            
+            if not admin.check_password(current_password):
+                flash('Current password is incorrect', 'danger')
+                return redirect(url_for('admin_settings'))
+            
+            if new_password != confirm_password:
+                flash('New passwords do not match', 'danger')
+                return redirect(url_for('admin_settings'))
+            
+            if len(new_password) < 6:
+                flash('Password must be at least 6 characters', 'danger')
+                return redirect(url_for('admin_settings'))
+            
+            admin.set_password(new_password)
+            db.session.commit()
+            
+            flash('Password changed successfully!', 'success')
+            return redirect(url_for('admin_settings'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Change password error: {str(e)}", file=sys.stderr)
+            flash('Error changing password. Please try again.', 'danger')
+    
+    return render_template('admin/settings.html')
+
+# ========== API ENDPOINTS ==========
+
+@app.route('/api/admin/login', methods=['POST'])
+def api_admin_login():
+    """API endpoint for admin login (for AJAX)"""
+    try:
+        data = request.get_json()
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password required'})
+        
+        admin = User.query.filter_by(username=username, is_admin=True).first()
+        
+        if admin and admin.check_password(password):
+            session['admin_id'] = admin.id
+            session['admin_name'] = admin.username
+            session['is_admin'] = True
+            
+            return jsonify({
+                'success': True,
+                'message': 'Login successful',
+                'redirect_url': url_for('admin_dashboard')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid credentials'
+            })
+            
+    except Exception as e:
+        print(f"❌ API login error: {str(e)}", file=sys.stderr)
+        return jsonify({
+            'success': False,
+            'message': 'Server error'
+        })
 
 # ========== HEALTH CHECK ==========
 @app.route('/health')
