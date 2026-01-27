@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - {{ brand_name }}</title>
+    <title>About Us - {{ config.brand_name }}</title>
     <style>
         * {
             margin: 0;
@@ -56,6 +56,7 @@
         .nav-links {
             display: flex;
             gap: 30px;
+            align-items: center;
         }
 
         .nav-links a {
@@ -71,6 +72,25 @@
 
         .nav-links a.active {
             color: #9d4edd;
+        }
+
+        .cart-indicator {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #9d4edd;
+            color: white;
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Hero Section */
@@ -184,20 +204,20 @@
             margin-bottom: 10px;
         }
 
-        /* Wholesale Info */
-        .wholesale-info {
+        /* Slogan Section */
+        .slogan-section {
             background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
             color: white;
             padding: 60px 0;
             text-align: center;
         }
 
-        .wholesale-info h2 {
+        .slogan-section h2 {
             font-size: 32px;
             margin-bottom: 20px;
         }
 
-        .wholesale-info p {
+        .slogan-section p {
             font-size: 20px;
             max-width: 800px;
             margin: 0 auto;
@@ -318,6 +338,10 @@
             .section-title h2 {
                 font-size: 28px;
             }
+            
+            .nav-links a {
+                font-size: 14px;
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -328,15 +352,27 @@
         <div class="container">
             <div class="header-content">
                 <div>
-                    <a href="/" class="logo">{{ brand_name }}</a>
-                    <span class="tagline">{{ tagline }}</span>
+                    <a href="{{ url_for('index') }}" class="logo">{{ config.brand_name }}</a>
+                    <span class="tagline">{{ config.tagline }}</span>
                 </div>
                 <nav class="nav-links">
-                    <a href="/">Home</a>
-                    <a href="/shop">Shop</a>
-                    <a href="/about" class="active">About</a>
-                    <a href="/contact">Contact</a>
-                    <a href="/cart"><i class="fas fa-shopping-cart"></i></a>
+                    <a href="{{ url_for('index') }}">Home</a>
+                    <a href="{{ url_for('shop') }}">Shop</a>
+                    <a href="{{ url_for('about') }}" class="active">About</a>
+                    <a href="{{ url_for('contact') }}">Contact</a>
+                    {% if customer_id %}
+                    <a href="{{ url_for('account') }}">Account</a>
+                    <a href="{{ url_for('customer_logout') }}">Logout</a>
+                    {% else %}
+                    <a href="{{ url_for('customer_login') }}">Login</a>
+                    <a href="{{ url_for('customer_register') }}">Register</a>
+                    {% endif %}
+                    <a href="{{ url_for('cart') }}" class="cart-indicator">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if cart_count > 0 %}
+                        <span class="cart-count">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
                 </nav>
             </div>
         </div>
@@ -345,8 +381,8 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1>About Nora Hair Line</h1>
-            <p>Premium hair extensions and beauty products at wholesale prices. Luxury made accessible for all.</p>
+            <h1>About {{ config.brand_name }}</h1>
+            <p>{{ config.description }}</p>
         </div>
     </section>
 
@@ -386,11 +422,11 @@
         </div>
     </section>
 
-    <!-- Wholesale Info -->
-    <section class="wholesale-info">
+    <!-- Slogan Section -->
+    <section class="slogan-section">
         <div class="container">
-            <h2>{{ wholesale }}</h2>
-            <p>We specialize in wholesale distribution of premium hair products to salons, stylists, and beauty entrepreneurs across Nigeria.</p>
+            <h2>{{ config.slogan }}</h2>
+            <p>Premium 100% human hair extensions, wigs, and hair products at wholesale prices.</p>
         </div>
     </section>
 
@@ -406,20 +442,20 @@
                 <div class="info-card">
                     <i class="fas fa-map-marker-alt" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
                     <h3>Our Location</h3>
-                    <p>{{ address }}</p>
+                    <p>{{ config.address }}</p>
                 </div>
                 
                 <div class="info-card">
                     <i class="fas fa-phone" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
                     <h3>Contact Number</h3>
-                    <p>{{ phone }}</p>
-                    <p>WhatsApp: {{ phone }}</p>
+                    <p>{{ config.phone }}</p>
+                    <p>WhatsApp: {{ config.phone }}</p>
                 </div>
                 
                 <div class="info-card">
                     <i class="fas fa-hashtag" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
                     <h3>Social Media</h3>
-                    <p>Instagram: {{ instagram }}</p>
+                    <p>Instagram: @{{ config.instagram }}</p>
                 </div>
             </div>
         </div>
@@ -439,7 +475,7 @@
                         <i class="fas fa-store"></i>
                     </div>
                     <h3>Visit Our Store</h3>
-                    <p>{{ address }}</p>
+                    <p>{{ config.address }}</p>
                 </div>
                 
                 <div class="contact-item">
@@ -447,7 +483,7 @@
                         <i class="fas fa-phone"></i>
                     </div>
                     <h3>Call Us</h3>
-                    <p>{{ phone }}</p>
+                    <p>{{ config.phone }}</p>
                 </div>
                 
                 <div class="contact-item">
@@ -455,7 +491,7 @@
                         <i class="fab fa-whatsapp"></i>
                     </div>
                     <h3>WhatsApp</h3>
-                    <p>{{ phone }}</p>
+                    <p>{{ config.phone }}</p>
                 </div>
                 
                 <div class="contact-item">
@@ -463,7 +499,7 @@
                         <i class="fab fa-instagram"></i>
                     </div>
                     <h3>Instagram</h3>
-                    <p>{{ instagram }}</p>
+                    <p>@{{ config.instagram }}</p>
                 </div>
             </div>
         </div>
@@ -474,24 +510,25 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>{{ brand_name }}</h3>
-                    <p>{{ tagline }}</p>
-                    <p>{{ wholesale }}</p>
+                    <h3>{{ config.brand_name }}</h3>
+                    <p>{{ config.tagline }}</p>
+                    <p>{{ config.slogan }}</p>
                 </div>
                 
                 <div class="footer-section">
                     <h3>Contact Info</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> {{ address }}</p>
-                    <p><i class="fas fa-phone"></i> {{ phone }}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> {{ config.address }}</p>
+                    <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
+                    <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
                 </div>
                 
                 <div class="footer-section">
                     <h3>Connect With Us</h3>
                     <div class="social-links">
-                        <a href="{{ whatsapp }}" target="_blank">
+                        <a href="{{ config.whatsapp }}" target="_blank">
                             <i class="fab fa-whatsapp"></i>
                         </a>
-                        <a href="{{ instagram_url }}" target="_blank">
+                        <a href="{{ config.instagram_url }}" target="_blank">
                             <i class="fab fa-instagram"></i>
                         </a>
                     </div>
@@ -499,7 +536,7 @@
             </div>
             
             <div class="copyright">
-                <p>&copy; 2024 {{ brand_name }}. All rights reserved.</p>
+                <p>&copy; {{ now.year }} {{ config.brand_name }}. All rights reserved.</p>
             </div>
         </div>
     </footer>
