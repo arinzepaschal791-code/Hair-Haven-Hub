@@ -467,22 +467,40 @@
             <a href="/product/{{ product.id }}" style="text-decoration: none;">
                 <div class="product-card">
                     <div class="product-img">
-                        <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                        {% if product.image_url %}
+                            <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="/static/images/default-product.jpg" alt="{{ product.name }}">
+                        {% endif %}
                     </div>
                     <div class="product-info">
-                        <div class="product-category">{{ product.category.name }}</div>
+                        <!-- FIXED: Safe access for category -->
+                        <div class="product-category">
+                            {% if product.category %}
+                                {{ product.category.name }}
+                            {% else %}
+                                Hair Products
+                            {% endif %}
+                        </div>
                         <h3 class="product-name">{{ product.name }}</h3>
                         {% if product.compare_price and product.compare_price > product.price %}
                         <div class="product-price">
                             <span class="old-price">{{ format_price(product.compare_price) }}</span>
-                            {{ product.formatted_price }}
+                            {{ format_price(product.price) }}
                         </div>
                         {% else %}
-                        <div class="product-price">{{ product.formatted_price }}</div>
+                        <div class="product-price">{{ format_price(product.price) }}</div>
                         {% endif %}
                     </div>
                 </div>
             </a>
+            {% else %}
+            <!-- Show empty state if no featured products -->
+            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <i class="fas fa-box-open fa-3x" style="color: #ccc; margin-bottom: 20px;"></i>
+                <h3>No Featured Products Yet</h3>
+                <p>Check back soon for our premium hair collections!</p>
+            </div>
             {% endfor %}
         </div>
         
@@ -561,6 +579,27 @@
                         <div class="author-info">
                             <h4>{{ review.customer_name }}</h4>
                             <div class="author-location">{{ review.location }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Show empty state if no reviews -->
+                <div class="review-card" style="text-align: center;">
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="review-text">Be the first to leave a review! Share your experience with Nora Hair Line products.</p>
+                    <div class="review-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Your Name Here</h4>
+                            <div class="author-location">Your Location</div>
                         </div>
                     </div>
                 </div>
