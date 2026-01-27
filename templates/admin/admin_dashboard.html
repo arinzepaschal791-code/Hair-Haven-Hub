@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - {{ config.brand_name }}</title>
+    <title>Admin Dashboard - {{ brand_name or "NoraHairLine" }}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
@@ -17,23 +19,32 @@
             --accent-color: #F5DEB3;
             --dark-color: #2C1810;
             --light-color: #FFF8F0;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
+            overflow-x: hidden;
         }
         
         .admin-sidebar {
             background: var(--dark-color);
-            min-height: calc(100vh - 76px);
+            min-height: 100vh;
             color: white;
             padding: 0;
+            position: fixed;
+            width: 250px;
+            z-index: 1000;
         }
         
         .admin-sidebar .brand-header {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
         }
         
         .admin-sidebar .nav-link {
@@ -41,6 +52,8 @@
             padding: 12px 20px;
             border-left: 3px solid transparent;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
         }
         
         .admin-sidebar .nav-link:hover {
@@ -61,6 +74,7 @@
             color: white;
             transition: transform 0.3s, box-shadow 0.3s;
             overflow: hidden;
+            position: relative;
         }
         
         .stat-card:hover {
@@ -68,38 +82,39 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         
-        .bg-stat-1 { 
-            background: linear-gradient(45deg, var(--primary-color), #A0522D);
-            border-left: 5px solid var(--primary-color);
-        }
-        .bg-stat-2 { 
-            background: linear-gradient(45deg, #28a745, #20c997);
-            border-left: 5px solid #28a745;
-        }
-        .bg-stat-3 { 
-            background: linear-gradient(45deg, #007bff, #6610f2);
-            border-left: 5px solid #007bff;
-        }
-        .bg-stat-4 { 
-            background: linear-gradient(45deg, #ffc107, #fd7e14);
-            border-left: 5px solid #ffc107;
+        .stat-card .stat-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.3;
+            font-size: 3rem;
         }
         
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+        .bg-stat-1 { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .bg-stat-2 { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .bg-stat-3 { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .bg-stat-4 { 
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .bg-stat-5 { 
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .bg-stat-6 { 
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
         }
         
         .main-content {
+            margin-left: 250px;
             padding: 20px;
             background: #f8f9fa;
-            min-height: calc(100vh - 76px);
+            min-height: 100vh;
         }
         
         .dashboard-header {
@@ -128,6 +143,8 @@
         .status-shipped { background: #d1ecf1; color: #0c5460; }
         .status-delivered { background: #d4edda; color: #155724; }
         .status-cancelled { background: #f8d7da; color: #721c24; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-unpaid { background: #f8d7da; color: #721c24; }
         
         .table-hover tbody tr:hover {
             background-color: rgba(139, 69, 19, 0.05);
@@ -141,14 +158,47 @@
             overflow: hidden;
         }
         
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .top-product-card {
+            transition: transform 0.3s;
+        }
+        
+        .top-product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .avatar-primary { background: var(--primary-color); }
+        .avatar-success { background: var(--success); }
+        .avatar-info { background: var(--info); }
+        .avatar-warning { background: var(--warning); }
+        .avatar-danger { background: var(--danger); }
+        
         /* Mobile sidebar */
         @media (max-width: 767.98px) {
             .admin-sidebar {
-                position: fixed;
-                top: 76px;
-                left: -100%;
-                width: 80%;
-                z-index: 1040;
+                left: -250px;
                 transition: left 0.3s;
             }
             
@@ -157,474 +207,1020 @@
             }
             
             .main-content {
+                margin-left: 0;
                 padding: 15px;
             }
+            
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid;
+            margin-bottom: 10px;
+        }
+        
+        .toast-success { border-left-color: var(--success); }
+        .toast-error { border-left-color: var(--danger); }
+        .toast-warning { border-left-color: var(--warning); }
+        .toast-info { border-left-color: var(--info); }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Admin Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
-                <span class="d-none d-md-inline">{{ config.brand_name }} Admin</span>
-                <span class="d-md-none">{{ config.brand_name }}</span>
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="adminNavbar">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}" target="_blank">
-                            <i class="fas fa-store me-1"></i> View Store
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> {{ session.get('admin_name', 'Admin') }}
-                        </a>
-                        <ul class="dropdown-menu">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="admin-sidebar d-none d-md-block" id="adminSidebar">
+        <div class="brand-header">
+            <h5 class="mb-0"><i class="fas fa-crown me-2"></i> Admin Panel</h5>
+            <small class="text-muted">Welcome back, {{ current_user.username if current_user else 'Admin' }}</small>
+        </div>
+        
+        <ul class="nav flex-column mt-3">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_products') }}">
+                    <i class="fas fa-box me-2"></i> Products
+                    <span class="badge bg-primary float-end">{{ stats.total_products }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_categories') }}">
+                    <i class="fas fa-tags me-2"></i> Categories
+                    <span class="badge bg-primary float-end">{{ stats.total_categories }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_orders') }}">
+                    <i class="fas fa-shopping-bag me-2"></i> Orders
+                    <span class="badge bg-primary float-end">{{ stats.total_orders }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_customers') }}">
+                    <i class="fas fa-users me-2"></i> Customers
+                    <span class="badge bg-primary float-end">{{ stats.total_customers }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_reviews') }}">
+                    <i class="fas fa-star me-2"></i> Reviews
+                    <span class="badge bg-primary float-end">{{ stats.total_reviews }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_inventory') }}">
+                    <i class="fas fa-warehouse me-2"></i> Inventory
+                    <span class="badge bg-danger float-end">{{ stats.low_stock_count }}</span>
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                    <i class="fas fa-cog me-2"></i> Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="{{ url_for('admin_logout') }}">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </a>
+            </li>
+        </ul>
+        
+        <!-- Quick Stats -->
+        <div class="p-3 mt-4 border-top border-secondary">
+            <small class="text-muted d-block mb-2">Quick Stats</small>
+            <div class="d-flex justify-content-between mb-2">
+                <small>Revenue Today:</small>
+                <small class="text-warning">₦{{ "{:,.2f}".format(stats.today_revenue) }}</small>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <small>New Orders:</small>
+                <small class="text-primary">{{ stats.today_orders }}</small>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <small>New Customers:</small>
+                <small class="text-success">{{ stats.today_customers }}</small>
+            </div>
+            <div class="d-flex justify-content-between">
+                <small>Low Stock:</small>
+                <small class="text-danger">{{ stats.low_stock_count }}</small>
+            </div>
+        </div>
+        
+        <!-- Store Info -->
+        <div class="p-3 mt-2 border-top border-secondary">
+            <small class="text-muted d-block mb-2">Store Status</small>
+            <div class="d-flex align-items-center mb-1">
+                <div class="me-2" style="width: 8px; height: 8px; border-radius: 50%; background: #28a745;"></div>
+                <small>Online</small>
+            </div>
+            <small class="text-muted d-block">Last updated: {{ now.strftime('%H:%M') }}</small>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Admin Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+            <div class="container-fluid">
+                <button class="btn btn-outline-secondary me-2 d-md-none" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                    <span class="d-none d-md-inline">{{ brand_name or "NoraHairLine" }} Admin</span>
+                    <span class="d-md-none">Admin</span>
+                </a>
+                
+                <div class="d-flex align-items-center ms-auto">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% if stats.pending_orders > 0 %}
+                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+                                {{ stats.pending_orders }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            {% for notification in notifications[:5] %}
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-{{ notification.icon }} text-{{ notification.color }}"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 small">{{ notification.message }}</p>
+                                            <small class="text-muted">{{ notification.time }}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% if notifications|length == 0 %}
+                            <li><a class="dropdown-item text-muted" href="#">No new notifications</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ current_user.username if current_user else 'Admin' }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_profile') }}">
+                                <i class="fas fa-user me-2"></i> Profile
+                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">
                                 <i class="fas fa-cog me-2"></i> Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('index') }}" target="_blank">
+                                <i class="fas fa-store me-2"></i> View Store
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a></li>
                         </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="container-fluid mt-3">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show admin-alert" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar Toggle for Mobile -->
-            <button class="btn btn-primary d-md-none position-fixed top-80 start-0 m-3 z-3" 
-                    onclick="toggleSidebar()" 
-                    style="z-index: 1000;">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <!-- Sidebar -->
-            <div class="col-md-2 col-lg-2 admin-sidebar d-md-block" id="adminSidebar">
-                <div class="brand-header">
-                    <h5 class="mb-0"><i class="fas fa-crown me-2"></i> Admin Panel</h5>
-                    <small class="text-muted">Welcome back</small>
-                </div>
-                
-                <ul class="nav flex-column mt-3">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_products') }}">
-                            <i class="fas fa-box me-2"></i> Products
-                            <span class="badge bg-primary float-end">{{ total_products }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_categories') }}">
-                            <i class="fas fa-tags me-2"></i> Categories
-                            {% set total_categories = categories|length if categories is defined else 0 %}
-                            <span class="badge bg-primary float-end">{{ total_categories }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_orders') }}">
-                            <i class="fas fa-shopping-bag me-2"></i> Orders
-                            <span class="badge bg-primary float-end">{{ total_orders }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_customers') }}">
-                            <i class="fas fa-users me-2"></i> Customers
-                            <span class="badge bg-primary float-end">{{ total_customers }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_reviews') }}">
-                            <i class="fas fa-star me-2"></i> Reviews
-                            {% set total_reviews = reviews|length if reviews is defined else 0 %}
-                            <span class="badge bg-primary float-end">{{ total_reviews }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item mt-4">
-                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
-                            <i class="fas fa-cog me-2"></i> Settings
-                        </a>
-                    </li>
-                </ul>
-                
-                <!-- Quick Stats -->
-                <div class="p-3 mt-4 border-top border-secondary">
-                    <small class="text-muted d-block mb-2">Quick Stats</small>
-                    <div class="d-flex justify-content-between mb-2">
-                        <small>Revenue Today:</small>
-                        <small class="text-warning">₦0.00</small>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <small>New Orders:</small>
-                        <small class="text-primary">{{ pending_orders }}</small>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <small>Low Stock:</small>
-                        <small class="text-danger">{{ low_stock_products|length if low_stock_products is defined else 0 }}</small>
                     </div>
                 </div>
             </div>
+        </nav>
 
-            <!-- Main Content -->
-            <main class="col-md-10 col-lg-10 main-content">
-                <!-- Welcome Card -->
-                <div class="card welcome-card mb-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="container-fluid">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show admin-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Welcome Card -->
+        <div class="card welcome-card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-2">Welcome back, {{ current_user.username if current_user else 'Admin' }}! 👋</h4>
+                        <p class="mb-0">Here's what's happening with your store today.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <p class="mb-0"><i class="fas fa-calendar me-2"></i> {{ now.strftime('%A, %B %d, %Y') }}</p>
+                        <small class="opacity-75">Week {{ now.strftime('%U') }} of {{ now.year }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card bg-stat-1 h-100">
                     <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h4 class="mb-2">Welcome, {{ session.get('admin_name', 'Admin') }}!</h4>
-                                <p class="mb-0">Here's what's happening with your store today.</p>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1">Total Revenue</h6>
+                                <h2 class="text-white mb-0">₦{{ "{:,.2f}".format(stats.total_revenue) }}</h2>
+                                <small class="text-white-50">
+                                    <i class="fas fa-arrow-{% if stats.revenue_change >= 0 %}up{% else %}down{% endif %} me-1"></i>
+                                    {{ "{:,.1f}".format(stats.revenue_change) }}% from last month
+                                </small>
                             </div>
-                            <div class="col-md-4 text-end">
-                                <p class="mb-0"><i class="fas fa-calendar me-2"></i> {{ now.strftime('%B %d, %Y') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="row mb-4">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card bg-stat-1 h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="card-title text-white-50 mb-1">Total Products</h6>
-                                        <h2 class="text-white mb-0">{{ total_products }}</h2>
-                                        {% set active_products = products|selectattr('active', 'equalto', True)|list|length if products is defined else total_products %}
-                                        <small class="text-white-50">Active: {{ active_products }}</small>
-                                    </div>
-                                    <div class="stat-icon">
-                                        <i class="fas fa-box text-white"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card bg-stat-2 h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="card-title text-white-50 mb-1">Total Orders</h6>
-                                        <h2 class="text-white mb-0">{{ total_orders }}</h2>
-                                        <small class="text-white-50">Pending: {{ pending_orders }}</small>
-                                    </div>
-                                    <div class="stat-icon">
-                                        <i class="fas fa-shopping-bag text-white"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card bg-stat-3 h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="card-title text-white-50 mb-1">Total Revenue</h6>
-                                        <!-- FIXED: Use formatted_revenue or safe formatting -->
-                                        <h2 class="text-white mb-0">
-                                            {% if formatted_revenue is defined %}
-                                                {{ formatted_revenue }}
-                                            {% elif revenue is defined %}
-                                                ₦{{ "{:,.2f}".format(revenue) }}
-                                            {% else %}
-                                                ₦0.00
-                                            {% endif %}
-                                        </h2>
-                                        <small class="text-white-50">All Time</small>
-                                    </div>
-                                    <div class="stat-icon">
-                                        <i class="fas fa-money-bill-wave text-white"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card bg-stat-4 h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="card-title text-white-50 mb-1">Total Customers</h6>
-                                        <h2 class="text-white mb-0">{{ total_customers }}</h2>
-                                        <small class="text-white-50">Registered Users</small>
-                                    </div>
-                                    <div class="stat-icon">
-                                        <i class="fas fa-users text-white"></i>
-                                    </div>
-                                </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <!-- Recent Orders -->
-                    <div class="col-lg-8 mb-4">
-                        <div class="card h-100">
-                            <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">Recent Orders</h5>
-                                <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card bg-stat-2 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1">Total Orders</h6>
+                                <h2 class="text-white mb-0">{{ stats.total_orders }}</h2>
+                                <small class="text-white-50">Pending: {{ stats.pending_orders }}</small>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Order #</th>
-                                                <th>Customer</th>
-                                                <th>Date</th>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% if recent_orders and recent_orders|length > 0 %}
-                                                {% for order in recent_orders %}
-                                                <tr>
-                                                    <td><strong>{{ order.order_number }}</strong></td>
-                                                    <td>{{ order.customer_name }}</td>
-                                                    <td>{{ order.created_at.strftime('%b %d, %Y') if order.created_at else 'N/A' }}</td>
-                                                    <td>₦{{ "{:,.2f}".format(order.final_amount|float) if order.final_amount else '0.00' }}</td>
-                                                    <td>
-                                                        <span class="order-status-badge status-{{ order.status|lower if order.status else 'pending' }}">
-                                                            {{ order.status|title if order.status else 'Pending' }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="6" class="text-center py-4 text-muted">
-                                                        <i class="fas fa-shopping-bag fa-2x mb-3 d-block"></i>
-                                                        <p>No orders yet</p>
-                                                    </td>
-                                                </tr>
-                                            {% endif %}
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-bag"></i>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Quick Actions -->
-                    <div class="col-lg-4 mb-4">
-                        <div class="card h-100">
-                            <div class="card-header bg-white border-bottom-0">
-                                <h5 class="mb-0">Quick Actions</h5>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card bg-stat-3 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1">Total Customers</h6>
+                                <h2 class="text-white mb-0">{{ stats.total_customers }}</h2>
+                                <small class="text-white-50">
+                                    <i class="fas fa-user-plus me-1"></i>
+                                    {{ stats.new_customers_week }} new this week
+                                </small>
                             </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <a href="{{ url_for('admin_add_product') }}" class="btn btn-outline-primary">
-                                        <i class="fas fa-plus-circle me-2"></i> Add New Product
-                                    </a>
-                                    <a href="{{ url_for('admin_add_category') }}" class="btn btn-outline-success">
-                                        <i class="fas fa-tag me-2"></i> Add New Category
-                                    </a>
-                                    <a href="{{ url_for('admin_orders') }}?status=pending" class="btn btn-outline-warning">
-                                        <i class="fas fa-clock me-2"></i> View Pending Orders
-                                    </a>
-                                    <a href="{{ url_for('index') }}" class="btn btn-outline-info" target="_blank">
-                                        <i class="fas fa-store me-2"></i> View Store Front
-                                    </a>
-                                </div>
-                                
-                                <!-- Low Stock Alert -->
-                                {% if low_stock_products and low_stock_products|length > 0 %}
-                                <div class="mt-4 pt-3 border-top">
-                                    <h6 class="mb-3">Low Stock Alert</h6>
-                                    <div class="list-group list-group-flush">
-                                        {% for product in low_stock_products[:3] %}
-                                        <div class="list-group-item border-0 px-0 py-2">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <p class="mb-1 small">{{ product.name|truncate(30) }}</p>
-                                                    <small class="text-danger">
-                                                        <i class="fas fa-exclamation-triangle me-1"></i> Only {{ product.quantity }} left
-                                                    </small>
-                                                </div>
-                                                <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-sm btn-outline-secondary">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                        {% if low_stock_products|length > 3 %}
-                                        <div class="list-group-item border-0 px-0 py-2">
-                                            <small class="text-muted">And {{ low_stock_products|length - 3 }} more products...</small>
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card bg-stat-4 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1">Total Products</h6>
+                                <h2 class="text-white mb-0">{{ stats.total_products }}</h2>
+                                <small class="text-white-50">
+                                    <span class="text-warning">{{ stats.low_stock_count }}</span> low in stock
+                                </small>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Charts Row -->
+            <div class="col-lg-8 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Revenue Overview</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active" onclick="updateChart('weekly')">Week</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateChart('monthly')">Month</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateChart('yearly')">Year</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Products -->
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Top Products</h5>
+                        <a href="{{ url_for('admin_products') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            {% for product in top_products[:5] %}
+                            <div class="list-group-item border-0 px-0 py-3 top-product-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        {% if product.image_url %}
+                                        <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                                             class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="avatar avatar-primary rounded" style="width: 50px; height: 50px;">
+                                            {{ product.name[0]|upper }}
                                         </div>
                                         {% endif %}
                                     </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">{{ product.name|truncate(30) }}</h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">{{ product.sales_count }} sales</small>
+                                            <strong class="text-primary">₦{{ "{:,.2f}".format(product.revenue) }}</strong>
+                                        </div>
+                                        <div class="progress mt-2" style="height: 3px;">
+                                            <div class="progress-bar bg-primary" 
+                                                 style="width: {{ (product.sales_count / (top_products[0].sales_count if top_products else 1)) * 100 }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if top_products|length == 0 %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-box-open fa-2x mb-3"></i>
+                                <p>No product sales yet</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Recent Orders -->
+            <div class="col-lg-8 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Orders</h5>
+                        <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Payment</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_orders and recent_orders|length > 0 %}
+                                        {% for order in recent_orders[:8] %}
+                                        <tr>
+                                            <td><strong>{{ order.order_number }}</strong></td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-primary me-2">
+                                                        {{ order.customer_name[0]|upper if order.customer_name else 'G' }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-medium">{{ order.customer_name or 'Guest' }}</div>
+                                                        <small class="text-muted">{{ order.customer_email or '' }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ order.created_at.strftime('%b %d') }}</td>
+                                            <td><strong>₦{{ "{:,.2f}".format(order.total_amount) }}</strong></td>
+                                            <td>
+                                                <span class="order-status-badge status-{{ order.status|lower }}">
+                                                    {{ order.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="order-status-badge status-{{ 'paid' if order.payment_status == 'paid' else 'unpaid' }}">
+                                                    {{ order.payment_status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="viewOrder({{ order.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4 text-muted">
+                                                <i class="fas fa-shopping-bag fa-2x mb-3 d-block"></i>
+                                                <p>No orders yet</p>
+                                                <a href="{{ url_for('index') }}" class="btn btn-sm btn-primary">
+                                                    View Store
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Low Stock -->
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2 mb-4">
+                            <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i> Add New Product
+                            </a>
+                            <a href="{{ url_for('admin_add_category') }}" class="btn btn-outline-success">
+                                <i class="fas fa-tag me-2"></i> Add New Category
+                            </a>
+                            <a href="{{ url_for('admin_orders') }}?status=pending" class="btn btn-outline-warning">
+                                <i class="fas fa-clock me-2"></i> View Pending Orders
+                            </a>
+                            <a href="{{ url_for('admin_quick_sale') }}" class="btn btn-outline-info">
+                                <i class="fas fa-bolt me-2"></i> Quick Sale
+                            </a>
+                        </div>
+                        
+                        <!-- Low Stock Alert -->
+                        {% if low_stock_products and low_stock_products|length > 0 %}
+                        <div class="pt-3 border-top">
+                            <h6 class="mb-3 d-flex justify-content-between align-items-center">
+                                <span>⚠️ Low Stock Alert</span>
+                                <span class="badge bg-danger">{{ low_stock_products|length }}</span>
+                            </h6>
+                            <div class="list-group list-group-flush">
+                                {% for product in low_stock_products[:3] %}
+                                <div class="list-group-item border-0 px-0 py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-1 small">{{ product.name|truncate(25) }}</p>
+                                            <small class="text-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i> 
+                                                Only {{ product.stock_quantity }} left
+                                            </small>
+                                        </div>
+                                        <a href="{{ url_for('admin_edit_product', id=product.id) }}" 
+                                           class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if low_stock_products|length > 3 %}
+                                <div class="list-group-item border-0 px-0 py-2">
+                                    <small class="text-muted">And {{ low_stock_products|length - 3 }} more products...</small>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Additional Info -->
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-white">
-                                <h5 class="mb-0">Store Information</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <small class="text-muted d-block">Store Name</small>
-                                        <p class="mb-2">{{ config.brand_name }}</p>
-                                        
-                                        <small class="text-muted d-block">Email</small>
-                                        <p class="mb-2">{{ config.email }}</p>
-                                        
-                                        <small class="text-muted d-block">Phone</small>
-                                        <p class="mb-0">{{ config.phone }}</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted d-block">Products</small>
-                                        <p class="mb-2">{{ total_products }} items</p>
-                                        
-                                        <small class="text-muted d-block">Categories</small>
-                                        {% set total_categories = categories|length if categories is defined else 0 %}
-                                        <p class="mb-2">{{ total_categories }} categories</p>
-                                        
-                                        <small class="text-muted d-block">Customers</small>
-                                        <p class="mb-0">{{ total_customers }} registered</p>
+        <!-- Bottom Row -->
+        <div class="row">
+            <!-- Recent Customers -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Customers</h5>
+                        <a href="{{ url_for('admin_customers') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            {% if recent_customers and recent_customers|length > 0 %}
+                                {% for customer in recent_customers[:5] %}
+                                <div class="list-group-item border-0 px-0 py-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar avatar-primary">
+                                                {{ customer.username[0]|upper if customer.username else 'C' }}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ customer.username }}</h6>
+                                            <small class="text-muted">{{ customer.email|truncate(25) }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block">{{ customer.created_at.strftime('%b %d') }}</small>
+                                            <small class="text-primary">{{ customer.orders_count or 0 }} orders</small>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-user fa-2x mb-3"></i>
+                                    <p>No customers yet</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-white">
-                                <h5 class="mb-0">System Status</h5>
+                </div>
+            </div>
+            
+            <!-- Store Performance -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0">
+                        <h5 class="mb-0">Store Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-medium">Order Conversion</span>
+                                <span class="text-primary">{{ stats.conversion_rate }}%</span>
                             </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Database</span>
-                                        <span class="text-success"><i class="fas fa-check-circle"></i> Connected</span>
-                                    </div>
-                                    <div class="progress" style="height: 5px;">
-                                        <div class="progress-bar bg-success" style="width: 100%"></div>
-                                    </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" style="width: {{ stats.conversion_rate }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-medium">Inventory Health</span>
+                                <span class="text-{{ 'success' if stats.inventory_health > 80 else 'warning' if stats.inventory_health > 50 else 'danger' }}">
+                                    {{ stats.inventory_health }}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-{{ 'success' if stats.inventory_health > 80 else 'warning' if stats.inventory_health > 50 else 'danger' }}" 
+                                     style="width: {{ stats.inventory_health }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-medium">Customer Satisfaction</span>
+                                <span class="text-warning">{{ stats.avg_rating }}/5</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: {{ stats.avg_rating * 20 }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <small class="text-muted">Last updated: {{ now.strftime('%I:%M %p') }}</small>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Status -->
+            <div class="col-md-12 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-bottom-0">
+                        <h5 class="mb-0">System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-database me-2"></i>Database</span>
+                                <span class="text-success"><i class="fas fa-check-circle"></i> Connected</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-server me-2"></i>Server Load</span>
+                                <span class="text-{{ 'success' if stats.server_load < 70 else 'warning' if stats.server_load < 90 else 'danger' }}">
+                                    {{ stats.server_load }}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-{{ 'success' if stats.server_load < 70 else 'warning' if stats.server_load < 90 else 'danger' }}" 
+                                     style="width: {{ stats.server_load }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-hdd me-2"></i>Storage</span>
+                                <span class="text-info">{{ stats.disk_usage }}</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-info" style="width: {{ stats.disk_percent }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-shield-alt me-2"></i>Security</span>
+                                <span class="text-success"><i class="fas fa-check-circle"></i> Protected</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-muted d-block">Uptime</small>
+                                    <small class="fw-medium">{{ stats.uptime }}</small>
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Orders Today</span>
-                                        <span>
-                                            {% set today_orders = today_orders if today_orders is defined else 0 %}
-                                            {{ today_orders }} orders
-                                        </span>
-                                    </div>
-                                    <div class="progress" style="height: 5px;">
-                                        {% set today_percentage = (today_orders/10*100) if today_orders else 0 %}
-                                        <div class="progress-bar bg-info" style="width: {{ today_percentage }}%"></div>
-                                    </div>
+                                <div>
+                                    <small class="text-muted d-block">Version</small>
+                                    <small class="fw-medium">{{ version }}</small>
                                 </div>
-                                
-                                <div class="mb-0">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Performance</span>
-                                        <span class="text-success">Optimal</span>
-                                    </div>
-                                    <div class="progress" style="height: 5px;">
-                                        <div class="progress-bar bg-success" style="width: 90%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 pt-2 border-top">
-                                    <small class="text-muted">Last updated: {{ now.strftime('%I:%M %p') }}</small>
+                                <div>
+                                    <small class="text-muted d-block">Environment</small>
+                                    <small class="fw-medium">{{ environment }}</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Auto-dismiss alerts
-        setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
+        // Variables
+        let revenueChart = null;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize revenue chart
+            initRevenueChart();
+            
+            // Auto-dismiss alerts
+            setTimeout(() => {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+            
+            // Set up auto-refresh for real-time data
+            setInterval(updateDashboardData, 30000); // Update every 30 seconds
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        });
         
         // Mobile sidebar toggle
         function toggleSidebar() {
             const sidebar = document.getElementById('adminSidebar');
+            sidebar.classList.toggle('d-none');
             sidebar.classList.toggle('show');
         }
         
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('adminSidebar');
-            const toggleBtn = document.querySelector('.btn-primary.d-md-none');
+        // Initialize Revenue Chart
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
             
-            if (window.innerWidth < 768 && 
-                sidebar.classList.contains('show') &&
-                !sidebar.contains(event.target) &&
-                event.target !== toggleBtn &&
-                !toggleBtn.contains(event.target)) {
-                sidebar.classList.remove('show');
+            // Sample data - replace with real data from backend
+            const weeklyData = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Revenue (₦)',
+                    data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+            
+            const monthlyData = {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Revenue (₦)',
+                    data: [1200000, 1900000, 3000000, 4500000],
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+            
+            const yearlyData = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Revenue (₦)',
+                    data: [5000000, 8000000, 12000000, 15000000, 20000000, 25000000, 
+                           30000000, 35000000, 40000000, 45000000, 50000000, 60000000],
+                    borderColor: '#8B4513',
+                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+            
+            if (revenueChart) {
+                revenueChart.destroy();
             }
-        });
+            
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: weeklyData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `₦${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₦' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    }
+                }
+            });
+            
+            // Store chart data for switching
+            window.chartData = {
+                weekly: weeklyData,
+                monthly: monthlyData,
+                yearly: yearlyData
+            };
+        }
         
-        // Auto-refresh page every 60 seconds
-        setTimeout(() => {
-            window.location.reload();
-        }, 60000);
+        // Update chart based on selected period
+        function updateChart(period) {
+            if (revenueChart && window.chartData[period]) {
+                revenueChart.data = window.chartData[period];
+                revenueChart.update();
+                
+                // Update button states
+                document.querySelectorAll('#revenueChart').previousElementSibling.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+            }
+        }
+        
+        // Refresh dashboard data
+        function refreshDashboard() {
+            showLoading();
+            
+            fetch('/admin/api/dashboard-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update stats cards
+                        document.querySelectorAll('.stat-card')[0].querySelector('h2').textContent = 
+                            `₦${data.stats.total_revenue.toLocaleString()}`;
+                        
+                        document.querySelectorAll('.stat-card')[1].querySelector('h2').textContent = 
+                            data.stats.total_orders;
+                        
+                        document.querySelectorAll('.stat-card')[2].querySelector('h2').textContent = 
+                            data.stats.total_customers;
+                        
+                        document.querySelectorAll('.stat-card')[3].querySelector('h2').textContent = 
+                            data.stats.total_products;
+                        
+                        // Show success toast
+                        showToast('Dashboard data refreshed!', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error refreshing dashboard:', error);
+                    showToast('Failed to refresh data', 'error');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        // Update dashboard data (background refresh)
+        function updateDashboardData() {
+            fetch('/admin/api/dashboard-update')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update quick stats in sidebar
+                        document.querySelector('.admin-sidebar .text-warning:last-child').textContent = 
+                            `₦${data.stats.today_revenue.toLocaleString()}`;
+                        
+                        // Update notifications count if needed
+                        if (data.notifications_count > 0) {
+                            const badge = document.querySelector('.fa-bell').parentElement.querySelector('.badge');
+                            if (badge) {
+                                badge.textContent = data.notifications_count;
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating dashboard:', error));
+        }
+        
+        // View order details
+        function viewOrder(orderId) {
+            window.location.href = `/admin/orders/${orderId}`;
+        }
+        
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast toast-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close ms-2" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+            
+            // Remove toast after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                this.remove();
+            });
+        }
+        
+        // Print dashboard report
+        function printDashboard() {
+            const printContent = document.getElementById('mainContent').innerHTML;
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Dashboard Report - {{ brand_name }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .card { border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; padding: 15px; }
+                        .table { width: 100%; border-collapse: collapse; }
+                        .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        .stat-card { color: white; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+                        .text-center { text-align: center; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Dashboard Report - {{ brand_name }}</h1>
+                    <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+                    ${printContent}
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+        
+        // Export dashboard data
+        function exportDashboardData(format = 'csv') {
+            showLoading();
+            
+            fetch(`/admin/api/export-dashboard?format=${format}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    showToast(`Report exported as ${format.toUpperCase()}`, 'success');
+                })
+                .catch(error => {
+                    console.error('Error exporting data:', error);
+                    showToast('Failed to export report', 'error');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
     </script>
 </body>
 </html>
