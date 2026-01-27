@@ -1,42 +1,44 @@
-<footer class="bg-dark text-white py-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <h4><i class="fas fa-crown"></i> {{ brand_name }}</h4>
-                <p>{{ description }}</p>
-                <div class="social-links mt-3">
-                    <a href="{{ whatsapp }}" target="_blank" class="text-white me-3">
-                        <i class="fab fa-whatsapp fa-2x"></i>
+<footer style="background: #1a1a2e; color: white; padding: 40px 0; margin-top: 60px;">
+    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;">
+            <div>
+                <h3 style="color: #d4af37; margin-bottom: 20px;">NORA HAIR LINE</h3>
+                <p>Premium 100% human hair extensions, wigs, and hair products at wholesale prices.</p>
+                <div style="margin-top: 20px; display: flex; gap: 15px;">
+                    <a href="{{ config.whatsapp }}" target="_blank" style="color: white; font-size: 20px;">
+                        <i class="fab fa-whatsapp"></i>
                     </a>
-                    <a href="https://instagram.com/{{ instagram }}" target="_blank" class="text-white me-3">
-                        <i class="fab fa-instagram fa-2x"></i>
+                    <a href="{{ config.instagram_url }}" target="_blank" style="color: white; font-size: 20px;">
+                        <i class="fab fa-instagram"></i>
                     </a>
-                    <a href="mailto:{{ email }}" class="text-white">
-                        <i class="fas fa-envelope fa-2x"></i>
+                    <a href="mailto:{{ config.email }}" style="color: white; font-size: 20px;">
+                        <i class="fas fa-envelope"></i>
                     </a>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <h5>Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="/" class="text-white-50">Home</a></li>
-                    <li><a href="/shop" class="text-white-50">Shop</a></li>
-                    <li><a href="/about" class="text-white-50">About Us</a></li>
-                    <li><a href="/contact" class="text-white-50">Contact</a></li>
-                    <li><a href="/account" class="text-white-50">My Account</a></li>
+            
+            <div>
+                <h4 style="color: #d4af37; margin-bottom: 20px;">Quick Links</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px;"><a href="/" style="color: white; text-decoration: none;">Home</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/shop" style="color: white; text-decoration: none;">Shop</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/about" style="color: white; text-decoration: none;">About</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/contact" style="color: white; text-decoration: none;">Contact</a></li>
                 </ul>
             </div>
-            <div class="col-md-4 mb-4">
-                <h5>Contact Info</h5>
-                <p><i class="fas fa-map-marker-alt me-2"></i> {{ address }}</p>
-                <p><i class="fas fa-phone me-2"></i> {{ phone }}</p>
-                <p><i class="fas fa-envelope me-2"></i> {{ email }}</p>
-                <p><i class="fab fa-instagram me-2"></i> @{{ instagram }}</p>
+            
+            <div>
+                <h4 style="color: #d4af37; margin-bottom: 20px;">Contact Info</h4>
+                <p><i class="fas fa-map-marker-alt" style="margin-right: 10px;"></i> {{ config.address }}</p>
+                <p><i class="fas fa-phone" style="margin-right: 10px;"></i> {{ config.phone }}</p>
+                <p><i class="fas fa-envelope" style="margin-right: 10px;"></i> {{ config.email }}</p>
             </div>
         </div>
-        <hr class="bg-white">
-        <div class="text-center pt-3">
-            <p class="mb-0">&copy; {{ year }} {{ brand_name }}. All rights reserved.</p>
+        
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
+        
+        <div style="text-align: center; color: rgba(255,255,255,0.7);">
+            <p>&copy; {{ config.year }} Nora Hair Line. All rights reserved.</p>
         </div>
     </div>
 </footer>
