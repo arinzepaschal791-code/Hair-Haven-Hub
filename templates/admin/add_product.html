@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -357,6 +357,83 @@
             border-radius: 50%;
         }
 
+        /* Additional Product Fields */
+        .form-group small {
+            display: block;
+            color: var(--gray);
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+
+        .sku-generate {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .sku-generate button {
+            padding: 8px 15px;
+            background: var(--light-gray);
+            border: 1px solid var(--gray);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .sku-generate button:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* Color and Size Options */
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .option-tag {
+            background: var(--light);
+            border: 1px solid var(--light-gray);
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .option-tag .remove-option {
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Variants Section */
+        .variants-container {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid var(--light-gray);
+        }
+
+        .variant-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .variant-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
         /* Buttons */
         .form-actions {
             display: flex;
@@ -411,6 +488,17 @@
 
         .btn-success:hover {
             background: #2d9100;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
         }
 
         /* Toast Notification */
@@ -491,7 +579,30 @@
             }
         }
 
+        /* Error States */
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .has-error .form-control {
+            border-color: var(--danger);
+        }
+
+        .has-error .error-message {
+            display: block;
+        }
+
         /* Responsive */
+        @media (max-width: 992px) {
+            .variant-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 70px;
@@ -536,6 +647,14 @@
             .form-container {
                 padding: 20px;
             }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
     </style>
     <!-- Font Awesome for icons -->
@@ -577,42 +696,97 @@
 
             <!-- Form Container -->
             <div class="form-container">
-                <form id="addProductForm">
+                <form id="addProductForm" method="POST" action="/admin/products/add" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="productName">Product Name *</label>
-                            <input type="text" id="productName" class="form-control" placeholder="e.g., Premium Bone Straight Hair 24''" required>
+                            <label for="name">Product Name *</label>
+                            {{ form.name(class="form-control", placeholder="e.g., Premium Bone Straight Hair 24''", required=true) }}
+                            <small>Use descriptive names that customers can easily understand</small>
+                            <div class="error-message" id="nameError"></div>
                         </div>
                         <div class="form-group">
-                            <label for="productCategory">Category *</label>
-                            <select id="productCategory" class="form-control" required>
-                                <option value="">Select Category</option>
-                                <option value="hair">Hair Extensions</option>
-                                <option value="wigs">Wigs</option>
-                                <option value="closure">Closures</option>
-                                <option value="frontal">Frontals</option>
-                                <option value="360">360 Frontal</option>
-                                <option value="bundles">Bundles</option>
-                                <option value="care">Hair Care</option>
-                                <option value="tools">Tools & Accessories</option>
-                            </select>
+                            <label for="category">Category *</label>
+                            {{ form.category(class="form-control", required=true) }}
+                            <small>Select the main category for this product</small>
+                            <div class="error-message" id="categoryError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sku">SKU (Stock Keeping Unit)</label>
+                            <div class="sku-generate">
+                                {{ form.sku(class="form-control", placeholder="e.g., NHR-24BS-BLK") }}
+                                <button type="button" id="generateSKU">Generate</button>
+                            </div>
+                            <small>Leave empty to auto-generate</small>
+                            <div class="error-message" id="skuError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="brand">Brand</label>
+                            {{ form.brand(class="form-control", placeholder="e.g., NoraHairLine Premium") }}
+                            <small>Product brand name (optional)</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="productDescription">Description *</label>
-                        <textarea id="productDescription" class="form-control" placeholder="Describe the product features, quality, length, texture, etc." rows="4" required></textarea>
+                        <label for="description">Description *</label>
+                        {{ form.description(class="form-control", placeholder="Describe the product features, quality, length, texture, etc.", rows="4", required=true) }}
+                        <small>Include details about texture, length, quality, and care instructions</small>
+                        <div class="error-message" id="descriptionError"></div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="productPrice">Price (₦) *</label>
-                            <input type="number" id="productPrice" class="form-control" placeholder="0.00" min="0" step="0.01" required>
+                            <label for="price">Price (₦) *</label>
+                            {{ form.price(class="form-control", placeholder="0.00", min="0", step="0.01", required=true) }}
+                            <small>Selling price in Nigerian Naira</small>
+                            <div class="error-message" id="priceError"></div>
                         </div>
                         <div class="form-group">
-                            <label for="productStock">Stock Quantity *</label>
-                            <input type="number" id="productStock" class="form-control" placeholder="100" min="0" required>
+                            <label for="cost_price">Cost Price (₦)</label>
+                            {{ form.cost_price(class="form-control", placeholder="0.00", min="0", step="0.01") }}
+                            <small>Your cost price for inventory tracking</small>
                         </div>
+                        <div class="form-group">
+                            <label for="stock">Stock Quantity *</label>
+                            {{ form.stock(class="form-control", placeholder="100", min="0", required=true) }}
+                            <small>Available quantity in inventory</small>
+                            <div class="error-message" id="stockError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="length">Length</label>
+                            {{ form.length(class="form-control", placeholder="e.g., 24 inches") }}
+                            <small>Hair length if applicable</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Weight</label>
+                            {{ form.weight(class="form-control", placeholder="e.g., 100g") }}
+                            <small>Product weight</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="color">Color</label>
+                            {{ form.color(class="form-control", placeholder="e.g., Natural Black, #1B") }}
+                            <small>Product color(s)</small>
+                        </div>
+                    </div>
+
+                    <!-- Color Options -->
+                    <div class="form-group">
+                        <label>Available Colors</label>
+                        <div class="options-container" id="colorOptions">
+                            <!-- Color tags will be added here -->
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="text" id="newColor" class="form-control" placeholder="Add a color">
+                            <button type="button" class="btn btn-outline" onclick="addColor()">Add Color</button>
+                        </div>
+                        {{ form.colors(id="colorsInput", type="hidden") }}
                     </div>
 
                     <div class="form-row">
@@ -620,7 +794,7 @@
                             <label>Featured Product</label>
                             <div style="margin-top: 10px;">
                                 <label class="switch">
-                                    <input type="checkbox" id="featuredProduct">
+                                    {{ form.featured() }}
                                     <span class="slider round"></span>
                                 </label>
                                 <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
@@ -630,7 +804,7 @@
                             <label>Status</label>
                             <div style="margin-top: 10px;">
                                 <label class="switch">
-                                    <input type="checkbox" id="productStatus" checked>
+                                    {{ form.active(checked=true) }}
                                     <span class="slider round"></span>
                                 </label>
                                 <span style="margin-left: 10px; color: var(--gray);">Active</span>
@@ -640,34 +814,53 @@
 
                     <!-- Image Upload -->
                     <div class="form-group">
-                        <label>Product Images *</label>
-                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">Upload main product images. First image will be used as main display.</p>
+                        <label for="images">Product Images *</label>
+                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">
+                            Upload main product images. First image will be used as main display.
+                        </p>
                         
                         <div class="file-upload-container">
                             <div class="file-upload-area" id="imageUploadArea">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p>Drag & drop images here or click to browse</p>
                                 <span class="btn">Browse Images</span>
-                                <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                                {{ form.images(id="imageInput", accept="image/*", multiple=true, style="display: none;") }}
                             </div>
                             <div id="imagePreview"></div>
+                            <div class="error-message" id="imagesError"></div>
                         </div>
                     </div>
 
                     <!-- Video Upload (Optional) -->
                     <div class="form-group">
-                        <label>Product Video (Optional)</label>
-                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">Upload product demonstration video (max 100MB)</p>
+                        <label for="video">Product Video (Optional)</label>
+                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">
+                            Upload product demonstration video (max 100MB)
+                        </p>
                         
                         <div class="file-upload-container">
                             <div class="file-upload-area" id="videoUploadArea">
                                 <i class="fas fa-video"></i>
                                 <p>Drag & drop video here or click to browse</p>
                                 <span class="btn">Browse Video</span>
-                                <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                                {{ form.video(id="videoInput", accept="video/*", style="display: none;") }}
                             </div>
                             <div id="videoPreview"></div>
                         </div>
+                    </div>
+
+                    <!-- Specifications -->
+                    <div class="form-group">
+                        <label for="specifications">Specifications</label>
+                        {{ form.specifications(class="form-control", placeholder="Enter specifications (one per line)", rows="3") }}
+                        <small>Add specifications like: Material: 100% Human Hair, Texture: Bone Straight, etc.</small>
+                    </div>
+
+                    <!-- Care Instructions -->
+                    <div class="form-group">
+                        <label for="care_instructions">Care Instructions</label>
+                        {{ form.care_instructions(class="form-control", placeholder="Enter care instructions", rows="3") }}
+                        <small>How to care for and maintain the product</small>
                     </div>
 
                     <!-- Form Actions -->
@@ -678,6 +871,9 @@
                         <a href="/admin/products" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
+                        <button type="button" class="btn btn-outline" onclick="previewProduct()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
                     </div>
                 </form>
             </div>
@@ -707,10 +903,76 @@
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        const generateSKUBtn = document.getElementById('generateSKU');
+        const newColorInput = document.getElementById('newColor');
+        const colorOptions = document.getElementById('colorOptions');
+        const colorsInput = document.getElementById('colorsInput');
+        const skuInput = document.getElementById('sku');
 
-        // Arrays to store uploaded files
+        // Arrays to store uploaded files and colors
         let uploadedImages = [];
         let uploadedVideo = null;
+        let colors = [];
+
+        // Generate SKU
+        generateSKUBtn.addEventListener('click', function() {
+            const name = document.getElementById('name').value;
+            const category = document.getElementById('category').value;
+            
+            if (!name || !category) {
+                showToast('Please enter product name and category first', 'warning');
+                return;
+            }
+            
+            // Generate SKU from name and category
+            const namePrefix = name.substring(0, 3).toUpperCase();
+            const categoryPrefix = category.substring(0, 2).toUpperCase();
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const sku = `NHR-${namePrefix}-${categoryPrefix}-${randomNum}`;
+            
+            skuInput.value = sku;
+            showToast('SKU generated successfully', 'success');
+        });
+
+        // Color Management
+        function addColor() {
+            const color = newColorInput.value.trim();
+            if (!color) {
+                showToast('Please enter a color', 'warning');
+                return;
+            }
+            
+            if (!colors.includes(color)) {
+                colors.push(color);
+                updateColorDisplay();
+                newColorInput.value = '';
+                showToast('Color added', 'success');
+            } else {
+                showToast('Color already exists', 'warning');
+            }
+        }
+
+        function removeColor(colorToRemove) {
+            colors = colors.filter(color => color !== colorToRemove);
+            updateColorDisplay();
+            showToast('Color removed', 'success');
+        }
+
+        function updateColorDisplay() {
+            colorOptions.innerHTML = '';
+            colors.forEach(color => {
+                const tag = document.createElement('div');
+                tag.className = 'option-tag';
+                tag.innerHTML = `
+                    ${color}
+                    <span class="remove-option" onclick="removeColor('${color}')">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                colorOptions.appendChild(tag);
+            });
+            colorsInput.value = colors.join(',');
+        }
 
         // Image Upload Handling
         imageUploadArea.addEventListener('click', () => imageInput.click());
@@ -771,20 +1033,43 @@
         }
 
         function handleImageFiles(files) {
+            // Clear previous error
+            document.getElementById('imagesError').style.display = 'none';
+            imageUploadArea.classList.remove('has-error');
+            
+            // Validate files
+            const validFiles = [];
+            const invalidFiles = [];
+            
             files.forEach(file => {
                 if (!file.type.startsWith('image/')) {
-                    showToast('Please upload only image files', 'error');
+                    invalidFiles.push(file.name);
                     return;
                 }
 
                 if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                    showToast('Image file size should be less than 10MB', 'error');
+                    invalidFiles.push(`${file.name} (too large)`);
                     return;
                 }
 
-                // Upload to server
-                uploadImageToServer(file);
+                validFiles.push(file);
             });
+
+            if (invalidFiles.length > 0) {
+                showToast(`Invalid files: ${invalidFiles.join(', ')}`, 'error');
+            }
+
+            if (validFiles.length > 0) {
+                // Create previews
+                validFiles.forEach(file => {
+                    createImagePreview(file);
+                });
+                
+                // Add to FormData
+                validFiles.forEach(file => {
+                    uploadedImages.push(file);
+                });
+            }
         }
 
         function handleVideoUpload(e) {
@@ -805,100 +1090,48 @@
                 return;
             }
 
-            // Upload to server
-            uploadVideoToServer(file);
+            uploadedVideo = file;
+            createVideoPreview(file);
         }
 
-        function uploadImageToServer(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            loadingOverlay.classList.add('active');
-
-            fetch('/api/upload/image', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                loadingOverlay.classList.remove('active');
-                
-                if (data.success) {
-                    uploadedImages.push(data.url);
-                    displayImagePreview(data.url, file.name);
-                    showToast('Image uploaded successfully', 'success');
-                } else {
-                    showToast(data.message || 'Failed to upload image', 'error');
-                }
-            })
-            .catch(error => {
-                loadingOverlay.classList.remove('active');
-                showToast('Error uploading image', 'error');
-                console.error('Upload error:', error);
-            });
-        }
-
-        function uploadVideoToServer(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            loadingOverlay.classList.add('active');
-
-            fetch('/api/upload/video', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                loadingOverlay.classList.remove('active');
-                
-                if (data.success) {
-                    uploadedVideo = data.url;
-                    displayVideoPreview(data.url, file.name);
-                    showToast('Video uploaded successfully', 'success');
-                } else {
-                    showToast(data.message || 'Failed to upload video', 'error');
-                }
-            })
-            .catch(error => {
-                loadingOverlay.classList.remove('active');
-                showToast('Error uploading video', 'error');
-                console.error('Upload error:', error);
-            });
-        }
-
-        function displayImagePreview(url, filename) {
-            const previewItem = document.createElement('div');
-            previewItem.className = 'preview-item';
+        function createImagePreview(file) {
+            const reader = new FileReader();
             
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = filename;
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-btn';
-            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            removeBtn.onclick = () => {
-                previewItem.remove();
-                const index = uploadedImages.indexOf(url);
-                if (index > -1) {
-                    uploadedImages.splice(index, 1);
-                }
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = file.name;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => {
+                    previewItem.remove();
+                    const index = uploadedImages.findIndex(f => f.name === file.name);
+                    if (index > -1) {
+                        uploadedImages.splice(index, 1);
+                    }
+                };
+                
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeBtn);
+                imagePreview.appendChild(previewItem);
             };
             
-            previewItem.appendChild(img);
-            previewItem.appendChild(removeBtn);
-            imagePreview.appendChild(previewItem);
+            reader.readAsDataURL(file);
         }
 
-        function displayVideoPreview(url, filename) {
+        function createVideoPreview(file) {
             videoPreview.innerHTML = '';
             
             const previewItem = document.createElement('div');
             previewItem.className = 'preview-item';
             
             const video = document.createElement('video');
-            video.src = url;
+            video.src = URL.createObjectURL(file);
             video.controls = true;
             
             const removeBtn = document.createElement('button');
@@ -907,6 +1140,7 @@
             removeBtn.onclick = () => {
                 previewItem.remove();
                 uploadedVideo = null;
+                videoInput.value = '';
             };
             
             previewItem.appendChild(video);
@@ -914,49 +1148,97 @@
             videoPreview.appendChild(previewItem);
         }
 
+        // Form Validation
+        function validateForm() {
+            let isValid = true;
+            
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+                el.textContent = '';
+            });
+            
+            document.querySelectorAll('.form-group').forEach(el => {
+                el.classList.remove('has-error');
+            });
+
+            // Validate required fields
+            const requiredFields = [
+                { id: 'name', message: 'Product name is required' },
+                { id: 'category', message: 'Category is required' },
+                { id: 'description', message: 'Description is required' },
+                { id: 'price', message: 'Price is required' },
+                { id: 'stock', message: 'Stock quantity is required' }
+            ];
+
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                const errorElement = document.getElementById(field.id + 'Error');
+                
+                if (!element.value.trim()) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = field.message;
+                    errorElement.style.display = 'block';
+                } else if (field.id === 'price' && parseFloat(element.value) <= 0) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = 'Price must be greater than 0';
+                    errorElement.style.display = 'block';
+                } else if (field.id === 'stock' && parseInt(element.value) < 0) {
+                    isValid = false;
+                    element.parentElement.classList.add('has-error');
+                    errorElement.textContent = 'Stock cannot be negative';
+                    errorElement.style.display = 'block';
+                }
+            });
+
+            // Validate images
+            if (uploadedImages.length === 0) {
+                isValid = false;
+                imageUploadArea.classList.add('has-error');
+                document.getElementById('imagesError').textContent = 'At least one product image is required';
+                document.getElementById('imagesError').style.display = 'block';
+            }
+
+            return isValid;
+        }
+
         // Form Submission
         addProductForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Validate required fields
-            const productName = document.getElementById('productName').value.trim();
-            const productCategory = document.getElementById('productCategory').value;
-            const productDescription = document.getElementById('productDescription').value.trim();
-            const productPrice = document.getElementById('productPrice').value;
-            const productStock = document.getElementById('productStock').value;
-            
-            if (!productName || !productCategory || !productDescription || !productPrice || !productStock) {
-                showToast('Please fill in all required fields', 'error');
+            if (!validateForm()) {
+                showToast('Please fix the errors in the form', 'error');
                 return;
             }
             
-            if (uploadedImages.length === 0) {
-                showToast('Please upload at least one product image', 'error');
-                return;
+            // Update hidden colors input
+            colorsInput.value = colors.join(',');
+            
+            // Prepare FormData
+            const formData = new FormData(this);
+            
+            // Add uploaded images
+            uploadedImages.forEach((file, index) => {
+                formData.append(`image_${index}`, file);
+            });
+            
+            // Add video if exists
+            if (uploadedVideo) {
+                formData.append('video', uploadedVideo);
             }
-            
-            // Prepare product data
-            const productData = {
-                name: productName,
-                description: productDescription,
-                price: parseFloat(productPrice),
-                category: productCategory,
-                stock: parseInt(productStock),
-                featured: document.getElementById('featuredProduct').checked,
-                image_url: uploadedImages[0], // First image as main image
-                image_urls: uploadedImages,
-                video_url: uploadedVideo || ''
-            };
-            
-            // Submit to server
+
+            // Show loading
             loadingOverlay.classList.add('active');
-            
-            fetch('/api/admin/products', {
+
+            // Submit form
+            fetch(this.action, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(productData)
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
             .then(response => response.json())
             .then(data => {
@@ -972,13 +1254,27 @@
                         videoPreview.innerHTML = '';
                         uploadedImages = [];
                         uploadedVideo = null;
+                        colors = [];
+                        colorOptions.innerHTML = '';
                         
-                        // Redirect to products page after 2 seconds
+                        // Redirect to products page
                         setTimeout(() => {
                             window.location.href = '/admin/products';
                         }, 2000);
                     }, 1500);
                 } else {
+                    // Display errors
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            const errorElement = document.getElementById(field + 'Error');
+                            const formGroup = document.getElementById(field).parentElement;
+                            if (errorElement && formGroup) {
+                                formGroup.classList.add('has-error');
+                                errorElement.textContent = data.errors[field][0];
+                                errorElement.style.display = 'block';
+                            }
+                        });
+                    }
                     showToast(data.error || 'Failed to add product', 'error');
                 }
             })
@@ -988,6 +1284,52 @@
                 console.error('Error:', error);
             });
         });
+
+        // Preview Product
+        function previewProduct() {
+            if (!validateForm()) {
+                showToast('Please fix errors before previewing', 'error');
+                return;
+            }
+            
+            // Store form data temporarily
+            const formData = new FormData(addProductForm);
+            
+            // Create preview window
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(`
+                <html>
+                <head>
+                    <title>Product Preview</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .preview-container { max-width: 800px; margin: 0 auto; }
+                        .product-images img { max-width: 100%; height: auto; }
+                        .product-info { margin-top: 20px; }
+                        .price { color: #9d4edd; font-size: 24px; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-container">
+                        <h1>Product Preview</h1>
+                        <div class="product-images">
+                            ${uploadedImages.length > 0 ? 
+                                `<img src="${URL.createObjectURL(uploadedImages[0])}" alt="Product Preview">` : 
+                                '<p>No images uploaded</p>'}
+                        </div>
+                        <div class="product-info">
+                            <h2>${document.getElementById('name').value}</h2>
+                            <div class="price">₦${parseFloat(document.getElementById('price').value).toFixed(2)}</div>
+                            <p>${document.getElementById('description').value}</p>
+                            <p><strong>Category:</strong> ${document.getElementById('category').value}</p>
+                            <p><strong>Stock:</strong> ${document.getElementById('stock').value} units</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+        }
 
         // Toast Functions
         function showToast(message, type = 'success') {
@@ -1003,20 +1345,51 @@
             toast.classList.remove('show');
         }
 
-        // Initialize tooltips and other UI elements
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // Set default values
-            document.getElementById('productStock').value = 100;
-            document.getElementById('productPrice').value = '';
+            document.getElementById('stock').value = 100;
             
-            // Add currency formatting
-            const priceInput = document.getElementById('productPrice');
+            // Add currency formatting to price field
+            const priceInput = document.getElementById('price');
             priceInput.addEventListener('blur', function() {
                 if (this.value) {
                     this.value = parseFloat(this.value).toFixed(2);
                 }
             });
+            
+            // Add percentage validation for discount if exists
+            const discountInput = document.getElementById('discount');
+            if (discountInput) {
+                discountInput.addEventListener('blur', function() {
+                    if (this.value) {
+                        let value = parseFloat(this.value);
+                        if (value < 0) value = 0;
+                        if (value > 100) value = 100;
+                        this.value = value;
+                    }
+                });
+            }
+            
+            // Auto-generate SKU on name/category change
+            document.getElementById('name').addEventListener('blur', autoGenerateSKU);
+            document.getElementById('category').addEventListener('change', autoGenerateSKU);
         });
+
+        function autoGenerateSKU() {
+            const name = document.getElementById('name').value;
+            const category = document.getElementById('category').value;
+            const currentSKU = document.getElementById('sku').value;
+            
+            // Only auto-generate if SKU is empty
+            if (!currentSKU && name && category) {
+                const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
+                const categoryPrefix = category.substring(0, 2).toUpperCase();
+                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
+                document.getElementById('sku').value = sku;
+            }
+        }
     </script>
 </body>
 </html>
