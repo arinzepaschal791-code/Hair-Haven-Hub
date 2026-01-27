@@ -1,8 +1,9 @@
 Flask==2.3.3
 Werkzeug==2.3.7
 Flask-SQLAlchemy==3.0.5
-SQLAlchemy==1.4.49  # ⬅️ Original version that worked
+SQLAlchemy==1.4.49
 psycopg2-binary==2.9.7
 Flask-Login==0.6.2
 python-dotenv==1.0.0
 gunicorn==20.1.0
+itsdangerous==2.1.2
