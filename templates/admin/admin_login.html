@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -97,15 +97,22 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            height: 48px;
         }
         
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
         
-        .login-btn:active {
+        .login-btn:active:not(:disabled) {
             transform: translateY(0);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
         
         .error-message {
@@ -116,9 +123,25 @@
             margin-bottom: 20px;
             display: none;
             text-align: center;
+            font-size: 14px;
         }
         
         .error-message.show {
+            display: block;
+        }
+        
+        .success-message {
+            background: #e8f7ee;
+            color: #2a8356;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .success-message.show {
             display: block;
         }
         
@@ -157,6 +180,24 @@
             text-decoration: underline;
         }
         
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -173,21 +214,41 @@
         </div>
         
         <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
         
-        <form id="loginForm">
+        <!-- Show success message if redirected from password change -->
+        {% if request.args.get('password_changed') %}
+        <div class="success-message show" id="autoSuccessMessage">
+            Password changed successfully! Please login with your new password.
+        </div>
+        {% endif %}
+        
+        <!-- Show logout message if redirected from logout -->
+        {% if request.args.get('logged_out') %}
+        <div class="success-message show" id="autoSuccessMessage">
+            Successfully logged out.
+        </div>
+        {% endif %}
+        
+        <form id="loginForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="Enter admin username">
+                <input type="text" id="username" name="username" required 
+                       placeholder="Enter admin username" 
+                       value="{{ username or '' }}">
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter password">
+                <input type="password" id="password" name="password" required 
+                       placeholder="Enter password">
             </div>
             
             <button type="submit" class="login-btn" id="loginBtn">
                 <span id="btnText">Login</span>
-                <div id="btnSpinner" style="display: none;">Loading...</div>
+                <div class="spinner" id="btnSpinner"></div>
             </button>
         </form>
         
@@ -199,23 +260,34 @@
         </div>
         
         <div class="back-link">
-            <a href="/">← Back to Store</a>
+            <a href="{{ url_for('index') }}">← Back to Store</a>
         </div>
     </div>
 
     <script>
+        // Handle form submission
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
             const loginBtn = document.getElementById('loginBtn');
             const btnText = document.getElementById('btnText');
             const btnSpinner = document.getElementById('btnSpinner');
+            const form = this;
             
-            // Reset error
+            // Reset messages
             errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+            
+            // Validate inputs
+            if (!username.trim() || !password.trim()) {
+                errorMessage.textContent = 'Please enter both username and password';
+                errorMessage.classList.add('show');
+                return;
+            }
             
             // Show loading
             btnText.style.display = 'none';
@@ -223,28 +295,38 @@
             loginBtn.disabled = true;
             
             try {
-                const response = await fetch('/api/admin/login', {
+                // Submit the form via fetch API
+                const formData = new FormData(form);
+                const response = await fetch('{{ url_for("admin_login") }}', {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Redirect to admin dashboard
-                    window.location.href = '/admin/dashboard';
+                    // Show success message
+                    successMessage.textContent = data.message || 'Login successful!';
+                    successMessage.classList.add('show');
+                    
+                    // Redirect to admin dashboard after short delay
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || '{{ url_for("admin_dashboard") }}';
+                    }, 1000);
                 } else {
                     // Show error
                     errorMessage.textContent = data.message || 'Invalid credentials';
                     errorMessage.classList.add('show');
+                    
+                    // Shake animation for error
+                    form.classList.add('shake');
+                    setTimeout(() => form.classList.remove('shake'), 500);
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 errorMessage.textContent = 'Network error. Please try again.';
                 errorMessage.classList.add('show');
             } finally {
@@ -262,7 +344,42 @@
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
                 document.getElementById('errorMessage').classList.remove('show');
+                document.getElementById('successMessage').classList.remove('show');
             });
+        });
+        
+        // Add shake animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .shake {
+                animation: shake 0.5s;
+            }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Check URL for messages
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error')) {
+            document.getElementById('errorMessage').textContent = 
+                decodeURIComponent(urlParams.get('error'));
+            document.getElementById('errorMessage').classList.add('show');
+        }
+        if (urlParams.get('message')) {
+            document.getElementById('successMessage').textContent = 
+                decodeURIComponent(urlParams.get('message'));
+            document.getElementById('successMessage').classList.add('show');
+        }
+        
+        // Enter key to submit form
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
+                document.getElementById('loginForm').requestSubmit();
+            }
         });
     </script>
 </body>
