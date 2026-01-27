@@ -1,4 +1,4 @@
-# main.py - COMPLETE FIXED VERSION WITH ALL FEATURES
+# main.py - COMPLETE VERSION WITH ALL FUNCTIONALITIES
 import os
 import sys
 import traceback
@@ -7,8 +7,9 @@ import random
 import string
 from functools import wraps
 import json
+from werkzeug.utils import secure_filename
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -32,6 +33,9 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['SITE_LOGO'] = 'logo.png'
+
+# Allowed upload extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # ========== INITIALIZE EXTENSIONS ==========
 db = SQLAlchemy(app)
@@ -206,44 +210,93 @@ BUSINESS_CONFIG = {
     'site_logo': 'logo.png'
 }
 
-# ========== DELIVERY CALCULATOR ==========
-class DeliveryCalculator:
-    FREE_DELIVERY_THRESHOLD = 150000.00
-    LAGOS_DELIVERY = 3000.00
-    OUTSIDE_LAGOS_DELIVERY = 5000.00
+# ========== HELPER FUNCTIONS ==========
+def format_price(value):
+    """Safely format price value"""
+    try:
+        if value is None:
+            return "₦0.00"
+        if isinstance(value, str):
+            value = float(value)
+        return f"₦{value:,.2f}"
+    except (ValueError, TypeError):
+        return "₦0.00"
+
+def generate_order_number():
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return f'NORA-{timestamp}-{random_str}'
+
+def calculate_cart_total():
+    total = 0
+    if 'cart' in session:
+        for item in session['cart']:
+            price = item.get('price', 0)
+            quantity = item.get('quantity', 1)
+            total += float(price) * quantity
+    return total
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ========== AUTHENTICATION DECORATORS ==========
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_id' not in session or not session.get('is_admin'):
+            flash('Admin access required. Please login first.', 'danger')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def customer_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'customer_id' not in session:
+            flash('Please login to access this page', 'warning')
+            session['pending_checkout'] = True
+            return redirect(url_for('customer_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ========== CONTEXT PROCESSOR ==========
+@app.context_processor
+def inject_global_vars():
+    """Make variables available to all templates"""
+    categories = []
+    cart_count = 0
+    cart_total = 0
     
-    LAGOS_AREAS = [
-        'Ikeja', 'Victoria Island', 'Lekki', 'Ikoyi', 'Surulere', 
-        'Yaba', 'Lagos Island', 'Ajah', 'Apapa', 'Festac',
-        'Gbagada', 'Maryland', 'Magodo', 'Anthony', 'Ojota',
-        'Lagos', 'VI', 'IK', 'Aj'
-    ]
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        print(f"❌ Context processor error (categories): {str(e)}", file=sys.stderr)
+        categories = []
     
-    @staticmethod
-    def calculate_delivery_fee(cart_total, delivery_city=""):
-        if cart_total >= DeliveryCalculator.FREE_DELIVERY_THRESHOLD:
-            return 0.0
-        
-        if not delivery_city:
-            return DeliveryCalculator.LAGOS_DELIVERY
-        
-        delivery_city = delivery_city.lower()
-        is_lagos = any(area.lower() in delivery_city for area in DeliveryCalculator.LAGOS_AREAS)
-        
-        return DeliveryCalculator.LAGOS_DELIVERY if is_lagos else DeliveryCalculator.OUTSIDE_LAGOS_DELIVERY
+    if 'cart' in session:
+        cart_count = sum(item.get('quantity', 1) for item in session['cart'])
+        cart_total = calculate_cart_total()
     
-    @staticmethod
-    def get_delivery_message(cart_total, delivery_city=""):
-        fee = DeliveryCalculator.calculate_delivery_fee(cart_total, delivery_city)
-        
-        if fee == 0:
-            return "🎉 FREE DELIVERY!"
-        
-        remaining = DeliveryCalculator.FREE_DELIVERY_THRESHOLD - cart_total
-        if remaining > 0:
-            return f"Delivery: ₦{fee:,.2f} | Add ₦{remaining:,.2f} more for FREE delivery!"
-        
-        return f"Delivery Fee: ₦{fee:,.2f}"
+    return dict(
+        now=datetime.now(),
+        categories=categories,
+        cart_count=cart_count,
+        cart_total=cart_total,
+        current_year=datetime.now().year,
+        config=BUSINESS_CONFIG,
+        format_price=format_price
+    )
+
+# ========== ERROR HANDLERS ==========
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html', config=BUSINESS_CONFIG), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"❌ 500 Error: {str(error)}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    return render_template('500.html', config=BUSINESS_CONFIG), 500
 
 # ========== DATABASE INITIALIZATION ==========
 def init_db():
@@ -290,21 +343,21 @@ def init_db():
                 
                 sample_products = [
                     ('Brazilian Body Wave 24"', 12999.99, 15999.99, 50, 'hair-bundles', 
-                     'Premium Brazilian body wave hair, 24 inches, 100% human hair', 'brazilian-wave.jpg', 'body wave'),
+                     'Premium Brazilian body wave hair, 24 inches, 100% human hair', 'default-product.jpg', 'body wave'),
                     ('Peruvian Straight 22"', 14999.99, 17999.99, 30, 'hair-bundles',
-                     'Silky straight Peruvian hair, 22 inches, natural black', 'peruvian-straight.jpg', 'straight'),
+                     'Silky straight Peruvian hair, 22 inches, natural black', 'default-product.jpg', 'straight'),
                     ('13x4 Lace Frontal Wig', 19999.99, 23999.99, 20, 'lace-wigs',
-                     'HD lace frontal wig with natural hairline', 'lace-wig.jpg', 'straight'),
+                     'HD lace frontal wig with natural hairline', 'default-product.jpg', 'straight'),
                     ('4x4 Lace Closure', 8999.99, 11999.99, 40, 'closures',
-                     '4x4 HD lace closure with bleached knots', 'closure.jpg', 'straight'),
+                     '4x4 HD lace closure with bleached knots', 'default-product.jpg', 'straight'),
                     ('13x6 Lace Frontal', 15999.99, 19999.99, 25, 'frontals',
-                     '13x6 lace frontal for natural look', 'frontal.jpg', 'curly'),
+                     '13x6 lace frontal for natural look', 'default-product.jpg', 'curly'),
                     ('Hair Growth Oil', 2999.99, 3999.99, 100, 'hair-care',
-                     'Essential oils for hair growth and thickness', 'hair-oil.jpg', None),
+                     'Essential oils for hair growth and thickness', 'default-product.jpg', None),
                     ('360 Lace Frontal Wig', 22999.99, 27999.99, 10, '360-wigs',
-                     '360 lace wig for full perimeter styling', '360-wig.jpg', 'wavy'),
+                     '360 lace wig for full perimeter styling', 'default-product.jpg', 'wavy'),
                     ('Malaysian Straight 26"', 16999.99, 20999.99, 15, 'hair-bundles',
-                     'Premium Malaysian straight hair, 26 inches', 'malaysian-straight.jpg', 'straight'),
+                     'Premium Malaysian straight hair, 26 inches', 'default-product.jpg', 'straight'),
                 ]
                 
                 for i, (name, price, compare_price, quantity, category_slug, desc, image, texture) in enumerate(sample_products):
@@ -361,91 +414,6 @@ def init_db():
 # ========== INITIALIZE DATABASE ==========
 init_db()
 
-# ========== HELPER FUNCTIONS ==========
-def format_price(value):
-    """Safely format price value"""
-    try:
-        if value is None:
-            return "₦0.00"
-        if isinstance(value, str):
-            value = float(value)
-        return f"₦{value:,.2f}"
-    except (ValueError, TypeError):
-        return "₦0.00"
-
-def generate_order_number():
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    return f'NORA-{timestamp}-{random_str}'
-
-def calculate_cart_total():
-    total = 0
-    if 'cart' in session:
-        for item in session['cart']:
-            price = item.get('price', 0)
-            quantity = item.get('quantity', 1)
-            total += float(price) * quantity
-    return total
-
-# ========== AUTHENTICATION DECORATORS ==========
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'admin_id' not in session or not session.get('is_admin'):
-            flash('Admin access required. Please login first.', 'danger')
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def customer_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'customer_id' not in session:
-            flash('Please login to access this page', 'warning')
-            session['pending_checkout'] = True
-            return redirect(url_for('customer_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# ========== CONTEXT PROCESSOR ==========
-@app.context_processor
-def inject_global_vars():
-    """Make variables available to all templates"""
-    categories = []
-    cart_count = 0
-    cart_total = 0
-    
-    try:
-        categories = Category.query.all()
-    except Exception as e:
-        print(f"❌ Context processor error (categories): {str(e)}", file=sys.stderr)
-        categories = []
-    
-    if 'cart' in session:
-        cart_count = sum(item.get('quantity', 1) for item in session['cart'])
-        cart_total = calculate_cart_total()
-    
-    return dict(
-        now=datetime.now(),
-        categories=categories,
-        cart_count=cart_count,
-        cart_total=cart_total,
-        current_year=datetime.now().year,
-        config=BUSINESS_CONFIG,
-        format_price=format_price
-    )
-
-# ========== ERROR HANDLERS ==========
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    print(f"❌ 500 Error: {error}", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    return render_template('500.html'), 500
-
 # ========== PUBLIC ROUTES ==========
 
 @app.route('/')
@@ -459,17 +427,19 @@ def index():
         return render_template('index.html',
                              featured_products=featured_products,
                              categories=categories,
-                             reviews=reviews)
+                             reviews=reviews,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Homepage error: {str(e)}", file=sys.stderr)
         return render_template('index.html',
                              featured_products=[],
                              categories=[],
-                             reviews=[])
+                             reviews=[],
+                             config=BUSINESS_CONFIG)
 
 @app.route('/shop')
 def shop():
-    """Shop page - FIXED PAGINATION"""
+    """Shop page"""
     try:
         category_id = request.args.get('category', type=int)
         search = request.args.get('search', '')
@@ -484,7 +454,6 @@ def shop():
         if search:
             query = query.filter(Product.name.ilike(f'%{search}%'))
         
-        # FIXED: Proper pagination handling
         products_pagination = query.order_by(Product.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
@@ -495,7 +464,8 @@ def shop():
                              products=products_pagination,
                              categories=categories,
                              category_id=category_id,
-                             search_query=search)
+                             search_query=search,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Shop error: {str(e)}", file=sys.stderr)
         flash('Error loading products.', 'danger')
@@ -503,7 +473,8 @@ def shop():
                              products=[],
                              categories=[],
                              category_id=None,
-                             search_query='')
+                             search_query='',
+                             config=BUSINESS_CONFIG)
 
 @app.route('/product/<int:id>')
 def product_detail(id):
@@ -521,7 +492,8 @@ def product_detail(id):
         return render_template('product_detail.html',
                              product=product,
                              related_products=related_products,
-                             reviews=reviews)
+                             reviews=reviews,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Product detail error: {str(e)}", file=sys.stderr)
         flash('Product not found.', 'danger')
@@ -532,7 +504,9 @@ def cart():
     """Shopping cart page"""
     cart_items = session.get('cart', [])
     subtotal = calculate_cart_total()
-    delivery_fee = DeliveryCalculator.calculate_delivery_fee(subtotal)
+    delivery_fee = 3000  # Default delivery fee
+    if subtotal >= 150000:
+        delivery_fee = 0
     total = subtotal + delivery_fee
     
     return render_template('cart.html',
@@ -540,7 +514,8 @@ def cart():
                          subtotal=subtotal,
                          delivery_fee=delivery_fee,
                          total=total,
-                         free_delivery_threshold=DeliveryCalculator.FREE_DELIVERY_THRESHOLD)
+                         free_delivery_threshold=150000,
+                         config=BUSINESS_CONFIG)
 
 @app.route('/add-to-cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
@@ -685,7 +660,7 @@ def customer_register():
             print(f"❌ Registration error: {str(e)}", file=sys.stderr)
             flash('Error during registration. Please try again.', 'danger')
     
-    return render_template('register.html')
+    return render_template('register.html', config=BUSINESS_CONFIG)
 
 @app.route('/login', methods=['GET', 'POST'])
 def customer_login():
@@ -715,7 +690,7 @@ def customer_login():
             print(f"❌ Login error: {str(e)}", file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
     
-    return render_template('login.html')
+    return render_template('login.html', config=BUSINESS_CONFIG)
 
 @app.route('/logout')
 def customer_logout():
@@ -730,16 +705,21 @@ def customer_logout():
 @customer_required
 def account():
     """Customer account page"""
-    customer = Customer.query.get(session['customer_id'])
-    orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
-    
-    return render_template('account.html', customer=customer, orders=orders)
+    try:
+        customer = Customer.query.get(session['customer_id'])
+        orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
+        
+        return render_template('account.html', customer=customer, orders=orders, config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Account error: {str(e)}", file=sys.stderr)
+        flash('Error loading account information.', 'danger')
+        return redirect(url_for('index'))
 
 # ========== CHECKOUT ROUTES ==========
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    """Checkout page with delivery calculator"""
+    """Checkout page"""
     if 'customer_id' not in session:
         session['pending_checkout'] = True
         flash('Please login to complete your order', 'warning')
@@ -752,7 +732,10 @@ def checkout():
     
     # Calculate totals
     subtotal = calculate_cart_total()
-    delivery_city = request.form.get('city', '')
+    delivery_fee = 3000  # Default Lagos delivery
+    if subtotal >= 150000:
+        delivery_fee = 0
+    total = subtotal + delivery_fee
     
     if request.method == 'POST':
         try:
@@ -771,8 +754,12 @@ def checkout():
                 flash('Please fill in all required fields.', 'danger')
                 return redirect(url_for('checkout'))
             
-            # Calculate delivery fee
-            delivery_fee = DeliveryCalculator.calculate_delivery_fee(subtotal, city)
+            # Adjust delivery fee based on city
+            if city.lower() in ['lagos', 'ikeja', 'vi', 'lekki', 'ikoyi', 'surulere', 'yaba', 'ajah']:
+                delivery_fee = 3000 if subtotal < 150000 else 0
+            else:
+                delivery_fee = 5000 if subtotal < 150000 else 0
+            
             total = subtotal + delivery_fee
             
             # Create order
@@ -817,7 +804,8 @@ def checkout():
             flash(f'Order #{order.order_number} created successfully! We will contact you shortly.', 'success')
             return render_template('order.html',
                                  order=order,
-                                 bank_details=BUSINESS_CONFIG)
+                                 bank_details=BUSINESS_CONFIG,
+                                 config=BUSINESS_CONFIG)
             
         except Exception as e:
             db.session.rollback()
@@ -826,9 +814,6 @@ def checkout():
             return redirect(url_for('checkout'))
     
     # GET request - show checkout form
-    delivery_fee = DeliveryCalculator.calculate_delivery_fee(subtotal, delivery_city)
-    total = subtotal + delivery_fee
-    
     customer = None
     if 'customer_id' in session:
         customer = Customer.query.get(session['customer_id'])
@@ -838,13 +823,14 @@ def checkout():
                          subtotal=subtotal,
                          delivery_fee=delivery_fee,
                          total=total,
-                         free_delivery_threshold=DeliveryCalculator.FREE_DELIVERY_THRESHOLD,
-                         customer=customer)
+                         free_delivery_threshold=150000,
+                         customer=customer,
+                         config=BUSINESS_CONFIG)
 
 @app.route('/about')
 def about():
     """About page"""
-    return render_template('about.html')
+    return render_template('about.html', config=BUSINESS_CONFIG)
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -860,21 +846,60 @@ def contact():
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('contact'))
             
-            # Here you would save to database or send email
+            # In a real app, you would save to database or send email
             flash('Your message has been sent successfully! We will contact you soon.', 'success')
             return redirect(url_for('contact'))
             
         except Exception as e:
             flash('Error sending message. Please try again.', 'danger')
     
-    return render_template('contact.html')
+    return render_template('contact.html', config=BUSINESS_CONFIG)
+
+# ========== REVIEW ROUTES ==========
+
+@app.route('/add-review/<int:product_id>', methods=['POST'])
+@customer_required
+def add_review(product_id):
+    """Add product review"""
+    try:
+        product = Product.query.get_or_404(product_id)
+        rating = int(request.form.get('rating', 5))
+        comment = request.form.get('comment', '')
+        
+        if not comment:
+            flash('Please provide a review comment.', 'warning')
+            return redirect(url_for('product_detail', id=product_id))
+        
+        customer = Customer.query.get(session['customer_id'])
+        
+        review = Review(
+            product_id=product_id,
+            customer_name=f"{customer.first_name} {customer.last_name}",
+            email=customer.email,
+            rating=rating,
+            comment=comment,
+            location=customer.city or 'Unknown',
+            approved=False  # Admin needs to approve reviews
+        )
+        
+        db.session.add(review)
+        db.session.commit()
+        
+        flash('Thank you for your review! It will be visible after approval.', 'success')
+        return redirect(url_for('product_detail', id=product_id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Add review error: {str(e)}", file=sys.stderr)
+        flash('Error submitting review. Please try again.', 'danger')
+        return redirect(url_for('product_detail', id=product_id))
 
 # ========== ADMIN ROUTES ==========
 
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login - COMPLETE FIXED VERSION"""
+    """Admin login"""
     # If already logged in, redirect to dashboard
     if 'admin_id' in session and session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
@@ -884,51 +909,24 @@ def admin_login():
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
             
-            # Check for empty fields
-            if not username or not password:
-                flash('Please enter both username and password', 'danger')
-                return render_template('admin/admin_login.html')
-            
             # Query admin user
             admin = User.query.filter_by(username=username, is_admin=True).first()
             
             if admin and admin.check_password(password):
-                # Set session variables
                 session['admin_id'] = admin.id
                 session['admin_name'] = admin.username
                 session['is_admin'] = True
-                session.permanent = True
                 
                 flash('Admin login successful!', 'success')
-                
-                # Handle AJAX requests
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return jsonify({
-                        'success': True,
-                        'message': 'Login successful!',
-                        'redirect_url': url_for('admin_dashboard')
-                    })
-                
                 return redirect(url_for('admin_dashboard'))
             else:
-                flash('Invalid admin credentials. Try admin/admin123', 'danger')
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return jsonify({
-                        'success': False,
-                        'message': 'Invalid admin credentials'
-                    })
+                flash('Invalid admin credentials. Use admin/admin123', 'danger')
                 
         except Exception as e:
             print(f"❌ Admin login error: {str(e)}", file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    'success': False,
-                    'message': 'Server error. Please try again.'
-                })
     
-    # GET request - show login form
-    return render_template('admin/admin_login.html')
+    return render_template('admin/admin_login.html', config=BUSINESS_CONFIG)
 
 @app.route('/admin/logout')
 def admin_logout():
@@ -962,7 +960,8 @@ def admin_dashboard():
                              pending_orders=pending_orders,
                              revenue=revenue,
                              recent_orders=recent_orders,
-                             low_stock_products=low_stock_products)
+                             low_stock_products=low_stock_products,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin dashboard error: {str(e)}", file=sys.stderr)
         flash('Error loading dashboard.', 'danger')
@@ -973,7 +972,8 @@ def admin_dashboard():
                              pending_orders=0,
                              revenue=0,
                              recent_orders=[],
-                             low_stock_products=[])
+                             low_stock_products=[],
+                             config=BUSINESS_CONFIG)
 
 @app.route('/admin/products')
 @admin_required
@@ -985,13 +985,15 @@ def admin_products():
         
         return render_template('admin/products.html',
                              products=products,
-                             categories=categories)
+                             categories=categories,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin products error: {str(e)}", file=sys.stderr)
         flash('Error loading products.', 'danger')
         return render_template('admin/products.html',
                              products=[],
-                             categories=[])
+                             categories=[],
+                             config=BUSINESS_CONFIG)
 
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
@@ -1041,7 +1043,7 @@ def admin_add_product():
             flash('Error adding product. Please try again.', 'danger')
     
     categories = Category.query.all()
-    return render_template('admin/add_product.html', categories=categories)
+    return render_template('admin/add_product.html', categories=categories, config=BUSINESS_CONFIG)
 
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
@@ -1077,7 +1079,7 @@ def admin_edit_product(id):
             flash('Error updating product. Please try again.', 'danger')
     
     categories = Category.query.all()
-    return render_template('admin/edit_product.html', product=product, categories=categories)
+    return render_template('admin/edit_product.html', product=product, categories=categories, config=BUSINESS_CONFIG)
 
 @app.route('/admin/products/delete/<int:id>', methods=['POST'])
 @admin_required
@@ -1113,15 +1115,17 @@ def admin_orders():
         
         orders = query.order_by(Order.created_at.desc()).all()
         
-        return render_template('admin/order.html',
+        return render_template('admin/orders.html',
                              orders=orders,
-                             status=status)
+                             status=status,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin orders error: {str(e)}", file=sys.stderr)
         flash('Error loading orders.', 'danger')
-        return render_template('admin/order.html',
+        return render_template('admin/orders.html',
                              orders=[],
-                             status='all')
+                             status='all',
+                             config=BUSINESS_CONFIG)
 
 @app.route('/admin/orders/<int:id>')
 @admin_required
@@ -1133,7 +1137,8 @@ def admin_order_detail(id):
         
         return render_template('admin/order_detail.html',
                              order=order,
-                             order_items=order_items)
+                             order_items=order_items,
+                             config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin order detail error: {str(e)}", file=sys.stderr)
         flash('Error loading order details.', 'danger')
@@ -1168,11 +1173,11 @@ def admin_customers():
     """Admin customers list"""
     try:
         customers = Customer.query.order_by(Customer.created_at.desc()).all()
-        return render_template('admin/customers.html', customers=customers)
+        return render_template('admin/customers.html', customers=customers, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
         flash('Error loading customers.', 'danger')
-        return render_template('admin/customers.html', customers=[])
+        return render_template('admin/customers.html', customers=[], config=BUSINESS_CONFIG)
 
 @app.route('/admin/reviews')
 @admin_required
@@ -1180,11 +1185,11 @@ def admin_reviews():
     """Admin reviews"""
     try:
         reviews = Review.query.order_by(Review.created_at.desc()).all()
-        return render_template('admin/reviews.html', reviews=reviews)
+        return render_template('admin/reviews.html', reviews=reviews, config=BUSINESS_CONFIG)
     except Exception as e:
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
         flash('Error loading reviews.', 'danger')
-        return render_template('admin/reviews.html', reviews=[])
+        return render_template('admin/reviews.html', reviews=[], config=BUSINESS_CONFIG)
 
 @app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
 @admin_required
@@ -1219,6 +1224,50 @@ def admin_delete_review(id):
         db.session.rollback()
         flash('Error deleting review.', 'danger')
         return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/categories')
+@admin_required
+def admin_categories():
+    """Admin categories"""
+    try:
+        categories = Category.query.order_by(Category.name).all()
+        return render_template('admin/categories.html', categories=categories, config=BUSINESS_CONFIG)
+    except Exception as e:
+        print(f"❌ Admin categories error: {str(e)}", file=sys.stderr)
+        flash('Error loading categories.', 'danger')
+        return render_template('admin/categories.html', categories=[], config=BUSINESS_CONFIG)
+
+@app.route('/admin/categories/add', methods=['GET', 'POST'])
+@admin_required
+def admin_add_category():
+    """Add category"""
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            description = request.form.get('description')
+            slug = request.form.get('slug', '').lower().replace(' ', '-')
+            
+            if not slug:
+                slug = name.lower().replace(' ', '-')
+            
+            category = Category(
+                name=name,
+                slug=slug,
+                description=description
+            )
+            
+            db.session.add(category)
+            db.session.commit()
+            
+            flash(f'Category "{name}" added successfully!', 'success')
+            return redirect(url_for('admin_categories'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Add category error: {str(e)}", file=sys.stderr)
+            flash('Error adding category. Please try again.', 'danger')
+    
+    return render_template('admin/add_category.html', config=BUSINESS_CONFIG)
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @admin_required
@@ -1255,45 +1304,14 @@ def admin_settings():
             print(f"❌ Change password error: {str(e)}", file=sys.stderr)
             flash('Error changing password. Please try again.', 'danger')
     
-    return render_template('admin/settings.html')
+    return render_template('admin/settings.html', config=BUSINESS_CONFIG)
 
-# ========== API ENDPOINTS ==========
+# ========== STATIC FILE SERVING ==========
 
-@app.route('/api/admin/login', methods=['POST'])
-def api_admin_login():
-    """API endpoint for admin login (for AJAX)"""
-    try:
-        data = request.get_json()
-        username = data.get('username', '').strip()
-        password = data.get('password', '').strip()
-        
-        if not username or not password:
-            return jsonify({'success': False, 'message': 'Username and password required'})
-        
-        admin = User.query.filter_by(username=username, is_admin=True).first()
-        
-        if admin and admin.check_password(password):
-            session['admin_id'] = admin.id
-            session['admin_name'] = admin.username
-            session['is_admin'] = True
-            
-            return jsonify({
-                'success': True,
-                'message': 'Login successful',
-                'redirect_url': url_for('admin_dashboard')
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Invalid credentials'
-            })
-            
-    except Exception as e:
-        print(f"❌ API login error: {str(e)}", file=sys.stderr)
-        return jsonify({
-            'success': False,
-            'message': 'Server error'
-        })
+@app.route('/static/uploads/<filename>')
+def uploaded_file(filename):
+    """Serve uploaded files"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # ========== HEALTH CHECK ==========
 @app.route('/health')
