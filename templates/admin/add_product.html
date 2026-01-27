@@ -246,20 +246,6 @@
             color: var(--gray);
         }
 
-        .file-upload-area .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .file-upload-area .btn:hover {
-            background: var(--primary-dark);
-        }
-
         #imagePreview {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -669,7 +655,7 @@
 
             <!-- Form Container -->
             <div class="form-container">
-                <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}">
+                <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
                     <!-- Product Basic Information -->
                     <div class="form-row">
                         <div class="form-group">
@@ -701,12 +687,6 @@
                                 <button type="button" id="generateSKU">Generate</button>
                             </div>
                             <small>Leave empty to auto-generate</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="image_url">Image URL</label>
-                            <input type="text" id="image_url" name="image_url" class="form-control" 
-                                   placeholder="e.g., product-image.jpg">
-                            <small>Filename of product image (upload to static/uploads folder)</small>
                         </div>
                     </div>
 
@@ -759,6 +739,25 @@
                         </div>
                     </div>
 
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label for="image">Product Image *</label>
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" onclick="document.getElementById('image').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload product image</p>
+                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
+                                <div class="btn">Browse Files</div>
+                            </div>
+                            <input type="file" id="image" name="image" accept="image/*" 
+                                   style="display: none;" onchange="previewImage(this)">
+                            <div id="imagePreview"></div>
+                            <input type="text" id="image_url" name="image_url" class="form-control mt-3" 
+                                   placeholder="Or enter image URL (optional)">
+                            <small>Upload image or provide image URL</small>
+                        </div>
+                    </div>
+
                     <!-- Product Status -->
                     <div class="form-row">
                         <div class="form-group">
@@ -781,15 +780,6 @@
                                 <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Image Upload (Simple version for now) -->
-                    <div class="form-group">
-                        <label>Product Image</label>
-                        <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">
-                            For now, manually upload images to the <code>static/uploads/</code> folder and enter the filename above.
-                            Advanced image upload will be added in future updates.
-                        </p>
                     </div>
 
                     <!-- Form Actions -->
@@ -828,6 +818,40 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const generateSKUBtn = document.getElementById('generateSKU');
         const skuInput = document.getElementById('sku');
+        const imagePreview = document.getElementById('imagePreview');
+
+        // Image Preview
+        function previewImage(input) {
+            imagePreview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Product Preview';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = function() {
+                        imagePreview.removeChild(previewItem);
+                        input.value = '';
+                    };
+                    
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(removeBtn);
+                    imagePreview.appendChild(previewItem);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
 
         // Generate SKU
         generateSKUBtn.addEventListener('click', function() {
@@ -911,57 +935,7 @@
             loadingOverlay.classList.add('active');
 
             // Submit form
-            fetch(this.action, {
-                method: 'POST',
-                body: new FormData(this),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (response.redirected) {
-                    // Form submitted successfully, redirecting
-                    window.location.href = response.url;
-                    return;
-                }
-                return response.json();
-            })
-            .then(data => {
-                loadingOverlay.classList.remove('active');
-                
-                if (data && data.success) {
-                    showToast('Product added successfully!', 'success');
-                    
-                    // Clear form after successful submission
-                    setTimeout(() => {
-                        addProductForm.reset();
-                        
-                        // Redirect to products page
-                        setTimeout(() => {
-                            window.location.href = '/admin/products';
-                        }, 2000);
-                    }, 1500);
-                } else if (data && data.error) {
-                    // Display errors
-                    if (data.errors) {
-                        Object.keys(data.errors).forEach(field => {
-                            const errorElement = document.getElementById(field + 'Error');
-                            const formGroup = document.getElementById(field).parentElement;
-                            if (errorElement && formGroup) {
-                                formGroup.classList.add('has-error');
-                                errorElement.textContent = data.errors[field][0];
-                                errorElement.style.display = 'block';
-                            }
-                        });
-                    }
-                    showToast(data.error || 'Failed to add product', 'error');
-                }
-            })
-            .catch(error => {
-                loadingOverlay.classList.remove('active');
-                // Standard form submission will handle redirects
-                this.submit();
-            });
+            this.submit();
         });
 
         // Preview Product
