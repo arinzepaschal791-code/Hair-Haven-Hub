@@ -140,17 +140,35 @@
             border-radius: 10px;
             overflow: hidden;
         }
+        
+        /* Mobile sidebar */
+        @media (max-width: 767.98px) {
+            .admin-sidebar {
+                position: fixed;
+                top: 76px;
+                left: -100%;
+                width: 80%;
+                z-index: 1040;
+                transition: left 0.3s;
+            }
+            
+            .admin-sidebar.show {
+                left: 0;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Admin Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/admin/dashboard">
-                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                     alt="{{ config.brand_name }}" 
-                     style="height: 40px; width: auto; margin-right: 10px;">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
                 <span class="d-none d-md-inline">{{ config.brand_name }} Admin</span>
+                <span class="d-md-none">{{ config.brand_name }}</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
@@ -159,14 +177,23 @@
             
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}" target="_blank">
+                            <i class="fas fa-store me-1"></i> View Store
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> {{ session.admin_name if session.admin_name else 'Admin' }}
+                            <i class="fas fa-user-circle me-1"></i> {{ session.get('admin_name', 'Admin') }}
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/"><i class="fas fa-store me-2"></i> View Store</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">
+                                <i class="fas fa-cog me-2"></i> Settings
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -190,8 +217,15 @@
 
     <div class="container-fluid">
         <div class="row">
+            <!-- Sidebar Toggle for Mobile -->
+            <button class="btn btn-primary d-md-none position-fixed top-80 start-0 m-3 z-3" 
+                    onclick="toggleSidebar()" 
+                    style="z-index: 1000;">
+                <i class="fas fa-bars"></i>
+            </button>
+
             <!-- Sidebar -->
-            <div class="col-md-2 col-lg-2 admin-sidebar d-none d-md-block">
+            <div class="col-md-2 col-lg-2 admin-sidebar d-md-block" id="adminSidebar">
                 <div class="brand-header">
                     <h5 class="mb-0"><i class="fas fa-crown me-2"></i> Admin Panel</h5>
                     <small class="text-muted">Welcome back</small>
@@ -199,41 +233,44 @@
                 
                 <ul class="nav flex-column mt-3">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/admin/dashboard">
+                        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
                             <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/products">
+                        <a class="nav-link" href="{{ url_for('admin_products') }}">
                             <i class="fas fa-box me-2"></i> Products
                             <span class="badge bg-primary float-end">{{ total_products }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/categories">
+                        <a class="nav-link" href="{{ url_for('admin_categories') }}">
                             <i class="fas fa-tags me-2"></i> Categories
+                            {% set total_categories = categories|length if categories is defined else 0 %}
                             <span class="badge bg-primary float-end">{{ total_categories }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/orders">
+                        <a class="nav-link" href="{{ url_for('admin_orders') }}">
                             <i class="fas fa-shopping-bag me-2"></i> Orders
                             <span class="badge bg-primary float-end">{{ total_orders }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/customers">
+                        <a class="nav-link" href="{{ url_for('admin_customers') }}">
                             <i class="fas fa-users me-2"></i> Customers
                             <span class="badge bg-primary float-end">{{ total_customers }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/reviews">
+                        <a class="nav-link" href="{{ url_for('admin_reviews') }}">
                             <i class="fas fa-star me-2"></i> Reviews
+                            {% set total_reviews = reviews|length if reviews is defined else 0 %}
+                            <span class="badge bg-primary float-end">{{ total_reviews }}</span>
                         </a>
                     </li>
                     <li class="nav-item mt-4">
-                        <a class="nav-link" href="/admin/settings">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
                             <i class="fas fa-cog me-2"></i> Settings
                         </a>
                     </li>
@@ -252,7 +289,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <small>Low Stock:</small>
-                        <small class="text-danger">{{ low_stock if low_stock is defined else 0 }}</small>
+                        <small class="text-danger">{{ low_stock_products|length if low_stock_products is defined else 0 }}</small>
                     </div>
                 </div>
             </div>
@@ -264,7 +301,7 @@
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-8">
-                                <h4 class="mb-2">Welcome, {{ session.admin_name if session.admin_name else 'Admin' }}!</h4>
+                                <h4 class="mb-2">Welcome, {{ session.get('admin_name', 'Admin') }}!</h4>
                                 <p class="mb-0">Here's what's happening with your store today.</p>
                             </div>
                             <div class="col-md-4 text-end">
@@ -283,7 +320,8 @@
                                     <div>
                                         <h6 class="card-title text-white-50 mb-1">Total Products</h6>
                                         <h2 class="text-white mb-0">{{ total_products }}</h2>
-                                        <small class="text-white-50">Active: {{ total_products }}</small>
+                                        {% set active_products = products|selectattr('active', 'equalto', True)|list|length if products is defined else total_products %}
+                                        <small class="text-white-50">Active: {{ active_products }}</small>
                                     </div>
                                     <div class="stat-icon">
                                         <i class="fas fa-box text-white"></i>
@@ -316,7 +354,16 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title text-white-50 mb-1">Total Revenue</h6>
-                                        <h2 class="text-white mb-0">₦{{ "{:,.2f}".format(total_revenue) }}</h2>
+                                        <!-- FIXED: Use formatted_revenue or safe formatting -->
+                                        <h2 class="text-white mb-0">
+                                            {% if formatted_revenue is defined %}
+                                                {{ formatted_revenue }}
+                                            {% elif revenue is defined %}
+                                                ₦{{ "{:,.2f}".format(revenue) }}
+                                            {% else %}
+                                                ₦0.00
+                                            {% endif %}
+                                        </h2>
                                         <small class="text-white-50">All Time</small>
                                     </div>
                                     <div class="stat-icon">
@@ -351,7 +398,7 @@
                         <div class="card h-100">
                             <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Recent Orders</h5>
-                                <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View All</a>
+                                <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -367,20 +414,20 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% if recent_orders %}
+                                            {% if recent_orders and recent_orders|length > 0 %}
                                                 {% for order in recent_orders %}
                                                 <tr>
                                                     <td><strong>{{ order.order_number }}</strong></td>
                                                     <td>{{ order.customer_name }}</td>
-                                                    <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
-                                                    <td>₦{{ "{:,.2f}".format(order.final_amount) }}</td>
+                                                    <td>{{ order.created_at.strftime('%b %d, %Y') if order.created_at else 'N/A' }}</td>
+                                                    <td>₦{{ "{:,.2f}".format(order.final_amount|float) if order.final_amount else '0.00' }}</td>
                                                     <td>
-                                                        <span class="order-status-badge status-{{ order.status }}">
-                                                            {{ order.status|title }}
+                                                        <span class="order-status-badge status-{{ order.status|lower if order.status else 'pending' }}">
+                                                            {{ order.status|title if order.status else 'Pending' }}
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <a href="/admin/orders/{{ order.id }}" class="btn btn-sm btn-outline-primary">
+                                                        <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                     </td>
@@ -409,34 +456,48 @@
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <a href="/admin/products/add" class="btn btn-outline-primary">
+                                    <a href="{{ url_for('admin_add_product') }}" class="btn btn-outline-primary">
                                         <i class="fas fa-plus-circle me-2"></i> Add New Product
                                     </a>
-                                    <a href="/admin/categories/add" class="btn btn-outline-success">
+                                    <a href="{{ url_for('admin_add_category') }}" class="btn btn-outline-success">
                                         <i class="fas fa-tag me-2"></i> Add New Category
                                     </a>
-                                    <a href="/admin/orders?status=pending" class="btn btn-outline-warning">
+                                    <a href="{{ url_for('admin_orders') }}?status=pending" class="btn btn-outline-warning">
                                         <i class="fas fa-clock me-2"></i> View Pending Orders
                                     </a>
-                                    <a href="/shop" class="btn btn-outline-info">
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-info" target="_blank">
                                         <i class="fas fa-store me-2"></i> View Store Front
                                     </a>
                                 </div>
                                 
-                                <!-- Recent Activity -->
+                                <!-- Low Stock Alert -->
+                                {% if low_stock_products and low_stock_products|length > 0 %}
                                 <div class="mt-4 pt-3 border-top">
-                                    <h6 class="mb-3">Recent Activity</h6>
+                                    <h6 class="mb-3">Low Stock Alert</h6>
                                     <div class="list-group list-group-flush">
+                                        {% for product in low_stock_products[:3] %}
                                         <div class="list-group-item border-0 px-0 py-2">
-                                            <small class="text-muted">Today</small>
-                                            <p class="mb-1 small">No recent activity</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <p class="mb-1 small">{{ product.name|truncate(30) }}</p>
+                                                    <small class="text-danger">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i> Only {{ product.quantity }} left
+                                                    </small>
+                                                </div>
+                                                <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
                                         </div>
+                                        {% endfor %}
+                                        {% if low_stock_products|length > 3 %}
                                         <div class="list-group-item border-0 px-0 py-2">
-                                            <small class="text-muted">Yesterday</small>
-                                            <p class="mb-1 small">System initialized</p>
+                                            <small class="text-muted">And {{ low_stock_products|length - 3 }} more products...</small>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -466,6 +527,7 @@
                                         <p class="mb-2">{{ total_products }} items</p>
                                         
                                         <small class="text-muted d-block">Categories</small>
+                                        {% set total_categories = categories|length if categories is defined else 0 %}
                                         <p class="mb-2">{{ total_categories }} categories</p>
                                         
                                         <small class="text-muted d-block">Customers</small>
@@ -494,11 +556,15 @@
                                 
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
-                                        <span>Storage</span>
-                                        <span>25% used</span>
+                                        <span>Orders Today</span>
+                                        <span>
+                                            {% set today_orders = today_orders if today_orders is defined else 0 %}
+                                            {{ today_orders }} orders
+                                        </span>
                                     </div>
                                     <div class="progress" style="height: 5px;">
-                                        <div class="progress-bar bg-info" style="width: 25%"></div>
+                                        {% set today_percentage = (today_orders/10*100) if today_orders else 0 %}
+                                        <div class="progress-bar bg-info" style="width: {{ today_percentage }}%"></div>
                                     </div>
                                 </div>
                                 
@@ -535,17 +601,30 @@
             });
         }, 5000);
         
-        // Mobile sidebar toggle (optional)
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.createElement('button');
-            sidebarToggle.className = 'btn btn-primary d-md-none position-fixed bottom-0 end-0 m-3';
-            sidebarToggle.style.zIndex = '1000';
-            sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
-            sidebarToggle.onclick = function() {
-                document.querySelector('.admin-sidebar').classList.toggle('d-none');
-            };
-            document.body.appendChild(sidebarToggle);
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggleBtn = document.querySelector('.btn-primary.d-md-none');
+            
+            if (window.innerWidth < 768 && 
+                sidebar.classList.contains('show') &&
+                !sidebar.contains(event.target) &&
+                event.target !== toggleBtn &&
+                !toggleBtn.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
         });
+        
+        // Auto-refresh page every 60 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 60000);
     </script>
 </body>
 </html>
