@@ -425,12 +425,20 @@ def init_db():
         traceback.print_exc(file=sys.stderr)
         return False
 
-# ========== INITIALIZE DATABASE BEFORE FIRST REQUEST ==========
-@app.before_first_request
-def initialize_database():
-    """Initialize database on first request"""
-    with app.app_context():
-        init_db()
+# ========== INITIALIZE DATABASE ON STARTUP ==========
+# FIXED: Using with app.app_context() instead of @app.before_first_request
+print("🚀 Initializing database on application startup...", file=sys.stderr)
+with app.app_context():
+    try:
+        init_db_success = init_db()
+        if init_db_success:
+            print("✅ Database initialized successfully!", file=sys.stderr)
+        else:
+            print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
+    except Exception as e:
+        print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
 
 # ========== PUBLIC ROUTES ==========
 
@@ -1457,7 +1465,7 @@ if __name__ == '__main__':
     print(f"📧 Contact: /contact", file=sys.stderr)
     print(f"ℹ️  About: /about", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"✅ Database will be initialized on first request", file=sys.stderr)
+    print(f"✅ Database initialized at startup", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
