@@ -2,17 +2,34 @@ services:
   - type: web
     name: hair-haven-hub
     env: python
+    region: oregon
+    plan: free
+    branch: main
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
+      python -c "print('✅ Dependencies installed')"
     startCommand: gunicorn main:app
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
-        value: admin@yourdomain.com  # CHANGE THIS
+        value: admin@norahairline.com
       - key: ADMIN_PASSWORD
-        value: YourStrongPassword123!  # CHANGE THIS
-    plan: free
+        value: ChangeThisPassword123!
+      - key: DEBUG
+        value: false
+      - key: ENV
+        value: production
+      - key: ALLOWED_HOSTS
+        value: hair-haven-hub.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://hair-haven-hub.onrender.com
+      - key: WTF_CSRF_ENABLED
+        value: true
+      - key: SESSION_COOKIE_SECURE
+        value: true
