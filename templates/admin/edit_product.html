@@ -665,6 +665,9 @@
             <!-- Form Container -->
             <div class="form-container">
                 <form id="editProductForm" method="POST" action="{{ url_for('admin_edit_product', id=product.id) }}" enctype="multipart/form-data">
+                    <!-- CSRF TOKEN ADDED HERE -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
                     <!-- Product Basic Information -->
                     <div class="form-row">
                         <div class="form-group">
@@ -852,6 +855,8 @@
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <form method="POST" action="{{ url_for('admin_delete_product', id=product.id) }}" style="display: inline;">
+                    <!-- CSRF TOKEN ADDED TO DELETE FORM -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">Delete Product</button>
                 </form>
             </div>
