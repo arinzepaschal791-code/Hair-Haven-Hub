@@ -3,81 +3,1040 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop - {{ config.brand_name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Shop Premium Hair - {{ config.brand_name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #F5E6D3;
+            --accent: #D2691E;
+            --text: #333333;
+            --text-light: #666666;
+            --light: #FFFFFF;
+            --light-gray: #F8F8F8;
+            --border: #E0E0E0;
+            --shadow: rgba(139, 69, 19, 0.1);
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--light);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .main-header {
+            background: var(--light);
+            box-shadow: 0 4px 20px var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .logo:hover {
+            color: var(--primary-dark);
+        }
+
+        .main-nav ul {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+        }
+
+        .main-nav a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 16px;
+            padding: 8px 0;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .main-nav a:hover,
+        .main-nav a.active {
+            color: var(--primary);
+        }
+
+        .main-nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: -20px;
+            background: var(--light);
+            min-width: 200px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            padding: 15px 0;
+            z-index: 1001;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 12px 25px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-content a:hover {
+            background: var(--secondary);
+            color: var(--primary);
+            padding-left: 30px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .action-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary);
+            color: var(--light);
+            font-size: 12px;
+            font-weight: 600;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--light);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: translateY(-2px);
+        }
+
+        /* Shop Hero */
+        .shop-hero {
+            background: linear-gradient(135deg, var(--secondary) 0%, #FFF8F0 100%);
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%238b4513' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 25px auto 40px;
+            line-height: 1.8;
+        }
+
+        /* Search and Filters */
+        .shop-controls {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-top: 40px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-box {
+            display: flex;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 18px 25px;
+            border: 2px solid var(--border);
+            border-radius: 10px 0 0 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--shadow);
+        }
+
+        .search-btn {
+            background: var(--primary);
+            color: var(--light);
+            border: none;
+            padding: 0 35px;
+            border-radius: 0 10px 10px 0;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .filter-btn {
+            padding: 12px 28px;
+            background: var(--light-gray);
+            color: var(--text);
+            border: 2px solid transparent;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: var(--light);
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        /* Products Section */
+        .products-section {
+            padding: 80px 0;
+            background: var(--light-gray);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: var(--primary);
+        }
+
+        .products-count {
+            font-size: 16px;
+            color: var(--text-light);
+            background: var(--light);
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 35px;
+            margin-bottom: 60px;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: var(--light);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.15);
+        }
+
+        .product-badges {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-featured {
+            background: var(--accent);
+            color: var(--light);
+        }
+
+        .badge-sale {
+            background: var(--success);
+            color: var(--light);
+        }
+
+        .badge-new {
+            background: var(--primary);
+            color: var(--light);
+        }
+
+        .badge-out {
+            background: var(--danger);
+            color: var(--light);
+        }
+
+        .product-image {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.1);
+        }
+
+        .product-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(139, 69, 19, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .product-card:hover .product-overlay {
+            opacity: 1;
+        }
+
+        .quick-view-btn {
+            background: var(--light);
+            color: var(--primary);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-view-btn:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 25px;
+        }
+
+        .product-category {
+            font-size: 14px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .product-name a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .product-name a:hover {
+            color: var(--primary);
+        }
+
+        .product-description {
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-price {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .current-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .old-price {
+            font-size: 18px;
+            color: var(--text-light);
+            text-decoration: line-through;
+        }
+
+        .discount {
+            background: var(--success);
+            color: var(--light);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .product-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .meta-item i {
+            color: var(--primary);
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .add-to-cart-btn,
+        .view-details-btn {
+            flex: 1;
+            text-align: center;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .add-to-cart-btn {
+            background: var(--primary);
+            color: var(--light);
+        }
+
+        .add-to-cart-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .view-details-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .view-details-btn:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: translateY(-2px);
+        }
+
+        .btn-disabled {
+            background: var(--border);
+            color: var(--text-light);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-disabled:hover {
+            transform: none !important;
+            background: var(--border) !important;
+            color: var(--text-light) !important;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: var(--light);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            color: var(--border);
+            margin-bottom: 30px;
+        }
+
+        .empty-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: var(--text);
+            margin-bottom: 15px;
+        }
+
+        .empty-message {
+            color: var(--text-light);
+            font-size: 18px;
+            max-width: 500px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 60px;
+        }
+
+        .page-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--light);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .page-link:hover:not(.active) {
+            background: var(--secondary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .page-link.active {
+            background: var(--primary);
+            color: var(--light);
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-link.disabled:hover {
+            transform: none;
+            background: var(--light);
+            color: var(--text);
+        }
+
+        /* Results Info */
+        .results-info {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 16px;
+            margin-top: 30px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Filter Sidebar (for mobile) */
+        .mobile-filters {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .filter-toggle {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: var(--light);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Footer */
+        .main-footer {
+            background: var(--primary-dark);
+            color: var(--light);
+            padding: 70px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 50px;
+            margin-bottom: 50px;
+        }
+
+        .footer-brand h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: var(--light);
+        }
+
+        .footer-brand p {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .footer-section h4 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: var(--light);
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-section h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-links a:hover {
+            color: var(--light);
+            padding-left: 5px;
+        }
+
+        .footer-links i {
+            width: 20px;
+            color: var(--accent);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .social-link {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light);
+            text-decoration: none;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-nav {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+
+            .product-actions {
+                flex-direction: column;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .mobile-filters {
+                display: block;
+            }
+
+            .category-filters {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shop-controls {
+                padding: 20px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-input,
+            .search-btn {
+                border-radius: 10px;
+                width: 100%;
+            }
+
+            .search-input {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
-    <header>
+    <header class="main-header">
         <div class="container">
-            <div class="logo">
-                <a href="{{ url_for('index') }}">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ config.brand_name }}">
+            <div class="header-content">
+                <!-- Logo -->
+                <a href="{{ url_for('index') }}" class="logo">
+                    <i class="fas fa-crown"></i>
+                    {{ config.brand_name }}
                 </a>
-            </div>
-            
-            <!-- Navigation -->
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('shop') }}" class="active">Shop</a></li>
-                    <li class="dropdown">
-                        <a href="#">Categories <i class="fas fa-chevron-down"></i></a>
-                        <div class="dropdown-content">
-                            <a href="{{ url_for('shop') }}">All Products</a>
-                            {% for category in categories %}
-                            <a href="{{ url_for('shop', category=category.id) }}">{{ category.name }}</a>
-                            {% endfor %}
-                        </div>
-                    </li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                    <li><a href="{{ url_for('contact') }}">Contact</a></li>
-                </ul>
-            </nav>
-            
-            <!-- Cart and User -->
-            <div class="header-actions">
-                <a href="{{ url_for('cart') }}" class="cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                    {% if cart_count > 0 %}
-                    <span class="cart-count">{{ cart_count }}</span>
-                    {% endif %}
-                </a>
-                
-                {% if customer_id %}
-                <div class="user-dropdown">
-                    <a href="#" class="user-icon">
-                        <i class="fas fa-user"></i>
+
+                <!-- Navigation -->
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('shop') }}" class="active">Shop</a></li>
+                        <li class="dropdown">
+                            <a href="#">
+                                Categories <i class="fas fa-chevron-down"></i>
+                            </a>
+                            <div class="dropdown-content">
+                                <a href="{{ url_for('shop') }}">All Products</a>
+                                {% for category in categories %}
+                                <a href="{{ url_for('shop', category=category.id) }}">{{ category.name }}</a>
+                                {% endfor %}
+                            </div>
+                        </li>
+                        <li><a href="{{ url_for('about') }}">About</a></li>
+                        <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                    </ul>
+                </nav>
+
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <!-- Cart -->
+                    <a href="{{ url_for('cart') }}" class="action-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if cart_count > 0 %}
+                        <span class="cart-count">{{ cart_count }}</span>
+                        {% endif %}
                     </a>
-                    <div class="dropdown-content">
-                        <a href="{{ url_for('account') }}">My Account</a>
-                        <a href="{{ url_for('customer_logout') }}">Logout</a>
+
+                    <!-- User/Auth -->
+                    <div class="auth-buttons">
+                        {% if customer_id %}
+                        <div class="dropdown">
+                            <button class="action-btn">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="{{ url_for('account') }}"><i class="fas fa-user"></i> My Account</a>
+                                <a href="{{ url_for('customer_logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('customer_login') }}" class="btn btn-outline">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        <a href="{{ url_for('customer_register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
-                {% else %}
-                <a href="{{ url_for('customer_login') }}" class="login-btn">Login</a>
-                {% endif %}
             </div>
         </div>
     </header>
 
-    <!-- Search and Filter -->
-    <section class="shop-header">
+    <!-- Shop Hero Section -->
+    <section class="shop-hero">
         <div class="container">
-            <h1>Our Products</h1>
-            <p>Premium 100% Human Hair Extensions</p>
-            
+            <h1 class="hero-title">Premium Hair Collection</h1>
+            <p class="hero-subtitle">
+                Discover our exclusive collection of 100% human hair extensions, wigs, and closures. 
+                Each piece is carefully selected for its quality, texture, and natural appearance.
+            </p>
+
+            <!-- Search and Filter Controls -->
             <div class="shop-controls">
-                <form method="GET" action="{{ url_for('shop') }}" class="search-form">
-                    <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}">
-                    <button type="submit"><i class="fas fa-search"></i></button>
+                <!-- Search Form -->
+                <form method="GET" action="{{ url_for('shop') }}" class="search-box">
+                    <input type="text" 
+                           name="search" 
+                           class="search-input" 
+                           placeholder="Search for Brazilian, Peruvian, Lace wigs..."
+                           value="{{ search_query }}">
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </form>
-                
+
+                <!-- Category Filters -->
                 <div class="category-filters">
-                    <a href="{{ url_for('shop') }}" class="filter-btn {% if not category_id %}active{% endif %}">All</a>
+                    <a href="{{ url_for('shop') }}" 
+                       class="filter-btn {% if not category_id %}active{% endif %}">
+                        All Products
+                    </a>
                     {% for category in categories %}
-                    <a href="{{ url_for('shop', category=category.id) }}" class="filter-btn {% if category_id == category.id %}active{% endif %}">
+                    <a href="{{ url_for('shop', category=category.id) }}" 
+                       class="filter-btn {% if category_id == category.id %}active{% endif %}">
                         {{ category.name }}
                     </a>
                     {% endfor %}
@@ -86,167 +1045,314 @@
         </div>
     </section>
 
-    <!-- Products Grid -->
+    <!-- Products Section -->
     <section class="products-section">
         <div class="container">
+            <!-- Section Header -->
+            <div class="section-header">
+                <h2 class="section-title">Our Hair Collection</h2>
+                <div class="products-count">
+                    {{ total_products }} Products Found
+                </div>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <div class="mobile-filters">
+                <button class="filter-toggle">
+                    <i class="fas fa-filter"></i> Filter Categories
+                </button>
+            </div>
+
+            <!-- Products Grid -->
             {% if total_products == 0 %}
-            <div class="no-products">
-                <i class="fas fa-box-open"></i>
-                <h3>No products found</h3>
-                <p>Try a different search or browse all categories</p>
-                <a href="{{ url_for('shop') }}" class="btn">Browse All Products</a>
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 class="empty-title">No Products Found</h3>
+                <p class="empty-message">
+                    We couldn't find any products matching your search criteria.
+                    Try a different search term or browse all our categories.
+                </p>
+                <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                    <i class="fas fa-store"></i> Browse All Products
+                </a>
             </div>
             {% else %}
             <div class="products-grid">
                 {% for product in products %}
                 <div class="product-card">
-                    <div class="product-image">
-                        {% if product.image_url %}
-                        <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" alt="{{ product.name }}">
-                        {% else %}
-                        <img src="{{ url_for('static', filename='images/product-placeholder.jpg') }}" alt="{{ product.name }}">
-                        {% endif %}
+                    <!-- Product Badges -->
+                    <div class="product-badges">
                         {% if product.featured %}
-                        <span class="featured-badge">Featured</span>
+                        <span class="badge badge-featured">Featured</span>
+                        {% endif %}
+                        {% if product.compare_price and product.compare_price > product.price %}
+                        <span class="badge badge-sale">
+                            -{{ ((product.compare_price - product.price) / product.compare_price * 100)|int }}%
+                        </span>
                         {% endif %}
                         {% if product.quantity == 0 %}
-                        <span class="out-of-stock">Out of Stock</span>
+                        <span class="badge badge-out">Out of Stock</span>
                         {% endif %}
                     </div>
-                    
+
+                    <!-- Product Image -->
+                    <div class="product-image">
+                        {% if product.image_url %}
+                        <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                             alt="{{ product.name }}">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/product-placeholder.jpg') }}" 
+                             alt="{{ product.name }}">
+                        {% endif %}
+                        <div class="product-overlay">
+                            <button class="quick-view-btn" onclick="window.location.href='{{ url_for('product_detail', id=product.id) }}'">
+                                <i class="fas fa-eye"></i> Quick View
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product Info -->
                     <div class="product-info">
-                        <span class="product-category">{{ product.category.name if product.category else 'Uncategorized' }}</span>
-                        <h3><a href="{{ url_for('product_detail', id=product.id) }}">{{ product.name }}</a></h3>
-                        
+                        <span class="product-category">
+                            {{ product.category.name if product.category else 'Hair' }}
+                        </span>
+                        <h3 class="product-name">
+                            <a href="{{ url_for('product_detail', id=product.id) }}">
+                                {{ product.name }}
+                            </a>
+                        </h3>
+                        <p class="product-description">
+                            {{ product.description[:120] }}...
+                        </p>
+
+                        <!-- Price -->
                         <div class="product-price">
                             <span class="current-price">{{ product.formatted_price }}</span>
-                            {% if product.compare_price %}
-                            <span class="compare-price">{{ format_price(product.compare_price) }}</span>
+                            {% if product.compare_price and product.compare_price > product.price %}
+                            <span class="old-price">{{ format_price(product.compare_price) }}</span>
+                            <span class="discount">Save {{ format_price(product.compare_price - product.price) }}</span>
                             {% endif %}
                         </div>
-                        
-                        <p class="product-description">{{ product.description[:100] }}...</p>
-                        
+
+                        <!-- Product Meta -->
                         <div class="product-meta">
-                            {% if product.length %}<span><i class="fas fa-ruler"></i> {{ product.length }}</span>{% endif %}
-                            {% if product.texture %}<span><i class="fas fa-wave-square"></i> {{ product.texture }}</span>{% endif %}
-                            <span><i class="fas fa-box"></i> {{ product.quantity }} in stock</span>
-                        </div>
-                        
-                        <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST" class="add-to-cart-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <input type="hidden" name="quantity" value="1">
-                            
-                            {% if product.quantity > 0 %}
-                            <button type="submit" class="btn add-to-cart-btn">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
-                            {% else %}
-                            <button type="button" class="btn disabled-btn" disabled>
-                                Out of Stock
-                            </button>
+                            {% if product.length %}
+                            <div class="meta-item">
+                                <i class="fas fa-ruler-vertical"></i>
+                                <span>{{ product.length }}</span>
+                            </div>
                             {% endif %}
-                            
-                            <a href="{{ url_for('product_detail', id=product.id) }}" class="btn view-details-btn">
-                                View Details
+                            {% if product.texture %}
+                            <div class="meta-item">
+                                <i class="fas fa-wave-square"></i>
+                                <span>{{ product.texture|title }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="meta-item">
+                                <i class="fas fa-box"></i>
+                                <span>{{ product.quantity }} in stock</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="product-actions">
+                            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="quantity" value="1">
+                                {% if product.quantity > 0 %}
+                                <button type="submit" class="add-to-cart-btn">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                                </button>
+                                {% else %}
+                                <button type="button" class="add-to-cart-btn btn-disabled" disabled>
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </button>
+                                {% endif %}
+                            </form>
+                            <a href="{{ url_for('product_detail', id=product.id) }}" class="view-details-btn">
+                                <i class="fas fa-info-circle"></i> Details
                             </a>
-                        </form>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            
+
             <!-- Pagination -->
             {% if total_pages > 1 %}
             <div class="pagination">
                 {% if current_page > 1 %}
-                <a href="{{ url_for('shop', page=current_page-1, category=category_id, search=search_query) }}" class="page-link">
+                <a href="{{ url_for('shop', page=current_page-1, category=category_id, search=search_query) }}" 
+                   class="page-link">
                     <i class="fas fa-chevron-left"></i> Previous
                 </a>
+                {% else %}
+                <span class="page-link disabled">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </span>
                 {% endif %}
-                
+
                 {% for page_num in range(1, total_pages + 1) %}
                     {% if page_num == current_page %}
                     <span class="page-link active">{{ page_num }}</span>
-                    {% else %}
-                    <a href="{{ url_for('shop', page=page_num, category=category_id, search=search_query) }}" class="page-link">
-                        {{ page_num }}
-                    </a>
+                    {% elif page_num >= current_page - 2 and page_num <= current_page + 2 %}
+                    <a href="{{ url_for('shop', page=page_num, category=category_id, search=search_query) }}" 
+                       class="page-link">{{ page_num }}</a>
+                    {% elif page_num == 1 or page_num == total_pages %}
+                    <a href="{{ url_for('shop', page=page_num, category=category_id, search=search_query) }}" 
+                       class="page-link">{{ page_num }}</a>
+                    {% elif page_num == current_page - 3 or page_num == current_page + 3 %}
+                    <span class="page-link">...</span>
                     {% endif %}
                 {% endfor %}
-                
+
                 {% if current_page < total_pages %}
-                <a href="{{ url_for('shop', page=current_page+1, category=category_id, search=search_query) }}" class="page-link">
+                <a href="{{ url_for('shop', page=current_page+1, category=category_id, search=search_query) }}" 
+                   class="page-link">
                     Next <i class="fas fa-chevron-right"></i>
                 </a>
+                {% else %}
+                <span class="page-link disabled">
+                    Next <i class="fas fa-chevron-right"></i>
+                </span>
                 {% endif %}
             </div>
             {% endif %}
-            
+
+            <!-- Results Info -->
             <div class="results-info">
-                Showing {{ ((current_page - 1) * 12) + 1 }} - {{ min(current_page * 12, total_products) }} of {{ total_products }} products
+                Showing 
+                <strong>{{ ((current_page - 1) * 12) + 1 if total_products > 0 else 0 }}</strong> 
+                to 
+                <strong>{{ min(current_page * 12, total_products) if total_products > 0 else 0 }}</strong> 
+                of 
+                <strong>{{ total_products }}</strong> 
+                products
+                {% if search_query %}
+                for "<strong>{{ search_query }}</strong>"
+                {% endif %}
+                {% if category_id %}
+                in "<strong>{{ categories|selectattr('id', 'equalto', category_id)|first|attr('name') if categories else '' }}</strong>"
+                {% endif %}
             </div>
             {% endif %}
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
+                <!-- Brand Info -->
+                <div class="footer-section footer-brand">
                     <h3>{{ config.brand_name }}</h3>
                     <p>{{ config.tagline }}</p>
                     <p>{{ config.description }}</p>
+                    <p><em>{{ config.slogan }}</em></p>
                 </div>
-                
+
+                <!-- Quick Links -->
                 <div class="footer-section">
-                    <h3>Contact Info</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> {{ config.address }}</p>
-                    <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
-                    <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="{{ url_for('shop') }}"><i class="fas fa-store"></i> Shop</a></li>
+                        <li><a href="{{ url_for('about') }}"><i class="fas fa-info-circle"></i> About Us</a></li>
+                        <li><a href="{{ url_for('contact') }}"><i class="fas fa-envelope"></i> Contact</a></li>
+                        {% if customer_id %}
+                        <li><a href="{{ url_for('account') }}"><i class="fas fa-user"></i> My Account</a></li>
+                        {% else %}
+                        <li><a href="{{ url_for('customer_login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                        <li><a href="{{ url_for('customer_register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+                        {% endif %}
+                    </ul>
                 </div>
-                
+
+                <!-- Contact Info -->
                 <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <a href="{{ url_for('index') }}">Home</a>
-                    <a href="{{ url_for('shop') }}">Shop</a>
-                    <a href="{{ url_for('about') }}">About</a>
-                    <a href="{{ url_for('contact') }}">Contact</a>
+                    <h4>Contact Info</h4>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-map-marker-alt"></i> {{ config.address }}</a></li>
+                        <li><a href="tel:{{ config.phone }}"><i class="fas fa-phone"></i> {{ config.phone }}</a></li>
+                        <li><a href="mailto:{{ config.email }}"><i class="fas fa-envelope"></i> {{ config.email }}</a></li>
+                        <li><a href="{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp Chat</a></li>
+                        <li><a href="{{ config.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i> @{{ config.instagram }}</a></li>
+                    </ul>
                 </div>
-                
+
+                <!-- Categories -->
                 <div class="footer-section">
-                    <h3>Connect With Us</h3>
-                    <div class="social-links">
-                        <a href="{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                        <a href="{{ config.instagram_url }}" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="mailto:{{ config.email }}"><i class="fas fa-envelope"></i></a>
-                    </div>
+                    <h4>Categories</h4>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('shop') }}"><i class="fas fa-list"></i> All Products</a></li>
+                        {% for category in categories[:5] %}
+                        <li><a href="{{ url_for('shop', category=category.id) }}"><i class="fas fa-tag"></i> {{ category.name }}</a></li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
-            
+
+            <!-- Social Links -->
+            <div style="text-align: center; margin: 30px 0;">
+                <div class="social-links" style="justify-content: center;">
+                    <a href="{{ config.whatsapp }}" target="_blank" class="social-link">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a href="{{ config.instagram_url }}" target="_blank" class="social-link">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="mailto:{{ config.email }}" class="social-link">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="tel:{{ config.phone }}" class="social-link">
+                        <i class="fas fa-phone"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
             <div class="footer-bottom">
-                <p>&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
-                <p>{{ config.slogan }}</p>
+                <p>&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved. | Premium 100% Human Hair Extensions</p>
+                <p style="margin-top: 10px; font-size: 12px;">{{ config.slogan }}</p>
             </div>
         </div>
     </footer>
 
+    <!-- JavaScript -->
     <script>
-        // Add to cart functionality
+        // Mobile filters toggle
         document.addEventListener('DOMContentLoaded', function() {
-            const addToCartForms = document.querySelectorAll('.add-to-cart-form');
+            const filterToggle = document.querySelector('.filter-toggle');
+            const categoryFilters = document.querySelector('.category-filters');
             
+            if (filterToggle) {
+                filterToggle.addEventListener('click', function() {
+                    categoryFilters.style.display = categoryFilters.style.display === 'flex' ? 'none' : 'flex';
+                    this.innerHTML = categoryFilters.style.display === 'flex' 
+                        ? '<i class="fas fa-times"></i> Close Filters' 
+                        : '<i class="fas fa-filter"></i> Filter Categories';
+                });
+            }
+
+            // Add to cart form submission
+            const addToCartForms = document.querySelectorAll('form[action*="add-to-cart"]');
             addToCartForms.forEach(form => {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
                     
-                    const formData = new FormData(this);
-                    const productId = this.action.split('/').pop();
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    
+                    // Show loading state
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                    submitBtn.disabled = true;
                     
                     fetch(this.action, {
                         method: 'POST',
-                        body: formData,
+                        body: new FormData(this),
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
@@ -260,32 +1366,124 @@
                     })
                     .then(data => {
                         if (data && data.success) {
-                            // Update cart count in header
+                            // Update cart count
                             const cartCount = document.querySelector('.cart-count');
                             if (cartCount) {
-                                cartCount.textContent = parseInt(cartCount.textContent) + 1;
+                                const currentCount = parseInt(cartCount.textContent) || 0;
+                                cartCount.textContent = currentCount + 1;
+                            } else {
+                                // Create cart count if doesn't exist
+                                const cartIcon = document.querySelector('.action-btn .fa-shopping-cart');
+                                if (cartIcon) {
+                                    const countSpan = document.createElement('span');
+                                    countSpan.className = 'cart-count';
+                                    countSpan.textContent = '1';
+                                    cartIcon.parentElement.appendChild(countSpan);
+                                }
                             }
                             
                             // Show success message
-                            alert(data.message || 'Product added to cart!');
+                            showNotification('✅ Product added to cart!');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Error adding product to cart');
+                        showNotification('❌ Error adding to cart. Please try again.', 'error');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     });
                 });
             });
-            
-            // Category filter active state
-            const filterBtns = document.querySelectorAll('.filter-btn');
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    filterBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
+
+            // Product card hover effects
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
                 });
             });
+
+            // Search input focus effect
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.addEventListener('focus', function() {
+                    this.parentElement.style.boxShadow = '0 10px 40px rgba(139, 69, 19, 0.2)';
+                });
+                
+                searchInput.addEventListener('blur', function() {
+                    this.parentElement.style.boxShadow = 'none';
+                });
+            }
         });
+
+        // Notification function
+        function showNotification(message, type = 'success') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#dc3545' : '#28a745'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 9999;
+                animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
