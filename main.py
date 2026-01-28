@@ -363,9 +363,7 @@ def inject_global_vars():
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
         cart_total = calculate_cart_total()
     
-    # DO NOT generate csrf_token here - it will be handled by Flask-WTF automatically
-    # Use {{ csrf_token() }} in templates instead
-    
+    # Flask-WTF will automatically handle csrf_token() in templates
     return dict(
         now=datetime.now(),
         categories=categories,
@@ -375,7 +373,7 @@ def inject_global_vars():
         config=BUSINESS_CONFIG,
         format_price=format_price,
         safe_format_number=safe_format_number,
-        # No csrf_token here - use {{ csrf_token() }} in templates
+        # csrf_token will be available via {{ csrf_token() }} in templates
     )
 
 # ========== ERROR HANDLERS ==========
