@@ -174,7 +174,11 @@
                 {% endif %}
             {% endwith %}
             
+            <!-- FIXED: Added CSRF token -->
             <form method="POST" action="{{ url_for('customer_login') }}">
+                <!-- CSRF TOKEN ADDED HERE -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                
                 <div class="mb-4">
                     <label for="email" class="form-label">Email Address</label>
                     <div class="input-group">
