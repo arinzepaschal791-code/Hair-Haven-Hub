@@ -303,25 +303,29 @@
         <!-- Product Count -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
             <p style="color: #6c757d;">
-                {% if products.items %}
-                    Showing {{ (products.page - 1) * products.per_page + 1 }} - 
-                    {{ min(products.page * products.per_page, products.total) }} 
-                    of {{ products.total }} products
+                {% if products %}
+                    Showing {{ ((current_page - 1) * 12) + 1 }} - 
+                    {{ min(current_page * 12, total_products) }} 
+                    of {{ total_products }} products
                 {% endif %}
             </p>
         </div>
         
         <!-- Products Grid -->
-        {% if products.items %}
+        {% if products %}
         <div class="product-grid">
-            {% for product in products.items %}
+            {% for product in products %}
             <div class="product-card">
                 <div class="product-image">
+                    {% if product.image_url %}
                     <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="/static/images/product-placeholder.jpg" alt="{{ product.name }}">
+                    {% endif %}
                 </div>
                 
                 <div class="product-info">
-                    <div class="product-category">{{ product.category.name }}</div>
+                    <div class="product-category">{{ product.category.name if product.category else 'Uncategorized' }}</div>
                     
                     <h3 class="product-title">{{ product.name }}</h3>
                     
@@ -360,10 +364,10 @@
         </div>
         
         <!-- Pagination -->
-        {% if products.pages > 1 %}
+        {% if total_pages > 1 %}
         <div class="pagination">
-            {% if products.has_prev %}
-            <a href="{{ url_for('shop', page=products.prev_num, category=category_id, search=search_query) }}" 
+            {% if current_page > 1 %}
+            <a href="{{ url_for('shop', page=current_page-1, category=category_id, search=search_query) }}" 
                class="page-link">
                 <i class="fas fa-chevron-left"></i> Previous
             </a>
@@ -373,21 +377,30 @@
             </span>
             {% endif %}
             
-            {% for page_num in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page_num %}
-                    {% if page_num == products.page %}
+            {% for page_num in range(1, total_pages + 1) %}
+                {% if page_num >= current_page - 2 and page_num <= current_page + 2 %}
+                    {% if page_num == current_page %}
                     <span class="page-link active">{{ page_num }}</span>
                     {% else %}
                     <a href="{{ url_for('shop', page=page_num, category=category_id, search=search_query) }}" 
                        class="page-link">{{ page_num }}</a>
                     {% endif %}
-                {% else %}
+                {% elif page_num == 1 or page_num == total_pages %}
+                    {% if page_num == current_page %}
+                    <span class="page-link active">{{ page_num }}</span>
+                    {% else %}
+                    <a href="{{ url_for('shop', page=page_num, category=category_id, search=search_query) }}" 
+                       class="page-link">{{ page_num }}</a>
+                    {% endif %}
+                {% elif loop.index == 2 and current_page > 4 %}
+                <span class="page-link disabled">...</span>
+                {% elif loop.index == total_pages - 1 and current_page < total_pages - 3 %}
                 <span class="page-link disabled">...</span>
                 {% endif %}
             {% endfor %}
             
-            {% if products.has_next %}
-            <a href="{{ url_for('shop', page=products.next_num, category=category_id, search=search_query) }}" 
+            {% if current_page < total_pages %}
+            <a href="{{ url_for('shop', page=current_page+1, category=category_id, search=search_query) }}" 
                class="page-link">
                 Next <i class="fas fa-chevron-right"></i>
             </a>
@@ -422,6 +435,17 @@
                     categoryBtns.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                 });
+            });
+            
+            // Add CSRF token to add-to-cart forms
+            const csrfToken = "{{ csrf_token() }}";
+            const addToCartForms = document.querySelectorAll('form[action*="add-to-cart"]');
+            addToCartForms.forEach(form => {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
             });
         });
     </script>
