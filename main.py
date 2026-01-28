@@ -1,4 +1,4 @@
-# main.py - UPDATED PRODUCTION-READY VERSION WITH FIXED ERRORS
+# main.py - UPDATED FOR FLASK 2.3+ COMPATIBILITY
 import os
 import sys
 import traceback
@@ -515,22 +515,24 @@ def init_db():
         traceback.print_exc(file=sys.stderr)
         return False
 
-# ========== INITIALIZE DATABASE ON STARTUP ==========
-@app.before_first_request
-def initialize_database():
-    """Initialize database before first request"""
-    print("🚀 Initializing database before first request...", file=sys.stderr)
-    try:
-        with app.app_context():
+# ========== APPLICATION STARTUP HOOK ==========
+@app.before_request
+def initialize_on_first_request():
+    """Initialize database on first request (Flask 2.3+ compatible)"""
+    if not hasattr(app, 'has_initialized'):
+        print("🚀 Initializing database on first request...", file=sys.stderr)
+        try:
             init_db_success = init_db()
             if init_db_success:
                 print("✅ Database initialized successfully!", file=sys.stderr)
             else:
                 print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
-    except Exception as e:
-        print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
-        print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
+        except Exception as e:
+            print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
+        
+        app.has_initialized = True
 
 # ========== PUBLIC ROUTES ==========
 
@@ -1610,7 +1612,7 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*60}", file=sys.stderr)
-    print(f"🚀 NORA HAIR LINE E-COMMERCE - PRODUCTION READY", file=sys.stderr)
+    print(f"🚀 NORA HAIR LINE E-COMMERCE - FLASK 2.3+ COMPATIBLE", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     print(f"✅ CSRF Protection: ENABLED", file=sys.stderr)
     print(f"✅ Database Connection: TESTED", file=sys.stderr)
@@ -1620,18 +1622,5 @@ if __name__ == '__main__':
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
-    
-    # Initialize database before starting
-    with app.app_context():
-        try:
-            init_db_success = init_db()
-            if init_db_success:
-                print("✅ Database initialized successfully!", file=sys.stderr)
-            else:
-                print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
-        except Exception as e:
-            print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=False)
