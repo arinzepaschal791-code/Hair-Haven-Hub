@@ -331,6 +331,9 @@
         
         <!-- Login Form -->
         <form id="loginForm" method="POST" action="{{ url_for('admin_login') }}">
+            <!-- CSRF TOKEN ADDED HERE -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <div class="form-group">
                 <label for="username">Username</label>
                 <div class="input-with-icon">
