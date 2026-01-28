@@ -305,17 +305,35 @@ def save_uploaded_file(file):
         # Get the upload folder from config
         upload_folder = app.config['UPLOAD_FOLDER']
         
+        # ========== ADDED DEBUGGING ==========
+        print(f"📁 UPLOAD DEBUG:", file=sys.stderr)
+        print(f"   Config UPLOAD_FOLDER: {upload_folder}", file=sys.stderr)
+        print(f"   Folder exists: {os.path.exists(upload_folder)}", file=sys.stderr)
+        print(f"   Is directory: {os.path.isdir(upload_folder) if os.path.exists(upload_folder) else 'N/A'}", file=sys.stderr)
+        
         # Double-check folder exists
         if not os.path.exists(upload_folder):
+            print(f"🔄 Creating upload folder: {upload_folder}", file=sys.stderr)
             os.makedirs(upload_folder, exist_ok=True)
+        else:
+            print(f"✅ Upload folder already exists", file=sys.stderr)
+        # ========== END DEBUGGING ==========
         
         # Create the full path
         upload_path = os.path.join(upload_folder, unique_filename)
         
+        print(f"💾 Saving to: {upload_path}", file=sys.stderr)
+        
         # Save the file
         file.save(upload_path)
         
-        print(f"✅ File saved successfully: {unique_filename}", file=sys.stderr)
+        # Verify file was saved
+        if os.path.exists(upload_path):
+            file_size = os.path.getsize(upload_path)
+            print(f"✅ File saved successfully: {unique_filename} ({file_size} bytes)", file=sys.stderr)
+        else:
+            print(f"❌ File NOT saved: {upload_path}", file=sys.stderr)
+            return None
         
         # Return just the filename (not the full path) for database storage
         return unique_filename
@@ -1502,6 +1520,27 @@ def admin_settings():
     return render_template('admin/settings.html')
 
 # ========== DEBUG ROUTES ==========
+@app.route('/debug/paths')
+def debug_paths():
+    """Debug upload paths"""
+    import os
+    
+    return jsonify({
+        'UPLOAD_FOLDER_config': app.config.get('UPLOAD_FOLDER'),
+        'UPLOAD_FOLDER_exists': os.path.exists(app.config.get('UPLOAD_FOLDER', '')),
+        'UPLOAD_FOLDER_is_dir': os.path.isdir(app.config.get('UPLOAD_FOLDER', '')),
+        'current_directory': os.getcwd(),
+        'project_root': os.path.dirname(os.path.abspath(__file__)),
+        'static_exists': os.path.exists('static'),
+        'static_uploads_exists': os.path.exists('static/uploads'),
+        'root_uploads_exists': os.path.exists('uploads'),
+        'all_paths': {
+            'static/uploads/': os.path.exists('static/uploads'),
+            'uploads/': os.path.exists('uploads'),
+            'static/': os.path.exists('static'),
+        }
+    })
+
 @app.route('/debug/uploads')
 def debug_uploads():
     """Debug uploads folder status"""
@@ -1558,8 +1597,30 @@ def create_app():
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    # Create required directories
-    os.makedirs('static/uploads', exist_ok=True)
+    # Create required directories with verification
+    try:
+        # Create static/uploads
+        upload_folder = app.config['UPLOAD_FOLDER']
+        print(f"🔄 Creating upload folder on startup: {upload_folder}", file=sys.stderr)
+        
+        # Remove if it's a file instead of directory
+        if os.path.exists(upload_folder) and not os.path.isdir(upload_folder):
+            print(f"⚠️ {upload_folder} is a FILE, not directory! Removing...", file=sys.stderr)
+            os.remove(upload_folder)
+        
+        # Create directory
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # Verify
+        if os.path.exists(upload_folder) and os.path.isdir(upload_folder):
+            print(f"✅ Upload folder created: {upload_folder}", file=sys.stderr)
+        else:
+            print(f"❌ FAILED to create upload folder!", file=sys.stderr)
+            
+    except Exception as e:
+        print(f"❌ Error creating upload folder: {str(e)}", file=sys.stderr)
+    
+    # Create other directories
     os.makedirs('static/images', exist_ok=True)
     
     port = int(os.environ.get('PORT', 5000))
@@ -1567,12 +1628,13 @@ if __name__ == '__main__':
     print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     print(f"📁 Uploads folder: {app.config['UPLOAD_FOLDER']}", file=sys.stderr)
+    print(f"📁 Uploads exists: {os.path.exists(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
+    print(f"📁 Uploads is dir: {os.path.isdir(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
     print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
     print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
     print(f"✅ CSRF Protection: Enabled", file=sys.stderr)
-    print(f"🛡️  CSRF Secret Key: Configured", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
