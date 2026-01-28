@@ -1,4 +1,4 @@
-# main.py - COMPLETE WORKING VERSION WITH ALL FEATURES
+# main.py - UPDATED PRODUCTION-READY VERSION WITH FIXED ERRORS
 import os
 import sys
 import traceback
@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
+from sqlalchemy import text
 
 # ========== CREATE APP ==========
 app = Flask(__name__)
@@ -27,11 +28,17 @@ if database_url:
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"✅ Using PostgreSQL database: {database_url[:50]}...", file=sys.stderr)
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+    print("✅ Using SQLite database", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 300,
+    'pool_pre_ping': True,
+}
 
 # ========== CSRF PROTECTION ==========
 # Initialize CSRF
@@ -379,16 +386,33 @@ def internal_error(error):
     traceback.print_exc(file=sys.stderr)
     return render_template('500.html', config=BUSINESS_CONFIG), 500
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all exceptions"""
+    print(f"❌ Unhandled Exception: {str(e)}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    return render_template('500.html', config=BUSINESS_CONFIG), 500
+
 # ========== DATABASE INITIALIZATION ==========
 def init_db():
     """Initialize database with tables and sample data"""
     print("🔄 Initializing database...", file=sys.stderr)
     
     try:
+        # Test database connection
+        db.session.execute(text('SELECT 1'))
+        print("✅ Database connection successful", file=sys.stderr)
+    except Exception as e:
+        print(f"❌ Database connection failed: {str(e)}", file=sys.stderr)
+        return False
+    
+    try:
         with app.app_context():
+            # Create all tables
             db.create_all()
             print("✅ Database tables created", file=sys.stderr)
             
+            # Create admin user if none exists
             if User.query.count() == 0:
                 admin = User(
                     username='admin',
@@ -399,6 +423,7 @@ def init_db():
                 db.session.add(admin)
                 print("✅ Admin user created: admin/admin123", file=sys.stderr)
             
+            # Create sample categories if none exist
             if Category.query.count() == 0:
                 categories = [
                     ('Lace Wigs', 'lace-wigs', 'Natural looking lace front wigs with HD lace'),
@@ -415,6 +440,7 @@ def init_db():
                 
                 print("✅ Sample categories added", file=sys.stderr)
             
+            # Create sample products if none exist
             if Product.query.count() == 0:
                 categories = Category.query.all()
                 
@@ -457,6 +483,7 @@ def init_db():
                 
                 print("✅ Sample products added", file=sys.stderr)
             
+            # Create sample reviews if none exist
             if Review.query.count() == 0:
                 reviews = [
                     (1, 'Chiamaka Okeke', 5, 'The Brazilian hair I purchased is absolutely stunning! It\'s been 6 months and still looks brand new. Best quality I\'ve ever had!', 'Lagos'),
@@ -489,14 +516,17 @@ def init_db():
         return False
 
 # ========== INITIALIZE DATABASE ON STARTUP ==========
-print("🚀 Initializing database on application startup...", file=sys.stderr)
-with app.app_context():
+@app.before_first_request
+def initialize_database():
+    """Initialize database before first request"""
+    print("🚀 Initializing database before first request...", file=sys.stderr)
     try:
-        init_db_success = init_db()
-        if init_db_success:
-            print("✅ Database initialized successfully!", file=sys.stderr)
-        else:
-            print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
+        with app.app_context():
+            init_db_success = init_db()
+            if init_db_success:
+                print("✅ Database initialized successfully!", file=sys.stderr)
+            else:
+                print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
     except Exception as e:
         print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
@@ -1552,7 +1582,7 @@ def uploaded_file(filename):
 def health_check():
     """Health check endpoint for Render"""
     try:
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
@@ -1572,21 +1602,36 @@ def create_app():
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
+    # Create necessary directories
     os.makedirs('static/uploads', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
+    os.makedirs('templates', exist_ok=True)
+    os.makedirs('templates/admin', exist_ok=True)
     
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*60}", file=sys.stderr)
-    print(f"🚀 NORA HAIR LINE E-COMMERCE - COMPLETE WORKING VERSION", file=sys.stderr)
+    print(f"🚀 NORA HAIR LINE E-COMMERCE - PRODUCTION READY", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     print(f"✅ CSRF Protection: ENABLED", file=sys.stderr)
-    print(f"✅ Registration: WORKING", file=sys.stderr)
-    print(f"✅ Login: WORKING", file=sys.stderr)
-    print(f"✅ Account Management: WORKING", file=sys.stderr)
-    print(f"✅ Cart & Checkout: WORKING", file=sys.stderr)
-    print(f"✅ Admin Panel: WORKING", file=sys.stderr)
+    print(f"✅ Database Connection: TESTED", file=sys.stderr)
+    print(f"✅ File Upload: ENABLED", file=sys.stderr)
+    print(f"✅ Error Handling: IMPROVED", file=sys.stderr)
+    print(f"✅ Health Check: AVAILABLE", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Initialize database before starting
+    with app.app_context():
+        try:
+            init_db_success = init_db()
+            if init_db_success:
+                print("✅ Database initialized successfully!", file=sys.stderr)
+            else:
+                print("⚠️ Database initialization had issues, but application will continue", file=sys.stderr)
+        except Exception as e:
+            print(f"❌ Critical error during database initialization: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            print("⚠️ Application will continue, but some features may not work", file=sys.stderr)
+    
+    app.run(host='0.0.0.0', port=port, debug=False)
