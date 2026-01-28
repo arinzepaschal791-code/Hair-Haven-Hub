@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Keep all your CSS styles as they were */
         .shop-header {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
@@ -318,7 +319,7 @@
             <div class="product-card">
                 <div class="product-image">
                     {% if product.image_url %}
-                    <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                    <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}" onerror="this.src='/static/images/product-placeholder.jpg'">
                     {% else %}
                     <img src="/static/images/product-placeholder.jpg" alt="{{ product.name }}">
                     {% endif %}
@@ -347,6 +348,8 @@
                     {% endif %}
                     
                     <form action="/add-to-cart/{{ product.id }}" method="POST">
+                        <!-- FIXED: Add CSRF token input -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="add-to-cart-btn" {% if product.quantity <= 0 %}disabled{% endif %}>
                             {% if product.quantity <= 0 %}Out of Stock{% else %}<i class="fas fa-shopping-cart"></i> Add to Cart{% endif %}
@@ -435,17 +438,6 @@
                     categoryBtns.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                 });
-            });
-            
-            // Add CSRF token to add-to-cart forms
-            const csrfToken = "{{ csrf_token() }}";
-            const addToCartForms = document.querySelectorAll('form[action*="add-to-cart"]');
-            addToCartForms.forEach(form => {
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrf_token';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
             });
         });
     </script>
