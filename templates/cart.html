@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Shopping Cart - {{ brand_name }}{% endblock %}
+{% block title %}Shopping Cart - {{ config.brand_name }}{% endblock %}
 
 {% block styles %}
 <style>
@@ -11,7 +11,6 @@
         background-position: center;
         color: white;
         padding: 80px 0 40px;
-        margin-top: 76px;
     }
     
     .cart-container {
@@ -260,7 +259,7 @@
         
         <nav aria-label="breadcrumb" class="mt-4">
             <ol class="breadcrumb justify-content-center">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
                 <li class="breadcrumb-item active">Cart</li>
             </ol>
         </nav>
@@ -286,25 +285,37 @@
                     
                     <!-- Cart Items List -->
                     {% for item in cart_items %}
+                    {% set product = Product.query.get(item.id) %}
                     <div class="cart-item" id="cartItem{{ item.id }}">
                         <!-- Product -->
                         <div class="cart-product">
                             <div class="cart-product-image">
-                                <img src="{{ item.product.image_url if item.product.image_url else '/static/images/default-product.jpg' }}" 
-                                     alt="{{ item.product.name }}">
+                                {% if item.image_url %}
+                                <img src="{{ url_for('uploaded_file', filename=item.image_url) }}" 
+                                     alt="{{ item.name }}">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                                     alt="{{ item.name }}">
+                                {% endif %}
                             </div>
                             <div class="cart-product-details">
-                                <h4>{{ item.product.name }}</h4>
-                                <div class="cart-product-category">{{ item.product.category|title if item.product.category else 'Uncategorized' }}</div>
+                                <h4>{{ item.name }}</h4>
+                                <div class="cart-product-category">
+                                    {% if product and product.category %}
+                                    {{ product.category.name }}
+                                    {% else %}
+                                    Uncategorized
+                                    {% endif %}
+                                </div>
                                 <div class="d-lg-none mt-2">
-                                    <span class="cart-price">{{ "${:,.2f}".format(item.product.price) if item.product.price else '$0.00' }}</span>
+                                    <span class="cart-price">{{ format_price(item.price) }}</span>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Price -->
                         <div class="cart-price d-none d-lg-block">
-                            {{ "${:,.2f}".format(item.product.price) if item.product.price else '$0.00' }}
+                            {{ format_price(item.price) }}
                         </div>
                         
                         <!-- Quantity -->
@@ -314,7 +325,7 @@
                             <input type="number" class="quantity-input" 
                                    value="{{ item.quantity }}" 
                                    min="1" 
-                                   max="{{ item.product.stock if item.product.stock else 99 }}"
+                                   max="{{ item.stock if item.stock else 99 }}"
                                    onchange="updateQuantity({{ item.id }}, this.value)">
                             <button class="quantity-btn" 
                                     onclick="updateQuantity({{ item.id }}, {{ item.quantity + 1 }})">+</button>
@@ -322,7 +333,7 @@
                         
                         <!-- Total -->
                         <div class="cart-total">
-                            ${% if item.product.price %}{{ "%.2f"|format(item.product.price * item.quantity) }}{% else %}0.00{% endif %}
+                            {{ format_price(item.price * item.quantity) }}
                         </div>
                         
                         <!-- Remove -->
@@ -333,6 +344,16 @@
                     </div>
                     {% endfor %}
                 </div>
+                
+                <!-- Continue Shopping -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('shop') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i> Continue Shopping
+                    </a>
+                    <a href="{{ url_for('checkout') }}" class="btn btn-primary">
+                        Proceed to Checkout <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
             </div>
             
             <!-- Cart Summary -->
@@ -340,65 +361,64 @@
                 <div class="cart-summary">
                     <h3 class="summary-title">Order Summary</h3>
                     
-                    {% set subtotal = namespace(value=0) %}
-                    {% for item in cart_items %}
-                        {% set subtotal.value = subtotal.value + (item.product.price * item.quantity) if item.product.price else subtotal.value %}
-                    {% endfor %}
-                    
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <span>${{ "%.2f"|format(subtotal.value) }}</span>
+                        <span>{{ format_price(subtotal) }}</span>
                     </div>
                     
                     <div class="summary-row">
-                        <span>Shipping</span>
-                        <span>${{ "%.2f"|format(5.00 if subtotal.value < 50 else 0.00) }}</span>
+                        <span>Delivery Fee</span>
+                        <span>
+                            {% if subtotal >= free_delivery_threshold %}
+                            <span class="text-success">FREE</span>
+                            {% else %}
+                            {{ format_price(delivery_fee) }}
+                            {% endif %}
+                        </span>
                     </div>
                     
-                    <div class="summary-row">
-                        <span>Tax</span>
-                        <span>${{ "%.2f"|format(subtotal.value * 0.08) }}</span>
-                    </div>
-                    
-                    {% set total = subtotal.value + (5.00 if subtotal.value < 50 else 0.00) + (subtotal.value * 0.08) %}
                     <div class="summary-row total">
                         <span>Total</span>
-                        <span>${{ "%.2f"|format(total) }}</span>
+                        <span>{{ format_price(total) }}</span>
                     </div>
                     
-                    <!-- Promo Code -->
-                    <div class="promo-code">
-                        <label class="form-label">Promo Code</label>
-                        <div class="promo-input">
-                            <input type="text" class="form-control" placeholder="Enter code" id="promoCode">
-                            <button class="btn btn-outline-primary" onclick="applyPromoCode()">Apply</button>
-                        </div>
+                    <!-- Free Delivery Message -->
+                    {% if subtotal < free_delivery_threshold %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-truck me-2"></i>
+                        Add {{ format_price(free_delivery_threshold - subtotal) }} more for FREE delivery!
                     </div>
+                    {% else %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        You qualify for FREE delivery!
+                    </div>
+                    {% endif %}
                     
-                    <!-- Cart Actions -->
-                    <div class="cart-actions">
-                        <a href="/shop" class="btn btn-outline-primary">
-                            <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
-                        </a>
-                        <a href="/checkout" class="btn btn-primary">
-                            <i class="fas fa-lock me-2"></i> Proceed to Checkout
-                        </a>
-                    </div>
+                    <!-- Checkout Button -->
+                    <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 mt-4">
+                        <i class="fas fa-lock me-2"></i> Proceed to Checkout
+                    </a>
                     
                     <!-- Payment Methods -->
                     <div class="mt-4">
                         <p class="small text-muted mb-2">We accept:</p>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap">
                             <span class="badge bg-light text-dark p-2">
                                 <i class="fas fa-university me-1"></i> Bank Transfer
                             </span>
                             <span class="badge bg-light text-dark p-2">
                                 <i class="fab fa-whatsapp me-1 text-success"></i> WhatsApp Payment
                             </span>
-                            <span class="badge bg-light text-dark p-2">
-                                <i class="fab fa-cc-paypal me-1 text-primary"></i> PayPal
-                            </span>
                         </div>
+                    </div>
+                    
+                    <!-- Contact Info -->
+                    <div class="mt-4 pt-3 border-top">
+                        <p class="small text-muted mb-2">Need help?</p>
+                        <a href="{{ config.whatsapp }}" target="_blank" class="btn btn-outline-success btn-sm w-100">
+                            <i class="fab fa-whatsapp me-1"></i> Chat on WhatsApp
+                        </a>
                     </div>
                 </div>
             </div>
@@ -412,11 +432,11 @@
             <h3>Your cart is empty</h3>
             <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
             <div class="d-flex gap-3 justify-content-center">
-                <a href="/shop" class="btn btn-primary">
+                <a href="{{ url_for('shop') }}" class="btn btn-primary">
                     <i class="fas fa-store me-2"></i> Start Shopping
                 </a>
-                {% if whatsapp %}
-                <a href="{{ whatsapp }}" target="_blank" class="btn btn-success">
+                {% if config.whatsapp %}
+                <a href="{{ config.whatsapp }}" target="_blank" class="btn btn-success">
                     <i class="fab fa-whatsapp me-2"></i> WhatsApp Order
                 </a>
                 {% endif %}
@@ -429,13 +449,18 @@
 
 {% block scripts %}
 <script>
+    // Get CSRF token from meta tag
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').content;
+    }
+    
     // Toast notification function
     function showToast(title, message, type = 'info') {
         // Create toast element
         const toast = document.createElement('div');
         toast.className = `toast align-items-center text-bg-${type} border-0 position-fixed`;
-        toast.style.top = '20px';
-        toast.style.right = '20px';
+        toast.style.top = '100px';
+        toast.style.right = '30px';
         toast.style.zIndex = '1050';
         
         toast.innerHTML = `
@@ -469,28 +494,27 @@
         }
         
         try {
-            const response = await fetch(`/cart/update/${itemId}`, {
+            const formData = new FormData();
+            formData.append('quantity', newQuantity);
+            
+            const response = await fetch(`/update-cart/${itemId}`, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    quantity: newQuantity
-                })
+                    'X-CSRFToken': getCSRFToken()
+                }
             });
             
-            const result = await response.json();
-            
-            if (result.success) {
+            if (response.ok) {
                 // Reload page to get updated totals
                 location.reload();
             } else {
-                showToast('Error', result.message, 'error');
+                showToast('Error', 'Failed to update quantity', 'error');
             }
             
         } catch (error) {
-            showToast('Error', 'Failed to update cart', 'error');
+            console.error('Error:', error);
+            showToast('Error', 'Failed to update quantity', 'error');
         }
     }
     
@@ -501,58 +525,22 @@
         }
         
         try {
-            const response = await fetch(`/cart/remove/${itemId}`, {
-                method: 'POST',
+            const response = await fetch(`/remove-from-cart/${itemId}`, {
+                method: 'GET',
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token() }}'
+                    'X-CSRFToken': getCSRFToken()
                 }
             });
             
-            const result = await response.json();
-            
-            if (result.success) {
+            if (response.ok) {
                 location.reload();
             } else {
-                showToast('Error', result.message, 'error');
+                showToast('Error', 'Failed to remove item', 'error');
             }
             
         } catch (error) {
+            console.error('Error:', error);
             showToast('Error', 'Failed to remove item', 'error');
-        }
-    }
-    
-    // Apply Promo Code
-    async function applyPromoCode() {
-        const promoCode = document.getElementById('promoCode').value;
-        
-        if (!promoCode.trim()) {
-            showToast('Info', 'Please enter a promo code', 'info');
-            return;
-        }
-        
-        try {
-            const response = await fetch('/cart/apply-promo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    promo_code: promoCode
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showToast('Success', result.message, 'success');
-                location.reload();
-            } else {
-                showToast('Error', result.message, 'error');
-            }
-            
-        } catch (error) {
-            showToast('Error', 'Failed to apply promo code', 'error');
         }
     }
     
