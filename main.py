@@ -34,7 +34,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 # ========== CSRF PROTECTION ==========
+# Initialize CSRF with explicit settings
 csrf = CSRFProtect(app)
+app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_SECRET_KEY'] = os.environ.get('CSRF_SECRET_KEY', 'csrf-secret-key-2026-change-in-production')
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
+app.config['WTF_CSRF_SSL_STRICT'] = False  # Set to True in production with HTTPS
 
 # ========== FIXED UPLOAD FOLDER CONFIG ==========
 # Get absolute path to project root
@@ -358,8 +363,8 @@ def inject_global_vars():
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
         cart_total = calculate_cart_total()
     
-    # Make csrf_token available to all templates
-    csrf_token = generate_csrf()
+    # DO NOT generate csrf_token here - it will be handled by Flask-WTF automatically
+    # Use {{ csrf_token() }} in templates instead
     
     return dict(
         now=datetime.now(),
@@ -370,7 +375,7 @@ def inject_global_vars():
         config=BUSINESS_CONFIG,
         format_price=format_price,
         safe_format_number=safe_format_number,
-        csrf_token=csrf_token  # ADDED THIS LINE
+        # No csrf_token here - use {{ csrf_token() }} in templates
     )
 
 # ========== ERROR HANDLERS ==========
@@ -1569,6 +1574,7 @@ if __name__ == '__main__':
     print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
     print(f"✅ CSRF Protection: Enabled", file=sys.stderr)
+    print(f"🛡️  CSRF Secret Key: Configured", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
