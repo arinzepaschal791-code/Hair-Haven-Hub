@@ -1,4 +1,4 @@
-# main.py - COMPLETE FIXED VERSION WITH WORKING UPLOADS - READY FOR PRODUCTION
+# main.py - COMPLETE FIXED VERSION WITH CSRF PROTECTION
 import os
 import sys
 import traceback
@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
 
@@ -31,6 +32,9 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+
+# ========== CSRF PROTECTION ==========
+csrf = CSRFProtect(app)
 
 # ========== FIXED UPLOAD FOLDER CONFIG ==========
 # Get absolute path to project root
@@ -191,6 +195,9 @@ class OrderItem(db.Model):
     total_price = db.Column(db.Float, nullable=False)
     
     product = db.relationship('Product')
+    
+    def __repr__(self):
+        return f'<OrderItem {self.id}>'
 
 class Review(db.Model):
     __tablename__ = 'review'
@@ -293,17 +300,12 @@ def save_uploaded_file(file):
         # Get the upload folder from config
         upload_folder = app.config['UPLOAD_FOLDER']
         
-        print(f"📁 Using upload folder: {upload_folder}", file=sys.stderr)
-        print(f"📁 Folder exists: {os.path.exists(upload_folder)}", file=sys.stderr)
-        
         # Double-check folder exists
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder, exist_ok=True)
-            print(f"📁 Created uploads folder: {upload_folder}", file=sys.stderr)
         
         # Create the full path
         upload_path = os.path.join(upload_folder, unique_filename)
-        print(f"📁 Full upload path: {upload_path}", file=sys.stderr)
         
         # Save the file
         file.save(upload_path)
@@ -315,7 +317,6 @@ def save_uploaded_file(file):
         
     except Exception as e:
         print(f"❌ CRITICAL ERROR saving file: {str(e)}", file=sys.stderr)
-        print(f"❌ Error type: {type(e).__name__}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return None
 
@@ -348,7 +349,6 @@ def inject_global_vars():
     cart_total = 0
     
     try:
-        # Use separate session for context processor
         categories = Category.query.all()
     except Exception as e:
         print(f"⚠️ Context processor error (categories): {str(e)}", file=sys.stderr)
@@ -358,6 +358,9 @@ def inject_global_vars():
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
         cart_total = calculate_cart_total()
     
+    # Make csrf_token available to all templates
+    csrf_token = generate_csrf()
+    
     return dict(
         now=datetime.now(),
         categories=categories,
@@ -366,7 +369,8 @@ def inject_global_vars():
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
         format_price=format_price,
-        safe_format_number=safe_format_number
+        safe_format_number=safe_format_number,
+        csrf_token=csrf_token  # ADDED THIS LINE
     )
 
 # ========== ERROR HANDLERS ==========
@@ -512,9 +516,8 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    """Homepage - FIXED SESSION ISSUE"""
+    """Homepage"""
     try:
-        # Use joinedload to load category relationship in the same query
         featured_products = Product.query.filter_by(featured=True, active=True)\
             .options(joinedload(Product.category))\
             .limit(8)\
@@ -526,20 +529,17 @@ def index():
         return render_template('index.html',
                              featured_products=featured_products,
                              categories=categories,
-                             reviews=reviews,
-                             config=BUSINESS_CONFIG)
+                             reviews=reviews)
     except Exception as e:
         print(f"❌ Homepage error: {str(e)}", file=sys.stderr)
-        # Return empty lists with proper structure
         return render_template('index.html',
                              featured_products=[],
                              categories=[],
-                             reviews=[],
-                             config=BUSINESS_CONFIG)
+                             reviews=[])
 
 @app.route('/shop')
 def shop():
-    """Shop page - FIXED SESSION ISSUE"""
+    """Shop page"""
     try:
         category_id = request.args.get('category', type=int)
         search = request.args.get('search', '')
@@ -581,8 +581,7 @@ def shop():
                              search_query=search,
                              current_page=page,
                              total_pages=total_pages,
-                             total_products=total_products,
-                             config=BUSINESS_CONFIG)
+                             total_products=total_products)
     except Exception as e:
         print(f"❌ Shop error: {str(e)}", file=sys.stderr)
         flash('Error loading products.', 'danger')
@@ -593,12 +592,11 @@ def shop():
                              search_query='',
                              current_page=1,
                              total_pages=1,
-                             total_products=0,
-                             config=BUSINESS_CONFIG)
+                             total_products=0)
 
 @app.route('/product/<int:id>')
 def product_detail(id):
-    """Product detail page - FIXED SESSION ISSUE"""
+    """Product detail page"""
     try:
         product = Product.query\
             .options(joinedload(Product.category))\
@@ -617,8 +615,7 @@ def product_detail(id):
         return render_template('product_detail.html',
                              product=product,
                              related_products=related_products,
-                             reviews=reviews,
-                             config=BUSINESS_CONFIG)
+                             reviews=reviews)
     except Exception as e:
         print(f"❌ Product detail error: {str(e)}", file=sys.stderr)
         flash('Product not found.', 'danger')
@@ -639,10 +636,10 @@ def cart():
                          subtotal=subtotal,
                          delivery_fee=delivery_fee,
                          total=total,
-                         free_delivery_threshold=150000,
-                         config=BUSINESS_CONFIG)
+                         free_delivery_threshold=150000)
 
 @app.route('/add-to-cart/<int:product_id>', methods=['POST'])
+@csrf.exempt  # This route doesn't need CSRF since it's from product page
 def add_to_cart(product_id):
     """Add product to cart"""
     try:
@@ -786,7 +783,7 @@ def customer_register():
             print(f"❌ Registration error: {str(e)}", file=sys.stderr)
             flash('Error during registration. Please try again.', 'danger')
     
-    return render_template('register.html', config=BUSINESS_CONFIG)
+    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def customer_login():
@@ -816,7 +813,7 @@ def customer_login():
             print(f"❌ Login error: {str(e)}", file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
     
-    return render_template('login.html', config=BUSINESS_CONFIG)
+    return render_template('login.html')
 
 @app.route('/logout')
 def customer_logout():
@@ -835,7 +832,7 @@ def account():
         customer = Customer.query.get(session['customer_id'])
         orders = Order.query.filter_by(customer_id=customer.id).order_by(Order.created_at.desc()).all()
     
-        return render_template('account.html', customer=customer, orders=orders, config=BUSINESS_CONFIG)
+        return render_template('account.html', customer=customer, orders=orders)
     except Exception as e:
         print(f"❌ Account error: {str(e)}", file=sys.stderr)
         flash('Error loading account information.', 'danger')
@@ -930,8 +927,7 @@ def checkout():
             flash(f'Order #{order.order_number} created successfully! We will contact you shortly.', 'success')
             return render_template('order.html',
                                  order=order,
-                                 bank_details=BUSINESS_CONFIG,
-                                 config=BUSINESS_CONFIG)
+                                 bank_details=BUSINESS_CONFIG)
             
         except Exception as e:
             db.session.rollback()
@@ -950,13 +946,12 @@ def checkout():
                          delivery_fee=delivery_fee,
                          total=total,
                          free_delivery_threshold=150000,
-                         customer=customer,
-                         config=BUSINESS_CONFIG)
+                         customer=customer)
 
 @app.route('/about')
 def about():
     """About page"""
-    return render_template('about.html', config=BUSINESS_CONFIG)
+    return render_template('about.html')
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -972,14 +967,13 @@ def contact():
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('contact'))
             
-            # In a real app, you would save to database or send email
             flash('Your message has been sent successfully! We will contact you soon.', 'success')
             return redirect(url_for('contact'))
             
         except Exception as e:
             flash('Error sending message. Please try again.', 'danger')
     
-    return render_template('contact.html', config=BUSINESS_CONFIG)
+    return render_template('contact.html')
 
 # ========== REVIEW ROUTES ==========
 
@@ -1006,7 +1000,7 @@ def add_review(product_id):
             rating=rating,
             comment=comment,
             location=customer.city or 'Unknown',
-            approved=False  # Admin needs to approve reviews
+            approved=False
         )
         
         db.session.add(review)
@@ -1053,7 +1047,7 @@ def admin_login():
             print(f"❌ Admin login error: {str(e)}", file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
     
-    return render_template('admin/admin_login.html', config=BUSINESS_CONFIG)
+    return render_template('admin/admin_login.html')
 
 @app.route('/admin/logout')
 def admin_logout():
@@ -1067,7 +1061,7 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard - FIXED SESSION ISSUE"""
+    """Admin dashboard"""
     try:
         total_orders = Order.query.count()
         total_products = Product.query.count()
@@ -1135,27 +1129,25 @@ def admin_dashboard():
 @app.route('/admin/products')
 @admin_required
 def admin_products():
-    """Admin products list - FIXED SESSION ISSUE"""
+    """Admin products list"""
     try:
         products = Product.query.options(joinedload(Product.category)).order_by(Product.created_at.desc()).all()
         categories = Category.query.all()
     
         return render_template('admin/products.html',
                              products=products,
-                             categories=categories,
-                             config=BUSINESS_CONFIG)
+                             categories=categories)
     except Exception as e:
         print(f"❌ Admin products error: {str(e)}", file=sys.stderr)
         flash('Error loading products.', 'danger')
         return render_template('admin/products.html',
                              products=[],
-                             categories=[],
-                             config=BUSINESS_CONFIG)
+                             categories=[])
 
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product with image upload - COMPLETELY FIXED"""
+    """Add product with image upload"""
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -1178,19 +1170,15 @@ def admin_add_product():
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename != '':
-                    print(f"📤 Processing file upload: {file.filename}", file=sys.stderr)
                     uploaded_filename = save_uploaded_file(file)
                     if uploaded_filename:
                         image_url = uploaded_filename
-                        print(f"✅ File uploaded successfully: {image_url}", file=sys.stderr)
                     else:
-                        print(f"❌ File upload failed", file=sys.stderr)
                         flash('Failed to upload image. Please try again.', 'warning')
             
             # If no file uploaded, use the image_url field
             if not image_url:
                 image_url = request.form.get('image_url')
-                print(f"📝 Using manual image URL: {image_url}", file=sys.stderr)
             
             product = Product(
                 name=name,
@@ -1212,7 +1200,6 @@ def admin_add_product():
             db.session.commit()
             
             flash(f'Product "{name}" added successfully!', 'success')
-            print(f"✅ Product '{name}' added to database", file=sys.stderr)
             return redirect(url_for('admin_products'))
             
         except Exception as e:
@@ -1222,7 +1209,7 @@ def admin_add_product():
             flash('Error adding product. Please try again.', 'danger')
     
     categories = Category.query.all()
-    return render_template('admin/add_product.html', categories=categories, config=BUSINESS_CONFIG)
+    return render_template('admin/add_product.html', categories=categories)
 
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
@@ -1268,7 +1255,7 @@ def admin_edit_product(id):
             flash('Error updating product. Please try again.', 'danger')
     
     categories = Category.query.all()
-    return render_template('admin/edit_product.html', product=product, categories=categories, config=BUSINESS_CONFIG)
+    return render_template('admin/edit_product.html', product=product, categories=categories)
 
 @app.route('/admin/products/delete/<int:id>', methods=['POST'])
 @admin_required
@@ -1306,15 +1293,13 @@ def admin_orders():
     
         return render_template('admin/orders.html',
                              orders=orders,
-                             status=status,
-                             config=BUSINESS_CONFIG)
+                             status=status)
     except Exception as e:
         print(f"❌ Admin orders error: {str(e)}", file=sys.stderr)
         flash('Error loading orders.', 'danger')
         return render_template('admin/orders.html',
                              orders=[],
-                             status='all',
-                             config=BUSINESS_CONFIG)
+                             status='all')
 
 @app.route('/admin/orders/<int:id>')
 @admin_required
@@ -1326,8 +1311,7 @@ def admin_order_detail(id):
     
         return render_template('admin/order_detail.html',
                              order=order,
-                             order_items=order_items,
-                             config=BUSINESS_CONFIG)
+                             order_items=order_items)
     except Exception as e:
         print(f"❌ Admin order detail error: {str(e)}", file=sys.stderr)
         flash('Error loading order details.', 'danger')
@@ -1362,16 +1346,16 @@ def admin_customers():
     """Admin customers list"""
     try:
         customers = Customer.query.order_by(Customer.created_at.desc()).all()
-        return render_template('admin/customers.html', customers=customers, config=BUSINESS_CONFIG)
+        return render_template('admin/customers.html', customers=customers)
     except Exception as e:
         print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
         flash('Error loading customers.', 'danger')
-        return render_template('admin/customers.html', customers=[], config=BUSINESS_CONFIG)
+        return render_template('admin/customers.html', customers=[])
 
 @app.route('/admin/reviews')
 @admin_required
 def admin_reviews():
-    """Admin reviews - FIXED: Added review_stats"""
+    """Admin reviews"""
     try:
         reviews = Review.query.order_by(Review.created_at.desc()).all()
         
@@ -1390,15 +1374,13 @@ def admin_reviews():
         
         return render_template('admin/reviews.html', 
                              reviews=reviews, 
-                             review_stats=review_stats,
-                             config=BUSINESS_CONFIG)
+                             review_stats=review_stats)
     except Exception as e:
         print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
         flash('Error loading reviews.', 'danger')
         return render_template('admin/reviews.html', 
                              reviews=[], 
-                             review_stats={'total': 0, 'approved': 0, 'pending': 0, 'avg_rating': 0},
-                             config=BUSINESS_CONFIG)
+                             review_stats={'total': 0, 'approved': 0, 'pending': 0, 'avg_rating': 0})
 
 @app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
 @admin_required
@@ -1440,11 +1422,11 @@ def admin_categories():
     """Admin categories"""
     try:
         categories = Category.query.order_by(Category.name).all()
-        return render_template('admin/categories.html', categories=categories, config=BUSINESS_CONFIG)
+        return render_template('admin/categories.html', categories=categories)
     except Exception as e:
         print(f"❌ Admin categories error: {str(e)}", file=sys.stderr)
         flash('Error loading categories.', 'danger')
-        return render_template('admin/categories.html', categories=[], config=BUSINESS_CONFIG)
+        return render_template('admin/categories.html', categories=[])
 
 @app.route('/admin/categories/add', methods=['GET', 'POST'])
 @admin_required
@@ -1476,7 +1458,7 @@ def admin_add_category():
             print(f"❌ Add category error: {str(e)}", file=sys.stderr)
             flash('Error adding category. Please try again.', 'danger')
     
-    return render_template('admin/add_category.html', config=BUSINESS_CONFIG)
+    return render_template('admin/add_category.html')
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @admin_required
@@ -1514,7 +1496,7 @@ def admin_settings():
             print(f"❌ Change password error: {str(e)}", file=sys.stderr)
             flash('Error changing password. Please try again.', 'danger')
     
-    return render_template('admin/settings.html', config=BUSINESS_CONFIG)
+    return render_template('admin/settings.html')
 
 # ========== DEBUG ROUTES ==========
 @app.route('/debug/uploads')
@@ -1539,7 +1521,7 @@ def debug_uploads():
 
 @app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
-    """Serve uploaded files - FIXED"""
+    """Serve uploaded files"""
     try:
         upload_folder = app.config['UPLOAD_FOLDER']
         return send_from_directory(upload_folder, filename)
@@ -1573,7 +1555,7 @@ def create_app():
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    # Create required directories (redundant but safe)
+    # Create required directories
     os.makedirs('static/uploads', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
     
@@ -1582,19 +1564,11 @@ if __name__ == '__main__':
     print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
     print(f"📁 Uploads folder: {app.config['UPLOAD_FOLDER']}", file=sys.stderr)
-    print(f"📁 Folder exists: {os.path.exists(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
-    print(f"📁 Writable: {os.access(app.config['UPLOAD_FOLDER'], os.W_OK) if os.path.exists(app.config['UPLOAD_FOLDER']) else False}", file=sys.stderr)
     print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
-    print(f"🔧 Debug: http://localhost:{port}/debug/uploads", file=sys.stderr)
     print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
-    print(f"👤 Customer: /login", file=sys.stderr)
-    print(f"📧 Contact: /contact", file=sys.stderr)
-    print(f"ℹ️  About: /about", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
-    print(f"✅ Database initialized at startup", file=sys.stderr)
-    print(f"✅ Uploads folder ready", file=sys.stderr)
+    print(f"✅ CSRF Protection: Enabled", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
