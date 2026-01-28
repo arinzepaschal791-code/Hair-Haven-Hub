@@ -1,4 +1,4 @@
-# main.py - COMPLETE FIXED VERSION WITH CSRF PROTECTION
+# main.py - FIXED VERSION WITH WORKING CSRF
 import os
 import sys
 import traceback
@@ -34,15 +34,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 # ========== CSRF PROTECTION ==========
-# Initialize CSRF with explicit settings
+# Initialize CSRF
 csrf = CSRFProtect(app)
-app.config['WTF_CSRF_ENABLED'] = True
-app.config['WTF_CSRF_SECRET_KEY'] = os.environ.get('CSRF_SECRET_KEY', 'csrf-secret-key-2026-change-in-production')
-app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
-app.config['WTF_CSRF_SSL_STRICT'] = False  # Set to True in production with HTTPS
 
 # ========== FIXED UPLOAD FOLDER CONFIG ==========
-# Get absolute path to project root
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
 
@@ -284,9 +279,9 @@ def safe_format_number(value, default=0):
     except:
         return str(default)
 
-# ========== FILE UPLOAD FUNCTION - COMPLETELY FIXED ==========
+# ========== FILE UPLOAD FUNCTION ==========
 def save_uploaded_file(file):
-    """Save uploaded file to uploads folder - FIXED FOR RENDER"""
+    """Save uploaded file to uploads folder"""
     if not file or file.filename == '':
         print(f"⚠️ No file provided for upload", file=sys.stderr)
         return None
@@ -296,46 +291,19 @@ def save_uploaded_file(file):
         return None
     
     try:
-        # Secure the filename
         filename = secure_filename(file.filename)
-        # Add timestamp to make filename unique
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         unique_filename = f"{timestamp}_{filename}"
         
-        # Get the upload folder from config
         upload_folder = app.config['UPLOAD_FOLDER']
         
-        # ========== ADDED DEBUGGING ==========
-        print(f"📁 UPLOAD DEBUG:", file=sys.stderr)
-        print(f"   Config UPLOAD_FOLDER: {upload_folder}", file=sys.stderr)
-        print(f"   Folder exists: {os.path.exists(upload_folder)}", file=sys.stderr)
-        print(f"   Is directory: {os.path.isdir(upload_folder) if os.path.exists(upload_folder) else 'N/A'}", file=sys.stderr)
-        
-        # Double-check folder exists
         if not os.path.exists(upload_folder):
-            print(f"🔄 Creating upload folder: {upload_folder}", file=sys.stderr)
             os.makedirs(upload_folder, exist_ok=True)
-        else:
-            print(f"✅ Upload folder already exists", file=sys.stderr)
-        # ========== END DEBUGGING ==========
         
-        # Create the full path
         upload_path = os.path.join(upload_folder, unique_filename)
-        
-        print(f"💾 Saving to: {upload_path}", file=sys.stderr)
-        
-        # Save the file
         file.save(upload_path)
         
-        # Verify file was saved
-        if os.path.exists(upload_path):
-            file_size = os.path.getsize(upload_path)
-            print(f"✅ File saved successfully: {unique_filename} ({file_size} bytes)", file=sys.stderr)
-        else:
-            print(f"❌ File NOT saved: {upload_path}", file=sys.stderr)
-            return None
-        
-        # Return just the filename (not the full path) for database storage
+        print(f"✅ File saved successfully: {unique_filename}", file=sys.stderr)
         return unique_filename
         
     except Exception as e:
@@ -381,7 +349,13 @@ def inject_global_vars():
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
         cart_total = calculate_cart_total()
     
-    # Flask-WTF will automatically handle csrf_token() in templates
+    # FIXED: Return the actual CSRF token string, not a function
+    csrf_token_value = ""
+    try:
+        csrf_token_value = generate_csrf()
+    except Exception as e:
+        print(f"⚠️ CSRF token generation error: {str(e)}", file=sys.stderr)
+    
     return dict(
         now=datetime.now(),
         categories=categories,
@@ -391,7 +365,7 @@ def inject_global_vars():
         config=BUSINESS_CONFIG,
         format_price=format_price,
         safe_format_number=safe_format_number,
-        # csrf_token will be available via {{ csrf_token() }} in templates
+        csrf_token=csrf_token_value  # FIXED: This is now a string
     )
 
 # ========== ERROR HANDLERS ==========
@@ -412,11 +386,9 @@ def init_db():
     
     try:
         with app.app_context():
-            # Create all tables
             db.create_all()
             print("✅ Database tables created", file=sys.stderr)
             
-            # Create admin user if not exists
             if User.query.count() == 0:
                 admin = User(
                     username='admin',
@@ -427,7 +399,6 @@ def init_db():
                 db.session.add(admin)
                 print("✅ Admin user created: admin/admin123", file=sys.stderr)
             
-            # Create default categories if none exist
             if Category.query.count() == 0:
                 categories = [
                     ('Lace Wigs', 'lace-wigs', 'Natural looking lace front wigs with HD lace'),
@@ -444,7 +415,6 @@ def init_db():
                 
                 print("✅ Sample categories added", file=sys.stderr)
             
-            # Create sample products if none exist
             if Product.query.count() == 0:
                 categories = Category.query.all()
                 
@@ -487,7 +457,6 @@ def init_db():
                 
                 print("✅ Sample products added", file=sys.stderr)
             
-            # Create sample reviews if none exist
             if Review.query.count() == 0:
                 reviews = [
                     (1, 'Chiamaka Okeke', 5, 'The Brazilian hair I purchased is absolutely stunning! It\'s been 6 months and still looks brand new. Best quality I\'ve ever had!', 'Lagos'),
@@ -567,7 +536,6 @@ def shop():
         page = request.args.get('page', 1, type=int)
         per_page = 12
         
-        # Start with base query
         query = Product.query.filter_by(active=True)\
             .options(joinedload(Product.category))
         
@@ -577,10 +545,8 @@ def shop():
         if search:
             query = query.filter(Product.name.ilike(f'%{search}%'))
         
-        # Get all products with categories loaded
         products = query.order_by(Product.created_at.desc()).all()
         
-        # Manual pagination
         total_products = len(products)
         total_pages = (total_products + per_page - 1) // per_page
         
@@ -647,7 +613,7 @@ def cart():
     """Shopping cart page"""
     cart_items = session.get('cart', [])
     subtotal = calculate_cart_total()
-    delivery_fee = 3000  # Default delivery fee
+    delivery_fee = 3000
     if subtotal >= 150000:
         delivery_fee = 0
     total = subtotal + delivery_fee
@@ -660,7 +626,7 @@ def cart():
                          free_delivery_threshold=150000)
 
 @app.route('/add-to-cart/<int:product_id>', methods=['POST'])
-@csrf.exempt  # This route doesn't need CSRF since it's from product page
+@csrf.exempt
 def add_to_cart(product_id):
     """Add product to cart"""
     try:
@@ -681,7 +647,6 @@ def add_to_cart(product_id):
         
         cart = session['cart']
         
-        # Check if product already in cart
         for item in cart:
             if item['id'] == product_id:
                 new_quantity = item['quantity'] + quantity
@@ -694,7 +659,6 @@ def add_to_cart(product_id):
                 flash(f'Added {quantity} more of {product.name} to cart.', 'success')
                 return redirect(request.referrer or url_for('cart'))
         
-        # Add new item to cart
         cart.append({
             'id': product_id,
             'name': product.name,
@@ -763,7 +727,7 @@ def remove_from_cart(product_id):
 
 @app.route('/register', methods=['GET', 'POST'])
 def customer_register():
-    """Customer registration"""
+    """Customer registration - FIXED"""
     if request.method == 'POST':
         try:
             email = request.form.get('email')
@@ -771,6 +735,7 @@ def customer_register():
             first_name = request.form.get('first_name')
             last_name = request.form.get('last_name')
             phone = request.form.get('phone')
+            address = request.form.get('address', '')
             
             # Check if customer exists
             existing_customer = Customer.query.filter_by(email=email).first()
@@ -784,7 +749,8 @@ def customer_register():
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                phone=phone
+                phone=phone,
+                address=address
             )
             customer.set_password(password)
             
@@ -823,7 +789,6 @@ def customer_login():
                 
                 flash('Login successful!', 'success')
                 
-                # Redirect to checkout if there's a pending order
                 if 'pending_checkout' in session:
                     return redirect(url_for('checkout'))
                 return redirect(url_for('account'))
@@ -874,16 +839,14 @@ def checkout():
         flash('Your cart is empty!', 'warning')
         return redirect(url_for('shop'))
     
-    # Calculate totals
     subtotal = calculate_cart_total()
-    delivery_fee = 3000  # Default Lagos delivery
+    delivery_fee = 3000
     if subtotal >= 150000:
         delivery_fee = 0
     total = subtotal + delivery_fee
     
     if request.method == 'POST':
         try:
-            # Get form data
             name = request.form.get('name')
             email = request.form.get('email')
             phone = request.form.get('phone')
@@ -893,12 +856,10 @@ def checkout():
             payment_method = request.form.get('payment_method', 'bank_transfer')
             notes = request.form.get('notes', '')
             
-            # Validate required fields
             if not all([name, email, phone, address, city, state]):
                 flash('Please fill in all required fields.', 'danger')
                 return redirect(url_for('checkout'))
             
-            # Adjust delivery fee based on city
             if city.lower() in ['lagos', 'ikeja', 'vi', 'lekki', 'ikoyi', 'surulere', 'yaba', 'ajah']:
                 delivery_fee = 3000 if subtotal < 150000 else 0
             else:
@@ -906,7 +867,6 @@ def checkout():
             
             total = subtotal + delivery_fee
             
-            # Create order
             order = Order(
                 order_number=generate_order_number(),
                 customer_id=session['customer_id'],
@@ -926,7 +886,6 @@ def checkout():
             db.session.add(order)
             db.session.flush()
             
-            # Add order items
             for item in cart_items:
                 product = Product.query.get(item['id'])
                 if product:
@@ -942,7 +901,6 @@ def checkout():
             
             db.session.commit()
             
-            # Clear cart
             session.pop('cart', None)
             
             flash(f'Order #{order.order_number} created successfully! We will contact you shortly.', 'success')
@@ -956,7 +914,6 @@ def checkout():
             flash('Error processing order. Please try again.', 'danger')
             return redirect(url_for('checkout'))
     
-    # GET request - show checkout form
     customer = None
     if 'customer_id' in session:
         customer = Customer.query.get(session['customer_id'])
@@ -1042,7 +999,6 @@ def add_review(product_id):
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     """Admin login"""
-    # If already logged in, redirect to dashboard
     if 'admin_id' in session and session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
     
@@ -1051,7 +1007,6 @@ def admin_login():
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
             
-            # Query admin user
             admin = User.query.filter_by(username=username, is_admin=True).first()
             
             if admin and admin.check_password(password):
@@ -1089,22 +1044,16 @@ def admin_dashboard():
         total_customers = Customer.query.count()
         pending_orders = Order.query.filter_by(status='pending').count()
         
-        # Calculate revenue
         revenue_result = db.session.query(db.func.sum(Order.final_amount)).scalar()
         revenue = float(revenue_result) if revenue_result is not None else 0.0
         
-        # Get recent data with joinedload for product relationships
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(8).all()
         recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
         low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
         
-        # Get reviews count
         total_reviews = Review.query.count()
-        
-        # Sample top products
         top_products = Product.query.filter_by(featured=True).limit(5).all()
         
-        # Add sales count and revenue to each product (sample data - implement properly)
         for product in top_products:
             product.sales_count = random.randint(10, 100)
             product.revenue = product.sales_count * product.price
@@ -1182,11 +1131,9 @@ def admin_add_product():
             length = request.form.get('length')
             texture = request.form.get('texture')
             
-            # Generate slug and SKU
             slug = name.lower().replace(' ', '-').replace('"', '').replace("'", '')
             sku = f"HAIR-{random.randint(1000, 9999)}"
             
-            # Handle image upload
             image_url = None
             if 'image' in request.files:
                 file = request.files['image']
@@ -1194,10 +1141,7 @@ def admin_add_product():
                     uploaded_filename = save_uploaded_file(file)
                     if uploaded_filename:
                         image_url = uploaded_filename
-                    else:
-                        flash('Failed to upload image. Please try again.', 'warning')
             
-            # If no file uploaded, use the image_url field
             if not image_url:
                 image_url = request.form.get('image_url')
             
@@ -1252,10 +1196,8 @@ def admin_edit_product(id):
             product.length = request.form.get('length')
             product.texture = request.form.get('texture')
             
-            # Update slug
             product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
             
-            # Handle image upload
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename != '':
@@ -1380,7 +1322,6 @@ def admin_reviews():
     try:
         reviews = Review.query.order_by(Review.created_at.desc()).all()
         
-        # Calculate review stats
         total_reviews = len(reviews)
         approved_reviews = len([r for r in reviews if r.approved])
         pending_reviews = len([r for r in reviews if not r.approved])
@@ -1519,46 +1460,6 @@ def admin_settings():
     
     return render_template('admin/settings.html')
 
-# ========== DEBUG ROUTES ==========
-@app.route('/debug/paths')
-def debug_paths():
-    """Debug upload paths"""
-    import os
-    
-    return jsonify({
-        'UPLOAD_FOLDER_config': app.config.get('UPLOAD_FOLDER'),
-        'UPLOAD_FOLDER_exists': os.path.exists(app.config.get('UPLOAD_FOLDER', '')),
-        'UPLOAD_FOLDER_is_dir': os.path.isdir(app.config.get('UPLOAD_FOLDER', '')),
-        'current_directory': os.getcwd(),
-        'project_root': os.path.dirname(os.path.abspath(__file__)),
-        'static_exists': os.path.exists('static'),
-        'static_uploads_exists': os.path.exists('static/uploads'),
-        'root_uploads_exists': os.path.exists('uploads'),
-        'all_paths': {
-            'static/uploads/': os.path.exists('static/uploads'),
-            'uploads/': os.path.exists('uploads'),
-            'static/': os.path.exists('static'),
-        }
-    })
-
-@app.route('/debug/uploads')
-def debug_uploads():
-    """Debug uploads folder status"""
-    import os
-    UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
-    folder_exists = os.path.exists(UPLOAD_FOLDER)
-    full_path = os.path.abspath(UPLOAD_FOLDER)
-    
-    return jsonify({
-        'folder': UPLOAD_FOLDER,
-        'exists': folder_exists,
-        'full_path': full_path,
-        'writable': os.access(UPLOAD_FOLDER, os.W_OK) if folder_exists else False,
-        'files': os.listdir(UPLOAD_FOLDER) if folder_exists else [],
-        'app_root': os.getcwd(),
-        'config_upload_folder': app.config['UPLOAD_FOLDER']
-    })
-
 # ========== STATIC FILE SERVING ==========
 
 @app.route('/static/uploads/<filename>')
@@ -1569,7 +1470,6 @@ def uploaded_file(filename):
         return send_from_directory(upload_folder, filename)
     except Exception as e:
         print(f"❌ Error serving file {filename}: {str(e)}", file=sys.stderr)
-        # Try to serve from relative path if absolute fails
         return send_from_directory('static/uploads', filename)
 
 # ========== HEALTH CHECK ==========
@@ -1597,44 +1497,17 @@ def create_app():
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
-    # Create required directories with verification
-    try:
-        # Create static/uploads
-        upload_folder = app.config['UPLOAD_FOLDER']
-        print(f"🔄 Creating upload folder on startup: {upload_folder}", file=sys.stderr)
-        
-        # Remove if it's a file instead of directory
-        if os.path.exists(upload_folder) and not os.path.isdir(upload_folder):
-            print(f"⚠️ {upload_folder} is a FILE, not directory! Removing...", file=sys.stderr)
-            os.remove(upload_folder)
-        
-        # Create directory
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        # Verify
-        if os.path.exists(upload_folder) and os.path.isdir(upload_folder):
-            print(f"✅ Upload folder created: {upload_folder}", file=sys.stderr)
-        else:
-            print(f"❌ FAILED to create upload folder!", file=sys.stderr)
-            
-    except Exception as e:
-        print(f"❌ Error creating upload folder: {str(e)}", file=sys.stderr)
-    
-    # Create other directories
+    os.makedirs('static/uploads', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
     
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*60}", file=sys.stderr)
-    print(f"🚀 NORA HAIR LINE E-COMMERCE", file=sys.stderr)
+    print(f"🚀 NORA HAIR LINE E-COMMERCE - FIXED CSRF", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"📁 Uploads folder: {app.config['UPLOAD_FOLDER']}", file=sys.stderr)
-    print(f"📁 Uploads exists: {os.path.exists(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
-    print(f"📁 Uploads is dir: {os.path.isdir(app.config['UPLOAD_FOLDER'])}", file=sys.stderr)
-    print(f"🌐 Website: https://norahairline.onrender.com", file=sys.stderr)
+    print(f"✅ CSRF Protection: ENABLED", file=sys.stderr)
+    print(f"✅ Registration: FIXED", file=sys.stderr)
     print(f"🌐 Local: http://localhost:{port}", file=sys.stderr)
-    print(f"🛍️  Shop: /shop", file=sys.stderr)
     print(f"👑 Admin: /admin (admin/admin123)", file=sys.stderr)
-    print(f"✅ CSRF Protection: Enabled", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
     
     app.run(host='0.0.0.0', port=port, debug=True)
