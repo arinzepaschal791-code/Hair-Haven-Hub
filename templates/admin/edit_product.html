@@ -7,17 +7,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #9d4edd;
-            --primary-dark: #7b2cbf;
-            --secondary: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
-            --success: #38b000;
-            --danger: #e63946;
-            --warning: #ffba08;
-            --info: #4361ee;
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #F5E6D3;
+            --light: #ffffff;
+            --dark: #333333;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --border: #dddddd;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
         }
 
         * {
@@ -28,7 +30,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             color: var(--dark);
             line-height: 1.6;
         }
@@ -41,14 +43,13 @@
         /* Sidebar Styles */
         .sidebar {
             width: 250px;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--primary-dark);
             color: white;
             padding: 20px 0;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            z-index: 100;
         }
 
         .sidebar-header {
@@ -90,19 +91,19 @@
         .nav-links a:hover {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            border-left: 3px solid white;
+            border-left: 3px solid var(--secondary);
         }
 
         .nav-links a.active {
             background: rgba(255, 255, 255, 0.15);
             color: white;
-            border-left: 3px solid white;
+            border-left: 3px solid var(--secondary);
             font-weight: 600;
         }
 
         .nav-links i {
             margin-right: 10px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         /* Main Content */
@@ -110,7 +111,7 @@
             flex: 1;
             margin-left: 250px;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
         }
 
         /* Header */
@@ -192,7 +193,7 @@
         .form-control {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--border);
             border-radius: 5px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
@@ -201,7 +202,7 @@
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
         }
 
         textarea.form-control {
@@ -221,7 +222,7 @@
         }
 
         .file-upload-area {
-            border: 2px dashed var(--light-gray);
+            border: 2px dashed var(--border);
             border-radius: 10px;
             padding: 40px 20px;
             text-align: center;
@@ -232,7 +233,7 @@
 
         .file-upload-area:hover {
             border-color: var(--primary);
-            background: #f5f0ff;
+            background: var(--secondary);
         }
 
         .file-upload-area i {
@@ -255,7 +256,7 @@
 
         .preview-item {
             position: relative;
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--border);
             border-radius: 5px;
             overflow: hidden;
         }
@@ -334,33 +335,12 @@
             border-radius: 50%;
         }
 
-        /* Additional Product Fields */
-        .form-group small {
+        /* Form Help Text */
+        .form-help {
             display: block;
             color: var(--gray);
             margin-top: 5px;
             font-size: 0.85rem;
-        }
-
-        .sku-generate {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 5px;
-        }
-
-        .sku-generate button {
-            padding: 8px 15px;
-            background: var(--light-gray);
-            border: 1px solid var(--gray);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .sku-generate button:hover {
-            background: var(--gray);
-            color: white;
         }
 
         /* Buttons */
@@ -370,6 +350,7 @@
             padding-top: 20px;
             border-top: 1px solid var(--light-gray);
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -384,6 +365,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            min-width: 140px;
         }
 
         .btn i {
@@ -398,7 +380,7 @@
         .btn-primary:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.2);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.2);
         }
 
         .btn-secondary {
@@ -416,7 +398,7 @@
         }
 
         .btn-success:hover {
-            background: #2d9100;
+            background: #218838;
         }
 
         .btn-danger {
@@ -425,12 +407,12 @@
         }
 
         .btn-danger:hover {
-            background: #c1121f;
+            background: #c82333;
         }
 
         .btn-outline {
             background: transparent;
-            border: 1px solid var(--primary);
+            border: 2px solid var(--primary);
             color: var(--primary);
         }
 
@@ -439,49 +421,42 @@
             color: white;
         }
 
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
+        /* Alert Messages */
+        .alert {
+            padding: 15px;
             border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-width: 300px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s ease;
         }
 
-        .toast.show {
-            transform: translateX(0);
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success);
+            color: #155724;
         }
 
-        .toast-success {
-            background: var(--success);
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
         }
 
-        .toast-error {
-            background: var(--danger);
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
         }
 
-        .toast-warning {
-            background: var(--warning);
-            color: var(--dark);
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin-left: 15px;
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Loading Overlay */
@@ -495,7 +470,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 9999;
         }
 
         .loading-overlay.active {
@@ -533,36 +508,45 @@
             display: block;
         }
 
-        /* Alert Messages */
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 5px solid;
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
         }
 
-        .alert-success {
-            background: #d4edda;
-            border-color: var(--success);
-            color: #155724;
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease;
         }
 
-        .alert-danger {
-            background: #f8d7da;
-            border-color: var(--danger);
-            color: #721c24;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: var(--warning);
-            color: #856404;
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 70px;
+                overflow: hidden;
             }
 
             .sidebar-header h2,
@@ -582,11 +566,19 @@
 
             .nav-links i {
                 margin-right: 0;
-                font-size: 1.5rem;
+                font-size: 1.3rem;
             }
 
             .form-row {
                 grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
             }
         }
 
@@ -604,14 +596,40 @@
             .form-container {
                 padding: 20px;
             }
+        }
 
-            .form-actions {
-                flex-direction: column;
-            }
+        /* Image Preview */
+        .current-image {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
 
-            .btn {
-                width: 100%;
-            }
+        .current-image p {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .image-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .image-preview-container img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid var(--border);
+        }
+
+        .image-info {
+            flex: 1;
+            min-width: 200px;
         }
     </style>
 </head>
@@ -640,7 +658,7 @@
             <!-- Header -->
             <header class="header">
                 <div>
-                    <h1>Edit Product: {{ product.name }}</h1>
+                    <h1>Edit Product</h1>
                     <p>Update product information and images</p>
                 </div>
                 <div class="user-info">
@@ -665,16 +683,15 @@
             <!-- Form Container -->
             <div class="form-container">
                 <form id="editProductForm" method="POST" action="{{ url_for('admin_edit_product', id=product.id) }}" enctype="multipart/form-data">
-                    <!-- CSRF TOKEN ADDED HERE -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- CRITICAL FIX: CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     
-                    <!-- Product Basic Information -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="name">Product Name *</label>
                             <input type="text" id="name" name="name" class="form-control" 
-                                   value="{{ product.name }}" required>
-                            <small>Use descriptive names that customers can easily understand</small>
+                                   value="{{ product.name if product.name else '' }}" required>
+                            <span class="form-help">Use descriptive names that customers can easily understand</span>
                             <div class="error-message" id="nameError"></div>
                         </div>
                         <div class="form-group">
@@ -682,12 +699,13 @@
                             <select id="category_id" name="category_id" class="form-control" required>
                                 <option value="">Select Category</option>
                                 {% for category in categories %}
-                                <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>
+                                <option value="{{ category.id }}" 
+                                    {% if product.category_id == category.id %}selected{% endif %}>
                                     {{ category.name }}
                                 </option>
                                 {% endfor %}
                             </select>
-                            <small>Select the main category for this product</small>
+                            <span class="form-help">Select the main category for this product</span>
                             <div class="error-message" id="categoryError"></div>
                         </div>
                     </div>
@@ -695,24 +713,21 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="sku">SKU (Stock Keeping Unit)</label>
-                            <div class="sku-generate">
-                                <input type="text" id="sku" name="sku" class="form-control" 
-                                       value="{{ product.sku }}" placeholder="e.g., NHR-24BS-BLK">
-                                <button type="button" id="generateSKU">Regenerate</button>
-                            </div>
-                            <small>Leave empty to auto-generate</small>
+                            <input type="text" id="sku" name="sku" class="form-control" 
+                                   value="{{ product.sku if product.sku else '' }}" placeholder="e.g., NHR-24BS-BLK">
+                            <span class="form-help">Leave empty to auto-generate</span>
                         </div>
                         <div class="form-group">
                             <label for="length">Length</label>
                             <input type="text" id="length" name="length" class="form-control" 
-                                   value="{{ product.length or '' }}" placeholder="e.g., 24 inches">
-                            <small>Hair length if applicable</small>
+                                   value="{{ product.length if product.length else '' }}" placeholder="e.g., 24 inches">
+                            <span class="form-help">Hair length if applicable</span>
                         </div>
                         <div class="form-group">
                             <label for="texture">Texture</label>
                             <input type="text" id="texture" name="texture" class="form-control" 
-                                   value="{{ product.texture or '' }}" placeholder="e.g., Bone Straight, Body Wave, Curly">
-                            <small>Hair texture type</small>
+                                   value="{{ product.texture if product.texture else '' }}" placeholder="e.g., Bone Straight, Body Wave, Curly">
+                            <span class="form-help">Hair texture type</span>
                         </div>
                     </div>
 
@@ -720,8 +735,8 @@
                         <label for="description">Description *</label>
                         <textarea id="description" name="description" class="form-control" 
                                   placeholder="Describe the product features, quality, length, texture, etc." 
-                                  rows="4" required>{{ product.description or '' }}</textarea>
-                        <small>Include details about texture, length, quality, and care instructions</small>
+                                  rows="4" required>{{ product.description if product.description else '' }}</textarea>
+                        <span class="form-help">Include details about texture, length, quality, and care instructions</span>
                         <div class="error-message" id="descriptionError"></div>
                     </div>
 
@@ -730,21 +745,21 @@
                         <div class="form-group">
                             <label for="price">Price (₦) *</label>
                             <input type="number" id="price" name="price" class="form-control" 
-                                   value="{{ product.price }}" min="0" step="0.01" required>
-                            <small>Selling price in Nigerian Naira</small>
+                                   value="{{ product.price if product.price else 0 }}" min="0" step="0.01" required>
+                            <span class="form-help">Selling price in Nigerian Naira</span>
                             <div class="error-message" id="priceError"></div>
                         </div>
                         <div class="form-group">
                             <label for="compare_price">Compare Price (₦)</label>
                             <input type="number" id="compare_price" name="compare_price" class="form-control" 
-                                   value="{{ product.compare_price or '' }}" min="0" step="0.01">
-                            <small>Original price to show discount (optional)</small>
+                                   value="{{ product.compare_price if product.compare_price else '' }}" min="0" step="0.01">
+                            <span class="form-help">Original price to show discount (optional)</span>
                         </div>
                         <div class="form-group">
                             <label for="quantity">Stock Quantity *</label>
                             <input type="number" id="quantity" name="quantity" class="form-control" 
-                                   value="{{ product.quantity }}" min="0" required>
-                            <small>Available quantity in inventory</small>
+                                   value="{{ product.quantity if product.quantity else 0 }}" min="0" required>
+                            <span class="form-help">Available quantity in inventory</span>
                             <div class="error-message" id="quantityError"></div>
                         </div>
                     </div>
@@ -753,41 +768,46 @@
                     <div class="form-group">
                         <label for="image">Product Image</label>
                         <div class="file-upload-container">
-                            <!-- Current Image Display -->
+                            <!-- Current Image -->
                             {% if product.image_url %}
-                            <div class="current-image" style="margin-bottom: 20px;">
+                            <div class="current-image">
                                 <p><strong>Current Image:</strong></p>
-                                <div style="display: flex; align-items: center; gap: 15px;">
+                                <div class="image-preview-container">
                                     <img src="{{ url_for('static', filename='uploads/' + product.image_url) if product.image_url else url_for('static', filename='images/default-product.jpg') }}" 
-                                         alt="{{ product.name }}" 
-                                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;">
-                                    <div>
-                                        <small>{{ product.image_url }}</small>
-                                        <br>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="removeCurrentImage()" style="margin-top: 10px;">
+                                         alt="{{ product.name }}">
+                                    <div class="image-info">
+                                        <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 10px;">
+                                            {{ product.image_url }}
+                                        </p>
+                                        <button type="button" class="btn btn-outline" onclick="removeCurrentImage()" style="padding: 8px 15px; font-size: 0.9rem;">
                                             <i class="fas fa-trash"></i> Remove Image
                                         </button>
                                     </div>
                                 </div>
-                                <input type="hidden" id="current_image_url" value="{{ product.image_url }}">
+                                <input type="hidden" id="current_image_url" name="current_image_url" value="{{ product.image_url }}">
                             </div>
                             {% endif %}
                             
+                            <!-- New Image Upload -->
                             <div class="file-upload-area" onclick="document.getElementById('image').click()">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p>Click to upload new product image</p>
                                 <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
-                                <div class="btn">Browse Files</div>
+                                <div class="btn btn-primary" style="display: inline-block; padding: 10px 20px; margin-top: 10px;">
+                                    Browse Files
+                                </div>
                             </div>
                             <input type="file" id="image" name="image" accept="image/*" 
                                    style="display: none;" onchange="previewImage(this)">
                             <div id="imagePreview"></div>
                             
                             <!-- Image URL fallback -->
-                            <input type="text" id="image_url" name="image_url" class="form-control mt-3" 
-                                   value="{{ product.image_url }}" placeholder="Or enter image URL (optional)">
-                            <small>Upload new image or provide image URL</small>
-                            <div class="error-message" id="imageError"></div>
+                            <label for="image_url" style="display: block; margin-top: 20px; margin-bottom: 8px;">
+                                Or enter image URL
+                            </label>
+                            <input type="text" id="image_url" name="image_url" class="form-control" 
+                                   value="{{ product.image_url if product.image_url else '' }}" placeholder="https://example.com/image.jpg">
+                            <span class="form-help">Upload new image or provide image URL</span>
                         </div>
                     </div>
 
@@ -795,22 +815,22 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Featured Product</label>
-                            <div style="margin-top: 10px;">
+                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
                                 <label class="switch">
                                     <input type="checkbox" id="featured" name="featured" {% if product.featured %}checked{% endif %}>
                                     <span class="slider round"></span>
                                 </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
+                                <span>Show on homepage</span>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Status</label>
-                            <div style="margin-top: 10px;">
+                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
                                 <label class="switch">
                                     <input type="checkbox" id="active" name="active" {% if product.active %}checked{% endif %}>
                                     <span class="slider round"></span>
                                 </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
+                                <span>Active (Available for sale)</span>
                             </div>
                         </div>
                     </div>
@@ -827,7 +847,7 @@
                             <i class="fas fa-eye"></i> Preview
                         </a>
                         <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                            <i class="fas fa-trash"></i> Delete Product
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>
                 </form>
@@ -835,10 +855,22 @@
         </main>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <span id="toastMessage">Product updated successfully!</span>
-        <button class="toast-close" onclick="hideToast()">&times;</button>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--danger); margin-bottom: 15px;">Delete Product</h3>
+            <p>Are you sure you want to delete <strong>"{{ product.name }}"</strong>?</p>
+            <p style="color: var(--danger); margin: 15px 0; padding: 10px; background: #f8d7da; border-radius: 5px;">
+                <i class="fas fa-exclamation-triangle"></i> This action cannot be undone. All product data will be permanently deleted.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <form method="POST" action="{{ url_for('admin_delete_product', id=product.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger">Delete Product</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Loading Overlay -->
@@ -846,53 +878,29 @@
         <div class="spinner"></div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
-            <h3 style="color: var(--danger); margin-bottom: 15px;">Delete Product</h3>
-            <p>Are you sure you want to delete <strong>"{{ product.name }}"</strong>?</p>
-            <p style="color: var(--danger); margin: 15px 0;">This action cannot be undone. All product data will be permanently deleted.</p>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <form method="POST" action="{{ url_for('admin_delete_product', id=product.id) }}" style="display: inline;">
-                    <!-- CSRF TOKEN ADDED TO DELETE FORM -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">Delete Product</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script>
         // DOM Elements
         const editProductForm = document.getElementById('editProductForm');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toastMessage');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const generateSKUBtn = document.getElementById('generateSKU');
-        const skuInput = document.getElementById('sku');
+        const deleteModal = document.getElementById('deleteModal');
         const imagePreview = document.getElementById('imagePreview');
 
-        // Generate SKU
-        generateSKUBtn.addEventListener('click', function() {
+        // Auto-generate SKU on name/category change
+        function autoGenerateSKU() {
             const name = document.getElementById('name').value;
             const categorySelect = document.getElementById('category_id');
             const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+            const currentSKU = document.getElementById('sku').value;
             
-            if (!name || !categoryText) {
-                showToast('Please enter product name and select category first', 'warning');
-                return;
+            // Only auto-generate if SKU is empty
+            if (!currentSKU && name && categoryText) {
+                const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
+                const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
+                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
+                document.getElementById('sku').value = sku;
             }
-            
-            // Generate SKU from name and category
-            const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
-            const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
-            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
-            
-            skuInput.value = sku;
-            showToast('SKU regenerated successfully', 'success');
-        });
+        }
 
         // Image Preview
         function previewImage(input) {
@@ -916,6 +924,8 @@
                     removeBtn.onclick = function() {
                         imagePreview.removeChild(previewItem);
                         input.value = '';
+                        // Also clear the image URL field
+                        document.getElementById('image_url').value = '';
                     };
                     
                     previewItem.appendChild(img);
@@ -933,10 +943,15 @@
         // Remove current image
         function removeCurrentImage() {
             if (confirm('Are you sure you want to remove the current product image?')) {
-                document.querySelector('.current-image').style.display = 'none';
+                const currentImageDiv = document.querySelector('.current-image');
+                if (currentImageDiv) {
+                    currentImageDiv.style.display = 'none';
+                }
                 document.getElementById('image_url').value = '';
                 document.getElementById('current_image_url').value = '';
-                showToast('Current image removed. Upload a new image or provide URL.', 'warning');
+                
+                // Show notification
+                showNotification('Current image removed. Upload a new image or provide URL.', 'warning');
             }
         }
 
@@ -993,7 +1008,7 @@
             e.preventDefault();
             
             if (!validateForm()) {
-                showToast('Please fix the errors in the form', 'error');
+                showNotification('Please fix the errors in the form', 'error');
                 return;
             }
             
@@ -1006,60 +1021,15 @@
 
         // Delete product confirmation
         function confirmDelete() {
-            document.getElementById('deleteModal').style.display = 'flex';
+            deleteModal.style.display = 'flex';
         }
 
         function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-
-        // Toast Functions
-        function showToast(message, type = 'success') {
-            toastMessage.textContent = message;
-            toast.className = `toast toast-${type} show`;
-            
-            setTimeout(() => {
-                hideToast();
-            }, 5000);
-        }
-
-        function hideToast() {
-            toast.classList.remove('show');
-        }
-
-        // Auto-generate SKU on name/category change
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add currency formatting to price field
-            const priceInput = document.getElementById('price');
-            priceInput.addEventListener('blur', function() {
-                if (this.value) {
-                    this.value = parseFloat(this.value).toFixed(2);
-                }
-            });
-            
-            // Auto-generate SKU on name/category change
-            document.getElementById('name').addEventListener('blur', autoGenerateSKU);
-            document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
-        });
-
-        function autoGenerateSKU() {
-            const name = document.getElementById('name').value;
-            const categorySelect = document.getElementById('category_id');
-            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-            const currentSKU = document.getElementById('sku').value;
-            
-            // Only auto-generate if SKU is empty
-            if (!currentSKU && name && categoryText) {
-                const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
-                const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
-                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-                const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
-                document.getElementById('sku').value = sku;
-            }
+            deleteModal.style.display = 'none';
         }
 
         // Close modal when clicking outside
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
+        deleteModal.addEventListener('click', function(e) {
             if (e.target === this) {
                 closeDeleteModal();
             }
@@ -1069,6 +1039,103 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeDeleteModal();
+            }
+        });
+
+        // Notification function
+        function showNotification(message, type = 'success') {
+            // Remove any existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} notification`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                min-width: 300px;
+                max-width: 400px;
+            `;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                         type === 'error' ? 'fa-exclamation-circle' : 
+                         'fa-exclamation-triangle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}" style="margin-right: 10px;"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+
+            // Add slideOut animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Auto-generate SKU on name/category change
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for auto SKU generation
+            document.getElementById('name').addEventListener('blur', autoGenerateSKU);
+            document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
+            
+            // Auto-generate SKU if empty
+            if (!document.getElementById('sku').value) {
+                autoGenerateSKU();
+            }
+            
+            // Format price on blur
+            const priceInput = document.getElementById('price');
+            priceInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+            });
+            
+            // Format compare price on blur
+            const comparePriceInput = document.getElementById('compare_price');
+            if (comparePriceInput) {
+                comparePriceInput.addEventListener('blur', function() {
+                    if (this.value) {
+                        this.value = parseFloat(this.value).toFixed(2);
+                    }
+                });
+            }
+        });
+
+        // Handle page unload to prevent accidental navigation
+        window.addEventListener('beforeunload', function(e) {
+            if (loadingOverlay.classList.contains('active')) {
+                e.preventDefault();
+                e.returnValue = 'Changes are being saved. Are you sure you want to leave?';
             }
         });
     </script>
