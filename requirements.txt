@@ -7,3 +7,4 @@ Flask-Login==0.6.2
 python-dotenv==1.0.0
 gunicorn==20.1.0
 itsdangerous==2.1.2
+flask-wtf==1.2.1  # ← ADD THIS LINE
