@@ -1,4 +1,4 @@
-# main.py - NORA HAIR LINE E-COMMERCE - COMPLETE VERSION
+# main.py - NORA HAIR LINE E-COMMERCE - ENHANCED VERSION
 import os
 import sys
 import traceback
@@ -14,7 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
-from sqlalchemy import text, or_
+from sqlalchemy import text, or_, and_, func
 
 # ========== CREATE APP ==========
 app = Flask(__name__)
@@ -104,38 +104,118 @@ id = db.Column(db.Integer, primary_key=True)
 name = db.Column(db.String(200), nullable=False)
 slug = db.Column(db.String(200), unique=True, nullable=False)
 description = db.Column(db.Text)
-price = db.Column(db.Float, nullable=False)
+base_price = db.Column(db.Float, nullable=False, default=0.0) # Renamed from price
 compare_price = db.Column(db.Float)
 sku = db.Column(db.String(100))
-quantity = db.Column(db.Integer, default=0)
+total_quantity = db.Column(db.Integer, default=0) # Total across all variants
 featured = db.Column(db.Boolean, default=False)
 active = db.Column(db.Boolean, default=True)
 category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-image_url = db.Column(db.String(500))
-length = db.Column(db.String(50))
-texture = db.Column(db.String(50))
+is_bundle = db.Column(db.Boolean, default=False)
+bundle_discount = db.Column(db.Float, default=0.0)
 created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 category = db.relationship('Category', backref='products', lazy='joined')
+variants = db.relationship('ProductVariant', backref='product', lazy=True, cascade='all, delete-orphan')
+images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
 
 @property
 def stock(self):
-return self.quantity
+"""Calculate total stock across all variants"""
+if self.variants:
+return sum(variant.stock for variant in self.variants)
+return self.total_quantity
 
-@stock.setter
-def stock(self, value):
-self.quantity = value
+@property
+def min_price(self):
+"""Get minimum variant price"""
+if self.variants:
+prices = [v.price for v in self.variants if v.price > 0]
+return min(prices) if prices else self.base_price
+return self.base_price
+
+@property
+def max_price(self):
+"""Get maximum variant price"""
+if self.variants:
+prices = [v.price for v in self.variants if v.price > 0]
+return max(prices) if prices else self.base_price
+return self.base_price
 
 @property
 def display_price(self):
-return float(self.price)
+"""Display price range for products with variants"""
+if self.variants and len(set(v.price for v in self.variants)) > 1:
+return f"₦{self.min_price:,.0f} - ₦{self.max_price:,.0f}"
+return f"₦{self.min_price:,.0f}"
 
 @property
-def formatted_price(self):
-return f"₦{self.display_price:,.2f}"
+def available_lengths(self):
+"""Get unique available lengths"""
+if self.variants:
+lengths = [v.length for v in self.variants if v.length and v.stock > 0]
+return sorted(set(lengths))
+return []
+
+@property
+def available_textures(self):
+"""Get unique available textures"""
+if self.variants:
+textures = [v.texture for v in self.variants if v.texture and v.stock > 0]
+return sorted(set(textures))
+return []
+
+def get_default_variant(self):
+"""Get first available variant"""
+if self.variants:
+available = [v for v in self.variants if v.stock > 0]
+return available[0] if available else self.variants[0]
+return None
 
 def __repr__(self):
 return f'<Product {self.name}>'
+
+class ProductVariant(db.Model):
+__tablename__ = 'product_variant'
+
+id = db.Column(db.Integer, primary_key=True)
+product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+name = db.Column(db.String(200))
+length = db.Column(db.String(50))
+texture = db.Column(db.String(50))
+color = db.Column(db.String(50))
+price = db.Column(db.Float, nullable=False)
+compare_price = db.Column(db.Float)
+stock = db.Column(db.Integer, default=0)
+sku = db.Column(db.String(100), unique=True)
+is_default = db.Column(db.Boolean, default=False)
+created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Index for faster queries
+__table_args__ = (
+db.Index('idx_variant_product', 'product_id'),
+db.Index('idx_variant_stock', 'stock'),
+)
+
+@property
+def available(self):
+return self.stock > 0
+
+def __repr__(self):
+return f'<ProductVariant {self.name} - {self.length} {self.texture}>'
+
+class ProductImage(db.Model):
+__tablename__ = 'product_image'
+
+id = db.Column(db.Integer, primary_key=True)
+product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+image_url = db.Column(db.String(500), nullable=False)
+is_primary = db.Column(db.Boolean, default=False)
+sort_order = db.Column(db.Integer, default=0)
+created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+def __repr__(self):
+return f'<ProductImage {self.id}>'
 
 class Customer(db.Model):
 __tablename__ = 'customer'
@@ -174,6 +254,7 @@ customer_phone = db.Column(db.String(20), nullable=False)
 shipping_address = db.Column(db.Text, nullable=False)
 shipping_city = db.Column(db.String(100), nullable=False)
 shipping_state = db.Column(db.String(100), nullable=False)
+shipping_area = db.Column(db.String(100)) # Added for Lagos areas
 total_amount = db.Column(db.Float, nullable=False)
 shipping_amount = db.Column(db.Float, default=0.0)
 final_amount = db.Column(db.Float, nullable=False)
@@ -195,12 +276,15 @@ __tablename__ = 'order_item'
 id = db.Column(db.Integer, primary_key=True)
 order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
 product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), nullable=True)
 product_name = db.Column(db.String(200), nullable=False)
+variant_details = db.Column(db.String(200)) # Store variant info: "24\" Brazilian Body Wave"
 quantity = db.Column(db.Integer, nullable=False)
 unit_price = db.Column(db.Float, nullable=False)
 total_price = db.Column(db.Float, nullable=False)
 
 product = db.relationship('Product')
+variant = db.relationship('ProductVariant')
 
 def __repr__(self):
 return f'<OrderItem {self.id}>'
@@ -215,6 +299,7 @@ email = db.Column(db.String(120))
 rating = db.Column(db.Integer, nullable=False)
 comment = db.Column(db.Text)
 location = db.Column(db.String(100))
+verified_purchase = db.Column(db.Boolean, default=False)
 approved = db.Column(db.Boolean, default=False)
 created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -222,6 +307,21 @@ product = db.relationship('Product')
 
 def __repr__(self):
 return f'<Review {self.id}>'
+
+class BundleItem(db.Model):
+__tablename__ = 'bundle_item'
+
+id = db.Column(db.Integer, primary_key=True)
+bundle_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+quantity = db.Column(db.Integer, default=1)
+created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+bundle = db.relationship('Product', foreign_keys=[bundle_id], backref='bundle_items')
+product = db.relationship('Product', foreign_keys=[product_id])
+
+def __repr__(self):
+return f'<BundleItem {self.id}>'
 
 # ========== BUSINESS CONFIGURATION ==========
 BUSINESS_CONFIG = {
@@ -242,7 +342,18 @@ BUSINESS_CONFIG = {
 'payment_bank': 'UBA',
 'payment_name': 'CHUKWUNEKE CHIAMAKA',
 'year': datetime.now().year,
-'site_logo': 'logo.png'
+'site_logo': 'logo.png',
+'delivery_rates': {
+'lagos_mainland': 3000,
+'lagos_island': 3500,
+'other_states': 5000,
+'express': 8000
+},
+'free_delivery_threshold': 150000,
+'delivery_areas': {
+'lagos': ['ikeja', 'vi', 'lekki', 'ikoyi', 'surulere', 'yaba', 'ajah', 'apapa', 'festac', 'ojo', 'badagry'],
+'express': ['same_day', 'next_day']
+}
 }
 
 # ========== HELPER FUNCTIONS ==========
@@ -271,6 +382,16 @@ quantity = item.get('quantity', 1)
 total += float(price) * quantity
 return total
 
+def calculate_cart_with_variants():
+"""Calculate cart total with variant-specific pricing"""
+total = 0
+if 'cart' in session:
+for item in session['cart']:
+variant_price = item.get('variant_price', item.get('price', 0))
+quantity = item.get('quantity', 1)
+total += float(variant_price) * quantity
+return total
+
 def allowed_file(filename):
 return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -284,6 +405,78 @@ return f"{value:,.2f}"
 return str(value)
 except:
 return str(default)
+
+def calculate_delivery_fee(city, state, area=None, subtotal=0):
+"""Calculate delivery fee based on location"""
+# Free delivery for orders above threshold
+if subtotal >= BUSINESS_CONFIG['free_delivery_threshold']:
+return 0
+
+city_lower = city.lower() if city else ''
+state_lower = state.lower() if state else ''
+area_lower = area.lower() if area else ''
+
+# Check if it's Lagos
+if state_lower == 'lagos' or city_lower == 'lagos':
+# Check for island areas
+island_areas = ['ikoyi', 'lekki', 'vi', 'victoria island', 'ajah']
+if any(island_area in area_lower for island_area in island_areas):
+return BUSINESS_CONFIG['delivery_rates']['lagos_island']
+return BUSINESS_CONFIG['delivery_rates']['lagos_mainland']
+
+# Other states
+return BUSINESS_CONFIG['delivery_rates']['other_states']
+
+def check_stock_availability(product_id, variant_id=None, quantity=1):
+"""Check if product/variant has sufficient stock"""
+try:
+if variant_id:
+variant = ProductVariant.query.get(variant_id)
+if not variant or variant.stock < quantity:
+return False, f"Only {variant.stock if variant else 0} available"
+return True, "Available"
+else:
+product = Product.query.get(product_id)
+if not product:
+return False, "Product not found"
+
+if product.variants:
+# For products with variants, we need to check specific variant
+return False, "Please select a variant"
+
+if product.total_quantity < quantity:
+return False, f"Only {product.total_quantity} available"
+return True, "Available"
+except Exception as e:
+print(f"❌ Stock check error: {str(e)}", file=sys.stderr)
+return False, "Error checking stock"
+
+def update_product_stock(product_id, variant_id=None, quantity_change=0):
+"""Update stock after purchase"""
+try:
+if variant_id:
+variant = ProductVariant.query.get(variant_id)
+if variant:
+variant.stock = max(0, variant.stock - quantity_change)
+
+# Update product total quantity
+product = Product.query.get(product_id)
+if product:
+product.total_quantity = sum(v.stock for v in product.variants)
+
+db.session.commit()
+return True
+else:
+product = Product.query.get(product_id)
+if product:
+product.total_quantity = max(0, product.total_quantity - quantity_change)
+db.session.commit()
+return True
+return False
+except Exception as e:
+db.session.rollback()
+print(f"❌ Update stock error: {str(e)}", file=sys.stderr)
+return False
 
 # ========== FILE UPLOAD FUNCTION ==========
 def save_uploaded_file(file):
@@ -354,7 +547,7 @@ categories = []
 
 if 'cart' in session:
 cart_count = sum(item.get('quantity', 1) for item in session['cart'])
-cart_total = calculate_cart_total()
+cart_total = calculate_cart_with_variants()
 
 # FIXED: Return the actual CSRF token string, not a function
 csrf_token_value = ""
@@ -375,7 +568,8 @@ safe_format_number=safe_format_number,
 csrf_token=csrf_token_value, # FIXED: This is now a string
 min=min, # ADDED for template functions
 max=max, # ADDED for template functions
-random=random # ADDED for random in templates
+random=random, # ADDED for random in templates
+check_stock=check_stock_availability # Added for stock checking
 )
 
 # ========== ERROR HANDLERS ==========
@@ -443,66 +637,82 @@ db.session.add(category)
 
 print("✅ Sample categories added", file=sys.stderr)
 
-# Create sample products if none exist
+# Create sample products with variants if none exist
 if Product.query.count() == 0:
 categories = Category.query.all()
 
 sample_products = [
-('Brazilian Body Wave 24"', 12999.99, 15999.99, 50, 'hair-bundles',
-'Premium Brazilian body wave hair, 24 inches, 100% human hair', '', 'body wave'),
-('Peruvian Straight 22"', 14999.99, 17999.99, 30, 'hair-bundles',
-'Silky straight Peruvian hair, 22 inches, natural black', '', 'straight'),
-('13x4 Lace Frontal Wig', 19999.99, 23999.99, 20, 'lace-wigs',
-'HD lace frontal wig with natural hairline', '', 'straight'),
-('4x4 Lace Closure', 8999.99, 11999.99, 40, 'closures',
-'4x4 HD lace closure with bleached knots', '', 'straight'),
-('13x6 Lace Frontal', 15999.99, 19999.99, 25, 'frontals',
-'13x6 lace frontal for natural look', '', 'curly'),
-('Hair Growth Oil', 2999.99, 3999.99, 100, 'hair-care',
-'Essential oils for hair growth and thickness', '', None),
-('360 Lace Frontal Wig', 22999.99, 27999.99, 10, '360-wigs',
-'360 lace wig for full perimeter styling', '', 'wavy'),
-('Malaysian Straight 26"', 16999.99, 20999.99, 15, 'hair-bundles',
-'Premium Malaysian straight hair, 26 inches', '', 'straight'),
+('Brazilian Body Wave', 12999.99, 15999.99, 'hair-bundles',
+'Premium Brazilian body wave hair, 100% human hair'),
+('Peruvian Straight', 14999.99, 17999.99, 'hair-bundles',
+'Silky straight Peruvian hair, natural black'),
+('13x4 Lace Frontal Wig', 19999.99, 23999.99, 'lace-wigs',
+'HD lace frontal wig with natural hairline'),
 ]
 
-for i, (name, price, compare_price, quantity, category_slug, desc, image, texture) in enumerate(sample_products):
+for i, (name, price, compare_price, category_slug, desc) in enumerate(sample_products):
 category = Category.query.filter_by(slug=category_slug).first()
 if category:
 product = Product(
 name=name,
 slug=name.lower().replace(' ', '-').replace('"', '').replace("'", ''),
 description=desc,
-price=price,
+base_price=price,
 compare_price=compare_price,
-quantity=quantity,
 sku=f'HAIR-{i+1:03d}',
 category_id=category.id,
-featured=(i < 6),
-texture=texture,
-image_url=image if image else None
+featured=(i < 3),
 )
 db.session.add(product)
+db.session.flush() # Get product ID
 
-print("✅ Sample products added", file=sys.stderr)
+# Add variants for hair bundles
+if category_slug == 'hair-bundles':
+lengths = ['20"', '22"', '24"', '26"', '28"']
+textures = ['Body Wave', 'Straight', 'Curly', 'Wavy']
+for length in lengths:
+for texture in textures[:2]: # Only add 2 textures per length
+variant = ProductVariant(
+product_id=product.id,
+name=f"{name} {length}",
+length=length,
+texture=texture,
+price=price + (len(lengths) * 1000), # Price increases with length
+stock=random.randint(5, 20),
+sku=f'HAIR-{i+1:03d}-{length.replace("", "")}-{texture[:3].upper()}',
+is_default=(length == '22"' and texture == 'Body Wave')
+)
+db.session.add(variant)
+else:
+# Add single variant for non-bundle products
+variant = ProductVariant(
+product_id=product.id,
+name=name,
+price=price,
+stock=random.randint(5, 20),
+sku=f'HAIR-{i+1:03d}-STD',
+is_default=True
+)
+db.session.add(variant)
+
+print("✅ Sample products with variants added", file=sys.stderr)
 
 # Create sample reviews if none exist
 if Review.query.count() == 0:
 reviews = [
-(1, 'Chiamaka Okeke', 5, 'The Brazilian hair I purchased is absolutely stunning! It\'s been 6 months and still looks brand new. Best quality I\'ve ever had!', 'Lagos'),
-(2, 'Bisi Adeyemi', 5, 'The lace frontal wig is so natural looking! I\'ve received countless compliments. The customer service was excellent too!', 'Abuja'),
-(3, 'Fatima Bello', 4, 'Fast delivery and premium quality hair. I\'ll definitely be ordering again. The Peruvian straight is my new favorite!', 'Port Harcourt'),
-(4, 'Amaka Nwosu', 5, 'The closure is perfect! So natural and easy to install. Will definitely buy from Nora Hair Line again.', 'Enugu'),
-(5, 'Jennifer Musa', 5, 'Hair growth oil works wonders! My edges are growing back after just 2 months of use.', 'Kano'),
+(1, 'Chiamaka Okeke', 5, 'The Brazilian hair I purchased is absolutely stunning! It\'s been 6 months and still looks brand new. Best quality I\'ve ever had!', 'Lagos', True),
+(2, 'Bisi Adeyemi', 5, 'The lace frontal wig is so natural looking! I\'ve received countless compliments. The customer service was excellent too!', 'Abuja', True),
+(3, 'Fatima Bello', 4, 'Fast delivery and premium quality hair. I\'ll definitely be ordering again. The Peruvian straight is my new favorite!', 'Port Harcourt', True),
 ]
 
-for product_id, name, rating, comment, location in reviews:
+for product_id, name, rating, comment, location, verified in reviews:
 review = Review(
 product_id=product_id,
 customer_name=name,
 rating=rating,
 comment=comment,
 location=location,
+verified_purchase=verified,
 approved=True
 )
 db.session.add(review)
@@ -564,10 +774,14 @@ reviews=[])
 
 @app.route('/shop')
 def shop():
-"""Shop page"""
+"""Shop page with advanced filtering"""
 try:
 category_id = request.args.get('category', type=int)
 search = request.args.get('search', '')
+length = request.args.get('length', '')
+texture = request.args.get('texture', '')
+min_price = request.args.get('min_price', type=float)
+max_price = request.args.get('max_price', type=float)
 page = request.args.get('page', 1, type=int)
 per_page = 12
 
@@ -580,7 +794,44 @@ query = query.filter_by(category_id=category_id)
 if search:
 query = query.filter(Product.name.ilike(f'%{search}%'))
 
+# Filter by length (using variants)
+if length:
+# Get product IDs that have variants with this length
+variant_products = db.session.query(ProductVariant.product_id)\
+.filter(ProductVariant.length == length, ProductVariant.stock > 0)\
+.distinct()
+query = query.filter(Product.id.in_(variant_products))
+
+# Filter by texture (using variants)
+if texture:
+variant_products = db.session.query(ProductVariant.product_id)\
+.filter(ProductVariant.texture == texture, ProductVariant.stock > 0)\
+.distinct()
+query = query.filter(Product.id.in_(variant_products))
+
+# Filter by price range
+if min_price is not None:
+# Check against variant min prices
+query = query.filter(Product.base_price >= min_price)
+if max_price is not None:
+query = query.filter(Product.base_price <= max_price)
+
 products = query.order_by(Product.created_at.desc()).all()
+
+# Get unique lengths and textures for filters
+all_lengths = db.session.query(ProductVariant.length)\
+.filter(ProductVariant.length.isnot(None), ProductVariant.stock > 0)\
+.distinct()\
+.order_by(ProductVariant.length)\
+.all()
+lengths = [l[0] for l in all_lengths if l[0]]
+
+all_textures = db.session.query(ProductVariant.texture)\
+.filter(ProductVariant.texture.isnot(None), ProductVariant.stock > 0)\
+.distinct()\
+.order_by(ProductVariant.texture)\
+.all()
+textures = [t[0] for t in all_textures if t[0]]
 
 total_products = len(products)
 total_pages = (total_products + per_page - 1) // per_page
@@ -601,6 +852,12 @@ products=paginated_products,
 categories=categories,
 category_id=category_id,
 search_query=search,
+lengths=lengths,
+textures=textures,
+selected_length=length,
+selected_texture=texture,
+min_price=min_price,
+max_price=max_price,
 current_page=page,
 total_pages=total_pages,
 total_products=total_products)
@@ -612,13 +869,15 @@ products=[],
 categories=[],
 category_id=None,
 search_query='',
+lengths=[],
+textures=[],
 current_page=1,
 total_pages=1,
 total_products=0)
 
 @app.route('/product/<int:id>')
 def product_detail(id):
-"""Product detail page"""
+"""Product detail page with variants"""
 try:
 product = Product.query\
 .options(joinedload(Product.category))\
@@ -628,6 +887,25 @@ if not product.active:
 flash('This product is currently unavailable.', 'warning')
 return redirect(url_for('shop'))
 
+# Get product variants
+variants = ProductVariant.query\
+.filter_by(product_id=id)\
+.order_by(ProductVariant.length, ProductVariant.texture)\
+.all()
+
+# Get product images
+images = ProductImage.query\
+.filter_by(product_id=id)\
+.order_by(ProductImage.sort_order, ProductImage.is_primary.desc())\
+.all()
+
+# Group variants by length for display
+variants_by_length = {}
+for variant in variants:
+if variant.length not in variants_by_length:
+variants_by_length[variant.length] = []
+variants_by_length[variant.length].append(variant)
+
 related_products = Product.query\
 .options(joinedload(Product.category))\
 .filter(
@@ -636,10 +914,13 @@ Product.id != product.id,
 Product.active == True
 ).limit(4).all()
 
-reviews = Review.query.filter_by(product_id=id, approved=True).all()
+reviews = Review.query.filter_by(product_id=id, approved=True).order_by(Review.created_at.desc()).all()
 
 return render_template('product_detail.html',
 product=product,
+variants=variants,
+variants_by_length=variants_by_length,
+images=images,
 related_products=related_products,
 reviews=reviews)
 except Exception as e:
@@ -647,68 +928,149 @@ print(f"❌ Product detail error: {str(e)}", file=sys.stderr)
 flash('Product not found.', 'danger')
 return redirect(url_for('shop'))
 
+@app.route('/product/<int:id>/variants')
+def get_product_variants(id):
+"""Get product variants for AJAX requests"""
+try:
+product = Product.query.get_or_404(id)
+variants = ProductVariant.query.filter_by(product_id=id).all()
+
+variants_data = []
+for variant in variants:
+variants_data.append({
+'id': variant.id,
+'name': variant.name,
+'length': variant.length,
+'texture': variant.texture,
+'color': variant.color,
+'price': variant.price,
+'stock': variant.stock,
+'available': variant.stock > 0
+})
+
+return jsonify({
+'success': True,
+'product_id': product.id,
+'product_name': product.name,
+'variants': variants_data
+})
+except Exception as e:
+return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/cart')
 def cart():
-"""Shopping cart page"""
+"""Shopping cart page with variant info"""
 cart_items = session.get('cart', [])
-subtotal = calculate_cart_total()
-delivery_fee = 3000
-if subtotal >= 150000:
-delivery_fee = 0
+
+# Enhance cart items with variant info
+enhanced_cart = []
+for item in cart_items:
+product = Product.query.get(item['id'])
+variant_info = {}
+if 'variant_id' in item:
+variant = ProductVariant.query.get(item['variant_id'])
+if variant:
+variant_info = {
+'variant_name': f"{variant.length} {variant.texture}" if variant.length and variant.texture else variant.name,
+'length': variant.length,
+'texture': variant.texture,
+'color': variant.color
+}
+
+enhanced_item = {
+**item,
+'product': product,
+'variant_info': variant_info
+}
+enhanced_cart.append(enhanced_item)
+
+subtotal = calculate_cart_with_variants()
+delivery_fee = calculate_delivery_fee(None, None, None, subtotal)
 total = subtotal + delivery_fee
 
 return render_template('cart.html',
-cart_items=cart_items,
+cart_items=enhanced_cart,
 subtotal=subtotal,
 delivery_fee=delivery_fee,
 total=total,
-free_delivery_threshold=150000)
+free_delivery_threshold=BUSINESS_CONFIG['free_delivery_threshold'])
 
 @app.route('/add-to-cart/<int:product_id>', methods=['POST'])
 @csrf.exempt
 def add_to_cart(product_id):
-"""Add product to cart"""
+"""Add product to cart with variant selection"""
 try:
 product = Product.query.get_or_404(product_id)
 
-if not product.active or product.quantity <= 0:
+if not product.active:
 flash('Product is not available.', 'warning')
 return redirect(request.referrer or url_for('shop'))
 
 quantity = int(request.form.get('quantity', 1))
+variant_id = request.form.get('variant_id', type=int)
 
-if quantity > product.quantity:
-flash(f'Only {product.quantity} items available in stock.', 'warning')
+# Check if product has variants
+if product.variants and not variant_id:
+flash('Please select a variant (length/texture) before adding to cart.', 'warning')
 return redirect(request.referrer or url_for('product_detail', id=product.id))
+
+# Check stock availability
+stock_available, message = check_stock_availability(product_id, variant_id, quantity)
+if not stock_available:
+flash(message, 'warning')
+return redirect(request.referrer or url_for('product_detail', id=product.id))
+
+# Get price from variant if selected, otherwise use product base price
+if variant_id:
+variant = ProductVariant.query.get(variant_id)
+if not variant:
+flash('Selected variant not found.', 'danger')
+return redirect(request.referrer or url_for('product_detail', id=product.id))
+price = variant.price
+variant_name = f"{variant.length} {variant.texture}" if variant.length and variant.texture else variant.name
+else:
+price = product.base_price
+variant_name = None
 
 if 'cart' not in session:
 session['cart'] = []
 
 cart = session['cart']
 
-# Check if product already in cart
+# Check if product already in cart (with same variant)
 for item in cart:
-if item['id'] == product_id:
+if item['id'] == product_id and item.get('variant_id') == variant_id:
 new_quantity = item['quantity'] + quantity
-if new_quantity > product.quantity:
-flash(f'Cannot add more. Only {product.quantity - item["quantity"]} more available.', 'warning')
+
+# Re-check stock for new total
+stock_available, message = check_stock_availability(product_id, variant_id, new_quantity)
+if not stock_available:
+flash(message, 'warning')
 return redirect(request.referrer or url_for('cart'))
 
 item['quantity'] = new_quantity
 session.modified = True
-flash(f'Added {quantity} more of {product.name} to cart.', 'success')
+flash(f'Added {quantity} more to cart.', 'success')
 return redirect(request.referrer or url_for('cart'))
 
 # Add new item to cart
-cart.append({
+cart_item = {
 'id': product_id,
 'name': product.name,
-'price': float(product.price),
+'price': float(price),
+'variant_price': float(price), # Store variant-specific price
 'quantity': quantity,
-'image_url': product.image_url if product.image_url else '',
-'stock': product.quantity,
+'image_url': product.images[0].image_url if product.images else '',
 'slug': product.slug
-})
+}
+
+if variant_id:
+cart_item['variant_id'] = variant_id
+cart_item['variant_name'] = variant_name
+cart_item['length'] = variant.length if variant else None
+cart_item['texture'] = variant.texture if variant else None
+
+cart.append(cart_item)
 session.modified = True
 
 flash(f'{product.name} added to cart!', 'success')
@@ -721,22 +1083,24 @@ return redirect(request.referrer or url_for('shop'))
 
 @app.route('/update-cart/<int:product_id>', methods=['POST'])
 def update_cart(product_id):
-"""Update cart item quantity"""
+"""Update cart item quantity with variant support"""
 try:
 if 'cart' not in session:
 return redirect(url_for('cart'))
 
 cart = session['cart']
 quantity = int(request.form.get('quantity', 1))
+variant_id = request.form.get('variant_id', type=int)
 
 for item in cart:
-if item['id'] == product_id:
+if item['id'] == product_id and item.get('variant_id') == variant_id:
 if quantity <= 0:
 cart.remove(item)
 else:
-product = Product.query.get(product_id)
-if product and quantity > product.quantity:
-flash(f'Only {product.quantity} items available in stock.', 'warning')
+# Check stock
+stock_available, message = check_stock_availability(product_id, variant_id, quantity)
+if not stock_available:
+flash(message, 'warning')
 return redirect(url_for('cart'))
 item['quantity'] = quantity
 break
@@ -751,10 +1115,15 @@ return redirect(url_for('cart'))
 
 @app.route('/remove-from-cart/<int:product_id>')
 def remove_from_cart(product_id):
-"""Remove item from cart"""
+"""Remove item from cart with variant support"""
 try:
+variant_id = request.args.get('variant_id', type=int)
+
 if 'cart' in session:
 cart = session['cart']
+if variant_id:
+session['cart'] = [item for item in cart if not (item['id'] == product_id and item.get('variant_id') == variant_id)]
+else:
 session['cart'] = [item for item in cart if item['id'] != product_id]
 session.modified = True
 flash('Item removed from cart.', 'info')
@@ -951,7 +1320,7 @@ return redirect(url_for('account'))
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-"""Checkout page"""
+"""Checkout page with delivery logic"""
 if 'customer_id' not in session:
 session['pending_checkout'] = True
 flash('Please login to complete your order', 'warning')
@@ -962,11 +1331,7 @@ if not cart_items:
 flash('Your cart is empty!', 'warning')
 return redirect(url_for('shop'))
 
-subtotal = calculate_cart_total()
-delivery_fee = 3000
-if subtotal >= 150000:
-delivery_fee = 0
-total = subtotal + delivery_fee
+subtotal = calculate_cart_with_variants()
 
 if request.method == 'POST':
 try:
@@ -976,6 +1341,7 @@ phone = request.form.get('phone')
 address = request.form.get('address')
 city = request.form.get('city')
 state = request.form.get('state')
+area = request.form.get('area', '')
 payment_method = request.form.get('payment_method', 'bank_transfer')
 notes = request.form.get('notes', '')
 
@@ -983,14 +1349,11 @@ if not all([name, email, phone, address, city, state]):
 flash('Please fill in all required fields.', 'danger')
 return redirect(url_for('checkout'))
 
-# Calculate delivery fee based on city
-if city.lower() in ['lagos', 'ikeja', 'vi', 'lekki', 'ikoyi', 'surulere', 'yaba', 'ajah']:
-delivery_fee = 3000 if subtotal < 150000 else 0
-else:
-delivery_fee = 5000 if subtotal < 150000 else 0
-
+# Calculate delivery fee based on location
+delivery_fee = calculate_delivery_fee(city, state, area, subtotal)
 total = subtotal + delivery_fee
 
+# Create order
 order = Order(
 order_number=generate_order_number(),
 customer_id=session['customer_id'],
@@ -1000,6 +1363,7 @@ customer_phone=phone,
 shipping_address=address,
 shipping_city=city,
 shipping_state=state,
+shipping_area=area,
 total_amount=subtotal,
 shipping_amount=delivery_fee,
 final_amount=total,
@@ -1010,21 +1374,29 @@ notes=notes
 db.session.add(order)
 db.session.flush()
 
+# Add order items and update stock
 for item in cart_items:
 product = Product.query.get(item['id'])
-if product:
+variant_id = item.get('variant_id')
+variant = ProductVariant.query.get(variant_id) if variant_id else None
+
+# Create order item
 order_item = OrderItem(
 order_id=order.id,
 product_id=product.id,
+variant_id=variant_id,
 product_name=product.name,
+variant_details=item.get('variant_name'),
 quantity=item['quantity'],
-unit_price=item['price'],
-total_price=item['price'] * item['quantity']
+unit_price=item['variant_price'],
+total_price=item['variant_price'] * item['quantity']
 )
 db.session.add(order_item)
 
-db.session.commit()
+# Update stock
+update_product_stock(product.id, variant_id, item['quantity'])
 
+db.session.commit()
 session.pop('cart', None)
 
 flash(f'Order #{order.order_number} created successfully! We will contact you shortly.', 'success')
@@ -1038,17 +1410,46 @@ print(f"❌ Checkout error: {str(e)}", file=sys.stderr)
 flash('Error processing order. Please try again.', 'danger')
 return redirect(url_for('checkout'))
 
-customer = None
-if 'customer_id' in session:
-customer = Customer.query.get(session['customer_id'])
+# GET request - calculate delivery fee based on customer's default address
+customer = Customer.query.get(session['customer_id']) if 'customer_id' in session else None
+delivery_fee = calculate_delivery_fee(
+customer.city if customer else None,
+customer.state if customer else None,
+None,
+subtotal
+)
+total = subtotal + delivery_fee
 
 return render_template('checkout.html',
 cart_items=cart_items,
 subtotal=subtotal,
 delivery_fee=delivery_fee,
 total=total,
-free_delivery_threshold=150000,
-customer=customer)
+free_delivery_threshold=BUSINESS_CONFIG['free_delivery_threshold'],
+customer=customer,
+delivery_areas=BUSINESS_CONFIG['delivery_areas'])
+
+@app.route('/calculate-delivery', methods=['POST'])
+def calculate_delivery():
+"""Calculate delivery fee via AJAX"""
+try:
+data = request.json
+city = data.get('city', '')
+state = data.get('state', '')
+area = data.get('area', '')
+subtotal = float(data.get('subtotal', 0))
+
+delivery_fee = calculate_delivery_fee(city, state, area, subtotal)
+
+return jsonify({
+'success': True,
+'delivery_fee': delivery_fee,
+'formatted_delivery_fee': format_price(delivery_fee),
+'total': subtotal + delivery_fee,
+'formatted_total': format_price(subtotal + delivery_fee)
+})
+except Exception as e:
+return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/about')
 def about():
@@ -1098,6 +1499,14 @@ return redirect(url_for('product_detail', id=product_id))
 
 customer = Customer.query.get(session['customer_id'])
 
+# Check if customer has purchased this product
+has_purchased = OrderItem.query\
+.join(Order)\
+.filter(
+Order.customer_id == customer.id,
+OrderItem.product_id == product_id
+).first() is not None
+
 review = Review(
 product_id=product_id,
 customer_name=f"{customer.first_name} {customer.last_name}",
@@ -1105,6 +1514,7 @@ email=customer.email,
 rating=rating,
 comment=comment,
 location=customer.city or 'Unknown',
+verified_purchase=has_purchased,
 approved=False
 )
 
@@ -1176,7 +1586,15 @@ revenue = float(revenue_result) if revenue_result is not None else 0.0
 
 recent_orders = Order.query.order_by(Order.created_at.desc()).limit(8).all()
 recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
-low_stock_products = Product.query.filter(Product.quantity > 0, Product.quantity <= 10).limit(5).all()
+
+# Get low stock products (across all variants)
+low_stock_products = []
+all_products = Product.query.all()
+for product in all_products:
+if product.stock > 0 and product.stock <= 10:
+low_stock_products.append(product)
+if len(low_stock_products) >= 5:
+break
 
 total_reviews = Review.query.count()
 top_products = Product.query.filter_by(featured=True).limit(5).all()
@@ -1187,16 +1605,22 @@ today_orders = Order.query.filter(db.func.date(Order.created_at) == today).count
 today_revenue_result = db.session.query(db.func.sum(Order.final_amount)).filter(db.func.date(Order.created_at) == today).scalar()
 today_revenue = float(today_revenue_result) if today_revenue_result is not None else 0.0
 
+# Get variant-based stats
+total_variants = ProductVariant.query.count()
+low_stock_variants = ProductVariant.query.filter(ProductVariant.stock > 0, ProductVariant.stock <= 5).count()
+
 return render_template('admin/admin_dashboard.html',
 total_orders=total_orders,
 total_products=total_products,
 total_customers=total_customers,
 total_reviews=total_reviews,
+total_variants=total_variants,
 pending_orders=pending_orders,
 revenue=revenue,
 recent_orders=recent_orders,
 recent_customers=recent_customers,
 low_stock_products=low_stock_products,
+low_stock_variants=low_stock_variants,
 top_products=top_products,
 today_revenue=today_revenue,
 today_orders=today_orders,
@@ -1218,20 +1642,23 @@ total_orders=0,
 total_products=0,
 total_customers=0,
 total_reviews=0,
+total_variants=0,
 pending_orders=0,
 revenue=0,
 recent_orders=[],
 recent_customers=[],
 low_stock_products=[],
+low_stock_variants=0,
 top_products=[])
 
 @app.route('/admin/products')
 @admin_required
 def admin_products():
-"""Admin products list"""
+"""Admin products list with variant info"""
 try:
 category_id = request.args.get('category', type=int)
 search = request.args.get('search', '')
+low_stock = request.args.get('low_stock', type=bool)
 
 query = Product.query.options(joinedload(Product.category))
 
@@ -1245,6 +1672,9 @@ Product.description.ilike(f'%{search}%'),
 Product.sku.ilike(f'%{search}%')
 ))
 
+if low_stock:
+query = query.filter(Product.total_quantity > 0, Product.total_quantity <= 10)
+
 products = query.order_by(Product.created_at.desc()).all()
 categories = Category.query.all()
 
@@ -1252,7 +1682,8 @@ return render_template('admin/products.html',
 products=products,
 categories=categories,
 category_id=category_id,
-search=search)
+search=search,
+low_stock=low_stock)
 except Exception as e:
 print(f"❌ Admin products error: {str(e)}", file=sys.stderr)
 flash('Error loading products.', 'danger')
@@ -1263,54 +1694,88 @@ categories=[])
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-"""Add product with image upload"""
+"""Add product with variants and multiple images"""
 if request.method == 'POST':
 try:
 name = request.form.get('name')
 description = request.form.get('description')
-price = float(request.form.get('price', 0))
+base_price = float(request.form.get('base_price', 0))
 compare_price = request.form.get('compare_price')
-quantity = int(request.form.get('quantity', 0))
 category_id = int(request.form.get('category_id'))
 featured = 'featured' in request.form
 active = 'active' in request.form
-length = request.form.get('length')
-texture = request.form.get('texture')
+is_bundle = 'is_bundle' in request.form
+bundle_discount = float(request.form.get('bundle_discount', 0))
 
 slug = name.lower().replace(' ', '-').replace('"', '').replace("'", '')
 sku = f"HAIR-{random.randint(1000, 9999)}"
 
-image_url = None
-if 'image' in request.files:
-file = request.files['image']
-if file and file.filename != '':
-uploaded_filename = save_uploaded_file(file)
-if uploaded_filename:
-image_url = uploaded_filename
-
-if not image_url:
-image_url = request.form.get('image_url')
-
+# Create product
 product = Product(
 name=name,
 slug=slug,
 description=description,
-price=price,
+base_price=base_price,
 compare_price=float(compare_price) if compare_price else None,
-quantity=quantity,
-sku=sku,
 category_id=category_id,
 featured=featured,
 active=active,
-length=length,
-texture=texture,
-image_url=image_url
+is_bundle=is_bundle,
+bundle_discount=bundle_discount,
+sku=sku
 )
 
 db.session.add(product)
+db.session.flush() # Get product ID
+
+# Handle image uploads
+if 'images' in request.files:
+files = request.files.getlist('images')
+for i, file in enumerate(files):
+if file and file.filename != '':
+uploaded_filename = save_uploaded_file(file)
+if uploaded_filename:
+is_primary = (i == 0)
+product_image = ProductImage(
+product_id=product.id,
+image_url=uploaded_filename,
+is_primary=is_primary,
+sort_order=i
+)
+db.session.add(product_image)
+
+# Handle variants
+variant_names = request.form.getlist('variant_name[]')
+variant_lengths = request.form.getlist('variant_length[]')
+variant_textures = request.form.getlist('variant_texture[]')
+variant_colors = request.form.getlist('variant_color[]')
+variant_prices = request.form.getlist('variant_price[]')
+variant_stocks = request.form.getlist('variant_stock[]')
+variant_skus = request.form.getlist('variant_sku[]')
+
+total_stock = 0
+for i in range(len(variant_names)):
+if variant_names[i]:
+variant = ProductVariant(
+product_id=product.id,
+name=variant_names[i],
+length=variant_lengths[i] if i < len(variant_lengths) else None,
+texture=variant_textures[i] if i < len(variant_textures) else None,
+color=variant_colors[i] if i < len(variant_colors) else None,
+price=float(variant_prices[i]) if variant_prices[i] else base_price,
+stock=int(variant_stocks[i]) if variant_stocks[i] else 0,
+sku=variant_skus[i] if variant_skus[i] else f"{sku}-V{i+1}",
+is_default=(i == 0)
+)
+db.session.add(variant)
+total_stock += variant.stock
+
+# Update total quantity
+product.total_quantity = total_stock
+
 db.session.commit()
 
-flash(f'Product "{name}" added successfully!', 'success')
+flash(f'Product "{name}" added successfully with {len(variant_names)} variants!', 'success')
 return redirect(url_for('admin_products'))
 
 except Exception as e:
@@ -1325,33 +1790,94 @@ return render_template('admin/add_product.html', categories=categories)
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(id):
-"""Edit product with image upload"""
-product = Product.query.options(joinedload(Product.category)).get_or_404(id)
+"""Edit product with variants"""
+product = Product.query.options(
+joinedload(Product.category),
+joinedload(Product.variants),
+joinedload(Product.images)
+).get_or_404(id)
 
 if request.method == 'POST':
 try:
 product.name = request.form.get('name')
 product.description = request.form.get('description')
-product.price = float(request.form.get('price', 0))
+product.base_price = float(request.form.get('base_price', 0))
 compare_price = request.form.get('compare_price')
 product.compare_price = float(compare_price) if compare_price else None
-product.quantity = int(request.form.get('quantity', 0))
 product.category_id = int(request.form.get('category_id'))
 product.featured = 'featured' in request.form
 product.active = 'active' in request.form
-product.length = request.form.get('length')
-product.texture = request.form.get('texture')
+product.is_bundle = 'is_bundle' in request.form
+product.bundle_discount = float(request.form.get('bundle_discount', 0))
 
 product.slug = product.name.lower().replace(' ', '-').replace('"', '').replace("'", '')
 
-if 'image' in request.files:
-file = request.files['image']
+# Handle image uploads
+if 'images' in request.files:
+files = request.files.getlist('images')
+for i, file in enumerate(files):
 if file and file.filename != '':
 uploaded_filename = save_uploaded_file(file)
 if uploaded_filename:
-product.image_url = uploaded_filename
-elif request.form.get('image_url'):
-product.image_url = request.form.get('image_url')
+is_primary = (i == 0 and not product.images)
+product_image = ProductImage(
+product_id=product.id,
+image_url=uploaded_filename,
+is_primary=is_primary,
+sort_order=len(product.images) + i
+)
+db.session.add(product_image)
+
+# Handle variant updates
+variant_ids = request.form.getlist('variant_id[]')
+variant_names = request.form.getlist('variant_name[]')
+variant_lengths = request.form.getlist('variant_length[]')
+variant_textures = request.form.getlist('variant_texture[]')
+variant_colors = request.form.getlist('variant_color[]')
+variant_prices = request.form.getlist('variant_price[]')
+variant_stocks = request.form.getlist('variant_stock[]')
+variant_skus = request.form.getlist('variant_sku[]')
+
+# Update existing variants
+existing_variant_ids = [int(vid) for vid in variant_ids if vid]
+for variant in product.variants:
+if variant.id not in existing_variant_ids:
+db.session.delete(variant)
+
+total_stock = 0
+for i in range(len(variant_names)):
+if variant_names[i]:
+if i < len(variant_ids) and variant_ids[i]:
+# Update existing variant
+variant = ProductVariant.query.get(int(variant_ids[i]))
+if variant:
+variant.name = variant_names[i]
+variant.length = variant_lengths[i] if i < len(variant_lengths) else None
+variant.texture = variant_textures[i] if i < len(variant_textures) else None
+variant.color = variant_colors[i] if i < len(variant_colors) else None
+variant.price = float(variant_prices[i]) if variant_prices[i] else product.base_price
+variant.stock = int(variant_stocks[i]) if variant
+variant.sku = variant_skus[i] if variant_skus[i] else f"{product.sku}-V{i+1}"
+variant.is_default = (i == 0)
+else:
+# Add new variant
+variant = ProductVariant(
+product_id=product.id,
+name=variant_names[i],
+length=variant_lengths[i] if i < len(variant_lengths) else None,
+texture=variant_textures[i] if i < len(variant_textures) else None,
+color=variant_colors[i] if i < len(variant_colors) else None,
+price=float(variant_prices[i]) if variant_prices[i] else product.base_price,
+stock=int(variant_stocks[i]) if variant_stocks[i] else 0,
+sku=variant_skus[i] if variant_skus[i] else f"{product.sku}-V{i+1}",
+is_default=(i == 0)
+)
+db.session.add(variant)
+
+total_stock += variant.stock if isinstance(variant.stock, int) else int(variant.stocks[i]) if variant_stocks[i] else 0
+
+# Update total quantity
+product.total_quantity = total_stock
 
 db.session.commit()
 
@@ -1385,6 +1911,103 @@ db.session.rollback()
 print(f"❌ Delete product error: {str(e)}", file=sys.stderr)
 flash('Error deleting product. Please try again.', 'danger')
 return redirect(url_for('admin_products'))
+
+# ========== VARIANT MANAGEMENT ROUTES ==========
+
+@app.route('/admin/products/<int:product_id>/variants')
+@admin_required
+def admin_product_variants(product_id):
+"""Manage product variants"""
+try:
+product = Product.query.get_or_404(product_id)
+variants = ProductVariant.query.filter_by(product_id=product_id).all()
+
+return render_template('admin/variants.html',
+product=product,
+variants=variants)
+except Exception as e:
+flash('Error loading variants.', 'danger')
+return redirect(url_for('admin_products'))
+
+@app.route('/admin/variants/add/<int:product_id>', methods=['POST'])
+@admin_required
+def admin_add_variant(product_id):
+"""Add variant to product"""
+try:
+product = Product.query.get_or_404(product_id)
+
+name = request.form.get('name')
+length = request.form.get('length')
+texture = request.form.get('texture')
+color = request.form.get('color')
+price = float(request.form.get('price', product.base_price))
+stock = int(request.form.get('stock', 0))
+
+variant = ProductVariant(
+product_id=product_id,
+name=name,
+length=length,
+texture=texture,
+color=color,
+price=price,
+stock=stock,
+sku=f"{product.sku}-V{ProductVariant.query.filter_by(product_id=product_id).count() + 1}"
+)
+
+db.session.add(variant)
+
+# Update product total quantity
+product.total_quantity = sum(v.stock for v in product.variants) + stock
+
+db.session.commit()
+
+return jsonify({'success': True, 'message': 'Variant added successfully!'})
+except Exception as e:
+db.session.rollback()
+return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/variants/update/<int:variant_id>', methods=['POST'])
+@admin_required
+def admin_update_variant(variant_id):
+"""Update variant"""
+try:
+variant = ProductVariant.query.get_or_404(variant_id)
+
+variant.name = request.form.get('name')
+variant.length = request.form.get('length')
+variant.texture = request.form.get('texture')
+variant.color = request.form.get('color')
+variant.price = float(request.form.get('price', variant.price))
+variant.stock = int(request.form.get('stock', variant.stock))
+
+db.session.commit()
+
+return jsonify({'success': True, 'message': 'Variant updated successfully!'})
+except Exception as e:
+db.session.rollback()
+return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/variants/delete/<int:variant_id>', methods=['POST'])
+@admin_required
+def admin_delete_variant(variant_id):
+"""Delete variant"""
+try:
+variant = ProductVariant.query.get_or_404(variant_id)
+product_id = variant.product_id
+
+db.session.delete(variant)
+
+# Update product total quantity
+product = Product.query.get(product_id)
+if product:
+product.total_quantity = sum(v.stock for v in product.variants)
+
+db.session.commit()
+
+return jsonify({'success': True, 'message': 'Variant deleted successfully!'})
+except Exception as e:
+db.session.rollback()
+return jsonify({'success': False, 'error': str(e)}), 500
 
 # ========== NEW PRODUCT MANAGEMENT ROUTES ==========
 
@@ -1440,9 +2063,9 @@ product = Product.query.get_or_404(id)
 return jsonify({
 'id': product.id,
 'name': product.name,
-'price': product.price,
+'base_price': product.base_price,
 'compare_price': product.compare_price,
-'quantity': product.quantity,
+'total_quantity': product.total_quantity,
 'category_id': product.category_id,
 'featured': product.featured
 })
@@ -1456,10 +2079,10 @@ def admin_quick_update_product(id):
 try:
 product = Product.query.get_or_404(id)
 product.name = request.form.get('name')
-product.price = float(request.form.get('price', 0))
+product.base_price = float(request.form.get('base_price', 0))
 compare_price = request.form.get('compare_price')
 product.compare_price = float(compare_price) if compare_price else None
-product.quantity = int(request.form.get('quantity', 0))
+product.total_quantity = int(request.form.get('total_quantity', 0))
 product.category_id = int(request.form.get('category_id'))
 product.featured = 'featured' in request.form
 
@@ -1488,7 +2111,13 @@ return jsonify({'error': 'File type not allowed'}), 400
 
 uploaded_filename = save_uploaded_file(file)
 if uploaded_filename:
-product.image_url = uploaded_filename
+# Add as product image
+product_image = ProductImage(
+product_id=product.id,
+image_url=uploaded_filename,
+is_primary=(len(product.images) == 0)
+)
+db.session.add(product_image)
 db.session.commit()
 return jsonify({'success': True, 'image_url': uploaded_filename})
 else:
@@ -1530,7 +2159,10 @@ def admin_order_detail(id):
 """Order detail"""
 try:
 order = Order.query.get_or_404(id)
-order_items = OrderItem.query.filter_by(order_id=order.id).all()
+order_items = OrderItem.query\
+.options(joinedload(OrderItem.product), joinedload(OrderItem.variant))\
+.filter_by(order_id=order.id)\
+.all()
 
 return render_template('admin/order_detail.html',
 order=order,
@@ -1551,10 +2183,22 @@ new_status = request.form.get('status')
 if new_status:
 order.status = new_status
 order.updated_at = datetime.utcnow()
+
+# If order is cancelled, restore stock
+if new_status == 'cancelled':
+for item in order.items:
+if item.variant_id:
+variant = ProductVariant.query.get(item.variant_id)
+if variant:
+variant.stock += item.quantity
+else:
+product = Product.query.get(item.product_id)
+if product:
+product.total_quantity += item.quantity
+
 db.session.commit()
 
 flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
-
 return redirect(url_for('admin_order_detail', id=id))
 
 except Exception as e:
@@ -1804,7 +2448,8 @@ return jsonify({
 'database': 'connected',
 'timestamp': datetime.utcnow().isoformat(),
 'service': 'Nora Hair Line E-commerce',
-'version': '1.0.0'
+'version': '2.0.0',
+'features': ['variants', 'multiple-images', 'delivery-logic', 'stock-management']
 }), 200
 except Exception as e:
 return jsonify({
@@ -1821,8 +2466,13 @@ try:
 # Test database connection
 db.session.execute(text('SELECT 1'))
 db_status = 'connected'
+
+# Test variant functionality
+variant_count = ProductVariant.query.count()
+
 except Exception as e:
 db_status = f'error: {str(e)}'
+variant_count = 0
 
 return jsonify({
 'status': 'ok',
@@ -1831,7 +2481,9 @@ return jsonify({
 'upload_folder': app.config['UPLOAD_FOLDER'],
 'session_keys': list(session.keys()),
 'has_admin': User.query.count() > 0,
-'has_products': Product.query.count() > 0
+'has_products': Product.query.count() > 0,
+'has_variants': variant_count > 0,
+'variant_count': variant_count
 })
 
 # ========== APPLICATION FACTORY ==========
@@ -1865,6 +2517,10 @@ print(f"✅ File Upload: ENABLED", file=sys.stderr)
 print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
 print(f"✅ Health Check: /health", file=sys.stderr)
 print(f"✅ Debug Mode: {'ON' if debug else 'OFF'}", file=sys.stderr)
+print(f"✅ Variant System: ENABLED", file=sys.stderr)
+print(f"✅ Multiple Images: ENABLED", file=sys.stderr)
+print(f"✅ Delivery Logic: ENABLED", file=sys.stderr)
+print(f"✅ Stock Management: ENABLED", file=sys.stderr)
 print(f"🌐 Server: http://localhost:{port}", file=sys.stderr)
 print(f"📱 Mobile Friendly: YES", file=sys.stderr)
 print(f"🔒 Secure: HTTPS Ready", file=sys.stderr)
