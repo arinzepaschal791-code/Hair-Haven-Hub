@@ -1,1499 +1,1639 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Products - {{ config.brand_name }} Admin</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
-        :root {
-            --primary: #9d4edd;
-            --primary-dark: #7b2cbf;
-            --secondary: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
-            --success: #38b000;
-            --danger: #e63946;
-            --warning: #ffba08;
-            --info: #4361ee;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-
-        .admin-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-
-        .sidebar-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: white;
-        }
-
-        .sidebar-header p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 20px 0;
-        }
-
-        .nav-links li {
-            margin-bottom: 5px;
-        }
-
-        .nav-links a {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-left: 3px solid white;
-        }
-
-        .nav-links a.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border-left: 3px solid white;
-            font-weight: 600;
-        }
-
-        .nav-links i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .logout-btn:hover {
-            background: #c1121f;
-        }
-
-        /* Products Header */
-        .products-header {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-left h2 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        .header-left p {
-            color: var(--gray);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn i {
-            font-size: 1rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #2d9100;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c1121f;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: var(--dark);
-        }
-
-        .btn-warning:hover {
-            background: #e6a800;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
-        }
-
-        /* Category Filter */
-        .category-filter {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .category-filter select {
-            padding: 8px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            background: white;
-            font-size: 0.9rem;
-        }
-
-        /* Products Table */
-        .products-table-container {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            overflow-x: auto;
-        }
-
-        .products-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .products-table th {
-            background: var(--light-gray);
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--dark);
-            border-bottom: 2px solid var(--light-gray);
-        }
-
-        .products-table td {
-            padding: 15px;
-            border-bottom: 1px solid var(--light-gray);
-            vertical-align: middle;
-        }
-
-        .products-table tr:hover {
-            background: #f9f9f9;
-        }
-
-        /* Product Image */
-        .product-image {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 5px;
-            border: 1px solid var(--light-gray);
-        }
-
-        /* Stock Status */
-        .stock-status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .stock-in {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .stock-low {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .stock-out {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Featured Badge */
-        .featured-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #9d4edd;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Search Box */
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            padding: 10px 15px 10px 40px;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            width: 300px;
-            font-size: 0.9rem;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--gray);
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: var(--light-gray);
-        }
-
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: var(--dark);
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--light-gray);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h3 {
-            color: var(--primary);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray);
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid var(--light-gray);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
-        }
-
-        .form-text {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-top: 5px;
-        }
-
-        /* File Upload */
-        .file-upload {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-upload-input {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-upload-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            border: 2px dashed var(--light-gray);
-            border-radius: 5px;
-            background: white;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .file-upload-label:hover {
-            border-color: var(--primary);
-            background: #f9f5ff;
-        }
-
-        .file-upload-label i {
-            font-size: 2rem;
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        .file-upload-label span {
-            display: block;
-            color: var(--gray);
-        }
-
-        .image-preview {
-            margin-top: 15px;
-            display: none;
-        }
-
-        .image-preview img {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 5px;
-            border: 1px solid var(--light-gray);
-        }
-
-        /* Checkbox and Radio Styles */
-        .form-check {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .form-check-input {
-            width: 18px;
-            height: 18px;
-        }
-
-        .form-check-label {
-            cursor: pointer;
-        }
-
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-width: 300px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast-success {
-            background: var(--success);
-        }
-
-        .toast-error {
-            background: var(--danger);
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin-left: 15px;
-        }
-
-        /* Bulk Actions */
-        .bulk-actions {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .bulk-select {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bulk-select input {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        .page-item {
-            list-style: none;
-        }
-
-        .page-link {
-            display: inline-block;
-            padding: 8px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            color: var(--dark);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .page-link:hover {
-            background: var(--light-gray);
-        }
-
-        .page-link.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Status Toggle */
-        .status-toggle {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .status-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .status-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .status-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .status-slider {
-            background-color: var(--success);
-        }
-
-        input:checked + .status-slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
-            }
-
-            .sidebar-header h2,
-            .nav-links span,
-            .sidebar-header p {
-                display: none;
-            }
-
-            .main-content {
-                margin-left: 70px;
-            }
-
-            .nav-links a {
-                justify-content: center;
-                padding: 15px;
-            }
-
-            .nav-links i {
-                margin-right: 0;
-                font-size: 1.5rem;
-            }
-
-            .products-header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .search-box input {
-                width: 100%;
-            }
-
-            .products-table {
-                font-size: 0.9rem;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .bulk-actions {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-
-            .user-info {
-                justify-content: center;
-            }
-
-            .category-filter {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .modal {
-                width: 95%;
-            }
-        }
-
-        /* Quick Edit Form */
-        .quick-edit-form {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-
-        .quick-edit-form .full-width {
-            grid-column: 1 / -1;
-        }
-
-        /* Import/Export */
-        .import-export {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Products - {{ config.brand_name }} Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+:root {
+--primary: #9d4edd;
+--primary-dark: #7b2cbf;
+--secondary: #f72585;
+--light: #f8f9fa;
+--dark: #212529;
+--gray: #6c757d;
+--light-gray: #e9ecef;
+--success: #38b000;
+--danger: #e63946;
+--warning: #ffba08;
+--info: #4361ee;
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background-color: #f5f5f5;
+color: var(--dark);
+line-height: 1.6;
+}
+
+.admin-container {
+display: flex;
+min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+width: 250px;
+background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+color: white;
+padding: 20px 0;
+box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+position: fixed;
+height: 100vh;
+overflow-y: auto;
+z-index: 100;
+}
+
+.sidebar-header {
+padding: 0 20px 20px;
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+text-align: center;
+}
+
+.sidebar-header h2 {
+font-size: 1.5rem;
+margin-bottom: 5px;
+color: white;
+}
+
+.sidebar-header p {
+font-size: 0.9rem;
+opacity: 0.8;
+}
+
+.nav-links {
+list-style: none;
+padding: 20px 0;
+}
+
+.nav-links li {
+margin-bottom: 5px;
+}
+
+.nav-links a {
+display: flex;
+align-items: center;
+padding: 12px 20px;
+color: rgba(255, 255, 255, 0.9);
+text-decoration: none;
+transition: all 0.3s ease;
+border-left: 3px solid transparent;
+}
+
+.nav-links a:hover {
+background: rgba(255, 255, 255, 0.1);
+color: white;
+border-left: 3px solid white;
+}
+
+.nav-links a.active {
+background: rgba(255, 255, 255, 0.15);
+color: white;
+border-left: 3px solid white;
+font-weight: 600;
+}
+
+.nav-links i {
+margin-right: 10px;
+font-size: 1.2rem;
+}
+
+/* Main Content */
+.main-content {
+flex: 1;
+margin-left: 250px;
+padding: 20px;
+background-color: #f5f5f5;
+}
+
+/* Header */
+.header {
+background: white;
+padding: 20px;
+border-radius: 10px;
+margin-bottom: 20px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.header h1 {
+font-size: 1.8rem;
+color: var(--primary);
+margin-bottom: 5px;
+}
+
+.header p {
+color: var(--gray);
+font-size: 0.9rem;
+}
+
+.user-info {
+display: flex;
+align-items: center;
+gap: 15px;
+}
+
+.user-avatar {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+background: var(--primary);
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+}
+
+.logout-btn {
+background: var(--danger);
+color: white;
+border: none;
+padding: 8px 15px;
+border-radius: 5px;
+cursor: pointer;
+text-decoration: none;
+font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+background: #c1121f;
+}
+
+/* Products Header */
+.products-header {
+background: white;
+padding: 25px;
+border-radius: 10px;
+margin-bottom: 20px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.header-left h2 {
+color: var(--primary);
+margin-bottom: 10px;
+}
+
+.header-left p {
+color: var(--gray);
+}
+
+.header-actions {
+display: flex;
+gap: 15px;
+align-items: center;
+}
+
+/* Buttons */
+.btn {
+padding: 10px 20px;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+font-weight: 600;
+text-decoration: none;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+transition: all 0.3s ease;
+}
+
+.btn i {
+font-size: 1rem;
+}
+
+.btn-primary {
+background: var(--primary);
+color: white;
+}
+
+.btn-primary:hover {
+background: var(--primary-dark);
+transform: translateY(-2px);
+}
+
+.btn-success {
+background: var(--success);
+color: white;
+}
+
+.btn-success:hover {
+background: #2d9100;
+}
+
+.btn-danger {
+background: var(--danger);
+color: white;
+}
+
+.btn-danger:hover {
+background: #c1121f;
+}
+
+.btn-warning {
+background: var(--warning);
+color: var(--dark);
+}
+
+.btn-warning:hover {
+background: #e6a800;
+}
+
+.btn-sm {
+padding: 6px 12px;
+font-size: 0.85rem;
+}
+
+/* Category Filter */
+.category-filter {
+display: flex;
+gap: 10px;
+align-items: center;
+}
+
+.category-filter select {
+padding: 8px 15px;
+border: 1px solid var(--light-gray);
+border-radius: 5px;
+background: white;
+font-size: 0.9rem;
+}
+
+/* Products Table */
+.products-table-container {
+background: white;
+padding: 25px;
+border-radius: 10px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+overflow-x: auto;
+}
+
+.products-table {
+width: 100%;
+border-collapse: collapse;
+}
+
+.products-table th {
+background: var(--light-gray);
+padding: 15px;
+text-align: left;
+font-weight: 600;
+color: var(--dark);
+border-bottom: 2px solid var(--light-gray);
+}
+
+.products-table td {
+padding: 15px;
+border-bottom: 1px solid var(--light-gray);
+vertical-align: middle;
+}
+
+.products-table tr:hover {
+background: #f9f9f9;
+}
+
+/* Product Image */
+.product-image {
+width: 60px;
+height: 60px;
+object-fit: cover;
+border-radius: 5px;
+border: 1px solid var(--light-gray);
+}
+
+/* Stock Status */
+.stock-status {
+display: inline-block;
+padding: 5px 10px;
+border-radius: 20px;
+font-size: 0.8rem;
+font-weight: 600;
+}
+
+.stock-in {
+background: #d4edda;
+color: #155724;
+}
+
+.stock-low {
+background: #fff3cd;
+color: #856404;
+}
+
+.stock-out {
+background: #f8d7da;
+color: #721c24;
+}
+
+/* Featured Badge */
+.featured-badge {
+display: inline-block;
+padding: 5px 10px;
+background: #9d4edd;
+color: white;
+border-radius: 20px;
+font-size: 0.8rem;
+font-weight: 600;
+}
+
+/* Variant Badge */
+.variant-badge {
+display: inline-block;
+padding: 4px 8px;
+background: #4361ee;
+color: white;
+border-radius: 12px;
+font-size: 0.75rem;
+font-weight: 600;
+margin-top: 5px;
+}
+
+/* Bundle Badge */
+.bundle-badge {
+display: inline-block;
+padding: 4px 8px;
+background: #f72585;
+color: white;
+border-radius: 12px;
+font-size: 0.75rem;
+font-weight: 600;
+margin-left: 5px;
+}
+
+/* Action Buttons */
+.action-buttons {
+display: flex;
+gap: 8px;
+}
+
+/* Search Box */
+.search-box {
+position: relative;
+}
+
+.search-box input {
+padding: 10px 15px 10px 40px;
+border: 1px solid var(--light-gray);
+border-radius: 5px;
+width: 300px;
+font-size: 0.9rem;
+}
+
+.search-box i {
+position: absolute;
+left: 15px;
+top: 50%;
+transform: translateY(-50%);
+color: var(--gray);
+}
+
+/* Empty State */
+.empty-state {
+text-align: center;
+padding: 60px 20px;
+color: var(--gray);
+}
+
+.empty-state i {
+font-size: 48px;
+margin-bottom: 20px;
+color: var(--light-gray);
+}
+
+.empty-state h3 {
+margin-bottom: 10px;
+color: var(--dark);
+}
+
+/* Modal Styles */
+.modal-overlay {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.5);
+display: none;
+align-items: center;
+justify-content: center;
+z-index: 1000;
+}
+
+.modal-overlay.active {
+display: flex;
+}
+
+.modal {
+background: white;
+border-radius: 10px;
+width: 90%;
+max-width: 700px;
+max-height: 90vh;
+overflow-y: auto;
+}
+
+.modal-header {
+padding: 20px;
+border-bottom: 1px solid var(--light-gray);
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.modal-header h3 {
+color: var(--primary);
+}
+
+.modal-close {
+background: none;
+border: none;
+font-size: 1.5rem;
+cursor: pointer;
+color: var(--gray);
+}
+
+.modal-body {
+padding: 20px;
+}
+
+.modal-footer {
+padding: 20px;
+border-top: 1px solid var(--light-gray);
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+}
+
+/* Form Styles */
+.form-group {
+margin-bottom: 20px;
+}
+
+.form-label {
+display: block;
+margin-bottom: 8px;
+font-weight: 600;
+color: var(--dark);
+}
+
+.form-control {
+width: 100%;
+padding: 10px 15px;
+border: 1px solid var(--light-gray);
+border-radius: 5px;
+font-size: 0.95rem;
+transition: all 0.3s ease;
+}
+
+.form-control:focus {
+outline: none;
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+}
+
+.form-text {
+font-size: 0.85rem;
+color: var(--gray);
+margin-top: 5px;
+}
+
+/* File Upload */
+.file-upload {
+position: relative;
+display: inline-block;
+width: 100%;
+}
+
+.file-upload-input {
+position: absolute;
+left: 0;
+top: 0;
+opacity: 0;
+width: 100%;
+height: 100%;
+cursor: pointer;
+}
+
+.file-upload-label {
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 40px;
+border: 2px dashed var(--light-gray);
+border-radius: 5px;
+background: white;
+cursor: pointer;
+text-align: center;
+transition: all 0.3s ease;
+}
+
+.file-upload-label:hover {
+border-color: var(--primary);
+background: #f9f5ff;
+}
+
+.file-upload-label i {
+font-size: 2rem;
+color: var(--primary);
+margin-bottom: 10px;
+}
+
+.file-upload-label span {
+display: block;
+color: var(--gray);
+}
+
+.image-preview {
+margin-top: 15px;
+display: none;
+}
+
+.image-preview img {
+max-width: 200px;
+max-height: 200px;
+border-radius: 5px;
+border: 1px solid var(--light-gray);
+}
+
+/* Checkbox and Radio Styles */
+.form-check {
+display: flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 10px;
+}
+
+.form-check-input {
+width: 18px;
+height: 18px;
+}
+
+.form-check-label {
+cursor: pointer;
+}
+
+/* Toast Notification */
+.toast {
+position: fixed;
+top: 20px;
+right: 20px;
+padding: 15px 20px;
+border-radius: 5px;
+color: white;
+font-weight: 600;
+display: flex;
+align-items: center;
+justify-content: space-between;
+min-width: 300px;
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+transform: translateX(150%);
+transition: transform 0.3s ease;
+z-index: 1001;
+}
+
+.toast.show {
+transform: translateX(0);
+}
+
+.toast-success {
+background: var(--success);
+}
+
+.toast-error {
+background: var(--danger);
+}
+
+.toast-close {
+background: none;
+border: none;
+color: white;
+font-size: 1.2rem;
+cursor: pointer;
+margin-left: 15px;
+}
+
+/* Bulk Actions */
+.bulk-actions {
+background: white;
+padding: 15px 25px;
+border-radius: 10px;
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 15px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bulk-select {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.bulk-select input {
+width: 18px;
+height: 18px;
+}
+
+/* Pagination */
+.pagination {
+display: flex;
+justify-content: center;
+gap: 10px;
+margin-top: 30px;
+}
+
+.page-item {
+list-style: none;
+}
+
+.page-link {
+display: inline-block;
+padding: 8px 15px;
+border: 1px solid var(--light-gray);
+border-radius: 5px;
+color: var(--dark);
+text-decoration: none;
+transition: all 0.3s ease;
+}
+
+.page-link:hover {
+background: var(--light-gray);
+}
+
+.page-link.active {
+background: var(--primary);
+color: white;
+border-color: var(--primary);
+}
+
+/* Status Toggle */
+.status-toggle {
+position: relative;
+display: inline-block;
+width: 50px;
+height: 24px;
+}
+
+.status-toggle input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+.status-slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+transition: .4s;
+border-radius: 34px;
+}
+
+.status-slider:before {
+position: absolute;
+content: "";
+height: 16px;
+width: 16px;
+left: 4px;
+bottom: 4px;
+background-color: white;
+transition: .4s;
+border-radius: 50%;
+}
+
+input:checked + .status-slider {
+background-color: var(--success);
+}
+
+input:checked + .status-slider:before {
+transform: translateX(26px);
+}
+
+/* Price Range Display */
+.price-range {
+color: var(--primary);
+font-weight: 600;
+}
+
+/* Low Stock Filter Button */
+.filter-btn {
+padding: 8px 15px;
+border: 1px solid var(--light-gray);
+background: white;
+border-radius: 5px;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 8px;
+transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+background: var(--light-gray);
+}
+
+.filter-btn.active {
+background: var(--primary);
+color: white;
+border-color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+.sidebar {
+width: 70px;
+}
+
+.sidebar-header h2,
+.nav-links span,
+.sidebar-header p {
+display: none;
+}
+
+.main-content {
+margin-left: 70px;
+}
+
+.nav-links a {
+justify-content: center;
+padding: 15px;
+}
+
+.nav-links i {
+margin-right: 0;
+font-size: 1.5rem;
+}
+
+.products-header {
+flex-direction: column;
+gap: 20px;
+text-align: center;
+}
+
+.header-actions {
+flex-direction: column;
+width: 100%;
+}
+
+.search-box input {
+width: 100%;
+}
+
+.products-table {
+font-size: 0.9rem;
+}
+
+.action-buttons {
+flex-direction: column;
+}
+
+.bulk-actions {
+flex-direction: column;
+align-items: flex-start;
+}
+}
+
+@media (max-width: 576px) {
+.header {
+flex-direction: column;
+text-align: center;
+gap: 15px;
+}
+
+.user-info {
+justify-content: center;
+}
+
+.category-filter {
+flex-direction: column;
+align-items: stretch;
+}
+
+.modal {
+width: 95%;
+}
+}
+
+/* Quick Edit Form */
+.quick-edit-form {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 15px;
+}
+
+.quick-edit-form .full-width {
+grid-column: 1 / -1;
+}
+
+/* Import/Export */
+.import-export {
+background: white;
+padding: 20px;
+border-radius: 10px;
+margin-bottom: 20px;
+display: flex;
+gap: 15px;
+align-items: center;
+}
+
+/* Image Count Badge */
+.image-count {
+display: inline-block;
+padding: 2px 8px;
+background: var(--info);
+color: white;
+border-radius: 10px;
+font-size: 0.75rem;
+margin-left: 5px;
+}
+</style>
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>{{ config.brand_name }}</h2>
-                <p>Admin Panel</p>
-            </div>
-            <ul class="nav-links">
-                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
-                <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-                <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-                <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
-                <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-            </ul>
-        </aside>
+<div class="admin-container">
+<!-- Sidebar -->
+<aside class="sidebar">
+<div class="sidebar-header">
+<h2>{{ config.brand_name }}</h2>
+<p>Admin Panel</p>
+</div>
+<ul class="nav-links">
+<li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+<li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
+<li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
+<li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
+<li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+<li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
+<li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+<li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+</ul>
+</aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div>
-                    <h1>Manage Products</h1>
-                    <p>View and manage all products in your store</p>
-                </div>
-                <div class="user-info">
-                    <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
-                    <a href="{{ url_for('admin_logout') }}" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
-            </header>
+<!-- Main Content -->
+<main class="main-content">
+<!-- Header -->
+<header class="header">
+<div>
+<h1>Manage Products</h1>
+<p>View and manage all products in your store</p>
+</div>
+<div class="user-info">
+<div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
+<a href="{{ url_for('admin_logout') }}" class="logout-btn">
+<i class="fas fa-sign-out-alt"></i> Logout
+</a>
+</div>
+</header>
 
-            <!-- Import/Export -->
-            <div class="import-export">
-                <a href="#" class="btn btn-success" onclick="exportProducts()">
-                    <i class="fas fa-file-export"></i> Export Products
-                </a>
-                <button class="btn btn-primary" onclick="importProducts()">
-                    <i class="fas fa-file-import"></i> Import Products
-                </button>
-            </div>
+<!-- Import/Export -->
+<div class="import-export">
+<a href="#" class="btn btn-success" onclick="exportProducts()">
+<i class="fas fa-file-export"></i> Export Products
+</a>
+<button class="btn btn-primary" onclick="importProducts()">
+<i class="fas fa-file-import"></i> Import Products
+</button>
+</div>
 
-            <!-- Products Header -->
-            <div class="products-header">
-                <div class="header-left">
-                    <h2>{{ products|length }} Products</h2>
-                    <p>Manage your store inventory</p>
-                </div>
-                <div class="header-actions">
-                    <div class="category-filter">
-                        <select id="categoryFilter" onchange="filterByCategory()">
-                            <option value="">All Categories</option>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}" {% if request.args.get('category')|string == category.id|string %}selected{% endif %}>
-                                    {{ category.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()" value="{{ request.args.get('search', '') }}">
-                    </div>
-                    <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Product
-                    </a>
-                </div>
-            </div>
+<!-- Products Header -->
+<div class="products-header">
+<div class="header-left">
+<h2>{{ products|length }} Products</h2>
+<p>Manage your store inventory</p>
+</div>
+<div class="header-actions">
+<div class="category-filter">
+<select id="categoryFilter" onchange="filterByCategory()">
+<option value="">All Categories</option>
+{% for category in categories %}
+<option value="{{ category.id }}" {% if request.args.get('category')|string == category.id|string %}selected{% endif %}>
+{{ category.name }}
+</option>
+{% endfor %}
+</select>
+<button class="filter-btn {% if low_stock %}active{% endif %}" onclick="toggleLowStockFilter()">
+<i class="fas fa-exclamation-triangle"></i>
+Low Stock
+</button>
+</div>
+<div class="search-box">
+<i class="fas fa-search"></i>
+<input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()" value="{{ request.args.get('search', '') }}">
+</div>
+<a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
+<i class="fas fa-plus"></i> Add Product
+</a>
+</div>
+</div>
 
-            <!-- Bulk Actions -->
-            <div class="bulk-actions" id="bulkActions" style="display: none;">
-                <div class="bulk-select">
-                    <input type="checkbox" id="selectAllBulk" onchange="toggleAllBulk()">
-                    <span id="selectedCount">0</span> selected
-                </div>
-                <select id="bulkAction" class="form-control" style="width: 200px;">
-                    <option value="">Bulk Actions</option>
-                    <option value="activate">Activate</option>
-                    <option value="deactivate">Deactivate</option>
-                    <option value="feature">Make Featured</option>
-                    <option value="unfeature">Remove Featured</option>
-                    <option value="delete">Delete</option>
-                </select>
-                <button class="btn btn-primary" onclick="applyBulkAction()">Apply</button>
-                <button class="btn btn-secondary" onclick="clearBulkSelection()">Clear</button>
-            </div>
+<!-- Bulk Actions -->
+<div class="bulk-actions" id="bulkActions" style="display: none;">
+<div class="bulk-select">
+<input type="checkbox" id="selectAllBulk" onchange="toggleAllBulk()">
+<span id="selectedCount">0</span> selected
+</div>
+<select id="bulkAction" class="form-control" style="width: 200px;">
+<option value="">Bulk Actions</option>
+<option value="activate">Activate</option>
+<option value="deactivate">Deactivate</option>
+<option value="feature">Make Featured</option>
+<option value="unfeature">Remove Featured</option>
+<option value="delete">Delete</option>
+</select>
+<button class="btn btn-primary" onclick="applyBulkAction()">Apply</button>
+<button class="btn btn-secondary" onclick="clearBulkSelection()">Clear</button>
+</div>
 
-            <!-- Products Table -->
-            <div class="products-table-container">
-                {% if products %}
-                <table class="products-table">
-                    <thead>
-                        <tr>
-                            <th width="30">
-                                <input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
-                            </th>
-                            <th>Image</th>
-                            <th>Product Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productsTableBody">
-                        {% for product in products %}
-                        <tr data-product-id="{{ product.id }}">
-                            <td>
-                                <input type="checkbox" class="product-checkbox" onchange="updateBulkActions()" value="{{ product.id }}">
-                            </td>
-                            <td>
-                                {% if product.image_url %}
-                                <img src="{{ url_for('uploaded_file', filename=product.image_url) }}" 
-                                     alt="{{ product.name }}" 
-                                     class="product-image"
-                                     onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
-                                {% else %}
-                                <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
-                                     alt="{{ product.name }}" 
-                                     class="product-image">
-                                {% endif %}
-                            </td>
-                            <td>
-                                <strong>{{ product.name }}</strong>
-                                <br>
-                                <small style="color: var(--gray);">
-                                    SKU: {{ product.sku or 'N/A' }}
-                                </small>
-                                <br>
-                                <small style="color: var(--gray);">
-                                    {{ product.description[:50] }}{% if product.description|length > 50 %}...{% endif %}
-                                </small>
-                                {% if product.featured %}
-                                <br>
-                                <span class="featured-badge">Featured</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if product.category %}
-                                    {{ product.category.name }}
-                                {% else %}
-                                    <span style="color: var(--gray);">Uncategorized</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <strong>{{ product.formatted_price }}</strong>
-                                {% if product.compare_price and product.compare_price > product.price %}
-                                <br>
-                                <small style="color: var(--gray); text-decoration: line-through;">
-                                    {{ format_price(product.compare_price) }}
-                                </small>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if product.quantity > 20 %}
-                                <span class="stock-status stock-in">{{ product.quantity }} in stock</span>
-                                {% elif product.quantity > 0 %}
-                                <span class="stock-status stock-low">{{ product.quantity }} left</span>
-                                {% else %}
-                                <span class="stock-status stock-out">Out of stock</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <label class="status-toggle">
-                                    <input type="checkbox" class="status-toggle-input" 
-                                           data-product-id="{{ product.id }}"
-                                           {% if product.active %}checked{% endif %}
-                                           onchange="toggleProductStatus({{ product.id }}, this.checked)">
-                                    <span class="status-slider"></span>
-                                </label>
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn btn-warning btn-sm" onclick="quickEditProduct({{ product.id }})">
-                                        <i class="fas fa-edit"></i> Quick Edit
-                                    </button>
-                                    <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    <button class="btn btn-danger btn-sm" onclick="deleteProduct({{ product.id }}, '{{ product.name }}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-box-open"></i>
-                    <h3>No products found</h3>
-                    <p>Get started by adding your first product</p>
-                    <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary" style="margin-top: 20px;">
-                        <i class="fas fa-plus"></i> Add Your First Product
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </main>
-    </div>
+<!-- Products Table -->
+<div class="products-table-container">
+{% if products %}
+<table class="products-table">
+<thead>
+<tr>
+<th width="30">
+<input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
+</th>
+<th>Image</th>
+<th>Product Name</th>
+<th>Category</th>
+<th>Price</th>
+<th>Stock</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="productsTableBody">
+{% for product in products %}
+<tr data-product-id="{{ product.id }}">
+<td>
+<input type="checkbox" class="product-checkbox" onchange="updateBulkActions()" value="{{ product.id }}">
+</td>
+<td>
+{% if product.images and product.images|length > 0 %}
+{% set primary_image = product.images|selectattr('is_primary')|first or product.images[0] %}
+<img src="{{ url_for('uploaded_file', filename=primary_image.image_url) }}"
+alt="{{ product.name }}"
+class="product-image"
+onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+{% if product.images|length > 1 %}
+<span class="image-count">+{{ product.images|length - 1 }}</span>
+{% endif %}
+{% else %}
+<img src="{{ url_for('static', filename='images/default-product.jpg') }}"
+alt="{{ product.name }}"
+class="product-image">
+{% endif %}
+</td>
+<td>
+<strong>{{ product.name }}</strong>
+<br>
+<small style="color: var(--gray);">
+SKU: {{ product.sku or 'N/A' }}
+</small>
+<br>
+<small style="color: var(--gray);">
+{{ product.description[:50] }}{% if product.description|length > 50 %}...{% endif %}
+</small>
+<br>
+{% if product.is_bundle %}
+<span class="bundle-badge">Bundle</span>
+{% endif %}
+{% if product.featured %}
+<span class="featured-badge">Featured</span>
+{% endif %}
+{% if product.variants|length > 0 %}
+<span class="variant-badge">{{ product.variants|length }} variants</span>
+{% endif %}
+</td>
+<td>
+{% if product.category %}
+{{ product.category.name }}
+{% else %}
+<span style="color: var(--gray);">Uncategorized</span>
+{% endif %}
+</td>
+<td>
+{% if product.variants and product.variants|length > 1 %}
+<span class="price-range">{{ product.display_price }}</span>
+<br>
+<small style="color: var(--gray);">
+Base: {{ format_price(product.base_price) }}
+</small>
+{% else %}
+<strong>{{ format_price(product.base_price) }}</strong>
+{% endif %}
+{% if product.compare_price and product.compare_price > product.base_price %}
+<br>
+<small style="color: var(--gray); text-decoration: line-through;">
+{{ format_price(product.compare_price) }}
+</small>
+{% endif %}
+</td>
+<td>
+{% set total_stock = product.stock %}
+{% if total_stock > 20 %}
+<span class="stock-status stock-in">{{ total_stock }} in stock</span>
+{% elif total_stock > 0 %}
+<span class="stock-status stock-low">{{ total_stock }} left</span>
+{% else %}
+<span class="stock-status stock-out">Out of stock</span>
+{% endif %}
+{% if product.variants|length > 0 %}
+<br>
+<small style="color: var(--gray); font-size: 0.8rem;">
+{{ product.variants|selectattr('stock', 'gt', 0)|list|length }} variants available
+</small>
+{% endif %}
+</td>
+<td>
+<label class="status-toggle">
+<input type="checkbox" class="status-toggle-input"
+data-product-id="{{ product.id }}"
+{% if product.active %}checked{% endif %}
+onchange="toggleProductStatus({{ product.id }}, this.checked)">
+<span class="status-slider"></span>
+</label>
+</td>
+<td>
+<div class="action-buttons">
+<button class="btn btn-warning btn-sm" onclick="quickEditProduct({{ product.id }})">
+<i class="fas fa-edit"></i> Quick Edit
+</button>
+<a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-info btn-sm">
+<i class="fas fa-eye"></i> View
+</a>
+{% if product.variants|length > 0 %}
+<a href="{{ url_for('admin_product_variants', product_id=product.id) }}" class="btn btn-primary btn-sm">
+<i class="fas fa-list"></i> Variants
+</a>
+{% endif %}
+<button class="btn btn-danger btn-sm" onclick="deleteProduct({{ product.id }}, '{{ product.name }}')">
+<i class="fas fa-trash"></i>
+</button>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="empty-state">
+<i class="fas fa-box-open"></i>
+<h3>No products found</h3>
+<p>Get started by adding your first product</p>
+<a href="{{ url_for('admin_add_product') }}" class="btn btn-primary" style="margin-top: 20px;">
+<i class="fas fa-plus"></i> Add Your First Product
+</a>
+</div>
+{% endif %}
+</div>
+</main>
+</div>
 
-    <!-- Quick Edit Modal -->
-    <div class="modal-overlay" id="quickEditModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Quick Edit Product</h3>
-                <button class="modal-close" onclick="closeQuickEditModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="quickEditForm" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label class="form-label">Product Name</label>
-                        <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Price (₦)</label>
-                        <input type="number" name="price" class="form-control" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Compare Price (₦)</label>
-                        <input type="number" name="compare_price" class="form-control" step="0.01">
-                        <div class="form-text">Leave empty if no compare price</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Quantity</label>
-                        <input type="number" name="quantity" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select name="category_id" class="form-control" required>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="featured" class="form-check-input" id="quickEditFeatured">
-                        <label class="form-check-label" for="quickEditFeatured">Featured Product</label>
-                    </div>
-                    <input type="hidden" name="product_id" id="quickEditProductId">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeQuickEditModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveQuickEdit()">Save Changes</button>
-            </div>
-        </div>
-    </div>
+<!-- Quick Edit Modal -->
+<div class="modal-overlay" id="quickEditModal">
+<div class="modal">
+<div class="modal-header">
+<h3>Quick Edit Product</h3>
+<button class="modal-close" onclick="closeQuickEditModal()">&times;</button>
+</div>
+<div class="modal-body">
+<form id="quickEditForm" method="POST">
+<div class="form-group">
+<label class="form-label">Product Name</label>
+<input type="text" name="name" class="form-control" required>
+</div>
+<div class="form-group">
+<label class="form-label">Base Price (₦)</label>
+<input type="number" name="base_price" class="form-control" step="0.01" required>
+</div>
+<div class="form-group">
+<label class="form-label">Compare Price (₦)</label>
+<input type="number" name="compare_price" class="form-control" step="0.01">
+<div class="form-text">Leave empty if no compare price</div>
+</div>
+<div class="form-group">
+<label class="form-label">Total Quantity</label>
+<input type="number" name="total_quantity" class="form-control" required>
+<div class="form-text">Total stock across all variants</div>
+</div>
+<div class="form-group">
+<label class="form-label">Category</label>
+<select name="category_id" class="form-control" required>
+{% for category in categories %}
+<option value="{{ category.id }}">{{ category.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="form-check">
+<input type="checkbox" name="featured" class="form-check-input" id="quickEditFeatured">
+<label class="form-check-label" for="quickEditFeatured">Featured Product</label>
+</div>
+<input type="hidden" name="product_id" id="quickEditProductId">
+</form>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" onclick="closeQuickEditModal()">Cancel</button>
+<button class="btn btn-primary" onclick="saveQuickEdit()">Save Changes</button>
+</div>
+</div>
+</div>
 
-    <!-- Image Upload Modal -->
-    <div class="modal-overlay" id="imageUploadModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Upload Product Image</h3>
-                <button class="modal-close" onclick="closeImageUploadModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Choose Image</label>
-                    <div class="file-upload">
-                        <input type="file" id="imageUpload" class="file-upload-input" accept="image/*" onchange="previewImage(this)">
-                        <label for="imageUpload" class="file-upload-label">
-                            <div>
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <span>Click to upload or drag and drop</span>
-                                <span style="font-size: 0.85rem;">PNG, JPG, GIF up to 5MB</span>
-                            </div>
-                        </label>
-                    </div>
-                    <div class="image-preview" id="imagePreview">
-                        <img id="previewImage" src="" alt="Preview">
-                    </div>
-                </div>
-                <input type="hidden" id="uploadProductId">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeImageUploadModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="uploadProductImage()">Upload Image</button>
-            </div>
-        </div>
-    </div>
+<!-- Image Upload Modal -->
+<div class="modal-overlay" id="imageUploadModal">
+<div class="modal">
+<div class="modal-header">
+<h3>Upload Product Image</h3>
+<button class="modal-close" onclick="closeImageUploadModal()">&times;</button>
+</div>
+<div class="modal-body">
+<div class="form-group">
+<label class="form-label">Choose Image</label>
+<div class="file-upload">
+<input type="file" id="imageUpload" class="file-upload-input" accept="image/*" onchange="previewImage(this)">
+<label for="imageUpload" class="file-upload-label">
+<div>
+<i class="fas fa-cloud-upload-alt"></i>
+<span>Click to upload or drag and drop</span>
+<span style="font-size: 0.85rem;">PNG, JPG, GIF up to 5MB</span>
+</div>
+</label>
+</div>
+<div class="image-preview" id="imagePreview">
+<img id="previewImage" src="" alt="Preview">
+</div>
+</div>
+<input type="hidden" id="uploadProductId">
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" onclick="closeImageUploadModal()">Cancel</button>
+<button class="btn btn-primary" onclick="uploadProductImage()">Upload Image</button>
+</div>
+</div>
+</div>
 
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">
-        <span id="toastMessage"></span>
-        <button class="toast-close" onclick="hideToast()">&times;</button>
-    </div>
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+<span id="toastMessage"></span>
+<button class="toast-close" onclick="hideToast()">&times;</button>
+</div>
 
-    <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- JavaScript Libraries -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <script>
-        // Get CSRF Token
-        function getCSRFToken() {
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            return metaTag ? metaTag.content : '';
-        }
+<script>
+// Get CSRF Token
+function getCSRFToken() {
+const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+return csrfTokenMeta ? csrfTokenMeta.content : '';
+}
 
-        // Category filter
-        function filterByCategory() {
-            const categoryId = document.getElementById('categoryFilter').value;
-            const search = document.getElementById('searchInput').value;
-            let url = '/admin/products?';
-            
-            if (categoryId) url += `category=${categoryId}&`;
-            if (search) url += `search=${search}`;
-            
-            window.location.href = url;
-        }
+// Category filter
+function filterByCategory() {
+const categoryId = document.getElementById('categoryFilter').value;
+const search = document.getElementById('searchInput').value;
+let url = '/admin/products?';
 
-        // Search products
-        function searchProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#productsTableBody tr');
-            
-            rows.forEach(row => {
-                const productName = row.querySelector('td:nth-child(3) strong').textContent.toLowerCase();
-                const productSKU = row.querySelector('td:nth-child(3) small').textContent.toLowerCase();
-                
-                if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
+if (categoryId) url += `category=${categoryId}&`;
+if (search) url += `search=${search}`;
+{% if low_stock %}url += 'low_stock=true';{% endif %}
 
-        // Toggle all products for bulk actions
-        function toggleAllProducts() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.product-checkbox');
-            
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAll.checked;
-            });
-            
-            updateBulkActions();
-        }
+window.location.href = url;
+}
 
-        // Update bulk actions visibility
-        function updateBulkActions() {
-            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-            const bulkActions = document.getElementById('bulkActions');
-            const selectedCount = document.getElementById('selectedCount');
-            
-            selectedCount.textContent = checkboxes.length;
-            
-            if (checkboxes.length > 0) {
-                bulkActions.style.display = 'flex';
-            } else {
-                bulkActions.style.display = 'none';
-                document.getElementById('selectAll').checked = false;
-            }
-        }
+// Toggle low stock filter
+function toggleLowStockFilter() {
+const categoryId = document.getElementById('categoryFilter').value;
+const search = document.getElementById('searchInput').value;
+let url = '/admin/products?';
 
-        // Toggle all bulk selection
-        function toggleAllBulk() {
-            const selectAllBulk = document.getElementById('selectAllBulk');
-            const checkboxes = document.querySelectorAll('.product-checkbox');
-            
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAllBulk.checked;
-            });
-            
-            updateBulkActions();
-        }
+if (categoryId) url += `category=${categoryId}&`;
+if (search) url += `search=${search}&`;
+url += 'low_stock=true';
 
-        // Clear bulk selection
-        function clearBulkSelection() {
-            const checkboxes = document.querySelectorAll('.product-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = false);
-            
-            document.getElementById('selectAll').checked = false;
-            document.getElementById('selectAllBulk').checked = false;
-            updateBulkActions();
-        }
+window.location.href = url;
+}
 
-        // Apply bulk action
-        async function applyBulkAction() {
-            const action = document.getElementById('bulkAction').value;
-            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-            const productIds = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (!action || productIds.length === 0) {
-                showToast('Please select an action and products', 'error');
-                return;
-            }
-            
-            if (action === 'delete' && !confirm(`Are you sure you want to delete ${productIds.length} products?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/admin/products/bulk-action', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        action: action,
-                        product_ids: productIds
-                    })
-                });
-                
-                if (response.ok) {
-                    showToast(`Bulk action applied to ${productIds.length} products`, 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    throw new Error('Failed to apply bulk action');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to apply bulk action', 'error');
-            }
-        }
+// Search products
+function searchProducts() {
+const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+const rows = document.querySelectorAll('#productsTableBody tr');
 
-        // Toggle product status
-        async function toggleProductStatus(productId, active) {
-            try {
-                const response = await fetch(`/admin/products/${productId}/toggle-status`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({ active: active })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to update status');
-                }
-                
-                showToast(`Product status ${active ? 'activated' : 'deactivated'}`, 'success');
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to update status', 'error');
-            }
-        }
+rows.forEach(row => {
+const productName = row.querySelector('td:nth-child(3) strong').textContent.toLowerCase();
+const productSKU = row.querySelector('td:nth-child(3) small').textContent.toLowerCase();
 
-        // Quick edit product
-        async function quickEditProduct(productId) {
-            try {
-                const response = await fetch(`/admin/products/${productId}/quick-edit`);
-                const product = await response.json();
-                
-                // Fill form
-                document.getElementById('quickEditProductId').value = product.id;
-                document.querySelector('#quickEditForm input[name="name"]').value = product.name;
-                document.querySelector('#quickEditForm input[name="price"]').value = product.price;
-                document.querySelector('#quickEditForm input[name="compare_price"]').value = product.compare_price || '';
-                document.querySelector('#quickEditForm input[name="quantity"]').value = product.quantity;
-                document.querySelector('#quickEditForm select[name="category_id"]').value = product.category_id;
-                document.getElementById('quickEditFeatured').checked = product.featured;
-                
-                // Show modal
-                document.getElementById('quickEditModal').classList.add('active');
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to load product data', 'error');
-            }
-        }
+if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
+row.style.display = '';
+} else {
+row.style.display = 'none';
+}
+});
+}
 
-        // Save quick edit
-        async function saveQuickEdit() {
-            const form = document.getElementById('quickEditForm');
-            const formData = new FormData(form);
-            
-            try {
-                const response = await fetch(`/admin/products/${formData.get('product_id')}/quick-update`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                });
-                
-                if (response.ok) {
-                    showToast('Product updated successfully', 'success');
-                    closeQuickEditModal();
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    throw new Error('Failed to update product');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to update product', 'error');
-            }
-        }
+// Toggle all products for bulk actions
+function toggleAllProducts() {
+const selectAll = document.getElementById('selectAll');
+const checkboxes = document.querySelectorAll('.product-checkbox');
 
-        // Close quick edit modal
-        function closeQuickEditModal() {
-            document.getElementById('quickEditModal').classList.remove('active');
-        }
+checkboxes.forEach(checkbox => {
+checkbox.checked = selectAll.checked;
+});
 
-        // Delete product
-        async function deleteProduct(productId, productName) {
-            if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/admin/products/${productId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                });
-                
-                if (response.ok) {
-                    showToast(`"${productName}" deleted successfully`, 'success');
-                    // Remove row from table
-                    const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-                    if (row) {
-                        row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 300);
-                    }
-                } else {
-                    throw new Error('Failed to delete product');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to delete product', 'error');
-            }
-        }
+updateBulkActions();
+}
 
-        // Open image upload modal
-        function openImageUploadModal(productId) {
-            document.getElementById('uploadProductId').value = productId;
-            document.getElementById('imageUploadModal').classList.add('active');
-        }
+// Update bulk actions visibility
+function updateBulkActions() {
+const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+const bulkActions = document.getElementById('bulkActions');
+const selectedCount = document.getElementById('selectedCount');
 
-        // Close image upload modal
-        function closeImageUploadModal() {
-            document.getElementById('imageUploadModal').classList.remove('active');
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('previewImage').src = '';
-            document.getElementById('imageUpload').value = '';
-        }
+selectedCount.textContent = checkboxes.length;
 
-        // Preview image before upload
-        function previewImage(input) {
-            const preview = document.getElementById('previewImage');
-            const previewContainer = document.getElementById('imagePreview');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                }
-                
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+if (checkboxes.length > 0) {
+bulkActions.style.display = 'flex';
+} else {
+bulkActions.style.display = 'none';
+document.getElementById('selectAll').checked = false;
+}
+}
 
-        // Upload product image
-        async function uploadProductImage() {
-            const productId = document.getElementById('uploadProductId').value;
-            const fileInput = document.getElementById('imageUpload');
-            
-            if (!fileInput.files[0]) {
-                showToast('Please select an image file', 'error');
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('image', fileInput.files[0]);
-            
-            try {
-                const response = await fetch(`/admin/products/${productId}/upload-image`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                });
-                
-                if (response.ok) {
-                    showToast('Image uploaded successfully', 'success');
-                    closeImageUploadModal();
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    throw new Error('Failed to upload image');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to upload image', 'error');
-            }
-        }
+// Toggle all bulk selection
+function toggleAllBulk() {
+const selectAllBulk = document.getElementById('selectAllBulk');
+const checkboxes = document.querySelectorAll('.product-checkbox');
 
-        // Export products
-        function exportProducts() {
-            window.location.href = '/admin/products/export';
-        }
+checkboxes.forEach(checkbox => {
+checkbox.checked = selectAllBulk.checked;
+});
 
-        // Import products
-        function importProducts() {
-            // Create file input for import
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv,.json,.xlsx';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                try {
-                    const response = await fetch('/admin/products/import', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': getCSRFToken()
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        showToast('Products imported successfully', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        throw new Error('Failed to import products');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showToast('Failed to import products', 'error');
-                }
-            };
-            
-            input.click();
-        }
+updateBulkActions();
+}
 
-        // Toast functions
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            
-            toastMessage.textContent = message;
-            toast.className = `toast toast-${type} show`;
-            
-            setTimeout(() => {
-                hideToast();
-            }, 5000);
-        }
+// Clear bulk selection
+function clearBulkSelection() {
+const checkboxes = document.querySelectorAll('.product-checkbox');
+checkboxes.forEach(checkbox => checkbox.checked = false);
 
-        function hideToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('show');
-        }
+document.getElementById('selectAll').checked = false;
+document.getElementById('selectAllBulk').checked = false;
+updateBulkActions();
+}
 
-        // Check for flash messages on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Select2
-            $('#categoryFilter').select2();
-            
-            // Show any flash messages from server
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const type = alert.classList.contains('alert-success') ? 'success' : 
-                            alert.classList.contains('alert-danger') ? 'error' : 
-                            alert.classList.contains('alert-warning') ? 'warning' : 'info';
-                
-                showToast(alert.textContent.trim(), type);
-                
-                // Remove alert after 5 seconds
-                setTimeout(() => {
-                    alert.remove();
-                }, 5000);
-            });
-            
-            // Check URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success')) {
-                showToast('Operation completed successfully', 'success');
-            }
-        });
+// Apply bulk action
+async function applyBulkAction() {
+const action = document.getElementById('bulkAction').value;
+const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+const productIds = Array.from(checkboxes).map(cb => cb.value);
 
-        // Close modals on ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeQuickEditModal();
-                closeImageUploadModal();
-            }
-        });
-    </script>
+if (!action || productIds.length === 0) {
+showToast('Please select an action and products', 'error');
+return;
+}
+
+if (action === 'delete' && !confirm(`Are you sure you want to delete ${productIds.length} products?`)) {
+return;
+}
+
+try {
+const response = await fetch('/admin/products/bulk-action', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'X-CSRFToken': getCSRFToken()
+},
+body: JSON.stringify({
+action: action,
+product_ids: productIds
+})
+});
+
+const data = await response.json();
+
+if (response.ok) {
+showToast(`Bulk action applied to ${data.count} products`, 'success');
+setTimeout(() => location.reload(), 1500);
+} else {
+throw new Error(data.error || 'Failed to apply bulk action');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to apply bulk action', 'error');
+}
+}
+
+// Toggle product status
+async function toggleProductStatus(productId, active) {
+try {
+const response = await fetch(`/admin/products/${productId}/toggle-status`, {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'X-CSRFToken': getCSRFToken()
+},
+body: JSON.stringify({ active: active })
+});
+
+const data = await response.json();
+
+if (response.ok) {
+showToast(`Product status ${active ? 'activated' : 'deactivated'}`, 'success');
+} else {
+throw new Error(data.error || 'Failed to update status');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to update status', 'error');
+// Revert toggle on error
+const toggle = document.querySelector(`input[data-product-id="${productId}"]`);
+if (toggle) toggle.checked = !active;
+}
+}
+
+// Quick edit product
+async function quickEditProduct(productId) {
+try {
+const response = await fetch(`/admin/products/${productId}/quick-edit`);
+const data = await response.json();
+
+if (response.ok) {
+// Fill form
+document.getElementById('quickEditProductId').value = data.id;
+document.querySelector('#quickEditForm input[name="name"]').value = data.name;
+document.querySelector('#quickEditForm input[name="base_price"]').value = data.price;
+document.querySelector('#quickEditForm input[name="compare_price"]').value = data.compare_price || '';
+document.querySelector('#quickEditForm input[name="total_quantity"]').value = data.total_quantity || data.quantity;
+document.querySelector('#quickEditForm select[name="category_id"]').value = data.category_id;
+document.getElementById('quickEditFeatured').checked = data.featured;
+
+// Show modal
+document.getElementById('quickEditModal').classList.add('active');
+} else {
+throw new Error(data.error || 'Failed to load product data');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to load product data', 'error');
+}
+}
+
+// Save quick edit
+async function saveQuickEdit() {
+const form = document.getElementById('quickEditForm');
+const formData = new FormData(form);
+const productId = formData.get('product_id');
+
+try {
+const response = await fetch(`/admin/products/${productId}/quick-update`, {
+method: 'POST',
+body: formData,
+headers: {
+'X-CSRFToken': getCSRFToken()
+}
+});
+
+const data = await response.json();
+
+if (response.ok) {
+showToast('Product updated successfully', 'success');
+closeQuickEditModal();
+setTimeout(() => location.reload(), 1500);
+} else {
+throw new Error(data.error || 'Failed to update product');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to update product', 'error');
+}
+}
+
+// Close quick edit modal
+function closeQuickEditModal() {
+document.getElementById('quickEditModal').classList.remove('active');
+}
+
+// Delete product
+async function deleteProduct(productId, productName) {
+if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+return;
+}
+
+try {
+const response = await fetch(`/admin/products/delete/${productId}`, {
+method: 'POST',
+headers: {
+'Content-Type': 'application/x-www-form-urlencoded',
+'X-CSRFToken': getCSRFToken()
+},
+body: `csrf_token=${encodeURIComponent(getCSRFToken())}`
+});
+
+if (response.ok) {
+showToast(`"${productName}" deleted successfully`, 'success');
+// Remove row from table
+const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+if (row) {
+row.style.opacity = '0';
+setTimeout(() => row.remove(), 300);
+}
+} else {
+throw new Error('Failed to delete product');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to delete product', 'error');
+}
+}
+
+// Open image upload modal
+function openImageUploadModal(productId) {
+document.getElementById('uploadProductId').value = productId;
+document.getElementById('imageUploadModal').classList.add('active');
+}
+
+// Close image upload modal
+function closeImageUploadModal() {
+document.getElementById('imageUploadModal').classList.remove('active');
+document.getElementById('imagePreview').style.display = 'none';
+document.getElementById('previewImage').src = '';
+document.getElementById('imageUpload').value = '';
+}
+
+// Preview image before upload
+function previewImage(input) {
+const preview = document.getElementById('previewImage');
+const previewContainer = document.getElementById('imagePreview');
+
+if (input.files && input.files[0]) {
+const reader = new FileReader();
+
+reader.onload = function(e) {
+preview.src = e.target.result;
+previewContainer.style.display = 'block';
+}
+
+reader.readAsDataURL(input.files[0]);
+}
+}
+
+// Upload product image
+async function uploadProductImage() {
+const productId = document.getElementById('uploadProductId').value;
+const fileInput = document.getElementById('imageUpload');
+
+if (!fileInput.files[0]) {
+showToast('Please select an image file', 'error');
+return;
+}
+
+const formData = new FormData();
+formData.append('image', fileInput.files[0]);
+
+try {
+const response = await fetch(`/admin/products/${productId}/upload-image`, {
+method: 'POST',
+body: formData,
+headers: {
+'X-CSRFToken': getCSRFToken()
+}
+});
+
+const data = await response.json();
+
+if (response.ok) {
+showToast('Image uploaded successfully', 'success');
+closeImageUploadModal();
+setTimeout(() => location.reload(), 1500);
+} else {
+throw new Error(data.error || 'Failed to upload image');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to upload image', 'error');
+}
+}
+
+// Export products
+function exportProducts() {
+// Create export URL with current filters
+let url = '/admin/products/export?';
+const categoryId = document.getElementById('categoryFilter').value;
+const search = document.getElementById('searchInput').value;
+
+if (categoryId) url += `category=${categoryId}&`;
+if (search) url += `search=${search}`;
+{% if low_stock %}url += 'low_stock=true';{% endif %}
+
+window.location.href = url;
+}
+
+// Import products
+function importProducts() {
+// Create file input for import
+const input = document.createElement('input');
+input.type = 'file';
+input.accept = '.csv,.json,.xlsx';
+input.onchange = async (e) => {
+const file = e.target.files[0];
+if (!file) return;
+
+const formData = new FormData();
+formData.append('file', file);
+formData.append('csrf_token', getCSRFToken());
+
+try {
+const response = await fetch('/admin/products/import', {
+method: 'POST',
+body: formData
+});
+
+if (response.ok) {
+showToast('Products imported successfully', 'success');
+setTimeout(() => location.reload(), 1500);
+} else {
+throw new Error('Failed to import products');
+}
+} catch (error) {
+console.error('Error:', error);
+showToast('Failed to import products', 'error');
+}
+};
+
+input.click();
+}
+
+// Toast functions
+function showToast(message, type = 'success') {
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toastMessage');
+
+toastMessage.textContent = message;
+toast.className = `toast toast-${type} show`;
+
+setTimeout(() => {
+hideToast();
+}, 5000);
+}
+
+function hideToast() {
+const toast = document.getElementById('toast');
+toast.classList.remove('show');
+}
+
+// Check for flash messages on page load
+document.addEventListener('DOMContentLoaded', function() {
+// Initialize Select2
+$('#categoryFilter').select2({
+width: '200px'
+});
+
+// Show any flash messages from server
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+showToast('{{ message }}', '{{ category }}');
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+// Initialize bulk actions
+updateBulkActions();
+});
+
+// Close modals on ESC key
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') {
+closeQuickEditModal();
+closeImageUploadModal();
+}
+});
+
+// Close modals when clicking outside
+document.addEventListener('click', function(e) {
+if (e.target.classList.contains('modal-overlay')) {
+closeQuickEditModal();
+closeImageUploadModal();
+}
+});
+</script>
 </body>
 </html>
