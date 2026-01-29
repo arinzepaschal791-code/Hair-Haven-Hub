@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config.brand_name }} - {{ config.tagline }}</title>
+    <title>{{ config.brand_name }} - Premium Human Hair Extensions</title>
     
-    <!-- Meta Tags -->
-    <meta name="description" content="{{ config.description }}">
-    <meta name="keywords" content="human hair, hair extensions, wigs, lace frontals, premium hair, Nigeria hair">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Premium 100% human hair extensions, wigs, closures and frontals at wholesale prices. Luxury hair for less with free delivery in Lagos.">
+    <meta name="keywords" content="human hair, hair extensions, wigs, lace frontals, Brazilian hair, Peruvian hair, hair bundles, Nigeria hair shop, premium hair">
     <meta name="author" content="{{ config.brand_name }}">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="{{ config.brand_name }} - {{ config.tagline }}">
+    <meta property="og:description" content="{{ config.description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
@@ -21,19 +28,24 @@
     <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
     <style>
         :root {
-            --primary: #8B4513; /* Rich brown */
+            --primary: #8B4513;
             --primary-dark: #5D2906;
             --primary-light: #A0522D;
-            --secondary: #D4AF37; /* Gold */
+            --secondary: #D4AF37;
             --secondary-light: #F4E4B3;
             --dark: #1A1A1A;
             --dark-light: #2D2D2D;
             --light: #F8F5F0;
             --gray: #8C8C8C;
             --success: #27AE60;
-            --transition: all 0.3s ease;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
             --radius: 12px;
@@ -52,6 +64,7 @@
             background: var(--light);
             line-height: 1.6;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         
         h1, h2, h3, h4, h5, h6 {
@@ -75,6 +88,7 @@
         
         .section {
             padding: 80px 0;
+            position: relative;
         }
         
         .section-title {
@@ -83,7 +97,7 @@
         }
         
         .section-title h2 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: var(--primary-dark);
             margin-bottom: 15px;
             position: relative;
@@ -105,7 +119,7 @@
             font-size: 1.1rem;
             color: var(--gray);
             max-width: 600px;
-            margin: 0 auto;
+            margin: 20px auto 0;
         }
         
         .btn {
@@ -113,7 +127,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 14px 32px;
+            padding: 16px 36px;
             border-radius: var(--radius);
             font-weight: 600;
             font-size: 0.95rem;
@@ -123,11 +137,32 @@
             transition: var(--transition);
             border: none;
             outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
         
         .btn-primary {
             background: var(--primary);
             color: white;
+            border: 2px solid var(--primary);
         }
         
         .btn-primary:hover {
@@ -139,6 +174,7 @@
         .btn-secondary {
             background: var(--secondary);
             color: var(--dark);
+            border: 2px solid var(--secondary);
         }
         
         .btn-secondary:hover {
@@ -163,7 +199,7 @@
             min-height: 90vh;
             display: flex;
             align-items: center;
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(45, 45, 45, 0.8) 100%);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 45, 0.9) 100%);
             overflow: hidden;
         }
         
@@ -180,7 +216,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.4;
+            opacity: 0.3;
         }
         
         .hero-content {
@@ -207,6 +243,7 @@
             margin-bottom: 20px;
             color: white;
             line-height: 1.1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .hero-text .tagline {
@@ -217,7 +254,7 @@
         }
         
         .hero-text p {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             opacity: 0.9;
             margin-bottom: 40px;
             line-height: 1.8;
@@ -235,6 +272,7 @@
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
             animation: float 6s ease-in-out infinite;
+            border: 5px solid rgba(255, 255, 255, 0.1);
         }
         
         @keyframes float {
@@ -246,11 +284,40 @@
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        
+        .hero-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 60px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         /* Featured Collections */
         .featured-collections {
             background: white;
+            position: relative;
         }
         
         .collection-nav {
@@ -270,6 +337,8 @@
             color: var(--dark);
             cursor: pointer;
             transition: var(--transition);
+            position: relative;
+            overflow: hidden;
         }
         
         .collection-nav button:hover,
@@ -293,6 +362,7 @@
             box-shadow: var(--shadow);
             transition: var(--transition);
             position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .product-card:hover {
@@ -304,13 +374,13 @@
             position: absolute;
             top: 15px;
             left: 15px;
-            background: var(--secondary);
-            color: var(--dark);
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
             z-index: 2;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .product-badge.featured {
@@ -319,12 +389,17 @@
         }
         
         .product-badge.sale {
-            background: #FF6B6B;
+            background: var(--danger);
             color: white;
         }
         
+        .product-badge.new {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+        
         .product-image {
-            height: 250px;
+            height: 280px;
             background: var(--light);
             position: relative;
             overflow: hidden;
@@ -334,11 +409,11 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.5s ease;
+            transition: transform 0.6s ease;
         }
         
         .product-card:hover .product-image img {
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
         
         .product-overlay {
@@ -346,7 +421,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
             padding: 20px;
             transform: translateY(100%);
             transition: var(--transition);
@@ -373,11 +448,13 @@
             color: var(--dark);
             cursor: pointer;
             transition: var(--transition);
+            border: none;
         }
         
         .quick-btn:hover {
             background: var(--primary);
             color: white;
+            transform: scale(1.1);
         }
         
         .product-info {
@@ -391,6 +468,9 @@
             letter-spacing: 1px;
             margin-bottom: 8px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .product-name {
@@ -398,6 +478,7 @@
             font-weight: 600;
             margin-bottom: 10px;
             color: var(--dark);
+            line-height: 1.4;
         }
         
         .product-price {
@@ -408,7 +489,7 @@
         }
         
         .current-price {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--primary);
         }
@@ -425,10 +506,34 @@
             align-items: center;
             font-size: 0.9rem;
             color: var(--gray);
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .rating {
             color: var(--secondary);
+        }
+        
+        .stock-status {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        
+        .in-stock {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .low-stock {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .out-stock {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
         }
         
         .view-all {
@@ -439,6 +544,17 @@
         /* Features Section */
         .features {
             background: var(--light);
+            position: relative;
+        }
+        
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, white, var(--light));
         }
         
         .feature-grid {
@@ -454,10 +570,12 @@
             text-align: center;
             box-shadow: var(--shadow);
             transition: var(--transition);
+            position: relative;
+            z-index: 1;
         }
         
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px);
         }
         
         .feature-icon {
@@ -471,6 +589,11 @@
             margin: 0 auto 25px;
             color: white;
             font-size: 2rem;
+            transition: var(--transition);
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: rotateY(180deg);
         }
         
         .feature-card h3 {
@@ -496,8 +619,9 @@
             gap: 30px;
             overflow-x: auto;
             scroll-behavior: smooth;
-            padding: 20px 0;
+            padding: 20px 10px;
             scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         
         .testimonial-slider::-webkit-scrollbar {
@@ -510,6 +634,18 @@
             padding: 40px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
+            position: relative;
+        }
+        
+        .testimonial-card::before {
+            content: '"';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 4rem;
+            font-family: 'Cormorant Garamond', serif;
+            color: rgba(139, 69, 19, 0.1);
+            line-height: 1;
         }
         
         .testimonial-text {
@@ -533,27 +669,33 @@
             height: 60px;
             border-radius: 50%;
             overflow: hidden;
-            background: var(--primary-light);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
             font-size: 1.2rem;
+            flex-shrink: 0;
         }
         
         .author-info h4 {
             margin-bottom: 5px;
+            font-size: 1.1rem;
         }
         
         .author-location {
             color: var(--gray);
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .stars {
             color: var(--secondary);
             margin-bottom: 10px;
+            font-size: 0.9rem;
         }
         
         /* Newsletter */
@@ -561,11 +703,31 @@
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark) 100%);
             color: white;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .newsletter::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         .newsletter-content {
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .newsletter h2 {
@@ -576,6 +738,7 @@
         .newsletter p {
             opacity: 0.9;
             margin-bottom: 30px;
+            font-size: 1.1rem;
         }
         
         .newsletter-form {
@@ -593,7 +756,8 @@
             font-size: 1rem;
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
         }
         
         .newsletter-input::placeholder {
@@ -604,6 +768,7 @@
             outline: none;
             border-color: var(--secondary);
             background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
         }
         
         /* Stats Section */
@@ -619,18 +784,27 @@
         }
         
         .stat-card {
-            padding: 30px;
+            padding: 40px 30px;
             background: white;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
         
         .stat-number {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 700;
             color: var(--primary);
             margin-bottom: 10px;
             font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .stat-label {
@@ -638,24 +812,36 @@
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
         }
         
         /* Responsive Design */
+        @media (max-width: 1200px) {
+            .hero-text h1 {
+                font-size: 3.8rem;
+            }
+        }
+        
         @media (max-width: 992px) {
             .hero-content .container {
                 flex-direction: column;
                 text-align: center;
+                gap: 40px;
             }
             
             .hero-text h1 {
-                font-size: 3.5rem;
+                font-size: 3.2rem;
             }
             
             .section-title h2 {
-                font-size: 2.5rem;
+                font-size: 2.8rem;
             }
             
             .hero-cta {
+                justify-content: center;
+            }
+            
+            .hero-stats {
                 justify-content: center;
             }
         }
@@ -666,11 +852,19 @@
             }
             
             .hero-text h1 {
-                font-size: 2.8rem;
+                font-size: 2.5rem;
             }
             
             .hero-text .tagline {
                 font-size: 1.2rem;
+            }
+            
+            .hero-text p {
+                font-size: 1rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2.2rem;
             }
             
             .product-grid {
@@ -686,15 +880,27 @@
                 min-width: 300px;
                 padding: 30px;
             }
+            
+            .stat-card {
+                padding: 30px 20px;
+            }
+            
+            .stat-number {
+                font-size: 2.8rem;
+            }
         }
         
-        @media (max-width: 480px) {
+        @media (max-width: 576px) {
+            .hero {
+                min-height: 80vh;
+            }
+            
             .hero-text h1 {
-                font-size: 2.2rem;
+                font-size: 2rem;
             }
             
             .section-title h2 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .product-grid {
@@ -703,28 +909,136 @@
             
             .hero-cta {
                 flex-direction: column;
+                width: 100%;
             }
             
             .btn {
                 width: 100%;
             }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .testimonial-card {
+                min-width: 280px;
+            }
         }
         
-        /* Animation Classes */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
         }
         
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(139, 69, 19, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .alert {
+            padding: 16px 24px;
+            border-radius: var(--radius);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: slideInRight 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .alert-success { 
+            background: linear-gradient(135deg, var(--success) 0%, #2ECC71 100%);
+        }
+        
+        .alert-danger { 
+            background: linear-gradient(135deg, var(--danger) 0%, #E74C3C 100%);
+        }
+        
+        .alert-warning { 
+            background: linear-gradient(135deg, var(--warning) 0%, #F1C40F 100%);
+        }
+        
+        .alert-info { 
+            background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     {% include 'header.html' %}
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     
     <!-- Hero Section -->
     <section class="hero">
@@ -737,8 +1051,8 @@
         <div class="hero-content">
             <div class="container">
                 <div class="hero-text" data-aos="fade-right" data-aos-duration="1000">
-                    <h1>NORA HAIR LINE</h1>
-                    <p class="tagline">Premium 100% Human Hair</p>
+                    <h1>{{ config.brand_name }}</h1>
+                    <p class="tagline">{{ config.tagline }}</p>
                     <p>{{ config.description }}</p>
                     
                     <div class="hero-cta">
@@ -751,18 +1065,22 @@
                     </div>
                     
                     <!-- Stats -->
-                    <div class="stats-preview" style="margin-top: 40px; display: flex; gap: 30px; flex-wrap: wrap;">
-                        <div>
-                            <h3 style="color: var(--secondary); font-size: 2rem;">100%</h3>
-                            <p>Human Hair</p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">100%</div>
+                            <div class="stat-label">Human Hair</div>
                         </div>
-                        <div>
-                            <h3 style="color: var(--secondary); font-size: 2rem;">500+</h3>
-                            <p>Happy Clients</p>
+                        <div class="stat-item">
+                            <div class="stat-number">500+</div>
+                            <div class="stat-label">Happy Clients</div>
                         </div>
-                        <div>
-                            <h3 style="color: var(--secondary); font-size: 2rem;">30</h3>
-                            <p>Day Returns</p>
+                        <div class="stat-item">
+                            <div class="stat-number">30</div>
+                            <div class="stat-label">Day Returns</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Support</div>
                         </div>
                     </div>
                 </div>
@@ -795,23 +1113,31 @@
             <!-- Product Grid -->
             <div class="product-grid">
                 {% for product in featured_products %}
-                <div class="product-card fade-in" data-category="{{ product.category_id }}" data-aos="fade-up">
+                <div class="product-card" data-category="{{ product.category_id }}" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
                     {% if product.featured %}
-                    <span class="product-badge featured">FEATURED</span>
+                    <span class="product-badge featured">Featured</span>
                     {% endif %}
                     
-                    {% if product.compare_price and product.compare_price > product.price %}
-                    <span class="product-badge sale">SALE</span>
+                    {% if product.compare_price and product.compare_price > product.min_price %}
+                    <span class="product-badge sale">Sale</span>
+                    {% elif loop.index <= 2 %}
+                    <span class="product-badge new">New</span>
                     {% endif %}
                     
                     <div class="product-image">
-                        {% if product.image_url %}
-                        <img src="{{ url_for('uploaded_file', filename=product.image_url) }}" 
-                             alt="{{ product.name }}"
-                             onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+                        {% if product.images %}
+                            {% set primary_image = product.images|selectattr('is_primary')|first or product.images[0] %}
+                            {% if primary_image %}
+                            <img src="{{ url_for('uploaded_file', filename=primary_image.image_url) }}" 
+                                 alt="{{ product.name }}"
+                                 onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                                 alt="{{ product.name }}">
+                            {% endif %}
                         {% else %}
-                        <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
-                             alt="{{ product.name }}">
+                            <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                                 alt="{{ product.name }}">
                         {% endif %}
                         
                         <div class="product-overlay">
@@ -834,6 +1160,7 @@
                     
                     <div class="product-info">
                         <div class="product-category">
+                            <i class="fas fa-tag"></i>
                             {% if product.category %}
                             {{ product.category.name }}
                             {% else %}
@@ -847,8 +1174,8 @@
                         </h3>
                         
                         <div class="product-price">
-                            <span class="current-price">{{ format_price(product.price) }}</span>
-                            {% if product.compare_price and product.compare_price > product.price %}
+                            <span class="current-price">{{ product.display_price }}</span>
+                            {% if product.compare_price and product.compare_price > product.min_price %}
                             <span class="old-price">{{ format_price(product.compare_price) }}</span>
                             {% endif %}
                         </div>
@@ -867,34 +1194,36 @@
                                     ({{ random.randint(15, 50) }})
                                 </span>
                             </div>
-                            {% if product.quantity > 0 %}
-                            <span style="color: var(--success); font-weight: 600;">
+                            <div class="stock-status {{ 'in-stock' if product.stock > 10 else 'low-stock' if product.stock > 0 else 'out-stock' }}">
+                                {% if product.stock > 10 %}
                                 <i class="fas fa-check-circle"></i> In Stock
-                            </span>
-                            {% else %}
-                            <span style="color: #FF6B6B; font-weight: 600;">
+                                {% elif product.stock > 0 %}
+                                <i class="fas fa-exclamation-circle"></i> Low Stock
+                                {% else %}
                                 <i class="fas fa-times-circle"></i> Out of Stock
-                            </span>
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% else %}
                 <!-- Empty State -->
                 <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
-                    <div style="width: 100px; height: 100px; background: var(--light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
-                        <i class="fas fa-box-open fa-2x" style="color: var(--gray);"></i>
+                    <div style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--light) 0%, white 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; box-shadow: var(--shadow);">
+                        <i class="fas fa-box-open fa-3x" style="color: var(--primary); opacity: 0.5;"></i>
                     </div>
-                    <h3 style="margin-bottom: 15px;">No Featured Products Yet</h3>
-                    <p style="color: var(--gray); margin-bottom: 30px;">Check back soon for our premium hair collections!</p>
+                    <h3 style="margin-bottom: 15px; color: var(--primary-dark);">No Featured Products Yet</h3>
+                    <p style="color: var(--gray); margin-bottom: 30px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        Check back soon for our premium hair collections! We're curating the best products for you.
+                    </p>
                     <a href="{{ url_for('shop') }}" class="btn btn-primary">
-                        Browse All Products
+                        <i class="fas fa-store"></i> Browse All Products
                     </a>
                 </div>
                 {% endfor %}
             </div>
             
-            <div class="view-all" data-aos="fade-up">
+            <div class="view-all" data-aos="fade-up" data-aos-delay="200">
                 <a href="{{ url_for('shop') }}" class="btn btn-secondary">
                     View All Collections <i class="fas fa-arrow-right"></i>
                 </a>
@@ -989,23 +1318,31 @@
                         <i class="fas fa-star"></i>
                         {% endfor %}
                     </div>
-                    <p class="testimonial-text">"{{ review.comment }}"</p>
+                    <p class="testimonial-text">{{ review.comment }}</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
                             {{ review.customer_name[0] }}
                         </div>
                         <div class="author-info">
                             <h4>{{ review.customer_name }}</h4>
-                            <div class="author-location">{{ review.location }}</div>
+                            <div class="author-location">
+                                <i class="fas fa-map-marker-alt"></i> {{ review.location or 'Lagos, Nigeria' }}
+                            </div>
+                            {% if review.verified_purchase %}
+                            <div style="font-size: 0.8rem; color: var(--success); margin-top: 5px;">
+                                <i class="fas fa-check-circle"></i> Verified Purchase
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
                 {% else %}
                 <!-- Default testimonials if none exist -->
                 {% for testimonial in [
-                    {'name': 'Chioma Okeke', 'rating': 5, 'comment': 'The Brazilian hair I purchased is absolutely stunning! Best quality I\'ve ever had!', 'location': 'Lagos'},
-                    {'name': 'Bisi Adeyemi', 'rating': 5, 'comment': 'The lace frontal wig is so natural looking! I\'ve received countless compliments.', 'location': 'Abuja'},
-                    {'name': 'Fatima Bello', 'rating': 4, 'comment': 'Fast delivery and premium quality hair. Will definitely order again!', 'location': 'Port Harcourt'}
+                    {'name': 'Chioma Okeke', 'rating': 5, 'comment': 'The Brazilian hair I purchased is absolutely stunning! Best quality I\'ve ever had. Lasted over a year with proper care.', 'location': 'Lagos', 'verified': true},
+                    {'name': 'Bisi Adeyemi', 'rating': 5, 'comment': 'The lace frontal wig is so natural looking! I\'ve received countless compliments. Customer service was excellent.', 'location': 'Abuja', 'verified': true},
+                    {'name': 'Fatima Bello', 'rating': 4, 'comment': 'Fast delivery and premium quality hair. The Peruvian straight is my new favorite! Will definitely order again.', 'location': 'Port Harcourt', 'verified': true},
+                    {'name': 'Amina Yusuf', 'rating': 5, 'comment': 'Excellent customer service and top-notch products. My go-to for all my hair needs. Highly recommended!', 'location': 'Kano', 'verified': false}
                 ] %}
                 <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
                     <div class="stars">
@@ -1013,14 +1350,21 @@
                         <i class="fas fa-star"></i>
                         {% endfor %}
                     </div>
-                    <p class="testimonial-text">"{{ testimonial.comment }}"</p>
+                    <p class="testimonial-text">{{ testimonial.comment }}</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
                             {{ testimonial.name[0] }}
                         </div>
                         <div class="author-info">
                             <h4>{{ testimonial.name }}</h4>
-                            <div class="author-location">{{ testimonial.location }}</div>
+                            <div class="author-location">
+                                <i class="fas fa-map-marker-alt"></i> {{ testimonial.location }}
+                            </div>
+                            {% if testimonial.verified %}
+                            <div style="font-size: 0.8rem; color: var(--success); margin-top: 5px;">
+                                <i class="fas fa-check-circle"></i> Verified Purchase
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -1043,6 +1387,10 @@
                         <i class="fas fa-paper-plane"></i> Subscribe
                     </button>
                 </form>
+                
+                <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7;">
+                    <i class="fas fa-lock"></i> We respect your privacy. Unsubscribe at any time.
+                </p>
             </div>
         </div>
     </section>
@@ -1057,24 +1405,19 @@
         AOS.init({
             duration: 1000,
             once: true,
-            offset: 100
+            offset: 100,
+            easing: 'ease-out-cubic'
         });
         
-        // Intersection Observer for fade-in animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-        
-        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        // Hide loading overlay when page is loaded
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 300);
+            }, 500);
+        });
         
         // Collection Filter
         document.querySelectorAll('.collection-nav button').forEach(button => {
@@ -1108,6 +1451,7 @@
         
         // Add to Cart Function
         async function addToCart(productId) {
+            showLoading();
             try {
                 const response = await fetch(`/add-to-cart/${productId}`, {
                     method: 'POST',
@@ -1119,14 +1463,17 @@
                 });
                 
                 if (response.ok) {
-                    showNotification('Product added to cart!', 'success');
+                    showNotification('Product added to cart successfully!', 'success');
                     updateCartCount();
                 } else {
-                    showNotification('Failed to add to cart', 'error');
+                    const data = await response.json();
+                    showNotification(data.error || 'Failed to add to cart', 'danger');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Network error. Please try again.', 'error');
+                showNotification('Network error. Please try again.', 'danger');
+            } finally {
+                hideLoading();
             }
         }
         
@@ -1135,105 +1482,131 @@
             let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
             const index = wishlist.indexOf(productId);
             
+            const heartIcon = event.target.closest('.quick-btn').querySelector('i');
+            
             if (index === -1) {
                 wishlist.push(productId);
                 showNotification('Added to wishlist!', 'success');
+                heartIcon.className = 'fas fa-heart';
+                heartIcon.style.color = 'var(--danger)';
             } else {
                 wishlist.splice(index, 1);
                 showNotification('Removed from wishlist', 'info');
+                heartIcon.className = 'fas fa-heart';
+                heartIcon.style.color = '';
             }
             
             localStorage.setItem('wishlist', JSON.stringify(wishlist));
         }
         
         // Newsletter Form
-        document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+        document.getElementById('newsletterForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = this.querySelector('.newsletter-input').value;
+            const button = this.querySelector('button');
+            const originalText = button.innerHTML;
             
             // Simple validation
-            if (email && email.includes('@')) {
-                showNotification('Thank you for subscribing!', 'success');
+            if (!email || !email.includes('@')) {
+                showNotification('Please enter a valid email address', 'warning');
+                return;
+            }
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+            button.disabled = true;
+            
+            try {
+                // In a real app, you would send this to your backend
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+                
+                showNotification('Thank you for subscribing to our newsletter!', 'success');
                 this.reset();
                 
-                // In a real app, you would send this to your backend
-                fetch('/api/newsletter', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({ email: email })
+                // Save to localStorage
+                let subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+                subscribers.push({
+                    email: email,
+                    date: new Date().toISOString()
                 });
-            } else {
-                showNotification('Please enter a valid email address', 'error');
+                localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+                
+            } catch (error) {
+                showNotification('Error subscribing. Please try again.', 'danger');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
         });
         
         // Notification System
         function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.custom-notification');
+            existingNotifications.forEach(n => n.remove());
+            
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
+            notification.className = `custom-notification`;
             notification.style.cssText = `
                 position: fixed;
                 top: 100px;
                 right: 30px;
-                padding: 15px 25px;
-                background: ${type === 'success' ? '#27AE60' : type === 'error' ? '#FF6B6B' : '#F39C12'};
+                padding: 16px 24px;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #27AE60 0%, #2ECC71 100%)' : 
+                              type === 'danger' ? 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)' : 
+                              type === 'warning' ? 'linear-gradient(135deg, #F39C12 0%, #F1C40F 100%)' : 
+                              'linear-gradient(135deg, #3498DB 0%, #2980B9 100%)'};
                 color: white;
-                border-radius: 8px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-lg);
                 z-index: 9999;
-                animation: slideInRight 0.3s ease-out;
-                max-width: 350px;
+                animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                max-width: 400px;
                 font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             `;
             
+            const icons = {
+                success: 'check-circle',
+                danger: 'exclamation-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle'
+            };
+            
             notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span style="margin-left: 10px;">${message}</span>
+                <i class="fas fa-${icons[type] || 'info-circle'}" style="font-size: 1.2rem;"></i>
+                <span>${message}</span>
             `;
             
             document.body.appendChild(notification);
             
-            // Auto remove after 3 seconds
+            // Auto remove after 4 seconds
             setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                notification.style.animation = 'slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
                 setTimeout(() => {
                     if (notification.parentNode) {
                         notification.parentNode.removeChild(notification);
                     }
                 }, 300);
-            }, 3000);
+            }, 4000);
         }
         
-        // Add animation keyframes
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            
-            @keyframes slideOutRight {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+        // Loading functions
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingOverlay').style.opacity = '1';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }, 300);
+        }
         
         // Get CSRF Token
         function getCSRFToken() {
@@ -1248,33 +1621,63 @@
                 let count = parseInt(el.textContent) || 0;
                 el.textContent = count + 1;
                 el.style.display = 'flex';
+                // Add animation
+                el.style.animation = 'none';
+                setTimeout(() => {
+                    el.style.animation = 'bounce 0.5s';
+                }, 10);
             });
         }
         
-        // Auto-scroll testimonials
-        let scrollDirection = 1;
-        function autoScrollTestimonials() {
-            const slider = document.getElementById('testimonialSlider');
-            if (slider) {
-                const scrollAmount = 370; // Width of testimonial + gap
-                let newScroll = slider.scrollLeft + (scrollDirection * scrollAmount);
-                
-                // Check if we've reached the end
-                if (newScroll >= slider.scrollWidth - slider.clientWidth) {
-                    scrollDirection = -1;
-                } else if (newScroll <= 0) {
-                    scrollDirection = 1;
-                }
-                
-                slider.scrollTo({
-                    left: newScroll,
-                    behavior: 'smooth'
-                });
+        // Add bounce animation
+        const bounceStyle = document.createElement('style');
+        bounceStyle.textContent = `
+            @keyframes bounce {
+                0%, 20%, 60%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                80% { transform: translateY(-5px); }
             }
-        }
+        `;
+        document.head.appendChild(bounceStyle);
         
-        // Auto-scroll every 5 seconds
-        setInterval(autoScrollTestimonials, 5000);
+        // Auto-scroll testimonials
+        function setupTestimonialSlider() {
+            const slider = document.getElementById('testimonialSlider');
+            if (!slider || !slider.children.length) return;
+            
+            let scrollDirection = 1;
+            let autoScrollInterval;
+            
+            function startAutoScroll() {
+                autoScrollInterval = setInterval(() => {
+                    const cardWidth = slider.children[0].offsetWidth + 30; // Include gap
+                    const maxScroll = slider.scrollWidth - slider.clientWidth;
+                    
+                    if (slider.scrollLeft >= maxScroll) {
+                        scrollDirection = -1;
+                    } else if (slider.scrollLeft <= 0) {
+                        scrollDirection = 1;
+                    }
+                    
+                    slider.scrollBy({
+                        left: scrollDirection * cardWidth,
+                        behavior: 'smooth'
+                    });
+                }, 5000);
+            }
+            
+            // Pause on hover
+            slider.addEventListener('mouseenter', () => {
+                clearInterval(autoScrollInterval);
+            });
+            
+            slider.addEventListener('mouseleave', () => {
+                startAutoScroll();
+            });
+            
+            // Start auto-scroll
+            startAutoScroll();
+        }
         
         // Initialize cart count from session
         window.addEventListener('DOMContentLoaded', () => {
@@ -1289,6 +1692,37 @@
                     el.style.display = 'flex';
                 }
             });
+            
+            // Initialize testimonial slider
+            setupTestimonialSlider();
+            
+            // Add scroll animation for product cards
+            const productCards = document.querySelectorAll('.product-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            productCards.forEach(card => observer.observe(card));
+        });
+        
+        // Add keyboard navigation for testimonials
+        document.addEventListener('keydown', (e) => {
+            const slider = document.getElementById('testimonialSlider');
+            if (!slider) return;
+            
+            if (e.key === 'ArrowLeft') {
+                slider.scrollBy({ left: -370, behavior: 'smooth' });
+            } else if (e.key === 'ArrowRight') {
+                slider.scrollBy({ left: 370, behavior: 'smooth' });
+            }
         });
     </script>
 </body>
