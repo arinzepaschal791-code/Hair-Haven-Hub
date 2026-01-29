@@ -4,78 +4,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - {{ config.brand_name }}</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary-color: #8B4513;
-            --secondary-color: #D2691E;
-            --accent-color: #F5DEB3;
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #D4AF37;
+            --secondary-light: #F4E4B3;
+            --dark: #1A1A1A;
+            --light: #F8F5F0;
+            --gray: #8C8C8C;
+            --success: #27AE60;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --transition: all 0.3s ease;
+            --shadow: 0 5px 15px rgba(0,0,0,0.08);
+            --radius: 10px;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            padding-top: 80px;
+            min-height: 100vh;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
         }
         
         .dashboard-card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
             background: white;
+            margin-bottom: 1.5rem;
         }
+        
         .dashboard-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
         }
+        
         .order-status {
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
-            font-weight: bold;
+            font-weight: 600;
+            display: inline-block;
         }
-        .status-pending { background: #ffc107; color: #000; }
-        .status-processing { background: #007bff; color: #fff; }
-        .status-shipped { background: #6610f2; color: #fff; }
-        .status-delivered { background: #28a745; color: #fff; }
-        .status-cancelled { background: #dc3545; color: #fff; }
+        
+        .status-pending { background: #FFF3CD; color: #856404; border: 1px solid #FFEAA7; }
+        .status-processing { background: #D1ECF1; color: #0C5460; border: 1px solid #BEE5EB; }
+        .status-shipped { background: #E2E3E5; color: #383D41; border: 1px solid #D6D8DB; }
+        .status-delivered { background: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }
+        .status-cancelled { background: #F8D7DA; color: #721C24; border: 1px solid #F5C6CB; }
         
         .account-sidebar {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem 1.5rem;
             height: fit-content;
-        }
-        .account-sidebar .nav-link {
-            color: #333;
-            padding: 12px 15px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-        }
-        .account-sidebar .nav-link.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        .account-sidebar .nav-link:hover:not(.active) {
-            background-color: #f8f9fa;
+            position: sticky;
+            top: 100px;
         }
         
-        body {
-            padding-top: 80px;
-            background-color: #f8f9fa;
+        .account-sidebar .nav-link {
+            color: var(--dark);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+        
+        .account-sidebar .nav-link:hover:not(.active) {
+            background-color: rgba(139, 69, 19, 0.05);
+            color: var(--primary);
+        }
+        
+        .account-sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .account-sidebar .badge {
+            min-width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
         }
         
         .navbar {
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white !important;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0;
+            margin-top: 4rem;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .contact-icon {
+            width: 35px;
+            height: 35px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: var(--radius) var(--radius) 0 0;
+            border-bottom: none;
+        }
+        
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(139, 69, 19, 0.03);
+        }
+        
+        .text-gold {
+            color: var(--secondary);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .account-sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+            
+            body {
+                padding-top: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .navbar-brand img {
+                height: 35px;
+            }
+            
+            .dashboard-card {
+                margin-bottom: 1rem;
+            }
+            
+            .footer {
+                padding: 2rem 0;
+            }
+            
+            .modal-dialog {
+                margin: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .account-sidebar {
+                padding: 1.5rem 1rem;
+            }
+            
+            .navbar-brand span {
+                font-size: 1.2rem;
+            }
+            
+            .user-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
                      alt="{{ config.brand_name }} Logo" 
-                     style="height: 40px; width: auto; margin-right: 10px;">
-                {{ config.brand_name }}
+                     height="40" class="me-2">
+                <span>{{ config.brand_name }}</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -85,21 +279,21 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/shop">Shop</a>
+                        <a class="nav-link" href="{{ url_for('shop') }}">Shop</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/about">About</a>
+                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
+                        <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
                     </li>
                 </ul>
                 
-                <div class="d-flex align-items-center">
-                    <a href="/cart" class="btn btn-outline-dark position-relative me-3">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('cart') }}" class="btn btn-outline-dark position-relative">
                         <i class="fas fa-shopping-cart"></i>
                         {% if cart_count > 0 %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -111,11 +305,21 @@
                     <!-- User dropdown -->
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-2"></i>{{ customer.first_name if customer else 'Account' }}
+                            <i class="fas fa-user me-2"></i>
+                            {% if session.customer_name %}
+                                {{ session.customer_name.split(' ')[0] }}
+                            {% else %}
+                                Account
+                            {% endif %}
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/account">My Account</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('customer_logout') }}">Logout</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('account') }}">
+                                <i class="fas fa-user-circle me-2"></i> My Account
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('customer_logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a></li>
                         </ul>
                     </div>
                 </div>
@@ -128,7 +332,8 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -141,42 +346,50 @@
             <div class="col-lg-3 mb-4">
                 <div class="account-sidebar">
                     <div class="text-center mb-4">
-                        <div class="mb-3">
-                            <i class="fas fa-user-circle fa-3x text-primary"></i>
+                        <div class="user-avatar">
+                            {{ customer.first_name[0] }}{{ customer.last_name[0] if customer.last_name else '' }}
                         </div>
                         <h5>{{ customer.first_name }} {{ customer.last_name }}</h5>
-                        <p class="text-muted small">{{ customer.email }}</p>
-                        <p class="small"><i class="fas fa-phone me-1"></i> {{ customer.phone }}</p>
+                        <p class="text-muted small mb-2">{{ customer.email }}</p>
+                        {% if customer.phone %}
+                        <p class="small mb-0">
+                            <i class="fas fa-phone me-1 text-gold"></i> {{ customer.phone }}
+                        </p>
+                        {% endif %}
+                        <p class="small mt-2 text-muted">
+                            <i class="fas fa-calendar-alt me-1"></i> 
+                            Member since {{ customer.created_at.strftime('%B %Y') }}
+                        </p>
                     </div>
                     
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            <a class="nav-link active" href="#" onclick="showDashboard()">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#orders">
-                                <i class="fas fa-shopping-bag me-2"></i> My Orders
-                                <span class="badge bg-primary float-end">{{ orders|length }}</span>
+                            <a class="nav-link" href="#" onclick="showOrders()">
+                                <i class="fas fa-shopping-bag"></i> My Orders
+                                <span class="badge bg-primary ms-auto">{{ orders|length }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#profile" data-bs-toggle="tab">
-                                <i class="fas fa-user-edit me-2"></i> Edit Profile
+                            <a class="nav-link" href="#" onclick="showProfile()">
+                                <i class="fas fa-user-edit"></i> Edit Profile
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/cart">
-                                <i class="fas fa-shopping-cart me-2"></i> My Cart
+                            <a class="nav-link" href="{{ url_for('cart') }}">
+                                <i class="fas fa-shopping-cart"></i> My Cart
                                 {% if cart_count > 0 %}
-                                <span class="badge bg-danger float-end">{{ cart_count }}</span>
+                                <span class="badge bg-danger ms-auto">{{ cart_count }}</span>
                                 {% endif %}
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item mt-4">
                             <a class="nav-link text-danger" href="{{ url_for('customer_logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                <i class="fas fa-sign-out-alt"></i> Logout
                             </a>
                         </li>
                     </ul>
@@ -185,192 +398,262 @@
 
             <!-- Main Content -->
             <div class="col-lg-9">
-                <!-- Welcome Message -->
-                <div class="card dashboard-card mb-4">
-                    <div class="card-body">
-                        <h4 class="card-title">Welcome back, {{ customer.first_name }}!</h4>
-                        <p class="card-text">Here's what's happening with your account.</p>
-                        <p class="mb-0">
-                            Member since: {{ customer.created_at.strftime('%B %d, %Y') }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Quick Stats -->
-                <div class="row mb-4">
-                    <div class="col-md-4 mb-3">
-                        <div class="card dashboard-card h-100">
-                            <div class="card-body text-center">
-                                <div class="mb-3">
-                                    <i class="fas fa-shopping-bag fa-3x text-primary"></i>
+                <!-- Dashboard Section (Default) -->
+                <div id="dashboardSection">
+                    <!-- Welcome Message -->
+                    <div class="card dashboard-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4 class="card-title mb-2">Welcome back, {{ customer.first_name }}!</h4>
+                                    <p class="card-text text-muted">
+                                        Here's what's happening with your account at {{ config.brand_name }}.
+                                    </p>
                                 </div>
-                                <h3>{{ orders|length }}</h3>
-                                <p class="text-muted">Total Orders</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card dashboard-card h-100">
-                            <div class="card-body text-center">
-                                <div class="mb-3">
-                                    <i class="fas fa-clock fa-3x text-warning"></i>
+                                <div class="col-md-4 text-end">
+                                    <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                                        <i class="fas fa-shopping-bag me-1"></i> Continue Shopping
+                                    </a>
                                 </div>
-                                <h3>
-                                    {% set pending_count = 0 %}
-                                    {% for order in orders %}
-                                        {% if order.status == 'pending' %}
-                                            {% set pending_count = pending_count + 1 %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {{ pending_count }}
-                                </h3>
-                                <p class="text-muted">Pending Orders</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card dashboard-card h-100">
-                            <div class="card-body text-center">
-                                <div class="mb-3">
-                                    <i class="fas fa-check-circle fa-3x text-success"></i>
+
+                    <!-- Quick Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-shopping-bag fa-3x" style="color: var(--primary);"></i>
+                                    </div>
+                                    <h2 class="mb-2">{{ orders|length }}</h2>
+                                    <p class="text-muted mb-0">Total Orders</p>
                                 </div>
-                                <h3>
-                                    {% set delivered_count = 0 %}
-                                    {% for order in orders %}
-                                        {% if order.status == 'delivered' %}
-                                            {% set delivered_count = delivered_count + 1 %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {{ delivered_count }}
-                                </h3>
-                                <p class="text-muted">Delivered Orders</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-clock fa-3x" style="color: var(--warning);"></i>
+                                    </div>
+                                    <h2 class="mb-2">
+                                        {% set pending_count = orders|selectattr('status', 'equalto', 'pending')|list|length %}
+                                        {{ pending_count }}
+                                    </h2>
+                                    <p class="text-muted mb-0">Pending Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-check-circle fa-3x" style="color: var(--success);"></i>
+                                    </div>
+                                    <h2 class="mb-2">
+                                        {% set delivered_count = orders|selectattr('status', 'equalto', 'delivered')|list|length %}
+                                        {{ delivered_count }}
+                                    </h2>
+                                    <p class="text-muted mb-0">Delivered Orders</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Recent Orders -->
-                <div class="card dashboard-card mb-4" id="orders">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Recent Orders</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if orders %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Order #</th>
-                                        <th>Date</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for order in orders %}
-                                    <tr>
-                                        <td><strong>{{ order.order_number }}</strong></td>
-                                        <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
-                                        <td>{{ order.items|length }} item(s)</td>
-                                        <td>{{ format_price(order.final_amount) }}</td>
-                                        <td>
-                                            <span class="order-status status-{{ order.status }}">
-                                                {{ order.status|title }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <!-- FIXED: This links to admin panel which customers can't access -->
-                                            <!-- Changed to show order details in a modal -->
-                                            <button class="btn btn-sm btn-outline-primary" onclick="showOrderDetails('{{ order.order_number }}', {{ order.final_amount }}, '{{ order.status }}', '{{ order.created_at.strftime('%b %d, %Y') }}')">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <!-- Recent Orders Preview -->
+                    <div class="card dashboard-card">
+                        <div class="card-header bg-white border-bottom-0 pb-0">
+                            <h5 class="mb-3">Recent Orders</h5>
                         </div>
-                        {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
-                            <h5>No orders yet</h5>
-                            <p class="text-muted">Start shopping to see your orders here.</p>
-                            <a href="/shop" class="btn btn-primary">
-                                <i class="fas fa-shopping-cart me-1"></i> Start Shopping
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Default Address -->
-                <div class="card dashboard-card">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Default Shipping Address</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if customer.address %}
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6>{{ customer.first_name }} {{ customer.last_name }}</h6>
-                                <p class="mb-1">{{ customer.address }}</p>
-                                {% if customer.city or customer.state %}
-                                <p class="mb-1">
-                                    {% if customer.city %}{{ customer.city }}{% endif %}
-                                    {% if customer.city and customer.state %}, {% endif %}
-                                    {% if customer.state %}{{ customer.state }}{% endif %}
-                                </p>
-                                {% endif %}
-                                <p class="mb-0">
-                                    <i class="fas fa-phone me-1"></i> {{ customer.phone }}
-                                </p>
-                                <p class="mb-0 mt-2">
-                                    <i class="fas fa-envelope me-1"></i> {{ customer.email }}
-                                </p>
+                        <div class="card-body">
+                            {% if orders[:3] %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders[:3] %}
+                                        <tr>
+                                            <td><strong>{{ order.order_number }}</strong></td>
+                                            <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ order.items|length }} item(s)</td>
+                                            <td>{{ format_price(order.final_amount) }}</td>
+                                            <td>
+                                                <span class="order-status status-{{ order.status }}">
+                                                    {{ order.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showOrderDetails('{{ order.order_number }}', {{ order.final_amount }}, '{{ order.status }}', '{{ order.created_at.strftime('%b %d, %Y %H:%M') }}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-md-4 text-end">
-                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
-                                    <i class="fas fa-edit me-1"></i> Edit Address
+                            {% if orders|length > 3 %}
+                            <div class="text-center mt-3">
+                                <a href="#" class="btn btn-outline-primary" onclick="showOrders()">
+                                    View All Orders <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                                <h5>No orders yet</h5>
+                                <p class="text-muted mb-4">Start shopping to see your orders here.</p>
+                                <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                                    <i class="fas fa-shopping-cart me-1"></i> Start Shopping
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Default Address -->
+                    <div class="card dashboard-card mt-4">
+                        <div class="card-header bg-white border-bottom-0 pb-0">
+                            <h5 class="mb-3">Default Shipping Address</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if customer.address %}
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2">{{ customer.first_name }} {{ customer.last_name }}</h6>
+                                    <p class="mb-1">{{ customer.address }}</p>
+                                    {% if customer.city or customer.state %}
+                                    <p class="mb-1">
+                                        {% if customer.city %}{{ customer.city }}{% endif %}
+                                        {% if customer.city and customer.state %}, {% endif %}
+                                        {% if customer.state %}{{ customer.state }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    <p class="mb-1">
+                                        <i class="fas fa-phone me-1"></i> {{ customer.phone }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-envelope me-1"></i> {{ customer.email }}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
+                                        <i class="fas fa-edit me-1"></i> Edit Address
+                                    </button>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-3">No shipping address set yet</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
+                                    <i class="fas fa-plus me-1"></i> Add Address
                                 </button>
                             </div>
+                            {% endif %}
                         </div>
-                        {% else %}
-                        <div class="text-center py-3">
-                            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted mb-3">No shipping address set yet</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editAddressModal">
-                                <i class="fas fa-plus me-1"></i> Add Address
-                            </button>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Account Information -->
-                <div class="card dashboard-card mt-4" id="profile">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Account Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Personal Information</h6>
-                                <p><strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
-                                <p><strong>Email:</strong> {{ customer.email }}</p>
-                                <p><strong>Phone:</strong> {{ customer.phone }}</p>
-                                <p><strong>Account Created:</strong> {{ customer.created_at.strftime('%B %d, %Y') }}</p>
+                <!-- Orders Section (Hidden by default) -->
+                <div id="ordersSection" class="d-none">
+                    <div class="card dashboard-card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">My Orders</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="showDashboard()">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if orders %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td><strong>{{ order.order_number }}</strong></td>
+                                            <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ order.items|length }} item(s)</td>
+                                            <td>{{ format_price(order.final_amount) }}</td>
+                                            <td>
+                                                <span class="order-status status-{{ order.status }}">
+                                                    {{ order.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showOrderDetails('{{ order.order_number }}', {{ order.final_amount }}, '{{ order.status }}', '{{ order.created_at.strftime('%b %d, %Y %H:%M') }}')">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-md-6">
-                                <h6>Actions</h6>
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                                        <i class="fas fa-user-edit me-1"></i> Edit Profile
-                                    </button>
-                                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                                        <i class="fas fa-key me-1"></i> Change Password
-                                    </button>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                                <h5>No orders yet</h5>
+                                <p class="text-muted mb-4">Start shopping to see your orders here.</p>
+                                <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                                    <i class="fas fa-shopping-cart me-1"></i> Start Shopping
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Section (Hidden by default) -->
+                <div id="profileSection" class="d-none">
+                    <div class="card dashboard-card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Account Information</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="showDashboard()">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Personal Information</h6>
+                                    <p><strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                    <p><strong>Email:</strong> {{ customer.email }}</p>
+                                    <p><strong>Phone:</strong> {{ customer.phone or 'Not set' }}</p>
+                                    <p><strong>Account Created:</strong> {{ customer.created_at.strftime('%B %d, %Y') }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Account Actions</h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                            <i class="fas fa-user-edit me-1"></i> Edit Profile
+                                        </button>
+                                        <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                            <i class="fas fa-key me-1"></i> Change Password
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -396,30 +679,30 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         
                         <div class="mb-3">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" name="full_name" 
-                                   value="{{ customer.first_name }} {{ customer.last_name }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea class="form-control" name="address" rows="3" required>{{ customer.address if customer.address else '' }}</textarea>
+                            <label class="form-label">Full Address *</label>
+                            <textarea class="form-control" name="address" rows="3" required 
+                                      placeholder="Enter your complete address">{{ customer.address if customer.address else '' }}</textarea>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">City</label>
+                                <label class="form-label">City *</label>
                                 <input type="text" class="form-control" name="city" 
-                                       value="{{ customer.city if customer.city else '' }}" required>
+                                       value="{{ customer.city if customer.city else '' }}" 
+                                       placeholder="Enter your city" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">State</label>
+                                <label class="form-label">State *</label>
                                 <input type="text" class="form-control" name="state" 
-                                       value="{{ customer.state if customer.state else '' }}" required>
+                                       value="{{ customer.state if customer.state else '' }}" 
+                                       placeholder="Enter your state" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Phone Number</label>
+                            <label class="form-label">Phone Number *</label>
                             <input type="tel" class="form-control" name="phone" 
-                                   value="{{ customer.phone if customer.phone else '' }}" required>
+                                   value="{{ customer.phone if customer.phone else '' }}" 
+                                   placeholder="Enter your phone number" required>
+                            <div class="form-text">We'll use this to contact you about your order.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -439,30 +722,31 @@
                     <h5 class="modal-title">Edit Profile</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ url_for('update_profile') }}">
+                <form method="POST" action="{{ url_for('update_profile') }}" id="profileForm">
                     <div class="modal-body">
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">First Name</label>
+                                <label class="form-label">First Name *</label>
                                 <input type="text" class="form-control" name="first_name" 
                                        value="{{ customer.first_name }}" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Last Name</label>
+                                <label class="form-label">Last Name *</label>
                                 <input type="text" class="form-control" name="last_name" 
                                        value="{{ customer.last_name }}" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">Email Address *</label>
                             <input type="email" class="form-control" name="email" 
                                    value="{{ customer.email }}" required>
+                            <div class="form-text">You'll use this email to log in to your account.</div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Phone Number</label>
+                            <label class="form-label">Phone Number *</label>
                             <input type="tel" class="form-control" name="phone" 
                                    value="{{ customer.phone }}" required>
                         </div>
@@ -484,21 +768,22 @@
                     <h5 class="modal-title">Change Password</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ url_for('change_password') }}">
+                <form method="POST" action="{{ url_for('change_password') }}" id="passwordForm">
                     <div class="modal-body">
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         
                         <div class="mb-3">
-                            <label class="form-label">Current Password</label>
+                            <label class="form-label">Current Password *</label>
                             <input type="password" class="form-control" name="current_password" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">New Password</label>
+                            <label class="form-label">New Password *</label>
                             <input type="password" class="form-control" name="new_password" required minlength="6">
+                            <div class="form-text">Password must be at least 6 characters long.</div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Confirm New Password</label>
+                            <label class="form-label">Confirm New Password *</label>
                             <input type="password" class="form-control" name="confirm_password" required>
                         </div>
                     </div>
@@ -513,17 +798,39 @@
 
     <!-- Order Details Modal -->
     <div class="modal fade" id="orderDetailsModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Order Details</h5>
+                    <h5 class="modal-title">Order Details - <span id="modalOrderNumber"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Order Number:</strong> <span id="modalOrderNumber"></span></p>
-                    <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
-                    <p><strong>Order Total:</strong> <span id="modalOrderTotal"></span></p>
-                    <p><strong>Status:</strong> <span id="modalOrderStatus"></span></p>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                            <p><strong>Order Total:</strong> <span id="modalOrderTotal"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> <span id="modalOrderStatus"></span></p>
+                            <p><strong>Payment Method:</strong> <span id="modalPaymentMethod"></span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3">Order Items</h6>
+                    <div id="modalOrderItems" class="mb-3">
+                        <!-- Order items will be populated here -->
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Shipping Address</h6>
+                            <p id="modalShippingAddress" class="mb-0"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Contact Info</h6>
+                            <p id="modalContactInfo" class="mb-0"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -533,26 +840,46 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="footer">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <h5>{{ config.brand_name }}</h5>
-                    <p>{{ config.tagline }}</p>
+                <div class="col-lg-4 mb-4">
+                    <h5 class="mb-3">{{ config.brand_name }}</h5>
+                    <p class="mb-3">{{ config.tagline }}</p>
+                    <p class="small text-light opacity-75">{{ config.slogan }}</p>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h5>Contact</h5>
-                    <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ config.phone }}</p>
-                    <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ config.email }}</p>
+                <div class="col-lg-4 mb-4">
+                    <h5 class="mb-3">Contact Information</h5>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div>{{ config.phone }}</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>{{ config.email }}</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>{{ config.address }}</div>
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h5>Quick Links</h5>
-                    <a href="/" class="text-white text-decoration-none d-block">Home</a>
-                    <a href="/shop" class="text-white text-decoration-none d-block">Shop</a>
-                    <a href="/contact" class="text-white text-decoration-none d-block">Contact</a>
+                <div class="col-lg-4 mb-4">
+                    <h5 class="mb-3">Quick Links</h5>
+                    <div class="d-flex flex-column">
+                        <a href="{{ url_for('index') }}" class="text-white text-decoration-none mb-2">Home</a>
+                        <a href="{{ url_for('shop') }}" class="text-white text-decoration-none mb-2">Shop</a>
+                        <a href="{{ url_for('about') }}" class="text-white text-decoration-none mb-2">About Us</a>
+                        <a href="{{ url_for('contact') }}" class="text-white text-decoration-none mb-2">Contact</a>
+                    </div>
                 </div>
             </div>
-            <hr class="bg-white my-3">
+            <hr class="bg-white my-4">
             <div class="text-center">
                 <p class="mb-0">&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
             </div>
@@ -562,58 +889,129 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Section Navigation Functions
+        function showDashboard() {
+            document.getElementById('dashboardSection').classList.remove('d-none');
+            document.getElementById('ordersSection').classList.add('d-none');
+            document.getElementById('profileSection').classList.add('d-none');
+            
+            // Update sidebar active state
+            updateSidebarActive('dashboard');
+        }
+        
+        function showOrders() {
+            document.getElementById('dashboardSection').classList.add('d-none');
+            document.getElementById('ordersSection').classList.remove('d-none');
+            document.getElementById('profileSection').classList.add('d-none');
+            
+            // Update sidebar active state
+            updateSidebarActive('orders');
+        }
+        
+        function showProfile() {
+            document.getElementById('dashboardSection').classList.add('d-none');
+            document.getElementById('ordersSection').classList.add('d-none');
+            document.getElementById('profileSection').classList.remove('d-none');
+            
+            // Update sidebar active state
+            updateSidebarActive('profile');
+        }
+        
+        function updateSidebarActive(section) {
+            // Remove active class from all links
+            document.querySelectorAll('.account-sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Add active class to clicked section
+            let activeLink = null;
+            switch(section) {
+                case 'dashboard':
+                    activeLink = document.querySelector('.account-sidebar .nav-link:nth-child(1)');
+                    break;
+                case 'orders':
+                    activeLink = document.querySelector('.account-sidebar .nav-link:nth-child(2)');
+                    break;
+                case 'profile':
+                    activeLink = document.querySelector('.account-sidebar .nav-link:nth-child(3)');
+                    break;
+            }
+            
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+        
         // Show order details in modal
         function showOrderDetails(orderNumber, total, status, date) {
             document.getElementById('modalOrderNumber').textContent = orderNumber;
-            document.getElementById('modalOrderTotal').textContent = '₦' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('modalOrderTotal').textContent = '₦' + parseFloat(total).toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('modalOrderStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
             document.getElementById('modalOrderDate').textContent = date;
+            
+            // For demo purposes, we'll show sample order items
+            // In a real app, you would fetch this data from your backend
+            const orderItemsHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>Brazilian Body Wave 22"</strong>
+                        <div class="text-muted small">Quantity: 1</div>
+                    </div>
+                    <div>₦12,999.99</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>13x4 Lace Frontal Wig</strong>
+                        <div class="text-muted small">Quantity: 1</div>
+                    </div>
+                    <div>₦19,999.99</div>
+                </div>
+            `;
+            document.getElementById('modalOrderItems').innerHTML = orderItemsHTML;
+            
+            // Show customer info
+            document.getElementById('modalShippingAddress').textContent = '{{ customer.address if customer.address else "No address provided" }}';
+            document.getElementById('modalContactInfo').innerHTML = `
+                {{ customer.first_name }} {{ customer.last_name }}<br>
+                {{ customer.email }}<br>
+                {{ customer.phone if customer.phone else "No phone provided" }}
+            `;
+            
+            // Set default payment method for demo
+            document.getElementById('modalPaymentMethod').textContent = 'Bank Transfer';
             
             const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
             modal.show();
         }
         
-        // Auto-dismiss alerts
-        setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-        
-        // Form validation for modals
+        // Form validation
         document.addEventListener('DOMContentLoaded', function() {
-            // Validate address form
-            const addressForm = document.querySelector('form[action*="update_address"]');
-            if (addressForm) {
-                addressForm.addEventListener('submit', function(e) {
-                    const phoneInput = addressForm.querySelector('input[name="phone"]');
-                    if (phoneInput && !validatePhone(phoneInput.value)) {
-                        e.preventDefault();
-                        alert('Please enter a valid phone number');
-                        phoneInput.focus();
-                    }
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
                 });
-            }
+            }, 5000);
             
-            // Validate profile form
-            const profileForm = document.querySelector('form[action*="update_profile"]');
+            // Profile form validation
+            const profileForm = document.getElementById('profileForm');
             if (profileForm) {
                 profileForm.addEventListener('submit', function(e) {
-                    const emailInput = profileForm.querySelector('input[name="email"]');
-                    const phoneInput = profileForm.querySelector('input[name="phone"]');
+                    const email = profileForm.querySelector('input[name="email"]');
+                    const phone = profileForm.querySelector('input[name="phone"]');
                     
-                    if (emailInput && !validateEmail(emailInput.value)) {
+                    if (!validateEmail(email.value)) {
                         e.preventDefault();
                         alert('Please enter a valid email address');
-                        emailInput.focus();
+                        email.focus();
                         return false;
                     }
                     
-                    if (phoneInput && !validatePhone(phoneInput.value)) {
+                    if (!validatePhone(phone.value)) {
                         e.preventDefault();
                         alert('Please enter a valid phone number');
-                        phoneInput.focus();
+                        phone.focus();
                         return false;
                     }
                     
@@ -621,30 +1019,48 @@
                 });
             }
             
-            // Validate password form
-            const passwordForm = document.querySelector('form[action*="change_password"]');
+            // Password form validation
+            const passwordForm = document.getElementById('passwordForm');
             if (passwordForm) {
                 passwordForm.addEventListener('submit', function(e) {
-                    const newPassword = passwordForm.querySelector('input[name="new_password"]');
-                    const confirmPassword = passwordForm.querySelector('input[name="confirm_password"]');
+                    const newPass = passwordForm.querySelector('input[name="new_password"]');
+                    const confirmPass = passwordForm.querySelector('input[name="confirm_password"]');
                     
-                    if (newPassword.value !== confirmPassword.value) {
+                    if (newPass.value.length < 6) {
                         e.preventDefault();
-                        alert('New passwords do not match!');
-                        confirmPassword.focus();
+                        alert('New password must be at least 6 characters long');
+                        newPass.focus();
                         return false;
                     }
                     
-                    if (newPassword.value.length < 6) {
+                    if (newPass.value !== confirmPass.value) {
                         e.preventDefault();
-                        alert('Password must be at least 6 characters long');
-                        newPassword.focus();
+                        alert('New passwords do not match');
+                        confirmPass.focus();
                         return false;
                     }
                     
                     return true;
                 });
             }
+            
+            // Form loading states
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        const originalHTML = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+                        submitBtn.disabled = true;
+                        
+                        // Reset button after 10 seconds (in case of error)
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalHTML;
+                            submitBtn.disabled = false;
+                        }, 10000);
+                    }
+                });
+            });
         });
         
         function validateEmail(email) {
