@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Variants - {{ config.brand_name }} Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #F5E6D3;
+            --light: #ffffff;
+            --dark: #333333;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --border: #dddddd;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--primary-dark);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 3px solid var(--secondary);
+        }
+
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 3px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #c1121f;
+        }
+
+        /* Product Header */
+        .product-header {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-info h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .product-info p {
+            color: var(--gray);
+        }
+
+        .product-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn i {
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Variants Table */
+        .variants-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .variants-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .variants-table th {
+            background: var(--light-gray);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .variants-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--light-gray);
+            vertical-align: middle;
+        }
+
+        .variants-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Stock Status */
+        .stock-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stock-in {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Default Badge */
+        .default-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--success);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Action Buttons in Table */
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+
+        .form-text {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Form Row */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: var(--success);
+        }
+
+        .toast-error {
+            background: var(--danger);
+        }
+
+        .toast-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--light-gray);
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Stock Warning */
+        .stock-warning {
+            color: var(--danger);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header h2,
+            .nav-links span,
+            .sidebar-header p {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+
+            .nav-links i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .product-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .product-stats {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .variants-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .user-info {
+                justify-content: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .modal {
+                width: 95%;
+            }
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Variant Card (Mobile View) */
+        .variant-card {
+            display: none;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .variant-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .variant-card .card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .variant-card .card-footer {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .variants-table {
+                display: none;
+            }
+            
+            .variant-card {
+                display: block;
+            }
+        }
+
+        /* Bulk Actions */
+        .bulk-actions {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .bulk-select {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bulk-select input {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>{{ config.brand_name }}</h2>
+                <p>Admin Panel</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="{{ url_for('admin_products') }}"><i class="fas fa-box"></i> <span>Products</span></a></li>
+                <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
+                <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
+                <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+                <li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
+                <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1>Manage Variants</h1>
+                    <p>Manage product variants for {{ product.name }}</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
+                    <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="toast toast-{{ category }}" id="flashToast">
+                        <span>{{ message }}</span>
+                        <button class="toast-close" onclick="this.parentElement.classList.remove('show')">&times;</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Product Header -->
+            <div class="product-header">
+                <div class="product-info">
+                    <h2>{{ product.name }}</h2>
+                    <p>SKU: {{ product.sku }} | Base Price: {{ format_price(product.base_price) }}</p>
+                    <p style="margin-top: 10px;">
+                        <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-edit"></i> Edit Product
+                        </a>
+                        <a href="{{ url_for('product_detail', id=product.id) }}" target="_blank" class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i> View Product
+                        </a>
+                    </p>
+                </div>
+                <div class="product-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ variants|length }}</span>
+                        <span class="stat-label">Total Variants</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ variants|selectattr('stock', 'gt', 0)|list|length }}</span>
+                        <span class="stat-label">In Stock</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ variants|selectattr('is_default')|list|length }}</span>
+                        <span class="stat-label">Default</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="openAddVariantModal()">
+                    <i class="fas fa-plus"></i> Add New Variant
+                </button>
+                <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Product
+                </a>
+                <button class="btn btn-warning" onclick="refreshStock()">
+                    <i class="fas fa-sync-alt"></i> Refresh Stock
+                </button>
+            </div>
+
+            <!-- Variants Container -->
+            <div class="variants-container">
+                {% if variants %}
+                <!-- Desktop Table View -->
+                <table class="variants-table">
+                    <thead>
+                        <tr>
+                            <th width="30">
+                                <input type="checkbox" id="selectAll" onchange="toggleAllVariants()">
+                            </th>
+                            <th>Variant Name</th>
+                            <th>Length</th>
+                            <th>Texture</th>
+                            <th>Color</th>
+                            <th>Price (₦)</th>
+                            <th>Stock</th>
+                            <th>SKU</th>
+                            <th>Default</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for variant in variants %}
+                        <tr data-variant-id="{{ variant.id }}">
+                            <td>
+                                <input type="checkbox" class="variant-checkbox" value="{{ variant.id }}">
+                            </td>
+                            <td>
+                                <strong>{{ variant.name or 'N/A' }}</strong>
+                            </td>
+                            <td>{{ variant.length or 'N/A' }}</td>
+                            <td>{{ variant.texture or 'N/A' }}</td>
+                            <td>{{ variant.color or 'N/A' }}</td>
+                            <td>
+                                <strong>{{ format_price(variant.price) }}</strong>
+                                {% if variant.compare_price and variant.compare_price > variant.price %}
+                                <br>
+                                <small style="color: var(--gray); text-decoration: line-through;">
+                                    {{ format_price(variant.compare_price) }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="stock-status {% if variant.stock > 20 %}stock-in{% elif variant.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                                    {{ variant.stock }}
+                                </span>
+                                {% if variant.stock <= 5 and variant.stock > 0 %}
+                                <div class="stock-warning">Low Stock!</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small style="color: var(--gray);">{{ variant.sku }}</small>
+                            </td>
+                            <td>
+                                {% if variant.is_default %}
+                                <span class="default-badge">Default</span>
+                                {% else %}
+                                <button class="btn btn-sm btn-secondary" onclick="setAsDefault({{ variant.id }})">
+                                    Set Default
+                                </button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn btn-warning btn-sm" onclick="editVariant({{ variant.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteVariant({{ variant.id }}, '{{ variant.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Mobile Card View -->
+                <div class="variant-cards">
+                    {% for variant in variants %}
+                    <div class="variant-card" data-variant-id="{{ variant.id }}">
+                        <div class="card-header">
+                            <div>
+                                <strong>{{ variant.name or 'N/A' }}</strong>
+                                {% if variant.is_default %}
+                                <span class="default-badge" style="margin-left: 10px;">Default</span>
+                                {% endif %}
+                            </div>
+                            <input type="checkbox" class="variant-checkbox" value="{{ variant.id }}">
+                        </div>
+                        <div class="card-body">
+                            <div>
+                                <small>Length:</small>
+                                <div>{{ variant.length or 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <small>Texture:</small>
+                                <div>{{ variant.texture or 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <small>Color:</small>
+                                <div>{{ variant.color or 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <small>Price:</small>
+                                <div>{{ format_price(variant.price) }}</div>
+                            </div>
+                            <div>
+                                <small>Stock:</small>
+                                <div>
+                                    <span class="stock-status {% if variant.stock > 20 %}stock-in{% elif variant.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                                        {{ variant.stock }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <small>SKU:</small>
+                                <div>{{ variant.sku }}</div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            {% if not variant.is_default %}
+                            <button class="btn btn-sm btn-secondary" onclick="setAsDefault({{ variant.id }})">
+                                Set Default
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-warning btn-sm" onclick="editVariant({{ variant.id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteVariant({{ variant.id }}, '{{ variant.name }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>No Variants Found</h3>
+                    <p>This product doesn't have any variants yet.</p>
+                    <button class="btn btn-success" onclick="openAddVariantModal()" style="margin-top: 20px;">
+                        <i class="fas fa-plus"></i> Add Your First Variant
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Back Button -->
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Products
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Variant Modal -->
+    <div class="modal-overlay" id="variantModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Variant</h3>
+                <button class="modal-close" onclick="closeVariantModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="variantForm">
+                    <input type="hidden" name="variant_id" id="variantId">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Variant Name *</label>
+                        <input type="text" name="name" id="variantName" class="form-control" required>
+                        <span class="form-text">e.g., "24" Brazilian Straight" or "28" Body Wave"</span>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Length</label>
+                            <input type="text" name="length" id="variantLength" class="form-control" placeholder="e.g., 24 inches">
+                            <span class="form-text">Hair length measurement</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Texture</label>
+                            <input type="text" name="texture" id="variantTexture" class="form-control" placeholder="e.g., Straight, Curly, Wavy">
+                            <span class="form-text">Hair texture type</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Color</label>
+                        <input type="text" name="color" id="variantColor" class="form-control" placeholder="e.g., Natural Black, Blonde">
+                        <span class="form-text">Hair color description</span>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Price (₦) *</label>
+                            <input type="number" name="price" id="variantPrice" class="form-control" step="0.01" min="0" required>
+                            <span class="form-text">Selling price for this variant</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Compare Price (₦)</label>
+                            <input type="number" name="compare_price" id="variantComparePrice" class="form-control" step="0.01" min="0">
+                            <span class="form-text">Original price for showing discount</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stock Quantity *</label>
+                            <input type="number" name="stock" id="variantStock" class="form-control" min="0" required>
+                            <span class="form-text">Available quantity for this variant</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SKU</label>
+                            <input type="text" name="sku" id="variantSKU" class="form-control" placeholder="Auto-generated">
+                            <span class="form-text">Leave empty to auto-generate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="toggle-switch">
+                                <input type="checkbox" name="is_default" id="variantDefault">
+                                <span class="toggle-slider"></span>
+                            </div>
+                            Set as Default Variant
+                        </label>
+                        <span class="form-text">Default variant will be pre-selected on product page</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeVariantModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveVariant()" id="saveVariantBtn">
+                    <span id="saveBtnText">Save Variant</span>
+                    <div class="spinner" id="saveSpinner" style="display: none;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="color: var(--danger);">Delete Variant</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteVariantName"></strong>?</p>
+                <p style="color: var(--danger); margin: 15px 0; padding: 10px; background: #f8d7da; border-radius: 5px;">
+                    <i class="fas fa-exclamation-triangle"></i> This action cannot be undone.
+                </p>
+                <input type="hidden" id="deleteVariantId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteVariant()">Delete Variant</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+        <button class="toast-close" onclick="hideToast()">&times;</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const variantModal = document.getElementById('variantModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const flashToast = document.getElementById('flashToast');
+        
+        // Get CSRF Token
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            
+            setTimeout(() => {
+                hideToast();
+            }, 5000);
+        }
+        
+        function hideToast() {
+            toast.classList.remove('show');
+        }
+        
+        // Show flash toast if exists
+        if (flashToast) {
+            flashToast.classList.add('show');
+            setTimeout(() => {
+                flashToast.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Toggle all variants for selection
+        function toggleAllVariants() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.variant-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+        
+        // Open add variant modal
+        function openAddVariantModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Variant';
+            document.getElementById('variantForm').reset();
+            document.getElementById('variantId').value = '';
+            document.getElementById('variantPrice').value = {{ product.base_price }};
+            
+            // Auto-generate SKU
+            const baseSKU = '{{ product.sku }}';
+            if (baseSKU) {
+                const variantCount = {{ variants|length }};
+                document.getElementById('variantSKU').value = `${baseSKU}-V${variantCount + 1}`;
+            }
+            
+            variantModal.classList.add('active');
+        }
+        
+        // Close variant modal
+        function closeVariantModal() {
+            variantModal.classList.remove('active');
+        }
+        
+        // Open delete confirmation modal
+        function openDeleteModal(variantId, variantName) {
+            document.getElementById('deleteVariantId').value = variantId;
+            document.getElementById('deleteVariantName').textContent = variantName;
+            deleteModal.classList.add('active');
+        }
+        
+        // Close delete modal
+        function closeDeleteModal() {
+            deleteModal.classList.remove('active');
+        }
+        
+        // Edit variant
+        async function editVariant(variantId) {
+            try {
+                loadingOverlay.classList.add('active');
+                
+                const response = await fetch(`/admin/variants/${variantId}/edit`);
+                if (!response.ok) throw new Error('Failed to load variant data');
+                
+                const variant = await response.json();
+                
+                // Fill form
+                document.getElementById('modalTitle').textContent = 'Edit Variant';
+                document.getElementById('variantId').value = variant.id;
+                document.getElementById('variantName').value = variant.name || '';
+                document.getElementById('variantLength').value = variant.length || '';
+                document.getElementById('variantTexture').value = variant.texture || '';
+                document.getElementById('variantColor').value = variant.color || '';
+                document.getElementById('variantPrice').value = variant.price || '';
+                document.getElementById('variantComparePrice').value = variant.compare_price || '';
+                document.getElementById('variantStock').value = variant.stock || 0;
+                document.getElementById('variantSKU').value = variant.sku || '';
+                document.getElementById('variantDefault').checked = variant.is_default || false;
+                
+                variantModal.classList.add('active');
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to load variant data', 'error');
+            } finally {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+        
+        // Save variant
+        async function saveVariant() {
+            const form = document.getElementById('variantForm');
+            const formData = new FormData(form);
+            const variantId = formData.get('variant_id');
+            const isEdit = !!variantId;
+            
+            // Validate form
+            if (!validateVariantForm()) {
+                return;
+            }
+            
+            try {
+                // Show loading
+                const saveBtn = document.getElementById('saveVariantBtn');
+                const saveBtnText = document.getElementById('saveBtnText');
+                const saveSpinner = document.getElementById('saveSpinner');
+                
+                saveBtnText.style.display = 'none';
+                saveSpinner.style.display = 'block';
+                saveBtn.disabled = true;
+                
+                // Prepare data
+                const data = {
+                    name: formData.get('name'),
+                    length: formData.get('length') || null,
+                    texture: formData.get('texture') || null,
+                    color: formData.get('color') || null,
+                    price: parseFloat(formData.get('price')),
+                    compare_price: formData.get('compare_price') ? parseFloat(formData.get('compare_price')) : null,
+                    stock: parseInt(formData.get('stock')),
+                    sku: formData.get('sku') || null,
+                    is_default: formData.get('is_default') === 'on'
+                };
+                
+                let response;
+                if (isEdit) {
+                    // Update existing variant
+                    response = await fetch(`/admin/variants/update/${variantId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    // Add new variant
+                    data.product_id = parseInt(formData.get('product_id'));
+                    response = await fetch('/admin/variants/add/' + data.product_id, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showToast(result.message || (isEdit ? 'Variant updated successfully' : 'Variant added successfully'), 'success');
+                    closeVariantModal();
+                    
+                    // Reload page after delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Failed to save variant');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message || 'Failed to save variant', 'error');
+            } finally {
+                // Reset button state
+                const saveBtn = document.getElementById('saveVariantBtn');
+                const saveBtnText = document.getElementById('saveBtnText');
+                const saveSpinner = document.getElementById('saveSpinner');
+                
+                saveBtnText.style.display = 'block';
+                saveSpinner.style.display = 'none';
+                saveBtn.disabled = false;
+            }
+        }
+        
+        // Validate variant form
+        function validateVariantForm() {
+            const name = document.getElementById('variantName').value.trim();
+            const price = document.getElementById('variantPrice').value;
+            const stock = document.getElementById('variantStock').value;
+            
+            if (!name) {
+                showToast('Variant name is required', 'error');
+                document.getElementById('variantName').focus();
+                return false;
+            }
+            
+            if (!price || parseFloat(price) <= 0) {
+                showToast('Price must be greater than 0', 'error');
+                document.getElementById('variantPrice').focus();
+                return false;
+            }
+            
+            if (!stock || parseInt(stock) < 0) {
+                showToast('Stock cannot be negative', 'error');
+                document.getElementById('variantStock').focus();
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Set variant as default
+        async function setAsDefault(variantId) {
+            try {
+                loadingOverlay.classList.add('active');
+                
+                const response = await fetch(`/admin/variants/${variantId}/set-default`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('Default variant updated successfully', 'success');
+                    // Reload page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('Failed to set default variant');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to set default variant', 'error');
+            } finally {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+        
+        // Delete variant
+        function deleteVariant(variantId, variantName) {
+            openDeleteModal(variantId, variantName);
+        }
+        
+        // Confirm delete variant
+        async function confirmDeleteVariant() {
+            const variantId = document.getElementById('deleteVariantId').value;
+            
+            try {
+                loadingOverlay.classList.add('active');
+                
+                const response = await fetch(`/admin/variants/delete/${variantId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showToast('Variant deleted successfully', 'success');
+                    closeDeleteModal();
+                    
+                    // Remove variant row/card
+                    const variantRow = document.querySelector(`[data-variant-id="${variantId}"]`);
+                    if (variantRow) {
+                        variantRow.style.opacity = '0';
+                        setTimeout(() => {
+                            variantRow.remove();
+                        }, 300);
+                    }
+                    
+                    // Reload page after delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error(result.error || 'Failed to delete variant');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to delete variant', 'error');
+            } finally {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+        
+        // Refresh stock (recalculate total stock)
+        async function refreshStock() {
+            try {
+                loadingOverlay.classList.add('active');
+                
+                const response = await fetch(`/admin/products/{{ product.id }}/refresh-stock`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('Stock refreshed successfully', 'success');
+                    // Reload page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('Failed to refresh stock');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to refresh stock', 'error');
+            } finally {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+        
+        // Auto-generate SKU based on product SKU and variant info
+        function autoGenerateSKU() {
+            const name = document.getElementById('variantName').value;
+            const length = document.getElementById('variantLength').value;
+            const texture = document.getElementById('variantTexture').value;
+            const skuInput = document.getElementById('variantSKU');
+            
+            if (!skuInput.value && name) {
+                const productSKU = '{{ product.sku }}';
+                const variantCount = {{ variants|length }};
+                
+                let sku = `${productSKU}-V${variantCount + 1}`;
+                
+                if (length) {
+                    const cleanLength = length.replace(/[^0-9]/g, '');
+                    if (cleanLength) sku += `-${cleanLength}`;
+                }
+                
+                if (texture) {
+                    const textureCode = texture.substring(0, 2).toUpperCase();
+                    sku += `-${textureCode}`;
+                }
+                
+                skuInput.value = sku;
+            }
+        }
+        
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-generate SKU on name change
+            document.getElementById('variantName').addEventListener('blur', autoGenerateSKU);
+            
+            // Close modals on ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeVariantModal();
+                    closeDeleteModal();
+                }
+            });
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal-overlay')) {
+                    closeVariantModal();
+                    closeDeleteModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
