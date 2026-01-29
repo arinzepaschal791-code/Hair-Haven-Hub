@@ -3,67 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ brand_name }} - {{ tagline }}{% endblock %}</title>
+    <title>{% block title %}{{ config.brand_name }} - {{ config.tagline }}{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{{ config.description }}">
+    <meta name="keywords" content="human hair, hair extensions, wigs, lace frontals, Brazilian hair, Peruvian hair, hair bundles, Nigeria hair shop, premium hair">
+    <meta name="author" content="{{ config.brand_name }}">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
     
     {% block styles %}{% endblock %}
     
     <style>
         :root {
-            --primary-color: #8a6d3b;
-            --primary-dark: #6b552d;
-            --accent-gold: #d4af37;
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #D4AF37;
+            --secondary-light: #F4E4B3;
+            --dark: #1A1A1A;
+            --dark-light: #2D2D2D;
+            --light: #F8F5F0;
+            --gray: #8C8C8C;
+            --success: #27AE60;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --transition: all 0.3s ease;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--dark);
+            background: var(--light);
+            line-height: 1.6;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
         }
         
         .content-wrapper {
             flex: 1;
         }
         
-        /* Page-specific adjustments */
+        /* Navigation Styles */
+        .navbar {
+            background: white;
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+        
+        .navbar-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .navbar-toggler {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            display: none;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            padding: 0.5rem 0;
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(139, 69, 19, 0.05);
+            color: var(--primary);
+        }
+        
+        /* Cart Styles */
+        .nav-cart {
+            position: relative;
+            color: var(--dark);
+            font-size: 1.25rem;
+            transition: var(--transition);
+            padding: 0.5rem;
+        }
+        
+        .nav-cart:hover {
+            color: var(--primary);
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* WhatsApp Float Button */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #25D366;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+        
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(37, 211, 102, 0.4);
+            color: white;
+        }
+        
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            z-index: 999;
+            box-shadow: var(--shadow);
+        }
+        
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .back-to-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .footer-logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .footer-logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .footer-tagline {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links h4,
+        .footer-contact h4 {
+            color: var(--secondary);
+            margin-bottom: 25px;
+            font-size: 1.25rem;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .footer-links a:hover {
+            color: var(--secondary);
+            padding-left: 5px;
+        }
+        
+        .contact-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+        
+        .contact-details strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .contact-details p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .social-link {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        
+        .social-link:hover {
+            background: var(--secondary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .footer-bottom a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-bottom a:hover {
+            color: var(--secondary);
+        }
+        
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .toast.success {
+            border-left-color: var(--success);
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+        
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+        
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+        
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+        
+        .toast.info .toast-icon {
+            color: var(--primary);
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .toast-message {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 5px;
+            transition: var(--transition);
+        }
+        
+        .toast-close:hover {
+            color: var(--dark);
+        }
+        
+        /* Page Header */
         .page-header {
             background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
-                        url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+                        url('{{ url_for("static", filename="images/page-header-bg.jpg") }}');
             background-size: cover;
             background-position: center;
             color: white;
-            padding: 100px 0 60px;
+            padding: 140px 0 60px;
             margin-top: 76px;
+            text-align: center;
+        }
+        
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: white;
         }
         
         .breadcrumb {
             background: transparent;
             padding: 0;
-            margin-bottom: 0;
+            margin: 0;
+            justify-content: center;
         }
         
         .breadcrumb-item a {
-            color: var(--accent-gold);
+            color: var(--secondary);
+            text-decoration: none;
         }
         
         .breadcrumb-item.active {
-            color: white;
-            opacity: 0.8;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .navbar-toggler {
+                display: block;
+            }
+            
+            .navbar-nav {
+                position: fixed;
+                top: 76px;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: var(--shadow);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: var(--transition);
+                z-index: 999;
+            }
+            
+            .navbar-nav.open {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .nav-link {
+                padding: 15px 0;
+            }
+            
+            .page-header {
+                padding: 120px 0 40px;
+            }
+            
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .whatsapp-float {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .back-to-top {
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+                bottom: 80px;
+                right: 20px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand span {
+                font-size: 1.25rem;
+            }
+            
+            .page-header {
+                padding: 100px 0 30px;
+            }
+            
+            .page-header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .footer {
+                padding: 40px 0 20px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Utility Classes */
+        .text-gold {
+            color: var(--secondary) !important;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+        }
+        
+        .bg-gradient-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #F1C40F 100%) !important;
         }
     </style>
 </head>
 <body>
     <!-- WhatsApp Float Button -->
-    <a href="{{ whatsapp }}" target="_blank" class="whatsapp-float">
+    <a href="{{ config.whatsapp }}" target="_blank" class="whatsapp-float">
         <i class="fab fa-whatsapp"></i>
     </a>
     
@@ -80,76 +664,93 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 
-                <a class="navbar-brand" href="/">
-                    {% if logo_url %}
-                    <img src="{{ logo_url }}" alt="{{ brand_name }} Logo">
-                    {% endif %}
-                    <span>{{ brand_name }}</span>
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                         alt="{{ config.brand_name }} Logo"
+                         onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
+                    <span>{{ config.brand_name }}</span>
                 </a>
                 
                 <ul class="navbar-nav" id="navbarNav">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">
                             <i class="fas fa-home"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path.startswith('/shop') or request.path.startswith('/products') %}active{% endif %}" href="/shop">
+                        <a class="nav-link {% if request.path.startswith('/shop') %}active{% endif %}" href="{{ url_for('shop') }}">
                             <i class="fas fa-shopping-bag"></i> Shop
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-th-large"></i> Categories
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/shop?category=hair">
-                                <i class="fas fa-user"></i> Hair Extensions
-                            </a></li>
-                            <li><a class="dropdown-item" href="/shop?category=wigs">
-                                <i class="fas fa-hat-cowboy"></i> Wigs
-                            </a></li>
-                            <li><a class="dropdown-item" href="/shop?category=care">
-                                <i class="fas fa-spa"></i> Hair Care
-                            </a></li>
+                            {% for category in categories[:4] %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('shop') }}?category={{ category.id }}">
+                                    <i class="fas fa-tag"></i> {{ category.name }}
+                                </a>
+                            </li>
+                            {% endfor %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/shop">
-                                <i class="fas fa-store"></i> All Products
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('shop') }}">
+                                    <i class="fas fa-store"></i> All Products
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">
+                        <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="{{ url_for('about') }}">
                             <i class="fas fa-info-circle"></i> About
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/contact' %}active{% endif %}" href="/contact">
+                        <a class="nav-link {% if request.path == '/contact' %}active{% endif %}" href="{{ url_for('contact') }}">
                             <i class="fas fa-envelope"></i> Contact
                         </a>
                     </li>
                 </ul>
                 
                 <div class="d-flex align-items-center gap-3">
-                    {% if session.user_id %}
+                    {% if session.customer_id %}
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i> {{ session.user_name[:15] }}{% if session.user_name|length > 15 %}...{% endif %}
+                            <i class="fas fa-user me-1"></i> 
+                            {% if session.customer_name %}
+                                {{ session.customer_name[:15] }}{% if session.customer_name|length > 15 %}...{% endif %}
+                            {% else %}
+                                My Account
+                            {% endif %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/account"><i class="fas fa-user-circle me-2"></i> My Account</a></li>
-                            <li><a class="dropdown-item" href="/orders"><i class="fas fa-history me-2"></i> My Orders</a></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('account') }}">
+                                    <i class="fas fa-user-circle me-2"></i> My Account
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('account') }}#orders">
+                                    <i class="fas fa-history me-2"></i> My Orders
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('customer_logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     {% else %}
-                    <a href="/login" class="btn btn-outline-primary">
+                    <a href="{{ url_for('customer_login') }}" class="btn btn-outline-primary">
                         <i class="fas fa-sign-in-alt me-1"></i> Login
                     </a>
                     {% endif %}
                     
-                    <a href="/cart" class="nav-cart position-relative">
+                    <a href="{{ url_for('cart') }}" class="nav-cart position-relative">
                         <i class="fas fa-shopping-cart fs-5"></i>
                         {% if cart_count > 0 %}
                         <span class="cart-badge">{{ cart_count }}</span>
@@ -171,23 +772,25 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <div class="footer-logo">
-                        {% if logo_url %}
-                        <img src="{{ logo_url }}" alt="{{ brand_name }} Logo">
-                        {% endif %}
-                        <div class="footer-logo-text">{{ brand_name }}</div>
+                        <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                             alt="{{ config.brand_name }} Logo"
+                             onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
+                        <div class="footer-logo-text">{{ config.brand_name }}</div>
                     </div>
-                    <p class="footer-tagline">{{ tagline }}</p>
-                    <p class="small text-light opacity-75">{{ wholesale }}</p>
+                    <p class="footer-tagline">{{ config.tagline }}</p>
+                    <p class="small text-light opacity-75">{{ config.slogan }}</p>
                 </div>
                 
                 <div class="footer-links">
                     <h4>Quick Links</h4>
                     <ul>
-                        <li><a href="/"><i class="fas fa-chevron-right me-2"></i> Home</a></li>
-                        <li><a href="/shop"><i class="fas fa-chevron-right me-2"></i> Shop All</a></li>
-                        <li><a href="/about"><i class="fas fa-chevron-right me-2"></i> About Us</a></li>
-                        <li><a href="/contact"><i class="fas fa-chevron-right me-2"></i> Contact</a></li>
-                        <li><a href="/account"><i class="fas fa-chevron-right me-2"></i> My Account</a></li>
+                        <li><a href="{{ url_for('index') }}"><i class="fas fa-chevron-right me-2"></i> Home</a></li>
+                        <li><a href="{{ url_for('shop') }}"><i class="fas fa-chevron-right me-2"></i> Shop All</a></li>
+                        <li><a href="{{ url_for('about') }}"><i class="fas fa-chevron-right me-2"></i> About Us</a></li>
+                        <li><a href="{{ url_for('contact') }}"><i class="fas fa-chevron-right me-2"></i> Contact</a></li>
+                        {% if session.customer_id %}
+                        <li><a href="{{ url_for('account') }}"><i class="fas fa-chevron-right me-2"></i> My Account</a></li>
+                        {% endif %}
                     </ul>
                 </div>
                 
@@ -199,7 +802,7 @@
                         </div>
                         <div class="contact-details">
                             <strong>Address:</strong>
-                            <p>{{ address }}</p>
+                            <p>{{ config.address }}</p>
                         </div>
                     </div>
                     
@@ -209,31 +812,31 @@
                         </div>
                         <div class="contact-details">
                             <strong>Phone:</strong>
-                            <p>{{ phone }}</p>
+                            <p>{{ config.phone }}</p>
                         </div>
                     </div>
                     
                     <div class="contact-item">
                         <div class="contact-icon">
-                            <i class="fab fa-instagram"></i>
+                            <i class="fas fa-envelope"></i>
                         </div>
                         <div class="contact-details">
-                            <strong>Instagram:</strong>
-                            <p>{{ instagram }}</p>
+                            <strong>Email:</strong>
+                            <p>{{ config.email }}</p>
                         </div>
                     </div>
                     
                     <div class="footer-social">
-                        <a href="{{ whatsapp }}" target="_blank" class="social-link">
+                        <a href="{{ config.whatsapp }}" target="_blank" class="social-link">
                             <i class="fab fa-whatsapp"></i>
                         </a>
-                        <a href="{{ instagram_url }}" target="_blank" class="social-link">
+                        <a href="{{ config.instagram_url }}" target="_blank" class="social-link">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="tel:{{ phone }}" class="social-link">
+                        <a href="tel:{{ config.phone }}" class="social-link">
                             <i class="fas fa-phone"></i>
                         </a>
-                        <a href="mailto:{{ contact_email }}" class="social-link">
+                        <a href="mailto:{{ config.email }}" class="social-link">
                             <i class="fas fa-envelope"></i>
                         </a>
                     </div>
@@ -241,10 +844,10 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; {{ year }} {{ brand_name }}. All rights reserved. | Luxury Hair at Wholesale Prices</p>
+                <p>&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
                 <p class="small mt-2">
-                    <a href="/privacy" class="text-light opacity-75 me-3">Privacy Policy</a> | 
-                    <a href="/terms" class="text-light opacity-75 ms-3">Terms of Service</a>
+                    <a href="#" class="text-light opacity-75 me-3">Privacy Policy</a> | 
+                    <a href="#" class="text-light opacity-75 ms-3">Terms of Service</a>
                 </p>
             </div>
         </div>
@@ -273,6 +876,15 @@
             }
         });
 
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('.navbar-nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 992) {
+                    document.getElementById('navbarNav').classList.remove('open');
+                }
+            });
+        });
+
         // Back to Top Button
         const backToTop = document.getElementById('backToTop');
         
@@ -295,12 +907,17 @@
         function showToast(title, message, type = 'info') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: 'check-circle',
+                error: 'exclamation-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle'
+            };
+            
             toast.innerHTML = `
                 <div class="toast-icon">
-                    ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
-                      type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : 
-                      type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : 
-                      '<i class="fas fa-info-circle"></i>'}
+                    <i class="fas fa-${icons[type] || 'info-circle'}"></i>
                 </div>
                 <div class="toast-content">
                     <div class="toast-title">${title}</div>
@@ -330,47 +947,59 @@
         }
 
         // Add to Cart Function
-        async function addToCart(productId, quantity = 1) {
+        async function addToCart(productId, quantity = 1, variantId = null) {
             try {
                 const formData = new FormData();
                 formData.append('quantity', quantity);
+                formData.append('csrf_token', '{{ csrf_token }}');
+                if (variantId) {
+                    formData.append('variant_id', variantId);
+                }
                 
                 const response = await fetch(`/add-to-cart/${productId}`, {
                     method: 'POST',
                     body: formData
                 });
                 
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+                
                 const result = await response.json();
                 
-                if (result.success) {
+                if (result.success || response.ok) {
                     // Update cart count
-                    updateCartCount(result.cart_count);
+                    updateCartCount(result.cart_count || {{ cart_count }} + 1);
                     showToast('Success', 'Product added to cart!', 'success');
                     return true;
                 } else {
-                    showToast('Error', result.message, 'error');
+                    showToast('Error', result.message || 'Failed to add to cart', 'error');
                     return false;
                 }
             } catch (error) {
+                console.error('Error:', error);
                 showToast('Error', 'Failed to add to cart', 'error');
                 return false;
             }
         }
 
         function updateCartCount(count) {
-            const cartBadge = document.querySelector('.cart-badge');
-            if (cartBadge) {
-                cartBadge.textContent = count;
-                cartBadge.style.display = count > 0 ? 'flex' : 'none';
+            const cartBadges = document.querySelectorAll('.cart-badge');
+            if (cartBadges.length > 0) {
+                cartBadges.forEach(badge => {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'flex' : 'none';
+                });
             } else if (count > 0) {
                 // Create cart badge if it doesn't exist
-                const cartIcon = document.querySelector('.nav-cart i');
-                if (cartIcon) {
+                const cartIcons = document.querySelectorAll('.nav-cart i');
+                cartIcons.forEach(icon => {
                     const badge = document.createElement('span');
                     badge.className = 'cart-badge';
                     badge.textContent = count;
-                    cartIcon.parentElement.appendChild(badge);
-                }
+                    icon.parentElement.appendChild(badge);
+                });
             }
         }
 
@@ -378,11 +1007,18 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const target = document.querySelector(targetId);
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
                     });
                 }
             });
@@ -392,8 +1028,49 @@
         document.addEventListener('DOMContentLoaded', function() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover'
+                });
             });
+            
+            // Initialize popovers
+            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        });
+
+        // Handle form submissions with loading states
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+                    submitBtn.disabled = true;
+                    
+                    // Reset after 10 seconds (in case of error)
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 10000);
+                }
+            });
+        });
+
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const flashMessages = document.querySelectorAll('.flash-messages .alert');
+                flashMessages.forEach(message => {
+                    message.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        if (message.parentElement) {
+                            message.parentElement.remove();
+                        }
+                    }, 300);
+                });
+            }, 5000);
         });
     </script>
     
