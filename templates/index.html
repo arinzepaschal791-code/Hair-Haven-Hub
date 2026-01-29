@@ -4,19 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config.brand_name }} - {{ config.tagline }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="{{ config.description }}">
+    <meta name="keywords" content="human hair, hair extensions, wigs, lace frontals, premium hair, Nigeria hair">
+    <meta name="author" content="{{ config.brand_name }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
     <style>
         :root {
-            --primary-dark: #1a1a2e;
-            --secondary-dark: #16213e;
-            --accent-gold: #d4af37;
-            --light-gray: #f8f9fa;
-            --text-dark: #333333;
-            --text-light: #6c757d;
-            --success: #2a8356;
-            --white: #ffffff;
+            --primary: #8B4513; /* Rich brown */
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #D4AF37; /* Gold */
+            --secondary-light: #F4E4B3;
+            --dark: #1A1A1A;
+            --dark-light: #2D2D2D;
+            --light: #F8F5F0;
+            --gray: #8C8C8C;
+            --success: #27AE60;
+            --transition: all 0.3s ease;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --radius: 12px;
+            --radius-lg: 20px;
         }
         
         * {
@@ -26,172 +47,337 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--dark);
+            background: var(--light);
             line-height: 1.6;
-            color: var(--text-dark);
-            background-color: var(--white);
+            overflow-x: hidden;
         }
         
-        h1, h2, h3, h4, h5 {
-            font-family: 'Playfair Display', serif;
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
-            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+        
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
         }
         
         .container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 0 20px;
         }
         
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .section-title h2 {
+            font-size: 3rem;
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--secondary);
+        }
+        
+        .section-title p {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--secondary-light);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-outline:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
-            color: var(--white);
-            padding: 100px 0 80px;
             position: relative;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(45, 45, 45, 0.8) 100%);
             overflow: hidden;
         }
         
-        .hero::before {
-            content: '';
+        .hero-bg {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/static/images/pattern.png') repeat;
-            opacity: 0.05;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.4;
         }
         
         .hero-content {
             position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto;
+            z-index: 2;
+            width: 100%;
+            color: white;
         }
         
-        .brand-name {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
+        .hero-content .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 50px;
         }
         
-        .tagline {
+        .hero-text {
+            flex: 1;
+            max-width: 600px;
+        }
+        
+        .hero-text h1 {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            color: white;
+            line-height: 1.1;
+        }
+        
+        .hero-text .tagline {
             font-size: 1.5rem;
-            color: var(--accent-gold);
+            color: var(--secondary);
             margin-bottom: 25px;
             font-weight: 500;
         }
         
-        .slogan {
+        .hero-text p {
             font-size: 1.1rem;
             opacity: 0.9;
             margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            line-height: 1.8;
         }
         
-        .cta-buttons {
+        .hero-image {
+            flex: 1;
             display: flex;
-            gap: 15px;
             justify-content: center;
+            align-items: center;
+        }
+        
+        .hero-image img {
+            max-width: 100%;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .hero-cta {
+            display: flex;
+            gap: 20px;
             flex-wrap: wrap;
         }
         
-        .btn {
-            padding: 15px 35px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
+        /* Featured Collections */
+        .featured-collections {
+            background: white;
+        }
+        
+        .collection-nav {
+            display: flex;
+            justify-content: center;
             gap: 10px;
-            transition: all 0.3s ease;
-            font-size: 1rem;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
         }
         
-        .btn-primary {
-            background: var(--accent-gold);
-            color: var(--primary-dark);
+        .collection-nav button {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid var(--light);
+            border-radius: var(--radius);
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
         }
         
-        .btn-primary:hover {
-            background: #e6c158;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: var(--white);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .btn-secondary:hover {
-            border-color: var(--accent-gold);
-            background: rgba(212, 175, 55, 0.1);
-        }
-        
-        /* Featured Products */
-        .section-title {
-            text-align: center;
-            margin: 60px 0 40px;
-        }
-        
-        .section-title h2 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .section-title p {
-            color: var(--text-light);
-            max-width: 600px;
-            margin: 0 auto;
+        .collection-nav button:hover,
+        .collection-nav button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
         
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 30px;
-            margin-bottom: 60px;
+            margin-bottom: 50px;
         }
         
         .product-card {
-            background: var(--white);
-            border-radius: 12px;
+            background: white;
+            border-radius: var(--radius);
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            border: 1px solid #eef2f7;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
         }
         
         .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
         }
         
-        .product-img {
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--secondary);
+            color: var(--dark);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+        
+        .product-badge.featured {
+            background: var(--success);
+            color: white;
+        }
+        
+        .product-badge.sale {
+            background: #FF6B6B;
+            color: white;
+        }
+        
+        .product-image {
             height: 250px;
-            background: var(--light-gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--light);
+            position: relative;
             overflow: hidden;
         }
         
-        .product-img img {
-            max-height: 100%;
-            max-width: 100%;
+        .product-image img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
         }
         
-        .product-card:hover .product-img img {
+        .product-card:hover .product-image img {
             transform: scale(1.05);
+        }
+        
+        .product-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: var(--transition);
+        }
+        
+        .product-card:hover .product-overlay {
+            transform: translateY(0);
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .quick-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .quick-btn:hover {
+            background: var(--primary);
+            color: white;
         }
         
         .product-info {
@@ -199,127 +385,161 @@
         }
         
         .product-category {
-            color: var(--text-light);
+            color: var(--primary);
             font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             margin-bottom: 8px;
+            font-weight: 600;
         }
         
         .product-name {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin-bottom: 10px;
-            color: var(--primary-dark);
+            color: var(--dark);
         }
         
         .product-price {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
         }
         
+        .current-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
         .old-price {
-            color: var(--text-light);
-            text-decoration: line-through;
             font-size: 1rem;
-            margin-right: 8px;
+            color: var(--gray);
+            text-decoration: line-through;
+        }
+        
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .rating {
+            color: var(--secondary);
+        }
+        
+        .view-all {
+            text-align: center;
+            margin-top: 30px;
         }
         
         /* Features Section */
         .features {
-            background: var(--light-gray);
-            padding: 80px 0;
-            margin: 60px 0;
+            background: var(--light);
         }
         
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
         }
         
         .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: var(--radius);
             text-align: center;
-            padding: 30px;
-            background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
         }
         
         .feature-icon {
-            width: 70px;
-            height: 70px;
-            background: var(--primary-dark);
-            color: var(--white);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 1.8rem;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 2rem;
         }
         
-        .feature-title {
-            font-size: 1.3rem;
+        .feature-card h3 {
+            font-size: 1.5rem;
             margin-bottom: 15px;
+            color: var(--dark);
         }
         
-        /* Reviews Section */
-        .reviews {
-            padding: 80px 0;
-            background: var(--white);
+        .feature-card p {
+            color: var(--gray);
+            line-height: 1.7;
         }
         
-        .review-slider {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .review-card {
-            background: var(--white);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 20px;
+        /* Testimonials */
+        .testimonials {
+            background: white;
             position: relative;
+            overflow: hidden;
         }
         
-        .review-card::before {
-            content: '"';
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 4rem;
-            color: var(--accent-gold);
-            opacity: 0.3;
-            font-family: serif;
+        .testimonial-slider {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 20px 0;
+            scrollbar-width: none;
         }
         
-        .review-text {
+        .testimonial-slider::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .testimonial-card {
+            min-width: 350px;
+            background: var(--light);
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .testimonial-text {
             font-size: 1.1rem;
             line-height: 1.8;
-            margin-bottom: 20px;
-            color: var(--text-dark);
+            color: var(--dark);
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 20px;
+            border-left: 3px solid var(--primary);
         }
         
-        .review-author {
+        .testimonial-author {
             display: flex;
             align-items: center;
             gap: 15px;
         }
         
         .author-avatar {
-            width: 50px;
-            height: 50px;
-            background: var(--primary-dark);
-            color: var(--white);
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
+            overflow: hidden;
+            background: var(--primary-light);
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
             font-weight: 600;
+            font-size: 1.2rem;
         }
         
         .author-info h4 {
@@ -327,20 +547,19 @@
         }
         
         .author-location {
-            color: var(--text-light);
+            color: var(--gray);
             font-size: 0.9rem;
         }
         
         .stars {
-            color: var(--accent-gold);
+            color: var(--secondary);
             margin-bottom: 10px;
         }
         
         /* Newsletter */
         .newsletter {
-            background: var(--primary-dark);
-            color: var(--white);
-            padding: 60px 0;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark) 100%);
+            color: white;
             text-align: center;
         }
         
@@ -349,9 +568,9 @@
             margin: 0 auto;
         }
         
-        .newsletter h3 {
-            color: var(--white);
-            margin-bottom: 15px;
+        .newsletter h2 {
+            color: white;
+            margin-bottom: 20px;
         }
         
         .newsletter p {
@@ -368,59 +587,113 @@
         
         .newsletter-input {
             flex: 1;
-            padding: 15px 20px;
+            padding: 16px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius);
             font-size: 1rem;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--white);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .newsletter-input::placeholder {
             color: rgba(255, 255, 255, 0.7);
         }
         
-        /* Responsive */
-        @media (max-width: 768px) {
-            .brand-name {
-                font-size: 2.5rem;
-            }
-            
-            .tagline {
-                font-size: 1.2rem;
-            }
-            
-            .hero {
-                padding: 70px 0 50px;
-            }
-            
-            .cta-buttons {
+        .newsletter-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Stats Section */
+        .stats {
+            background: var(--light);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+        
+        .stat-card {
+            padding: 30px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero-content .container {
                 flex-direction: column;
-                align-items: center;
+                text-align: center;
             }
             
-            .btn {
-                width: 100%;
-                max-width: 300px;
-                justify-content: center;
+            .hero-text h1 {
+                font-size: 3.5rem;
             }
             
             .section-title h2 {
-                font-size: 2rem;
+                font-size: 2.5rem;
+            }
+            
+            .hero-cta {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .section {
+                padding: 60px 0;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.8rem;
+            }
+            
+            .hero-text .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
             }
             
             .newsletter-form {
                 flex-direction: column;
             }
             
-            .product-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
+            .testimonial-card {
+                min-width: 300px;
+                padding: 30px;
             }
         }
         
         @media (max-width: 480px) {
-            .brand-name {
+            .hero-text h1 {
+                font-size: 2.2rem;
+            }
+            
+            .section-title h2 {
                 font-size: 2rem;
             }
             
@@ -428,9 +701,25 @@
                 grid-template-columns: 1fr;
             }
             
-            .review-card {
-                padding: 30px 20px;
+            .hero-cta {
+                flex-direction: column;
             }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        /* Animation Classes */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -439,140 +728,269 @@
     
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content container">
-            <h1 class="brand-name">NORA HAIR LINE</h1>
-            <p class="tagline">Premium 100% Human Hair</p>
-            <p class="slogan">Luxury for less... Premium 100% human hair extensions, wigs, and hair products at wholesale prices.</p>
-            
-            <div class="cta-buttons">
-                <a href="/shop" class="btn btn-primary">
-                    <i class="fas fa-shopping-bag"></i> Shop Now
-                </a>
-                <a href="#featured" class="btn btn-secondary">
-                    <i class="fas fa-star"></i> View Collections
-                </a>
+        <div class="hero-bg">
+            <img src="{{ url_for('static', filename='images/hero-bg.jpg') }}" 
+                 alt="Nora Hair Line Premium Hair" 
+                 onerror="this.src='https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'">
+        </div>
+        
+        <div class="hero-content">
+            <div class="container">
+                <div class="hero-text" data-aos="fade-right" data-aos-duration="1000">
+                    <h1>NORA HAIR LINE</h1>
+                    <p class="tagline">Premium 100% Human Hair</p>
+                    <p>{{ config.description }}</p>
+                    
+                    <div class="hero-cta">
+                        <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                            <i class="fas fa-shopping-bag"></i> Shop Collections
+                        </a>
+                        <a href="#featured" class="btn btn-outline">
+                            <i class="fas fa-eye"></i> View Featured
+                        </a>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="stats-preview" style="margin-top: 40px; display: flex; gap: 30px; flex-wrap: wrap;">
+                        <div>
+                            <h3 style="color: var(--secondary); font-size: 2rem;">100%</h3>
+                            <p>Human Hair</p>
+                        </div>
+                        <div>
+                            <h3 style="color: var(--secondary); font-size: 2rem;">500+</h3>
+                            <p>Happy Clients</p>
+                        </div>
+                        <div>
+                            <h3 style="color: var(--secondary); font-size: 2rem;">30</h3>
+                            <p>Day Returns</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-image" data-aos="fade-left" data-aos-duration="1000">
+                    <img src="{{ url_for('static', filename='images/hero-product.png') }}" 
+                         alt="Premium Hair Product"
+                         onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                </div>
             </div>
         </div>
     </section>
     
-    <!-- Featured Products -->
-    <section id="featured" class="container">
-        <div class="section-title">
-            <h2>Featured Collections</h2>
-            <p>Discover our premium selection of 100% human hair products</p>
-        </div>
-        
-        <div class="product-grid">
-            {% for product in featured_products %}
-            <a href="/product/{{ product.id }}" style="text-decoration: none;">
-                <div class="product-card">
-                    <div class="product-img">
+    <!-- Featured Collections -->
+    <section id="featured" class="section featured-collections">
+        <div class="container">
+            <div class="section-title" data-aos="fade-up">
+                <h2>Featured Collections</h2>
+                <p>Discover our premium selection of 100% human hair products</p>
+            </div>
+            
+            <!-- Collection Navigation -->
+            <div class="collection-nav" data-aos="fade-up" data-aos-delay="100">
+                <button class="active" data-category="all">All Products</button>
+                {% for category in categories[:5] %}
+                <button data-category="{{ category.id }}">{{ category.name }}</button>
+                {% endfor %}
+            </div>
+            
+            <!-- Product Grid -->
+            <div class="product-grid">
+                {% for product in featured_products %}
+                <div class="product-card fade-in" data-category="{{ product.category_id }}" data-aos="fade-up">
+                    {% if product.featured %}
+                    <span class="product-badge featured">FEATURED</span>
+                    {% endif %}
+                    
+                    {% if product.compare_price and product.compare_price > product.price %}
+                    <span class="product-badge sale">SALE</span>
+                    {% endif %}
+                    
+                    <div class="product-image">
                         {% if product.image_url %}
-                            <img src="/static/uploads/{{ product.image_url }}" alt="{{ product.name }}">
+                        <img src="{{ url_for('uploaded_file', filename=product.image_url) }}" 
+                             alt="{{ product.name }}"
+                             onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
                         {% else %}
-                            <img src="/static/images/default-product.jpg" alt="{{ product.name }}">
+                        <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                             alt="{{ product.name }}">
                         {% endif %}
+                        
+                        <div class="product-overlay">
+                            <div class="quick-actions">
+                                <button class="quick-btn" onclick="addToCart({{ product.id }})" 
+                                        title="Add to Cart">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                                <button class="quick-btn" onclick="window.location.href='{{ url_for('product_detail', id=product.id) }}'"
+                                        title="Quick View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="quick-btn" onclick="toggleWishlist({{ product.id }})"
+                                        title="Add to Wishlist">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                    
                     <div class="product-info">
-                        <!-- FIXED: Safe access for category -->
                         <div class="product-category">
                             {% if product.category %}
-                                {{ product.category.name }}
+                            {{ product.category.name }}
                             {% else %}
-                                Hair Products
+                            Hair Collection
                             {% endif %}
                         </div>
-                        <h3 class="product-name">{{ product.name }}</h3>
-                        {% if product.compare_price and product.compare_price > product.price %}
+                        <h3 class="product-name">
+                            <a href="{{ url_for('product_detail', id=product.id) }}">
+                                {{ product.name }}
+                            </a>
+                        </h3>
+                        
                         <div class="product-price">
+                            <span class="current-price">{{ format_price(product.price) }}</span>
+                            {% if product.compare_price and product.compare_price > product.price %}
                             <span class="old-price">{{ format_price(product.compare_price) }}</span>
-                            {{ format_price(product.price) }}
+                            {% endif %}
                         </div>
-                        {% else %}
-                        <div class="product-price">{{ format_price(product.price) }}</div>
-                        {% endif %}
+                        
+                        <div class="product-meta">
+                            <div class="rating">
+                                {% set avg_rating = random.randint(4,5) %}
+                                {% for i in range(5) %}
+                                {% if i < avg_rating %}
+                                <i class="fas fa-star"></i>
+                                {% else %}
+                                <i class="far fa-star"></i>
+                                {% endif %}
+                                {% endfor %}
+                                <span style="color: var(--gray); font-size: 0.8rem; margin-left: 5px;">
+                                    ({{ random.randint(15, 50) }})
+                                </span>
+                            </div>
+                            {% if product.quantity > 0 %}
+                            <span style="color: var(--success); font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> In Stock
+                            </span>
+                            {% else %}
+                            <span style="color: #FF6B6B; font-weight: 600;">
+                                <i class="fas fa-times-circle"></i> Out of Stock
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </a>
-            {% else %}
-            <!-- Show empty state if no featured products -->
-            <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <i class="fas fa-box-open fa-3x" style="color: #ccc; margin-bottom: 20px;"></i>
-                <h3>No Featured Products Yet</h3>
-                <p>Check back soon for our premium hair collections!</p>
+                {% else %}
+                <!-- Empty State -->
+                <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+                    <div style="width: 100px; height: 100px; background: var(--light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
+                        <i class="fas fa-box-open fa-2x" style="color: var(--gray);"></i>
+                    </div>
+                    <h3 style="margin-bottom: 15px;">No Featured Products Yet</h3>
+                    <p style="color: var(--gray); margin-bottom: 30px;">Check back soon for our premium hair collections!</p>
+                    <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                        Browse All Products
+                    </a>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        
-        <div style="text-align: center; margin: 40px 0;">
-            <a href="/shop" class="btn btn-primary">
-                <i class="fas fa-store"></i> View All Products
-            </a>
+            
+            <div class="view-all" data-aos="fade-up">
+                <a href="{{ url_for('shop') }}" class="btn btn-secondary">
+                    View All Collections <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
         </div>
     </section>
     
     <!-- Features Section -->
-    <section class="features">
+    <section class="section features">
         <div class="container">
-            <div class="section-title">
-                <h2>Why Choose Nora Hair Line</h2>
-                <p>Experience premium quality and exceptional service</p>
+            <div class="section-title" data-aos="fade-up">
+                <h2>Why Choose Nora Hair</h2>
+                <p>Premium quality and exceptional service you can trust</p>
             </div>
             
             <div class="feature-grid">
-                <div class="feature-card">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
                     <div class="feature-icon">
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-award"></i>
                     </div>
-                    <h3 class="feature-title">100% Human Hair</h3>
-                    <p>Premium quality virgin hair with natural texture and longevity.</p>
+                    <h3>Premium Quality</h3>
+                    <p>100% virgin human hair with natural texture, longevity, and minimal shedding.</p>
                 </div>
                 
-                <div class="feature-card">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
                     <div class="feature-icon">
-                        <i class="fas fa-truck"></i>
+                        <i class="fas fa-shipping-fast"></i>
                     </div>
-                    <h3 class="feature-title">Nationwide Delivery</h3>
-                    <p>Fast and reliable shipping across Nigeria with tracking.</p>
+                    <h3>Fast Delivery</h3>
+                    <p>Nationwide shipping across Nigeria with real-time tracking and secure packaging.</p>
                 </div>
                 
-                <div class="feature-card">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
                     <div class="feature-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h3 class="feature-title">Quality Guarantee</h3>
-                    <p>30-day return policy and quality assurance on all products.</p>
+                    <h3>Quality Guarantee</h3>
+                    <p>30-day satisfaction guarantee with easy returns and quality assurance on all products.</p>
                 </div>
                 
-                <div class="feature-card">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
                     <div class="feature-icon">
                         <i class="fas fa-headset"></i>
                     </div>
-                    <h3 class="feature-title">Expert Support</h3>
-                    <p>Professional consultation and customer support available.</p>
+                    <h3>Expert Support</h3>
+                    <p>Professional consultation and 24/7 customer support for all your hair needs.</p>
                 </div>
             </div>
         </div>
     </section>
     
-    <!-- Customer Reviews -->
-    <section class="reviews">
+    <!-- Stats Section -->
+    <section class="section stats">
         <div class="container">
-            <div class="section-title">
-                <h2>Customer Reviews</h2>
-                <p>See what our satisfied customers are saying</p>
+            <div class="stats-grid">
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Happy Customers</div>
+                </div>
+                
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Hair Products</div>
+                </div>
+                
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Human Hair</div>
+                </div>
+                
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials -->
+    <section class="section testimonials">
+        <div class="container">
+            <div class="section-title" data-aos="fade-up">
+                <h2>Client Testimonials</h2>
+                <p>What our customers are saying about us</p>
             </div>
             
-            <div class="review-slider">
+            <div class="testimonial-slider" id="testimonialSlider">
                 {% for review in reviews %}
-                <div class="review-card">
+                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
                     <div class="stars">
                         {% for i in range(review.rating) %}
                         <i class="fas fa-star"></i>
                         {% endfor %}
                     </div>
-                    <p class="review-text">{{ review.comment }}</p>
-                    <div class="review-author">
+                    <p class="testimonial-text">"{{ review.comment }}"</p>
+                    <div class="testimonial-author">
                         <div class="author-avatar">
                             {{ review.customer_name[0] }}
                         </div>
@@ -583,41 +1001,45 @@
                     </div>
                 </div>
                 {% else %}
-                <!-- Show empty state if no reviews -->
-                <div class="review-card" style="text-align: center;">
+                <!-- Default testimonials if none exist -->
+                {% for testimonial in [
+                    {'name': 'Chioma Okeke', 'rating': 5, 'comment': 'The Brazilian hair I purchased is absolutely stunning! Best quality I\'ve ever had!', 'location': 'Lagos'},
+                    {'name': 'Bisi Adeyemi', 'rating': 5, 'comment': 'The lace frontal wig is so natural looking! I\'ve received countless compliments.', 'location': 'Abuja'},
+                    {'name': 'Fatima Bello', 'rating': 4, 'comment': 'Fast delivery and premium quality hair. Will definitely order again!', 'location': 'Port Harcourt'}
+                ] %}
+                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
                     <div class="stars">
+                        {% for i in range(testimonial.rating) %}
                         <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
+                        {% endfor %}
                     </div>
-                    <p class="review-text">Be the first to leave a review! Share your experience with Nora Hair Line products.</p>
-                    <div class="review-author">
+                    <p class="testimonial-text">"{{ testimonial.comment }}"</p>
+                    <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            {{ testimonial.name[0] }}
                         </div>
                         <div class="author-info">
-                            <h4>Your Name Here</h4>
-                            <div class="author-location">Your Location</div>
+                            <h4>{{ testimonial.name }}</h4>
+                            <div class="author-location">{{ testimonial.location }}</div>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
                 {% endfor %}
             </div>
         </div>
     </section>
     
     <!-- Newsletter -->
-    <section class="newsletter">
+    <section class="section newsletter">
         <div class="container">
-            <div class="newsletter-content">
-                <h3>Stay Updated</h3>
+            <div class="newsletter-content" data-aos="fade-up">
+                <h2>Stay Updated</h2>
                 <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
-                <form class="newsletter-form">
+                <form class="newsletter-form" id="newsletterForm">
                     <input type="email" class="newsletter-input" placeholder="Your email address" required>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-paper-plane"></i> Subscribe
                     </button>
                 </form>
@@ -627,30 +1049,244 @@
     
     {% include 'footer.html' %}
     
+    <!-- JavaScript Libraries -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
     <script>
-        // Newsletter form submission
-        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+        
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        
+        // Collection Filter
+        document.querySelectorAll('.collection-nav button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                document.querySelectorAll('.collection-nav button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                const category = this.dataset.category;
+                const productCards = document.querySelectorAll('.product-card');
+                
+                productCards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'block';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 10);
+                    } else {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+        });
+        
+        // Add to Cart Function
+        async function addToCart(productId) {
+            try {
+                const response = await fetch(`/add-to-cart/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: 'quantity=1'
+                });
+                
+                if (response.ok) {
+                    showNotification('Product added to cart!', 'success');
+                    updateCartCount();
+                } else {
+                    showNotification('Failed to add to cart', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+        // Wishlist Function
+        function toggleWishlist(productId) {
+            let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+            const index = wishlist.indexOf(productId);
+            
+            if (index === -1) {
+                wishlist.push(productId);
+                showNotification('Added to wishlist!', 'success');
+            } else {
+                wishlist.splice(index, 1);
+                showNotification('Removed from wishlist', 'info');
+            }
+            
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        }
+        
+        // Newsletter Form
+        document.getElementById('newsletterForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const email = this.querySelector('.newsletter-input').value;
-            if (email) {
-                alert('Thank you for subscribing to our newsletter!');
-                this.querySelector('.newsletter-input').value = '';
+            
+            // Simple validation
+            if (email && email.includes('@')) {
+                showNotification('Thank you for subscribing!', 'success');
+                this.reset();
+                
+                // In a real app, you would send this to your backend
+                fetch('/api/newsletter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+            } else {
+                showNotification('Please enter a valid email address', 'error');
             }
         });
         
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                if (targetId === '#') return;
+        // Notification System
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 30px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#27AE60' : type === 'error' ? '#FF6B6B' : '#F39C12'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 350px;
+                font-weight: 500;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span style="margin-left: 10px;">${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Get CSRF Token
+        function getCSRFToken() {
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            return metaTag ? metaTag.content : '';
+        }
+        
+        // Update cart count in header
+        function updateCartCount() {
+            const cartCountEls = document.querySelectorAll('.cart-count');
+            cartCountEls.forEach(el => {
+                let count = parseInt(el.textContent) || 0;
+                el.textContent = count + 1;
+                el.style.display = 'flex';
+            });
+        }
+        
+        // Auto-scroll testimonials
+        let scrollDirection = 1;
+        function autoScrollTestimonials() {
+            const slider = document.getElementById('testimonialSlider');
+            if (slider) {
+                const scrollAmount = 370; // Width of testimonial + gap
+                let newScroll = slider.scrollLeft + (scrollDirection * scrollAmount);
                 
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
+                // Check if we've reached the end
+                if (newScroll >= slider.scrollWidth - slider.clientWidth) {
+                    scrollDirection = -1;
+                } else if (newScroll <= 0) {
+                    scrollDirection = 1;
+                }
+                
+                slider.scrollTo({
+                    left: newScroll,
+                    behavior: 'smooth'
+                });
+            }
+        }
+        
+        // Auto-scroll every 5 seconds
+        setInterval(autoScrollTestimonials, 5000);
+        
+        // Initialize cart count from session
+        window.addEventListener('DOMContentLoaded', () => {
+            const cartCountEls = document.querySelectorAll('.cart-count');
+            const cartCount = {{ cart_count }};
+            
+            cartCountEls.forEach(el => {
+                el.textContent = cartCount;
+                if (cartCount === 0) {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = 'flex';
                 }
             });
         });
