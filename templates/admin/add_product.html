@@ -282,6 +282,95 @@
             justify-content: center;
         }
 
+        /* Variants Section */
+        .variants-section {
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            background: #fafafa;
+        }
+
+        .variants-section h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .variants-section h3 i {
+            font-size: 1.2rem;
+        }
+
+        .variant-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--light-gray);
+        }
+
+        .variant-header {
+            background: var(--light-gray);
+            font-weight: 600;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .remove-variant {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-variant-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .add-variant-btn:hover {
+            background: #2d9100;
+        }
+
+        /* Bundle Section */
+        .bundle-section {
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            background: #fafafa;
+        }
+
+        .bundle-section h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         /* Switch */
         .switch {
             position: relative;
@@ -340,27 +429,6 @@
             color: var(--gray);
             margin-top: 5px;
             font-size: 0.85rem;
-        }
-
-        .sku-generate {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 5px;
-        }
-
-        .sku-generate button {
-            padding: 8px 15px;
-            background: var(--light-gray);
-            border: 1px solid var(--gray);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .sku-generate button:hover {
-            background: var(--gray);
-            color: white;
         }
 
         /* Buttons */
@@ -579,6 +647,11 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+
+            .variant-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
         }
 
         @media (max-width: 576px) {
@@ -632,7 +705,7 @@
             <header class="header">
                 <div>
                     <h1>Add New Product</h1>
-                    <p>Add new hair products to your store inventory</p>
+                    <p>Add new hair products to your store inventory with variants</p>
                 </div>
                 <div class="user-info">
                     <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
@@ -656,7 +729,6 @@
             <!-- Form Container -->
             <div class="form-container">
                 <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
-                    <!-- FIXED: Use csrf_token directly, not csrf_token() -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     
                     <!-- Product Basic Information -->
@@ -664,7 +736,7 @@
                         <div class="form-group">
                             <label for="name">Product Name *</label>
                             <input type="text" id="name" name="name" class="form-control" 
-                                   placeholder="e.g., Premium Bone Straight Hair 24''" required>
+                                   placeholder="e.g., Premium Brazilian Body Wave" required>
                             <small>Use descriptive names that customers can easily understand</small>
                             <div class="error-message" id="nameError"></div>
                         </div>
@@ -681,18 +753,6 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="sku">SKU (Stock Keeping Unit)</label>
-                            <div class="sku-generate">
-                                <input type="text" id="sku" name="sku" class="form-control" 
-                                       placeholder="e.g., NHR-24BS-BLK">
-                                <button type="button" id="generateSKU">Generate</button>
-                            </div>
-                            <small>Leave empty to auto-generate</small>
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <label for="description">Description *</label>
                         <textarea id="description" name="description" class="form-control" 
@@ -702,13 +762,13 @@
                         <div class="error-message" id="descriptionError"></div>
                     </div>
 
-                    <!-- Pricing and Stock -->
+                    <!-- Pricing Information -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="price">Price (₦) *</label>
-                            <input type="number" id="price" name="price" class="form-control" 
+                            <label for="base_price">Base Price (₦) *</label>
+                            <input type="number" id="base_price" name="base_price" class="form-control" 
                                    placeholder="0.00" min="0" step="0.01" required>
-                            <small>Selling price in Nigerian Naira</small>
+                            <small>Base price for this product (variant prices will override)</small>
                             <div class="error-message" id="priceError"></div>
                         </div>
                         <div class="form-group">
@@ -717,51 +777,9 @@
                                    placeholder="0.00" min="0" step="0.01">
                             <small>Original price to show discount (optional)</small>
                         </div>
-                        <div class="form-group">
-                            <label for="quantity">Stock Quantity *</label>
-                            <input type="number" id="quantity" name="quantity" class="form-control" 
-                                   placeholder="100" min="0" required>
-                            <small>Available quantity in inventory</small>
-                            <div class="error-message" id="quantityError"></div>
-                        </div>
                     </div>
 
-                    <!-- Product Details -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="length">Length</label>
-                            <input type="text" id="length" name="length" class="form-control" 
-                                   placeholder="e.g., 24 inches">
-                            <small>Hair length if applicable</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="texture">Texture</label>
-                            <input type="text" id="texture" name="texture" class="form-control" 
-                                   placeholder="e.g., Bone Straight, Body Wave, Curly">
-                            <small>Hair texture type</small>
-                        </div>
-                    </div>
-
-                    <!-- Image Upload -->
-                    <div class="form-group">
-                        <label for="image">Product Image *</label>
-                        <div class="file-upload-container">
-                            <div class="file-upload-area" onclick="document.getElementById('image').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Click to upload product image</p>
-                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
-                                <div class="btn">Browse Files</div>
-                            </div>
-                            <input type="file" id="image" name="image" accept="image/*" 
-                                   style="display: none;" onchange="previewImage(this)">
-                            <div id="imagePreview"></div>
-                            <input type="text" id="image_url" name="image_url" class="form-control mt-3" 
-                                   placeholder="Or enter image URL (optional)">
-                            <small>Upload image or provide image URL</small>
-                        </div>
-                    </div>
-
-                    <!-- Product Status -->
+                    <!-- Product Settings -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>Featured Product</label>
@@ -785,6 +803,104 @@
                         </div>
                     </div>
 
+                    <!-- Bundle Options -->
+                    <div class="bundle-section">
+                        <h3><i class="fas fa-boxes"></i> Bundle Options</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Is Bundle Product?</label>
+                                <div style="margin-top: 10px;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="is_bundle" name="is_bundle">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span style="margin-left: 10px; color: var(--gray);">This product is a bundle of other products</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bundle_discount">Bundle Discount (%)</label>
+                                <input type="number" id="bundle_discount" name="bundle_discount" 
+                                       class="form-control" placeholder="0" min="0" max="100" step="1">
+                                <small>Discount percentage for bundle (0-100)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Variants Section -->
+                    <div class="variants-section" id="variantsSection">
+                        <h3><i class="fas fa-layer-group"></i> Product Variants</h3>
+                        <p style="color: var(--gray); margin-bottom: 20px;">
+                            Add different variants of this product (different lengths, textures, colors, etc.)
+                        </p>
+                        
+                        <div class="variant-header">
+                            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr; gap: 10px;">
+                                <span>Variant Name</span>
+                                <span>Length</span>
+                                <span>Texture</span>
+                                <span>Price (₦)</span>
+                                <span>Stock</span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div id="variantsContainer">
+                            <!-- Default variant row -->
+                            <div class="variant-row" data-index="0">
+                                <div>
+                                    <input type="text" name="variant_name[]" class="form-control" 
+                                           placeholder="e.g., Standard" value="Standard">
+                                </div>
+                                <div>
+                                    <input type="text" name="variant_length[]" class="form-control" 
+                                           placeholder="e.g., 22''">
+                                </div>
+                                <div>
+                                    <input type="text" name="variant_texture[]" class="form-control" 
+                                           placeholder="e.g., Body Wave">
+                                </div>
+                                <div>
+                                    <input type="number" name="variant_price[]" class="form-control variant-price" 
+                                           placeholder="0.00" min="0" step="0.01">
+                                </div>
+                                <div>
+                                    <input type="number" name="variant_stock[]" class="form-control" 
+                                           placeholder="10" min="0" value="10">
+                                </div>
+                                <div>
+                                    <button type="button" class="remove-variant" onclick="removeVariant(this)" disabled>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="variant_id[]" value="">
+                                <input type="hidden" name="variant_color[]" value="">
+                                <input type="hidden" name="variant_sku[]" value="">
+                            </div>
+                        </div>
+
+                        <button type="button" class="add-variant-btn" onclick="addVariant()">
+                            <i class="fas fa-plus"></i> Add Variant
+                        </button>
+                    </div>
+
+                    <!-- Multiple Image Upload -->
+                    <div class="form-group">
+                        <label for="images">Product Images *</label>
+                        <small>Upload multiple images for this product</small>
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" onclick="document.getElementById('images').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload product images (multiple allowed)</p>
+                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
+                                <div class="btn">Browse Files</div>
+                            </div>
+                            <input type="file" id="images" name="images" accept="image/*" 
+                                   style="display: none;" multiple onchange="previewImages(this)">
+                            <div id="imagePreview"></div>
+                            <small>First image will be set as primary. Click on image to set as primary.</small>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="form-actions">
                         <button type="submit" class="btn btn-success">
@@ -793,9 +909,6 @@
                         <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
-                        <button type="button" class="btn btn-outline" onclick="previewProduct()">
-                            <i class="fas fa-eye"></i> Preview
-                        </button>
                     </div>
                 </form>
             </div>
@@ -819,62 +932,130 @@
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const generateSKUBtn = document.getElementById('generateSKU');
-        const skuInput = document.getElementById('sku');
         const imagePreview = document.getElementById('imagePreview');
+        const variantsContainer = document.getElementById('variantsContainer');
+        const basePriceInput = document.getElementById('base_price');
+        let variantIndex = 1;
 
-        // Image Preview
-        function previewImage(input) {
-            imagePreview.innerHTML = '';
-            
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const previewItem = document.createElement('div');
-                    previewItem.className = 'preview-item';
+        // Multiple Image Preview
+        function previewImages(input) {
+            if (input.files) {
+                for (let i = 0; i < input.files.length; i++) {
+                    const file = input.files[i];
+                    const reader = new FileReader();
                     
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.alt = 'Product Preview';
-                    
-                    const removeBtn = document.createElement('button');
-                    removeBtn.className = 'remove-btn';
-                    removeBtn.innerHTML = '×';
-                    removeBtn.onclick = function() {
-                        imagePreview.removeChild(previewItem);
-                        input.value = '';
+                    reader.onload = function(e) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        previewItem.dataset.index = i;
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Product Preview';
+                        
+                        const primaryBadge = document.createElement('div');
+                        primaryBadge.className = 'primary-badge';
+                        primaryBadge.innerHTML = '<i class="fas fa-star"></i> Primary';
+                        primaryBadge.style.cssText = `
+                            position: absolute;
+                            top: 5px;
+                            left: 5px;
+                            background: var(--primary);
+                            color: white;
+                            padding: 2px 8px;
+                            border-radius: 3px;
+                            font-size: 0.8rem;
+                            display: ${i === 0 ? 'block' : 'none'};
+                        `;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.innerHTML = '×';
+                        removeBtn.onclick = function() {
+                            imagePreview.removeChild(previewItem);
+                            // Note: We can't actually remove the file from input.files
+                            // This is just visual removal
+                        };
+                        
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(primaryBadge);
+                        previewItem.appendChild(removeBtn);
+                        previewItem.onclick = function() {
+                            // Set as primary (move to front)
+                            imagePreview.insertBefore(previewItem, imagePreview.firstChild);
+                            // Update all badges
+                            document.querySelectorAll('.primary-badge').forEach(badge => {
+                                badge.style.display = 'none';
+                            });
+                            primaryBadge.style.display = 'block';
+                        };
+                        
+                        imagePreview.appendChild(previewItem);
                     };
                     
-                    previewItem.appendChild(img);
-                    previewItem.appendChild(removeBtn);
-                    imagePreview.appendChild(previewItem);
-                };
-                
-                reader.readAsDataURL(file);
+                    reader.readAsDataURL(file);
+                }
             }
         }
 
-        // Generate SKU
-        generateSKUBtn.addEventListener('click', function() {
-            const name = document.getElementById('name').value;
-            const categorySelect = document.getElementById('category_id');
-            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+        // Variant Management
+        function addVariant() {
+            const newVariant = document.createElement('div');
+            newVariant.className = 'variant-row';
+            newVariant.dataset.index = variantIndex;
             
-            if (!name || !categoryText) {
-                showToast('Please enter product name and select category first', 'warning');
-                return;
+            newVariant.innerHTML = `
+                <div>
+                    <input type="text" name="variant_name[]" class="form-control" 
+                           placeholder="e.g., Brazilian Body Wave 24''">
+                </div>
+                <div>
+                    <input type="text" name="variant_length[]" class="form-control" 
+                           placeholder="e.g., 24''">
+                </div>
+                <div>
+                    <input type="text" name="variant_texture[]" class="form-control" 
+                           placeholder="e.g., Body Wave">
+                </div>
+                <div>
+                    <input type="number" name="variant_price[]" class="form-control variant-price" 
+                           placeholder="0.00" min="0" step="0.01" value="${basePriceInput.value || ''}">
+                </div>
+                <div>
+                    <input type="number" name="variant_stock[]" class="form-control" 
+                           placeholder="10" min="0" value="10">
+                </div>
+                <div>
+                    <button type="button" class="remove-variant" onclick="removeVariant(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="variant_id[]" value="">
+                <input type="hidden" name="variant_color[]" value="">
+                <input type="hidden" name="variant_sku[]" value="">
+            `;
+            
+            variantsContainer.appendChild(newVariant);
+            variantIndex++;
+            
+            showToast('New variant added', 'success');
+        }
+
+        function removeVariant(button) {
+            const variantRow = button.closest('.variant-row');
+            if (variantsContainer.children.length > 1) {
+                variantsContainer.removeChild(variantRow);
+                showToast('Variant removed', 'warning');
             }
-            
-            // Generate SKU from name and category
-            const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
-            const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
-            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
-            
-            skuInput.value = sku;
-            showToast('SKU generated successfully', 'success');
+        }
+
+        // Update variant prices when base price changes
+        basePriceInput.addEventListener('input', function() {
+            document.querySelectorAll('.variant-price').forEach(input => {
+                if (!input.value) {
+                    input.value = this.value;
+                }
+            });
         });
 
         // Form Validation
@@ -896,8 +1077,7 @@
                 { id: 'name', message: 'Product name is required' },
                 { id: 'category_id', message: 'Category is required' },
                 { id: 'description', message: 'Description is required' },
-                { id: 'price', message: 'Price is required' },
-                { id: 'quantity', message: 'Stock quantity is required' }
+                { id: 'base_price', message: 'Base price is required' }
             ];
 
             requiredFields.forEach(field => {
@@ -909,18 +1089,20 @@
                     element.parentElement.classList.add('has-error');
                     errorElement.textContent = field.message;
                     errorElement.style.display = 'block';
-                } else if (field.id === 'price' && parseFloat(element.value) <= 0) {
+                } else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
                     isValid = false;
                     element.parentElement.classList.add('has-error');
-                    errorElement.textContent = 'Price must be greater than 0';
-                    errorElement.style.display = 'block';
-                } else if (field.id === 'quantity' && parseInt(element.value) < 0) {
-                    isValid = false;
-                    element.parentElement.classList.add('has-error');
-                    errorElement.textContent = 'Stock cannot be negative';
+                    errorElement.textContent = 'Base price must be greater than 0';
                     errorElement.style.display = 'block';
                 }
             });
+
+            // Validate at least one image
+            const imagesInput = document.getElementById('images');
+            if (imagesInput.files.length === 0) {
+                isValid = false;
+                showToast('Please upload at least one product image', 'error');
+            }
 
             return isValid;
         }
@@ -930,7 +1112,6 @@
             e.preventDefault();
             
             if (!validateForm()) {
-                showToast('Please fix the errors in the form', 'error');
                 return;
             }
             
@@ -940,155 +1121,6 @@
             // Submit form
             this.submit();
         });
-
-        // Preview Product
-        function previewProduct() {
-            if (!validateForm()) {
-                showToast('Please fix errors before previewing', 'error');
-                return;
-            }
-            
-            // Get form values
-            const name = document.getElementById('name').value;
-            const price = document.getElementById('price').value;
-            const description = document.getElementById('description').value;
-            const categorySelect = document.getElementById('category_id');
-            const category = categorySelect.options[categorySelect.selectedIndex].text;
-            const quantity = document.getElementById('quantity').value;
-            
-            // Create preview window
-            const previewWindow = window.open('', '_blank');
-            previewWindow.document.write(`
-                <html>
-                <head>
-                    <title>Product Preview - {{ config.brand_name }}</title>
-                    <style>
-                        body { 
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                            padding: 20px;
-                            background: #f5f5f5;
-                        }
-                        .preview-container { 
-                            max-width: 800px; 
-                            margin: 0 auto;
-                            background: white;
-                            padding: 30px;
-                            border-radius: 10px;
-                            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-                        }
-                        .product-header {
-                            border-bottom: 2px solid #f0f0f0;
-                            padding-bottom: 20px;
-                            margin-bottom: 20px;
-                        }
-                        .product-images { 
-                            text-align: center;
-                            margin: 20px 0;
-                        }
-                        .product-images img { 
-                            max-width: 100%; 
-                            height: 300px;
-                            object-fit: contain;
-                            border-radius: 10px;
-                        }
-                        .product-info { margin-top: 20px; }
-                        .price { 
-                            color: #2a8356; 
-                            font-size: 32px; 
-                            font-weight: bold;
-                            margin: 10px 0;
-                        }
-                        .compare-price {
-                            color: #6c757d;
-                            text-decoration: line-through;
-                            font-size: 20px;
-                            margin-left: 10px;
-                        }
-                        .product-meta {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                            gap: 15px;
-                            margin: 20px 0;
-                            padding: 20px;
-                            background: #f8f9fa;
-                            border-radius: 10px;
-                        }
-                        .meta-item {
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .meta-label {
-                            font-weight: 600;
-                            color: #6c757d;
-                            font-size: 0.9rem;
-                            margin-bottom: 5px;
-                        }
-                        .meta-value {
-                            color: #212529;
-                            font-size: 1rem;
-                        }
-                        .product-description {
-                            line-height: 1.8;
-                            color: #495057;
-                            margin: 20px 0;
-                        }
-                        .back-btn {
-                            display: inline-block;
-                            margin-top: 20px;
-                            padding: 10px 20px;
-                            background: #9d4edd;
-                            color: white;
-                            text-decoration: none;
-                            border-radius: 5px;
-                            font-weight: 600;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="preview-container">
-                        <div class="product-header">
-                            <h1>Product Preview</h1>
-                            <p>This is how customers will see your product</p>
-                        </div>
-                        
-                        <div class="product-images">
-                            <img src="https://via.placeholder.com/600x400/9d4edd/ffffff?text=Product+Image" 
-                                 alt="Product Preview">
-                        </div>
-                        
-                        <div class="product-info">
-                            <h2>${name}</h2>
-                            <div>
-                                <span class="price">₦${parseFloat(price).toFixed(2)}</span>
-                            </div>
-                            
-                            <div class="product-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Category</span>
-                                    <span class="meta-value">${category}</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Stock</span>
-                                    <span class="meta-value">${quantity} units available</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Status</span>
-                                    <span class="meta-value">Available</span>
-                                </div>
-                            </div>
-                            
-                            <div class="product-description">
-                                ${description.replace(/\n/g, '<br>')}
-                            </div>
-                        </div>
-                        
-                        <a href="javascript:window.close()" class="back-btn">Close Preview</a>
-                    </div>
-                </body>
-                </html>
-            `);
-            previewWindow.document.close();
-        }
 
         // Toast Functions
         function showToast(message, type = 'success') {
@@ -1106,37 +1138,37 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default stock
-            document.getElementById('quantity').value = 100;
+            // Set default variant price to base price
+            const basePrice = basePriceInput.value;
+            if (basePrice) {
+                document.querySelector('.variant-price').value = basePrice;
+            }
             
-            // Add currency formatting to price field
-            const priceInput = document.getElementById('price');
-            priceInput.addEventListener('blur', function() {
-                if (this.value) {
-                    this.value = parseFloat(this.value).toFixed(2);
-                }
+            // Auto-update variant prices when base price changes
+            basePriceInput.addEventListener('input', function() {
+                document.querySelectorAll('.variant-price').forEach(input => {
+                    if (!input.value || input.value === basePrice) {
+                        input.value = this.value;
+                    }
+                });
             });
             
-            // Auto-generate SKU on name/category change
-            document.getElementById('name').addEventListener('blur', autoGenerateSKU);
-            document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
+            // Set SKU for default variant
+            const defaultSkuInput = document.querySelector('input[name="variant_sku[]"]');
+            if (defaultSkuInput) {
+                defaultSkuInput.value = 'DEFAULT';
+            }
         });
 
-        function autoGenerateSKU() {
-            const name = document.getElementById('name').value;
-            const categorySelect = document.getElementById('category_id');
-            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-            const currentSKU = document.getElementById('sku').value;
-            
-            // Only auto-generate if SKU is empty
-            if (!currentSKU && name && categoryText) {
-                const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
-                const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
-                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-                const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
-                document.getElementById('sku').value = sku;
+        // Handle bundle discount
+        document.getElementById('is_bundle').addEventListener('change', function() {
+            const bundleDiscountField = document.getElementById('bundle_discount');
+            if (this.checked) {
+                bundleDiscountField.value = bundleDiscountField.value || '10';
+            } else {
+                bundleDiscountField.value = '0';
             }
-        }
+        });
     </script>
 </body>
 </html>
