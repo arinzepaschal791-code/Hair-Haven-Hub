@@ -282,95 +282,6 @@
             justify-content: center;
         }
 
-        /* Variants Section */
-        .variants-section {
-            border: 2px solid var(--light-gray);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-            background: #fafafa;
-        }
-
-        .variants-section h3 {
-            color: var(--primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .variants-section h3 i {
-            font-size: 1.2rem;
-        }
-
-        .variant-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
-            gap: 10px;
-            align-items: end;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 5px;
-            border: 1px solid var(--light-gray);
-        }
-
-        .variant-header {
-            background: var(--light-gray);
-            font-weight: 600;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .remove-variant {
-            background: var(--danger);
-            color: white;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .add-variant-btn {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .add-variant-btn:hover {
-            background: #2d9100;
-        }
-
-        /* Bundle Section */
-        .bundle-section {
-            border: 2px solid var(--light-gray);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-            background: #fafafa;
-        }
-
-        .bundle-section h3 {
-            color: var(--primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         /* Switch */
         .switch {
             position: relative;
@@ -567,402 +478,711 @@
             border: 5px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s linear infinite;
+            animation: spin 1s1s linear infinite;
+        linear infinite;
         }
 
-        @keyframes spin {
+        @key }
+
+        @keyframes spinframes spin {
+            {
             to {
-                transform: rotate(360deg);
+                transform to {
+                transform: rotate(360: rotate(360deg);
+            }
+deg);
             }
         }
 
+        /*        }
+
         /* Error States */
-        .error-message {
-            color: var(--danger);
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: none;
+        Error States */
+        .error .error-message-message {
+            {
+            color: var(-- color: var(--danger);
+danger);
+            font            font-size:-size: 0.85 0.85rem;
+            marginrem;
+            margin-top:-top: 5px;
+ 5px;
+            display            display: none;
+       : none;
         }
 
-        .has-error .form-control {
-            border-color: var(--danger);
         }
 
-        .has-error .error-message {
-            display: block;
+        .has .has-error .-error .form-control {
+           form-control {
+            border-color border-color: var(--danger: var(--danger);
+        }
+
+       );
+        }
+
+        .has .has-error .-error .error-merror-message {
+essage {
+            display: block            display: block;
+        }
+
+        /* Alert Messages;
         }
 
         /* Alert Messages */
+        . */
         .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 5px solid;
+            paddingalert {
+            padding: : 15px;
+            border-radius15px;
+            border-radius: : 5px;
+            margin-bottom5px;
+            margin-bottom: 20px: 20px;
+            border-left;
+            border-left: : 5px5px solid;
         }
 
-        .alert-success {
-            background: #d4edda;
-            border-color: var(--success);
-            color: #155724;
+ solid;
+        }
+
+        .        .alert-success {
+           alert-success {
+            background: background: #d #d4ed4edda;
+            borderda;
+            border-color:-color: var(-- var(--success);
+            colorsuccess);
+            color: #: #155724;
+        }
+
+       155724;
         }
 
         .alert-danger {
-            background: #f8d7da;
-            border-color: var(--danger);
-            color: #721c24;
+ .alert-danger {
+            background            background: #f8: #f8d7da;
+            borderd7da;
+            border-color:-color: var(--danger);
+ var(--danger);
+            color: #            color: #721c721c24;
         }
 
-        .alert-warning {
-            background: #fff3cd;
-            border-color: var(--warning);
-            color: #856404;
+24;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
+        .        .alert-walert-warning {
+            backgroundarning {
+            background: #: #fff3fff3cd;
+cd;
+            border            border-color:-color: var(--warning);
+ var(--warning);
+            color: #            color: #856404856404;
+        }
+
+       ;
+        }
+
+        /* Respons /* Responsive */
+        @ive */
+        @media (media (max-width: max-width: 768px768px) {
+) {
             .sidebar {
-                width: 70px;
+            .sidebar {
+                width                width: : 70px70px;
+           ;
+            }
+
             }
 
             .sidebar-header h2,
-            .nav-links span,
-            .sidebar-header p {
+            . .sidebar-header h2,
+            .nav-lnav-links span,
+           inks span,
+            .sidebar .sidebar-header p-header p {
+                {
                 display: none;
+ display: none;
+            }
+
             }
 
             .main-content {
+                margin-left:             .main-content {
                 margin-left: 70px;
+70px;
             }
 
-            .nav-links a {
-                justify-content: center;
-                padding: 15px;
+            .nav            }
+
+            .nav-links-links a {
+                justify a {
+                justify-content:-content: center;
+ center;
+                padding: 15px                padding: 15px;
+           ;
             }
 
-            .nav-links i {
-                margin-right: 0;
-                font-size: 1.5rem;
+            }
+
+            .nav-links .nav-links i {
+ i {
+                margin                margin-right: 0;
+               -right: 0;
+                font-size font-size: : 1.1.5rem5rem;
+            }
+
+;
             }
 
             .form-row {
-                grid-template-columns: 1fr;
+                grid            .form-row {
+                grid-template-column-template-columns: 1fr;
             }
 
-            .variant-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
+s: 1fr;
+            }
+
+            .            .variant-row {
+               variant-row {
+                grid-template-columns: 1fr grid-template-columns: 1fr;
+               ;
+                gap: 15 gap: 15px;
             }
         }
 
-        @media (max-width: 576px) {
+px;
+            }
+        }
+
+        @media (        @media (max-widthmax-width: : 576px576px) {
+            .) {
             .header {
+                flex-direction:header {
                 flex-direction: column;
-                text-align: center;
-                gap: 15px;
+ column;
+                text-align:                text-align: center;
+                gap center;
+                gap: : 15px;
+           15px;
+            }
+
             }
 
             .user-info {
-                justify-content: center;
+                justify .user-info {
+                justify-content:-content: center;
+            }
+
+            . center;
             }
 
             .form-container {
-                padding: 20px;
+               form-container {
+                padding: 20 padding: 20px;
+px;
             }
 
-            .form-actions {
+            .            }
+
+            .form-form-actions {
+                flexactions {
                 flex-direction: column;
+-direction: column;
             }
+
+            .            }
 
             .btn {
-                width: 100%;
+btn {
+                width:                 width: 100%;
+            }
+100%;
             }
         }
+        }
     </style>
+</head    </style>
 </head>
 <body>
+<body>
+    <div>
     <div class="admin-container">
+        <!-- Side class="admin-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>{{ config.brand_name }}</h2>
-                <p>Admin Panel</p>
-            </div>
-            <ul class="nav-links">
-                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
-                <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-                <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-                <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
-                <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+bar -->
+               <aside class <aside class="sidebar">
+            <div="sidebar">
+            <div class=" class="sidebar-header">
+                <hsidebar-header">
+                <h2>{{ config.b2>{{ config.brand_namerand_name }}</h }}</h2>
+2>
+                               <p> <p>Admin PanelAdmin Panel</p>
+           </p>
+            </div </div>
+           >
+            <ul class=" <ul class="nav-lnav-links">
+inks">
+                               <li <li><a href><a href="{{ url_for('="{{ url_for('admin_dadmin_dashboard') }}ashboard') }}"><i class"><i class="fas="fas fa-t fa-tachometer-alt"></achometer-alt"></i>i> <span>Dashboard <span>Dashboard</span</span></a></a></li>
+                <li><a></li>
+                <li><a href="{{ href="{{ url_for url_for('admin('admin_products_products') }}"') }}" class="active class="active"><i class"><i class="fas="fas fa-box fa-box"></i>"></i> <span>Products</ <span>span></a></Products</span></a></li>
+li>
+                               <li>< <li><a hrefa href="{{ url="{{ url_for('_for('admin_admin_orders') }}orders') }}"><i class="fas"><i class="fas fa-shopping-c fa-shopping-cart"></i>art"></i> <span>Orders <span>Orders</span</span></a></a></li></li>
+               >
+                <li <li><a><a href="{{ href="{{ url_for url_for('admin('admin_categories_categories') }}') }}"><i"><i class=" class="fas fafas fa-tags"></i-tags"></i>> <span> <span>Categories</span></a></Categories</span></a></li>
+li>
+                               <li <li><a href="{{ url><a href="{{ url_for('admin_c_for('admin_customers') }}ustomers') }}"><i"><i class=" class="fas fafas fa-users"></-users"></i>i> <span>Customers <span>Customers</span</span></a></a></li></li>
+               >
+                <li <li><a><a href="{{ href="{{ url_for url_for('admin_settings')('admin_settings') }} }}"><i class="fas"><i class="fas fa-cog"></ fa-cog"></i>i> <span <span>Settings>Settings</span</span></a></a></li></li>
+                <li>
+                <li><a href="{{><a href="{{ url_for url_for('admin('admin_logout_logout') }}') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
             </ul>
         </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
+        </aside>
+
+        <!--        <!-- Main Content -->
+        Main Content -->
+        <main <main class=" class="main-contentmain-content">
+            <!-- Header">
             <!-- Header -->
-            <header class="header">
+            <header -->
+            class=" <header class="header">
+                <div>
+                    <h1header">
                 <div>
                     <h1>Add New Product</h1>
-                    <p>Add new hair products to your store inventory with variants</p>
+                   >Add New Product</h1>
+                    <p>Add new <p>Add new hair products to your hair products to your store inventory store inventory</p>
+</p                </div>
+                <div class="user-info>
                 </div>
                 <div class="user-info">
-                    <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
-                    <a href="{{ url_for('admin_logout') }}" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                    <div class="user-avatar">{{ session.get('admin">
+                    <div class="user-avatar">{{ session.get('admin_name',_name', 'A')[0] }}</div>
+                    <a href 'A')[0] }}</div>
+                    <a href="{{ url_for('="{{ url_for('admin_logout')admin_logout') }}" class=" }}" class="logoutlogout-btn">
+-btn">
+                        <i class                        <i class="fas fa-sign="fas fa-sign-out-alt"></i> Log-out-alt"></i> Logout
+                    </a>
+                </out
                     </a>
                 </div>
             </header>
 
+            <!--div>
+            </header>
+
             <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% with messages = get_flashed_messages(with Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true)_categories=true) %}
+                {% if messages %}
+ %}
                 {% if messages %}
                     {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
+                    <div                    {% for category, message in messages %}
+                    <div class="alert alert class="alert alert-{{-{{ category }}">
+                        {{ category }}">
                         {{ message }}
-                    </div>
+ message }}
+                    </                    </div>
+div>
                     {% endfor %}
-                {% endif %}
+                                   {% endfor %}
+                {% endif {% endif %}
+            {% end %}
             {% endwith %}
 
+with %}
+
             <!-- Form Container -->
-            <div class="form-container">
-                <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    
-                    <!-- Product Basic Information -->
-                    <div class="form-row">
+            <div            <!-- Form Container -->
+            <div class=" class="form-container">
+               form-container">
+                <form <form id=" id="addProductaddProductForm"Form" method=" method="POST"POST" action="{{ action="{{ url_for('add url_for('add_product') }}" en_product')ctype="multipart }}" enctype="multipart/form-data">
+                   /form-data">
+                    <!-- Product Basic Information <!-- Product Basic Information -->
+                    -->
+                    <div <div class="form-row class="form-row">
+                        <div">
+                        <div class=" class="form-groupform-group">
+                            <label">
+                            <label for for="name">Product Name="name">Product Name *</ *</label>
+                           label>
+                            <input type="text <input type="text" id" id="name" name="name" name="name" class="name" class="form="form-control"-control" 
+                                   
+                                   placeholder=" placeholder="e.ge.g., Premium., Premium Brazilian Body Brazilian Body Wave" Wave" required>
+ required>
+                                                       <small>Use descriptive <small>Use descriptive names that names that customers can customers can easily understand</small easily understand</small>
+                            <div>
+                            <div class=" class="error-messageerror-message"" id="nameError id="nameError"></div"></div>
+                       >
+                        </div </div>
+                       >
+                        <div class="form-group <div class="form-group">
+                           ">
+                            <label <label for="category_id for="category_id">Category *</">Category *</label>
+label>
+                                                       <select id="category_id" name=" <select id="category_id" name="category_idcategory_id" class="form" class="form-control" required>
+-control" required>
+                                <option value                                <option value="">Select="">Select Category</option>
+ Category</option>
+                                {% for                                {% for category in categories category in categories %}
+                                %}
+                                <option <option value="{{ category.id }}">{{ value="{{ category.id }}">{{ category.name category.name }}</option>
+                                }}</option>
+                                {% end {% endfor %}
+for %}
+                            </                            </select>
+                           select>
+                            <small> <small>Select theSelect the main category main category for this product</ for this product</small>
+small>
+                            <div class                            <div class="error="error-message" id="category-message" id="categoryError"></Error"></div>
+div>
+                        </                        </div>
+div>
+                    </div>
+
+                    </div>
+
+                                       <div class <div class="form="form-group">
+-group">
+                                               <label for <label for="description">Description="description">Description *</label>
+ *</label>
+                                               <textarea id="description <textarea id="description" name" name="description" class="description" class="form="form-control" 
+                                 -control" 
+                                  placeholder="Describe the placeholder="Describe the product features product features, quality, quality, length, texture, length, texture, etc, etc." 
+." 
+                                  rows                                  rows="4="4" required></textarea" required></textarea>
+                        <small>
+                        <small>Include>Include details about texture, details about texture, length, quality, and care instructions</small>
+ length, quality, and care instructions</small>
+                                               <div class <div class="error-message="error-message" id" id="descriptionError"></div>
+="descriptionError"></div>
+                    </                    </div>
+
+div>
+
+                    <!-- Pricing Information                    <!-- Pricing Information -->
+                    -->
+                    <div <div class=" class="form-row">
+                       form-row">
+                        <div class=" <div class="form-groupform-group">
+                           ">
+                            <label <label for=" for="price">Price (price">Price (₦₦) *) *</label</label>
+                            <input>
+                            <input type=" type="number" id="number" id="price"price" name=" name="price"price" class="form-control class="form-control" 
+                                   placeholder" 
+="0                                   placeholder="0.00" min.00" min="0="0" step="" step="0.010.01" required>
+                           " required>
+                            <small <small>Selling price>Selling price for this for this product</small>
+ product</small>
+                                                       <div class <div class="error-message="error-message" id" id="priceError"></="priceError"></div>
+div>
+                        </                        </div>
+                        <div class="formdiv>
                         <div class="form-group">
-                            <label for="name">Product Name *</label>
-                            <input type="text" id="name" name="name" class="form-control" 
-                                   placeholder="e.g., Premium Brazilian Body Wave" required>
-                            <small>Use descriptive names that customers can easily understand</small>
-                            <div class="error-message" id="nameError"></div>
+-group">
+                                                       <label for="compare <label for="compare_price">_price">Compare PriceCompare Price (₦)</ (₦)</label>
+label>
+                                                       <input type="number <input type="number" id" id="compare="compare_price"_price" name="compare_price name="compare_price" class" class="form="form-control" 
+                                   placeholder="-control" 
+                                   placeholder="0.0.00"00" min="0" min="0" step=" step="0.01">
+0.01">
+                                                       <small>Original price <small>Original price to show discount ( to show discount (optional)</optional)</small>
+small>
+                        </                        </div>
+                    </div>
+                    </div>
+
+div>
+
+                    <!-- Stock and                    <!-- Stock and SKU SKU -->
+                    -->
+                    <div <div class="form-row class="form-row">
+                        <div">
+                        <div class=" class="form-group">
+                            <labelform-group">
+                            <label for="stock"> for="stock">Stock QuantityStock Quantity *</ *</label>
+                           label>
+                            <input type <input type="number" id="number" id="stock="stock" name="stock" name="stock" class" class="form-control"="form-control" 
+                                   placeholder=" 
+                                   placeholder="100" min="100" min="0"0" required>
+ required>
+                                                       <small> <small>Available quantity in inventoryAvailable quantity in inventory</small>
+                            <div class="</small>
+                            <div class="error-message"error-message" id=" id="stockErrorstockError"></div"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="category_id">Category *</label>
-                            <select id="category_id" name="category_id" class="form-control" required>
-                                <option value="">Select Category</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
+                        </div>
+                       >
+                        <div class=" <div class="form-group">
+                           form-group">
+                            <label <label for=" for="sku">SKUsku">SKU (Stock (Stock Keeping Unit Keeping Unit)</label>
+                           )</label>
+                            <input <input type="text" id=" type="text" id="sku"sku" name="sku" class="form-control" 
+ name="sku" class="form-control" 
+                                   placeholder                                   placeholder="e="e.g.,.g., BRZ BRZ-BW-24-BW-24">
+                            <small">
+                            <small>Unique>Unique identifier for identifier for inventory management</small>
+                        inventory management</small>
+                        </div </div>
+                   >
+                    </div>
+
+                    </div>
+
+                    <!-- Product Specifications -->
+                    <!-- Product Specifications -->
+                    <div <div class=" class="form-rowform-row">
+                        <div">
+                        <div class=" class="form-group">
+                           form-group">
+                            <label for=" <label for="length">Length (length">Length (for hairfor hair products)</label>
+ products)</label>
+                            <input type="text                            <input type="text" id="length" id="length" name" name="length" class="length" class="form-control"="form-control" 
+                                   placeholder=" 
+                                   placeholder="e.ge.g., 12., 12, 14,, 14, 16 16, , 18, 2018, 20, , 22, 2422, 24, , 26,26, 28,  28, 30">
+                           30">
+                            <small> <small>SeparateSeparate multiple lengths with commas multiple lengths with commas</small>
+                       </small>
+                        </div>
+                        </div>
+                        <div <div class="form-group class="form-group">
+                           ">
+                            <label for="texture <label for="texture">Texture">Texture (for (for hair products)</label hair products)</label>
+                           >
+                            <select <select id="text id="texture" name="ure" name="texture" classtexture" class="form-control">
+="form-control">
+                                <option value                                <option value="">Select Texture</="">Select Texture</option>
+option>
+                                <option value="Stra                                <option value="Straight">Straight</optionight">Straight</option>
+                                <option>
+                                <option value=" value="Body Wave">BodyBody Wave">Body Wave</option>
+                                Wave</option>
+                                <option value <option value="Deep="Deep Wave">Deep Wave Wave">Deep Wave</option>
+                               </option>
+                                <option <option value="Loose value="Loose Wave"> Wave">Loose Wave</Loose Wave</option>
+option>
+                                <option value                                <option value="Curly">="Curly">Curly</optionCurly</option>
+                                <option>
+                                <option value="Kinky value="Kinky Curly Curly">Kinky Curly</">Kinky Curly</option>
+                                <option valueoption>
+                                <option value="Co="Coily">ily">CoilyCoily</option</option>
                             </select>
-                            <small>Select the main category for this product</small>
-                            <div class="error-message" id="categoryError"></div>
+                        </div>
+                   >
+                            </select>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="description">Description *</label>
-                        <textarea id="description" name="description" class="form-control" 
-                                  placeholder="Describe the product features, quality, length, texture, etc." 
-                                  rows="4" required></textarea>
-                        <small>Include details about texture, length, quality, and care instructions</small>
-                        <div class="error-message" id="descriptionError"></div>
                     </div>
 
-                    <!-- Pricing Information -->
-                    <div class="form-row">
+                    <!-- Product <!-- Product Settings -->
+ Settings -->
+                    <div class                    <div class="form-row">
+                        <div class="form="form-row">
                         <div class="form-group">
-                            <label for="base_price">Base Price (₦) *</label>
-                            <input type="number" id="base_price" name="base_price" class="form-control" 
-                                   placeholder="0.00" min="0" step="0.01" required>
-                            <small>Base price for this product (variant prices will override)</small>
-                            <div class="error-message" id="priceError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="compare_price">Compare Price (₦)</label>
-                            <input type="number" id="compare_price" name="compare_price" class="form-control" 
-                                   placeholder="0.00" min="0" step="0.01">
-                            <small>Original price to show discount (optional)</small>
-                        </div>
-                    </div>
-
-                    <!-- Product Settings -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Featured Product</label>
-                            <div style="margin-top: 10px;">
-                                <label class="switch">
-                                    <input type="checkbox" id="featured" name="featured">
-                                    <span class="slider round"></span>
+                           -group">
+                            <label>Featured Product <label>Featured Product</label>
+                            <div</label>
+                            <div style=" style="margin-top: margin-top: 10px10px;">
+                                <label;">
+                                <label class=" class="switch">
+                                   switch">
+ <input type="checkbox" id="featured" name="featured" value="1                                    <input type="checkbox" id="featured" name="featured" value="1">
+                                   ">
+                                    <span class=" <span class="slider round"></slider round"></span>
+span>
                                 </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <div style="margin-top: 10px;">
-                                <label class="switch">
-                                    <input type="checkbox" id="active" name="active" checked>
-                                    <span class="slider round"></span>
                                 </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
+                                                               <span style <span style="margin-left:="margin-left: 10 10px;px; color: var(-- color: var(--gray);gray);">Show on homepage">Show on homepage</span>
+                           </span>
                             </div>
+                        </div>
+                        </div>
+                        <div </div>
+                        <div class="form-group">
+                            class="form-group">
+                            <label <label>Status</label>Status</label>
+                           >
+                            <div style=" <div style="margin-top: margin-top: 10px10px;">
+                                <label;">
+                                <label class=" class="switch">
+switch">
+                                                                       <input type="checkbox <input type="checkbox" id="active" id="active" name="status" name="status" value" value="active="active" checked>
+                                   " checked>
+                                    <span <span class=" class="slider round"></slider round"></span>
+span>
+                                </label>
+                                                               </label>
+                                <span style <span style="margin="margin-left: 10-left: 10px;px; color: var(-- color: var(--gray);">Active (Availablegray);">Active (Available for sale for sale)</span)</span>
+                           >
+                            </div>
+                        </div>
                         </div>
                     </div>
+                    </div </div>
 
-                    <!-- Bundle Options -->
-                    <div class="bundle-section">
-                        <h3><i class="fas fa-boxes"></i> Bundle Options</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Is Bundle Product?</label>
-                                <div style="margin-top: 10px;">
-                                    <label class="switch">
-                                        <input type="checkbox" id="is_bundle" name="is_bundle">
-                                        <span class="slider round"></span>
-                                    </label>
-                                    <span style="margin-left: 10px; color: var(--gray);">This product is a bundle of other products</span>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="bundle_discount">Bundle Discount (%)</label>
-                                <input type="number" id="bundle_discount" name="bundle_discount" 
-                                       class="form-control" placeholder="0" min="0" max="100" step="1">
-                                <small>Discount percentage for bundle (0-100)</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product Variants Section -->
-                    <div class="variants-section" id="variantsSection">
-                        <h3><i class="fas fa-layer-group"></i> Product Variants</h3>
-                        <p style="color: var(--gray); margin-bottom: 20px;">
-                            Add different variants of this product (different lengths, textures, colors, etc.)
-                        </p>
-                        
-                        <div class="variant-header">
-                            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr; gap: 10px;">
-                                <span>Variant Name</span>
-                                <span>Length</span>
-                                <span>Texture</span>
-                                <span>Price (₦)</span>
-                                <span>Stock</span>
-                                <span></span>
-                            </div>
-                        </div>
-
-                        <div id="variantsContainer">
-                            <!-- Default variant row -->
-                            <div class="variant-row" data-index="0">
-                                <div>
-                                    <input type="text" name="variant_name[]" class="form-control" 
-                                           placeholder="e.g., Standard" value="Standard">
-                                </div>
-                                <div>
-                                    <input type="text" name="variant_length[]" class="form-control" 
-                                           placeholder="e.g., 22''">
-                                </div>
-                                <div>
-                                    <input type="text" name="variant_texture[]" class="form-control" 
-                                           placeholder="e.g., Body Wave">
-                                </div>
-                                <div>
-                                    <input type="number" name="variant_price[]" class="form-control variant-price" 
-                                           placeholder="0.00" min="0" step="0.01">
-                                </div>
-                                <div>
-                                    <input type="number" name="variant_stock[]" class="form-control" 
-                                           placeholder="10" min="0" value="10">
-                                </div>
-                                <div>
-                                    <button type="button" class="remove-variant" onclick="removeVariant(this)" disabled>
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <input type="hidden" name="variant_id[]" value="">
-                                <input type="hidden" name="variant_color[]" value="">
-                                <input type="hidden" name="variant_sku[]" value="">
-                            </div>
-                        </div>
-
-                        <button type="button" class="add-variant-btn" onclick="addVariant()">
-                            <i class="fas fa-plus"></i> Add Variant
-                        </button>
-                    </div>
+                    <!-- Multiple>
 
                     <!-- Multiple Image Upload -->
-                    <div class="form-group">
-                        <label for="images">Product Images *</label>
-                        <small>Upload multiple images for this product</small>
-                        <div class="file-upload-container">
-                            <div class="file-upload-area" onclick="document.getElementById('images').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Click to upload product images (multiple allowed)</p>
-                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
-                                <div class="btn">Browse Files</div>
-                            </div>
-                            <input type="file" id="images" name="images" accept="image/*" 
-                                   style="display: none;" multiple onchange="previewImages(this)">
-                            <div id="imagePreview"></div>
-                            <small>First image will be set as primary. Click on image to set as primary.</small>
-                        </div>
+                    Image Upload -->
+                    <div class=" <div class="form-groupform-group">
+                       ">
+                        <label <label for="images"> for="images">Product Images *</Product Images *</label>
+                       label>
+                        <small> <small>Upload multipleUpload multiple images for this product images for this product</small>
+                       </small>
+                        <div <div class="file- class="file-upload-containerupload-container">
+                            <div class="file-upload-area">
+                            <div class="file-upload-area" onclick="document" onclick="document.getElementById('images')..getElementById('images').click()click()">
+                               ">
+                                <i class="fas fa-cloud-upload-alt <i class="fas fa-cloud-upload-alt"></i>
+                                <p"></i>
+                                <p>Click>Click to upload product images to upload product images (multiple (multiple allowed)</ allowed)</p>
+                                <pp>
+                                <p><small>Supported formats><small>Supported formats: PNG: PNG, JPG,, JPG, JPEG, GIF, JPEG, GIF, WEBP WEBP</small></p</small></p>
+                                <div>
+                                <div class="btn"> class="btn">Browse FilesBrowse Files</div>
+                           </div>
+                            </div </div>
+                            <input>
+                            <input type=" type="file" id="file" id="images" name="images" name="images" accept="image/*images" accept="image/*" 
+" 
+                                   style="display                                   style="display: none;" multiple onchange="pre: none;" multiple onchange="previewImages(this)"viewImages(this)" required>
+ required>
+                            <div id="                            <div id="imagePreview"></imagePreview"></div>
+div>
+                            <small>                            <small>First image will be set as primary.First image will be set as primary. Click on Click on image to image to set as primary.</ set as primary.</small>
+small>
+                        </                        </div>
                     </div>
 
-                    <!-- Form Actions -->
+div>
+                    </div>
+
+                    <!--                    <!-- Form Actions Form Actions -->
+                    <div class="form- -->
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Save Product
+                        <button typeactions">
+                        <button type="submit" class="submit" class="btn btn-success="btn btn-success">
+                            <i">
+                            <i class="fas fa-save"></i class="fas fa-save"></i> Save> Save Product
+                        </ Product
                         </button>
-                        <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
+                       button>
+                        <a href <a href="{{ url="{{ url_for('admin_products')_for('admin_products') }}" class }}" class="btn btn-secondary="btn btn-secondary">
+                            <i">
+                            <i class="fas fa class="fas fa-times"></-times"></i> Cancel
+                        </i> Cancel
                         </a>
+a>
                     </div>
                 </form>
+            </                    </div>
+                </form>
             </div>
+        </div>
         </main>
+    </main>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <span id="toastMessage">Product added successfully!</span>
-        <button class="toast-close" onclick="hideToast()">&times;</button>
-    </div>
+    <!--div>
+
+    <!-- Toast Notification Toast Notification -->
+    <div -->
+    <div id="toast id="toast" class" class="toast">
+="toast">
+        <span id        <span id="to="toastMessage">ProductastMessage">Product added successfully added successfully!</span>
+        <button class="!</span>
+        <button class="toasttoast-close" onclick-close" onclick="hideToast()="hideToast()">&times;</button">&times;</button>
+   >
+    </div </div>
+
+    <!-- Loading>
 
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+    Overlay -->
+    <div class=" <div class="loading-overlay"loading-overlay" id=" id="loadingOverlay">
+loadingOver       lay">
+        <div class="spinner"></ <div class="spinner"></div>
+    </div>
     </div>
 
-    <script>
-        // DOM Elements
-        const addProductForm = document.getElementById('addProductForm');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toastMessage');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const imagePreview = document.getElementById('imagePreview');
-        const variantsContainer = document.getElementById('variantsContainer');
-        const basePriceInput = document.getElementById('base_price');
-        let variantIndex = 1;
+   div>
 
-        // Multiple Image Preview
-        function previewImages(input) {
-            if (input.files) {
-                for (let i = 0; i < input.files.length; i++) {
-                    const file = input.files[i];
-                    const reader = new FileReader();
+    <script>
+ <script>
+        // DOM Elements        // DOM Elements
+        const add
+        const addProductForm = documentProductForm = document.getElementById('addProduct.getElementById('addProductForm');
+        constForm');
+        const toast = toast = document.getElementById('toast');
+        const toastMessage = document document.getElementById('toast');
+        const toastMessage = document.getElementById('.getElementById('toastMessage');
+        consttoastMessage');
+        const loadingOver loadingOverlay = document.getElementByIdlay = document.getElementById('loading('loadingOverlay');
+       Overlay');
+        const imagePreview = const imagePreview = document.getElementById('imagePreview');
+
+ document.getElementById('imagePreview');
+
+        //        // Multiple Image Preview
+        function Multiple Image Preview
+        function previewImages(input) previewImages(input) {
+            imagePreview {
+            imagePreview.innerHTML = '';
+            
+.innerHTML = '';
+            
+            if            if (input.files (input.files && input && input.files.length >.files.length > 0) {
+ 0) {
+                for (let                for (let i = i = 0; i 0; i < input.files.length; < input.files.length; i++) {
+                    i++) {
+                    const file const file = input.files[i];
+ = input.files[i];
+                    const                    const reader = new File reader = new FileReader();
                     
-                    reader.onload = function(e) {
+                   Reader();
+                    
+                    reader.on reader.onload = function(eload = function(e) {
+                        const previewItem = document) {
                         const previewItem = document.createElement('div');
-                        previewItem.className = 'preview-item';
-                        previewItem.dataset.index = i;
+.createElement('div');
+                        previewItem.class                        previewItem.className = 'preName = 'preview-item';
+                       view-item';
+                        previewItem.dataset previewItem.dataset.index = i;
+.index = i;
                         
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
+                        const img                        
+                        const img = document = document.createElement('img');
+                        img.createElement('img');
+                        img.src =.src = e.target e.target.result;
+                        img.alt.result;
                         img.alt = 'Product Preview';
                         
-                        const primaryBadge = document.createElement('div');
+                        const = 'Product Preview';
+                        
+                        const primaryBadge = document.createElement('div primaryBadge = document.createElement('div');
+                        primaryBadge.className =');
                         primaryBadge.className = 'primary-badge';
-                        primaryBadge.innerHTML = '<i class="fas fa-star"></i> Primary';
-                        primaryBadge.style.cssText = `
+                        'primary-badge';
+                        primaryBadge.innerHTML primaryBadge.innerHTML = '<i class = '<i class="fas fa-star"></i> Primary="fas fa-star"></i> Primary';
+                        primaryBadge.style';
+                        primaryBadge.style.cssText.cssText = `
+                            position: absolute;
+                            top: = `
                             position: absolute;
                             top: 5px;
-                            left: 5px;
+ 5px;
+                            left                            left: 5px: 5px;
                             background: var(--primary);
-                            color: white;
+;
+                            background: var(--primary);
+                            color                            color: white;
+                            padding: 2px : white;
                             padding: 2px 8px;
+                            border-radius: 3px;
+                            font-size8px;
                             border-radius: 3px;
                             font-size: 0.8rem;
                             display: ${i === 0 ? 'block' : 'none'};
@@ -971,204 +1191,426 @@
                         const removeBtn = document.createElement('button');
                         removeBtn.className = 'remove-btn';
                         removeBtn.innerHTML = '×';
-                        removeBtn.onclick = function() {
+                        removeBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            imagePreview.removeChild(previewItem: 0.8rem;
+                            display: ${i === 0 ? 'block' : 'none'};
+                        `;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.innerHTML = '×';
+                        removeBtn.onclick = function(e) {
+                            e.stopPropagation();
                             imagePreview.removeChild(previewItem);
-                            // Note: We can't actually remove the file from input.files
-                            // This is just visual removal
+                           );
+                            // Create a new // Create a new FileList to remove the file
+ FileList to remove the file
+                            updateFileInput                            updateFileInput(pre(previewItem.dataset.index);
+                        };
+viewItem.dataset.index);
                         };
                         
                         previewItem.appendChild(img);
-                        previewItem.appendChild(primaryBadge);
-                        previewItem.appendChild(removeBtn);
+                                               
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(primaryBad previewItem.appendChild(primaryBadge);
+ge);
+                        previewItem.appendChild                        previewItem.appendChild(removeBtn);
+                        previewItem.on(removeBtn);
                         previewItem.onclick = function() {
-                            // Set as primary (move to front)
-                            imagePreview.insertBefore(previewItem, imagePreview.firstChild);
+                            // Set asclick = function() {
+                            // Set as primary primary (move to front)
+                            imagePreview (move to front)
+                            imagePreview.insertBefore(preview.insertBefore(previewItem,Item, imagePreview.firstChild);
+                            imagePreview.firstChild // Update all badges
+                            document.querySelector);
                             // Update all badges
-                            document.querySelectorAll('.primary-badge').forEach(badge => {
-                                badge.style.display = 'none';
+                            document.querySelectorAll('.primary-bAll('.primary-badge').adge').forEach(badge => {
+                               forEach(badge => {
+                                badge.style.display = badge.style.display = 'none';
                             });
-                            primaryBadge.style.display = 'block';
+                            primaryBadge.style 'none';
+                            });
+                            primaryBadge.style.display =.display = 'block';
+                        'block';
                         };
                         
+                        image };
+                        
                         imagePreview.appendChild(previewItem);
+Preview.appendChild(previewItem);
                     };
                     
-                    reader.readAsDataURL(file);
+                    reader.read                    };
+                    
+                    reader.readAsDataAsDataURL(file);
+               URL(file);
                 }
+                
+                // }
+                
+                // Hide the HTML5 required validation message
+ Hide the HTML5 required validation message
+                input.setCustom                input.setCustomValidity('');
+Validity('');
             }
         }
 
-        // Variant Management
-        function addVariant() {
-            const newVariant = document.createElement('div');
-            newVariant.className = 'variant-row';
-            newVariant.dataset.index = variantIndex;
-            
-            newVariant.innerHTML = `
-                <div>
-                    <input type="text" name="variant_name[]" class="form-control" 
-                           placeholder="e.g., Brazilian Body Wave 24''">
-                </div>
-                <div>
-                    <input type="text" name="variant_length[]" class="form-control" 
-                           placeholder="e.g., 24''">
-                </div>
-                <div>
-                    <input type="text" name="variant_texture[]" class="form-control" 
-                           placeholder="e.g., Body Wave">
-                </div>
-                <div>
-                    <input type="number" name="variant_price[]" class="form-control variant-price" 
-                           placeholder="0.00" min="0" step="0.01" value="${basePriceInput.value || ''}">
-                </div>
-                <div>
-                    <input type="number" name="variant_stock[]" class="form-control" 
-                           placeholder="10" min="0" value="10">
-                </div>
-                <div>
-                    <button type="button" class="remove-variant" onclick="removeVariant(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <input type="hidden" name="variant_id[]" value="">
-                <input type="hidden" name="variant_color[]" value="">
-                <input type="hidden" name="variant_sku[]" value="">
-            `;
-            
-            variantsContainer.appendChild(newVariant);
-            variantIndex++;
-            
-            showToast('New variant added', 'success');
-        }
-
-        function removeVariant(button) {
-            const variantRow = button.closest('.variant-row');
-            if (variantsContainer.children.length > 1) {
-                variantsContainer.removeChild(variantRow);
-                showToast('Variant removed', 'warning');
             }
         }
 
-        // Update variant prices when base price changes
-        basePriceInput.addEventListener('input', function() {
-            document.querySelectorAll('.variant-price').forEach(input => {
-                if (!input.value) {
-                    input.value = this.value;
+        // Update file        // Update file input after removing an input after removing an image
+        function image
+        function updateFileInput( updateFileInput(removedIndex)removedIndex) {
+            const file {
+            const fileInput =Input = document.getElementById document.getElementById('images');
+           ('images');
+            const dataTransfer = new DataTransfer();
+ const dataTransfer = new DataTransfer();
+            
+            for (let i            
+            for (let i =  = 0; i < fileInput0; i < fileInput.files.length; i++) {
+               .files.length; i++) {
+                if ( if (i != removedIndex) {
+                    dataTransfer.items.add(filei != removedIndex) {
+                    dataTransfer.items.add(fileInput.files[i]);
+               Input.files[i]);
                 }
+            }
+            }
+            
+ }
+            
+            fileInput.files = dataTransfer.files;
+            
+            fileInput.files = dataTransfer.files;
+            
+            // Update preview            // Update preview indexes
+            const previewItems = image indexes
+            const previewItems = imagePreview.querySelectorPreview.querySelectorAll('.previewAll('.preview-item');
+            previewItems.forEach-item');
+            previewItems.forEach((item, index) => {
+               ((item, index) => {
+                item.dataset.index item.dataset.index = index;
+            = index;
             });
-        });
+            
+            // });
+            
+            // Check if any files Check if any files remain
+            if remain
+            if (fileInput.files.length (fileInput.files.length === 0) === 0) {
+                fileInput.setCustom {
+                fileInput.setCustomValidity('PleaseValidity('Please upload at least one product image upload at least one product image');
+            } else');
+            } else {
+                {
+                fileInput.setCustomValidity fileInput.setCustomValidity('');
+            }
+       ('');
+            }
+        }
+
+        // Form }
 
         // Form Validation
+        function Validation
         function validateForm() {
-            let isValid = true;
+ validateForm() {
+            let            let isValid = true;
             
-            // Clear previous errors
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.style.display = 'none';
+            isValid = true;
+            
+            // Clear previous errors // Clear previous errors
+            document.querySelectorAll('.
+            document.querySelectorAll('.error-message').forEach(elerror-message').forEach(el => {
+                => {
+                el.style.display = ' el.style.display = 'none';
+                elnone';
                 el.textContent = '';
+.textContent = '';
             });
             
-            document.querySelectorAll('.form-group').forEach(el => {
+                       });
+            
+            document.querySelectorAll('. document.querySelectorAll('.form-group').forEach(el =>form-group').forEach(el => {
+                el.classList.remove(' {
                 el.classList.remove('has-error');
+           has-error');
             });
 
             // Validate required fields
-            const requiredFields = [
-                { id: 'name', message: 'Product name is required' },
-                { id: 'category_id', message: 'Category is required' },
-                { id: 'description', message: 'Description is required' },
-                { id: 'base_price', message: 'Base price is required' }
+            });
+
+            // Validate required fields
+            const requiredFields = const requiredFields = [
+                { id [
+                { id: 'name',: 'name', message: 'Product message: 'Product name is required' name is required' },
+                { id: ' },
+                { id: 'category_idcategory_id', message: 'Category is required'', message: 'Category is required' },
+                { id: ' },
+                { id: 'description', message: 'Descriptiondescription', message: 'Description is required' },
+                { is required' },
+                { id: id: 'price', message: ' 'price', message: 'Price is required' },
+                { idPrice is required' },
+                { id: 'stock',: 'stock', message: 'Stock quantity is message: 'Stock quantity is required' required' }
             ];
 
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                const errorElement = document.getElementById(field.id + 'Error');
+            }
+            ];
+
+            requiredFields.forEach(f requiredFields.forEach(field => {
+                const elementield => {
+                = document.getElementById(field.id const element = document.getElementById(field.id);
+                const errorElement = document.getElementById(field);
+                const errorElement = document.getElementById(field.id + 'Error.id + 'Error');
+                
+                if');
                 
                 if (!element.value.trim()) {
-                    isValid = false;
+ (!element.value.trim()) {
+                    isValid = false                    isValid = false;
+                   ;
                     element.parentElement.classList.add('has-error');
-                    errorElement.textContent = field.message;
-                    errorElement.style.display = 'block';
-                } else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
-                    isValid = false;
                     element.parentElement.classList.add('has-error');
-                    errorElement.textContent = 'Base price must be greater than 0';
+                    errorElement.textContent errorElement.textContent = field.message;
+                    error = field.message;
                     errorElement.style.display = 'block';
+               Element.style.display = 'block';
+                } else if ( } else if (field.id === 'field.id === 'price' && parseFloat(elementprice' && parseFloat(element.value).value) <= 0) <= 0) {
+                    isValid = false;
+ {
+                    isValid = false;
+                    element.parentElement                    element.parentElement.classList.add('has-error');
+.classList.add('has-error');
+                    errorElement.text                    errorElement.textContent =Content = 'Price must be 'Price must be greater than 0';
+                    greater than 0';
+                    errorElement.style.display errorElement.style.display = ' = 'block';
+                }block';
+                } else if (field.id === else if (field 'stock' && parseInt(element.value) < .id === 'stock' && parseInt(element.value) < 0) {
+                    isValid =0) {
+                    isValid = false;
+                    element false;
+                    element.parentElement.classList.add('has.parentElement.classList.add('has-error');
+                    errorElement.text-error');
+                    errorElement.textContent = 'Stock cannotContent = 'Stock cannot be negative be negative';
+                    errorElement.style.display = '';
+                    errorElement.style.display = 'block';
+block';
                 }
             });
 
-            // Validate at least one image
+            //                }
+            });
+
+            // Validate at least one Validate at least one image
+            const image
             const imagesInput = document.getElementById('images');
-            if (imagesInput.files.length === 0) {
+ imagesInput = document.getElementById('images');
+            if (imagesInput.f            if (imagesInput.files.length === 0)iles.length === 0) {
+                isValid = {
                 isValid = false;
-                showToast('Please upload at least one product image', 'error');
+                images false;
+Input.setCustomValidity('Please upload                imagesInput.setCustomValidity('Please upload at least one product at least one product image');
+                showToast(' image');
+                showToast('Please upload at leastPlease upload at least one product one product image', 'error');
+            } else image', 'error');
+            } else {
+                {
+                imagesInput imagesInput.setCustomValidity('');
+            }
+
+            return isValid.setCustomValidity('');
             }
 
             return isValid;
         }
 
         // Form Submission
-        addProductForm.addEventListener('submit', function(e) {
+;
+        }
+
+        // Form Submission
+        addProductForm        addProductForm.addEventListener('submit', function(e) {
+            e.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            if (!validateForm()) {
+           .preventDefault();
+            
+            if (!validateForm if (!validateForm()) {
+                return;
+           ()) {
                 return;
             }
             
+            // }
+            
             // Show loading
-            loadingOverlay.classList.add('active');
+            Show loading
+            loadingOverlay.classList.add(' loadingOverlay.classList.add('active');
 
-            // Submit form
-            this.submit();
+            //active');
+
+            // Submit form ( Submit form (with delay to showwith delay to show loading)
+            setTimeout(() => loading)
+            setTimeout(() => {
+                this.submit();
+            }, 500);
+        {
+                this.submit();
+            }, 500);
         });
 
+        // Auto });
+
+        // Auto-generate SKU-generate from product name
+        document.getElementById(' SKU from product name
+        document.getElementById('name').addEventListenername').addEventListener('blur', function()('blur', function() {
+            const sk {
+            const skuField = document.getElementById('uField = document.getElementById('sku');
+            ifsku');
+            if (!skuField.value (!skuField.value && this.value) && this.value) {
+                {
+                const name = this.value;
+ const name = this.value;
+                const sku = name.toUpperCase                const sku = name.toUpperCase()
+                    .replace(/[^A-Z0-()
+                    .replace(/[^A-Z0-9\s]/g,9\s]/g, '')
+                    . '')
+                    .replace(/\sreplace(/\s+/g, '-')
+                    .substring(+/g, '-')
+                    .substring(0, 200, 20);
+                skuField.value = sk);
+                skuField.value = sku;
+            }
+u;
+            }
+        });
+
+        // Auto-set length        });
+
+        // Auto-set length if not specified
+ if not specified
+        document.getElementById('        document.getElementById('name').addEventListener('blname').addEventListener('blur', function()ur', function() {
+            const length {
+            const lengthField =Field = document.getElementById('length');
+            const name = this.value.toLowerCase document.getElementById('length');
+            const name = this.value.toLowerCase();
+            
+            if (!lengthField.value) {
+();
+            
+            if (!lengthField.value) {
+                // Extract length from name                // Extract length from name (e.g., (e.g., "24 inch" "24 inch" or "24 or "24''")
+                const lengthMatch''")
+                const lengthMatch = name.match(/(\ = name.match(/(\d{2})(d{2})(?:\s*?:\s*inch|\s*''|\s*"inch|\s*''|\s*"|\s*|\s*in)/);
+in)/);
+                if (length                if (lengthMatch)Match) {
+                    lengthField.value = lengthMatch[1] + {
+                    lengthField.value = lengthMatch[1] + '"';
+                } else {
+                    // Try to '"';
+                } else {
+                    // Try to extract standalone numbers extract standalone numbers that might be that might be lengths
+                    const numMatch lengths
+                    const numMatch = name.match(/\b(12 = name.match(/\b(12|14|16|14|16|18|20|22|18|20|22|24|26|28|24|26|28|30|30)\b/);
+)\b/);
+                    if                    if (num (numMatch) {
+                        lengthField.value = numMatchMatch) {
+                        lengthField.value = numMatch[1] + '"';
+[1] + '"';
+                    }
+                }
+            }
+                    }
+                }
+            }
+        });
+
+        //        });
+
         // Toast Functions
-        function showToast(message, type = 'success') {
+        Toast Functions
+        function showToast(message, type function showToast(message, type = 'success') {
+            toastMessage.textContent = 'success') {
             toastMessage.textContent = message;
-            toast.className = `toast toast-${type} show`;
+            toast.class = message;
+            toast.className =Name = `toast toast-${ `toast toast-${type} show`;
+type} show`;
             
             setTimeout(() => {
+            
+            setTimeout(() => {
+                hideToast();
                 hideToast();
             }, 5000);
         }
 
+        function            }, 5000);
+        }
+
         function hideToast() {
+            toast.classList.remove('show hideToast() {
             toast.classList.remove('show');
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default variant price to base price
-            const basePrice = basePriceInput.value;
-            if (basePrice) {
-                document.querySelector('.variant-price').value = basePrice;
-            }
-            
-            // Auto-update variant prices when base price changes
-            basePriceInput.addEventListener('input', function() {
-                document.querySelectorAll('.variant-price').forEach(input => {
-                    if (!input.value || input.value === basePrice) {
-                        input.value = this.value;
-                    }
-                });
+        // Initialize form validation');
+        }
+
+        // Initialize form validation on input
+        on input
+        document.querySelectorAll(' document.querySelectorAll('input, textinput, textarea,area, select').forEach(element => {
+            element.addEventListener('input', select').forEach(element => {
+            element.addEventListener('input', function() function() {
+                const errorElement = document.getElementById(this.id {
+                const errorElement = document.getElementById(this.id + 'Error');
+ + 'Error');
+                if (error                if (errorElement) {
+                    errorElement.style.displayElement) {
+                    errorElement.style.display = 'none';
+                    this.parentElement.classList.remove('has-error');
+ = 'none';
+                    this.parentElement.classList.remove('has-error');
+                }
             });
-            
-            // Set SKU for default variant
-            const defaultSkuInput = document.querySelector('input[name="variant_sku[]"]');
-            if (defaultSkuInput) {
-                defaultSkuInput.value = 'DEFAULT';
-            }
+                }
+            });
         });
 
-        // Handle bundle discount
-        document.getElementById('is_bundle').addEventListener('change', function() {
-            const bundleDiscountField = document.getElementById('bundle_discount');
-            if (this.checked) {
-                bundleDiscountField.value = bundleDiscountField.value || '10';
-            } else {
-                bundleDiscountField.value = '0';
-            }
+        });
+
+        // Show validation errors on blur        // Show validation errors on blur
+        document.querySelector
+        document.querySelectorAll('input[required],All('input[required], textarea[required], select textarea[required], select[required]').forEach(element[required]').forEach(element => {
+            element.addEventListener('blur => {
+            element.addEventListener('blur', function() {
+', function() {
+                if (!this                if (!this.value.trim()) {
+                    const errorId.value.trim()) {
+                    const errorId = this.id + = this.id + 'Error';
+                    'Error';
+                    const errorElement = document.getElementById const errorElement = document.getElementById(errorId);
+                   (errorId);
+                    if (errorElement if (errorElement) {
+                        errorElement.text) {
+                        errorElement.textContent = 'Please fill inContent = 'Please fill in this field';
+                        this field';
+                        errorElement.style.display = ' errorElement.style.display = 'block';
+                        thisblock';
+                        this.parentElement.classList.add('has-error');
+                    }
+.parentElement.classList.add('has-error');
+                    }
+                }
+            });
+        });
+                }
+            });
         });
     </script>
+    </script>
+</body>
+</html>
 </body>
 </html>
