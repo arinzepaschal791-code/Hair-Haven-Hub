@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hair-haven-hub
+    name: norahairline-ecommerce
     env: python
     region: oregon
     plan: free
@@ -8,7 +8,12 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      python -c "print('✅ Dependencies installed')"
+      python -c "
+      print('✅ Dependencies installed')
+      print('Python version:')
+      import sys
+      print(sys.version)
+      "
     startCommand: gunicorn main:app
     healthCheckPath: /health
     autoDeploy: true
@@ -20,16 +25,40 @@ services:
       - key: ADMIN_EMAIL
         value: admin@norahairline.com
       - key: ADMIN_PASSWORD
-        value: ChangeThisPassword123!
+        value: admin123
       - key: DEBUG
+        value: false
+      - key: FLASK_DEBUG
         value: false
       - key: ENV
         value: production
-      - key: ALLOWED_HOSTS
-        value: hair-haven-hub.onrender.com
-      - key: CSRF_TRUSTED_ORIGINS
-        value: https://hair-haven-hub.onrender.com
+      - key: FLASK_ENV
+        value: production
       - key: WTF_CSRF_ENABLED
         value: true
       - key: SESSION_COOKIE_SECURE
         value: true
+      - key: SESSION_COOKIE_SAMESITE
+        value: 'Lax'
+      - key: PERMANENT_SESSION_LIFETIME
+        value: 86400
+      - key: SQLALCHEMY_TRACK_MODIFICATIONS
+        value: false
+      - key: SQLALCHEMY_ENGINE_OPTIONS
+        syncValue: '{\"pool_recycle\": 300, \"pool_pre_ping\": true}'
+      - key: MAX_CONTENT_LENGTH
+        value: 16777216
+      - key: UPLOAD_FOLDER
+        value: ./static/uploads
+      - key: ALLOWED_EXTENSIONS
+        value: png,jpg,jpeg,gif,webp
+
+    # Database configuration (Render will automatically provide DATABASE_URL)
+    # No need to manually set DATABASE_URL for PostgreSQL
+
+# Optional: Uncomment to add a PostgreSQL database
+# databases:
+#   - name: norahairline_db
+#     plan: free
+#     databaseName: norahairline
+#     user: norahairline_user
