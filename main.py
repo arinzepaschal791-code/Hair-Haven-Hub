@@ -26,18 +26,18 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-20
 database_url = os.environ.get('DATABASE_URL')
 
 if not database_url:
-    # Local development - use SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
-    print("✅ Using SQLite database (local development)", file=sys.stderr)
+# Local development - use SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+print("✅ Using SQLite database (local development)", file=sys.stderr)
 elif database_url.startswith('postgres://'):
-    # Fix Render/Heroku PostgreSQL URLs
-    fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
-    print("✅ Using PostgreSQL database (production)", file=sys.stderr)
+# Fix Render/Heroku PostgreSQL URLs
+fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
+print("✅ Using PostgreSQL database (production)", file=sys.stderr)
 else:
-    # Already correct URL
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("✅ Using database from environment", file=sys.stderr)
+# Already correct URL
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+print("✅ Using database from environment", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
@@ -1862,7 +1862,7 @@ variant.length = variant_lengths[i] if i < len(variant_lengths) else None
 variant.texture = variant_textures[i] if i < len(variant_textures) else None
 variant.color = variant_colors[i] if i < len(variant_colors) else None
 variant.price = float(variant_prices[i]) if variant_prices[i] else product.base_price
-variant.stock = int(variant_stocks[i]) if variant
+variant.stock = int(variant_stocks[i]) if variant_stocks[i] else 0
 variant.sku = variant_skus[i] if variant_skus[i] else f"{product.sku}-V{i+1}"
 variant.is_default = (i == 0)
 else:
@@ -1880,7 +1880,8 @@ is_default=(i == 0)
 )
 db.session.add(variant)
 
-total_stock += variant.stock if isinstance(variant.stock, int) else int(variant.stocks[i]) if variant_stocks[i] else 0
+if variant_stocks[i]:
+total_stock += int(variant_stocks[i])
 
 # Update total quantity
 product.total_quantity = total_stock
