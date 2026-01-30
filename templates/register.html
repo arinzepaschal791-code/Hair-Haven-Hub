@@ -361,38 +361,42 @@
             {% else %}
                 <!-- Registration Form -->
                 <form method="POST" action="{{ url_for('customer_register') }}" id="registerForm">
-                    <!-- CSRF Token -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if config.get('CSRF_ENABLED', False) %}
+                    <!-- CSRF Token - Only if CSRF is enabled in your config -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                    {% endif %}
                     
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <label for="first_name" class="form-label fw-semibold">First Name *</label>
+                            <label for="fullname" class="form-label fw-semibold">Full Name *</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-user"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
-                                       id="first_name" 
-                                       name="first_name" 
-                                       placeholder="Enter first name" 
+                                       id="fullname" 
+                                       name="fullname" 
+                                       placeholder="Enter your full name" 
                                        required
-                                       value="{{ request.form.first_name if request.form else '' }}">
+                                       value="{{ request.form.fullname if request.form else '' }}">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="last_name" class="form-label fw-semibold">Last Name *</label>
+                            <label for="username" class="form-label fw-semibold">Username</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i class="fas fa-user"></i>
+                                    <i class="fas fa-at"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
-                                       id="last_name" 
-                                       name="last_name" 
-                                       placeholder="Enter last name" 
-                                       required
-                                       value="{{ request.form.last_name if request.form else '' }}">
+                                       id="username" 
+                                       name="username" 
+                                       placeholder="Choose a username (optional)"
+                                       value="{{ request.form.username if request.form else '' }}">
+                            </div>
+                            <div class="form-text">
+                                If not provided, email will be used as username
                             </div>
                         </div>
                     </div>
@@ -426,12 +430,14 @@
                                    class="form-control" 
                                    id="phone" 
                                    name="phone" 
-                                   placeholder="Enter your phone number" 
+                                   placeholder="08012345678" 
                                    required
+                                   pattern="[0-9]{11}"
+                                   title="Please enter a valid 11-digit Nigerian phone number"
                                    value="{{ request.form.phone if request.form else '' }}">
                         </div>
                         <div class="form-text">
-                            This will be used for delivery communication
+                            Enter 11-digit Nigerian number (e.g., 08012345678)
                         </div>
                     </div>
                     
@@ -445,60 +451,62 @@
                                       id="address" 
                                       name="address" 
                                       placeholder="Enter your delivery address (optional)"
-                                      rows="2">{{ request.form.address if request.form else '' }}</textarea>
+                                      rows="3">{{ request.form.address if request.form else '' }}</textarea>
                         </div>
                         <div class="form-text">
                             Add your address now for faster checkout (you can add it later)
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="password" class="form-label fw-semibold">Password *</label>
-                        <div class="password-input">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="password" 
-                                       name="password" 
-                                       placeholder="Create a secure password" 
-                                       required
-                                       minlength="6">
-                                <button type="button" class="btn password-toggle" onclick="togglePassword('password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="password" class="form-label fw-semibold">Password *</label>
+                            <div class="password-input">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="Create a secure password" 
+                                           required
+                                           minlength="6">
+                                    <button type="button" class="btn password-toggle" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="password-strength">
+                                <span id="strength-text">Password strength: </span>
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strength-bar"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="password-strength">
-                            <span id="strength-text">Password strength: </span>
-                            <div class="strength-bar">
-                                <div class="strength-fill" id="strength-bar"></div>
+                        
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label fw-semibold">Confirm Password *</label>
+                            <div class="password-input">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="confirm_password" 
+                                           name="confirm_password" 
+                                           placeholder="Confirm your password" 
+                                           required
+                                           minlength="6">
+                                    <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-text">
-                            Minimum 6 characters. Use a mix of letters, numbers, and symbols for better security.
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="confirm_password" class="form-label fw-semibold">Confirm Password *</label>
-                        <div class="password-input">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="confirm_password" 
-                                       name="confirm_password" 
-                                       placeholder="Confirm your password" 
-                                       required
-                                       minlength="6">
-                                <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="form-text">
+                                Must be at least 6 characters
                             </div>
                         </div>
                     </div>
@@ -616,194 +624,180 @@
             });
         }
         
-        // Password confirmation validation
+        // Form validation and submission
         document.addEventListener('DOMContentLoaded', function() {
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('confirm_password');
             const registerForm = document.getElementById('registerForm');
-            
-            function validatePassword() {
-                if (password && confirmPassword) {
-                    if (password.value !== confirmPassword.value) {
-                        confirmPassword.setCustomValidity("Passwords don't match");
-                        return false;
-                    } else {
-                        confirmPassword.setCustomValidity('');
-                        return true;
-                    }
-                }
-                return true;
-            }
-            
-            if (password) password.onchange = validatePassword;
-            if (confirmPassword) confirmPassword.onkeyup = validatePassword;
             
             if (registerForm) {
                 registerForm.addEventListener('submit', function(e) {
-                    // Validate passwords match
-                    if (!validatePassword()) {
-                        e.preventDefault();
-                        showAlert('Please make sure passwords match', 'danger');
-                        confirmPassword.focus();
-                        return false;
-                    }
+                    e.preventDefault();
                     
-                    // Validate terms agreement
-                    const termsCheckbox = document.getElementById('terms');
-                    if (termsCheckbox && !termsCheckbox.checked) {
-                        e.preventDefault();
-                        showAlert('You must agree to the Terms of Service and Privacy Policy', 'danger');
-                        termsCheckbox.focus();
-                        return false;
-                    }
+                    // Reset validation
+                    clearValidationErrors();
                     
-                    // Validate email format
-                    const emailInput = document.getElementById('email');
-                    if (emailInput && !validateEmail(emailInput.value)) {
-                        e.preventDefault();
-                        showAlert('Please enter a valid email address', 'danger');
-                        emailInput.focus();
-                        return false;
-                    }
-                    
-                    // Validate password length
-                    if (password && password.value.length < 6) {
-                        e.preventDefault();
-                        showAlert('Password must be at least 6 characters long', 'danger');
-                        password.focus();
-                        return false;
-                    }
-                    
-                    // Show loading state
-                    const submitBtn = document.getElementById('registerBtn');
-                    if (submitBtn) {
-                        const originalText = submitBtn.innerHTML;
-                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Creating Account...';
-                        submitBtn.disabled = true;
+                    // Validate form
+                    if (validateForm()) {
+                        // Show loading state
+                        const submitBtn = document.getElementById('registerBtn');
+                        if (submitBtn) {
+                            const originalText = submitBtn.innerHTML;
+                            submitBtn.innerHTML = '<span class="loader"></span> Creating Account...';
+                            submitBtn.disabled = true;
+                        }
                         
-                        // Re-enable after 5 seconds (safety measure)
-                        setTimeout(() => {
-                            submitBtn.innerHTML = originalText;
-                            submitBtn.disabled = false;
-                        }, 5000);
+                        // Submit the form
+                        this.submit();
                     }
                 });
+            }
+            
+            function clearValidationErrors() {
+                document.querySelectorAll('.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+                document.querySelectorAll('.invalid-feedback').forEach(el => {
+                    el.remove();
+                });
+            }
+            
+            function validateForm() {
+                let isValid = true;
+                
+                // Validate fullname
+                const fullname = document.getElementById('fullname');
+                if (!fullname.value.trim()) {
+                    showError(fullname, 'Full name is required');
+                    isValid = false;
+                }
+                
+                // Validate email
+                const email = document.getElementById('email');
+                if (!email.value.trim()) {
+                    showError(email, 'Email is required');
+                    isValid = false;
+                } else if (!isValidEmail(email.value)) {
+                    showError(email, 'Please enter a valid email address');
+                    isValid = false;
+                }
+                
+                // Validate phone
+                const phone = document.getElementById('phone');
+                if (!phone.value.trim()) {
+                    showError(phone, 'Phone number is required');
+                    isValid = false;
+                } else if (!/^[0-9]{11}$/.test(phone.value.replace(/\D/g, ''))) {
+                    showError(phone, 'Please enter a valid 11-digit Nigerian phone number');
+                    isValid = false;
+                }
+                
+                // Validate password
+                const password = document.getElementById('password');
+                const confirmPassword = document.getElementById('confirm_password');
+                
+                if (!password.value) {
+                    showError(password, 'Password is required');
+                    isValid = false;
+                } else if (password.value.length < 6) {
+                    showError(password, 'Password must be at least 6 characters');
+                    isValid = false;
+                }
+                
+                if (!confirmPassword.value) {
+                    showError(confirmPassword, 'Please confirm your password');
+                    isValid = false;
+                } else if (password.value !== confirmPassword.value) {
+                    showError(confirmPassword, 'Passwords do not match');
+                    isValid = false;
+                }
+                
+                // Validate terms
+                const terms = document.getElementById('terms');
+                if (!terms.checked) {
+                    const termsLabel = terms.closest('.form-check');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback d-block';
+                    errorDiv.textContent = 'You must agree to the Terms of Service and Privacy Policy';
+                    termsLabel.appendChild(errorDiv);
+                    terms.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                return isValid;
+            }
+            
+            function showError(input, message) {
+                input.classList.add('is-invalid');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = message;
+                input.parentNode.appendChild(errorDiv);
+                input.focus();
+            }
+            
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
             }
         });
         
         // Auto-dismiss alerts after 5 seconds
-        setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(alert => {
-                if (alert.classList.contains('show')) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            });
-        }, 5000);
-        
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-        
-        function showAlert(message, type) {
-            // Remove existing alerts
-            document.querySelectorAll('.alert-dismissible').forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-            
-            // Create new alert
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            // Insert after welcome message
-            const welcomeMessage = document.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                welcomeMessage.parentNode.insertBefore(alertDiv, welcomeMessage.nextSibling);
-            } else {
-                const brandHeader = document.querySelector('.brand-header');
-                if (brandHeader) {
-                    brandHeader.parentNode.insertBefore(alertDiv, brandHeader.nextSibling);
-                }
-            }
-            
-            // Auto dismiss after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                const bsAlert = new bootstrap.Alert(alertDiv);
-                bsAlert.close();
+                document.querySelectorAll('.alert').forEach(alert => {
+                    if (alert.classList.contains('show')) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                });
             }, 5000);
-        }
+        });
         
-        // Auto-focus first name field when page loads
+        // Auto-focus fullname field when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            const firstNameInput = document.getElementById('first_name');
-            if (firstNameInput) {
-                firstNameInput.focus();
+            const fullnameInput = document.getElementById('fullname');
+            if (fullnameInput) {
+                fullnameInput.focus();
             }
         });
         
-        // Save form data to localStorage on input change
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('registerForm');
-            if (form) {
-                const formFields = ['first_name', 'last_name', 'email', 'phone', 'address'];
-                
-                // Load saved data
-                formFields.forEach(field => {
-                    const input = document.getElementById(field);
-                    if (input) {
-                        const savedValue = localStorage.getItem(`register_${field}`);
-                        if (savedValue) {
-                            input.value = savedValue;
-                        }
-                        
-                        // Save on change
-                        input.addEventListener('input', function() {
-                            localStorage.setItem(`register_${field}`, this.value);
-                        });
-                    }
-                });
-                
-                // Clear saved data on successful form submission
-                form.addEventListener('submit', function() {
-                    formFields.forEach(field => {
-                        localStorage.removeItem(`register_${field}`);
-                    });
-                });
+        // Auto-generate username from email
+        document.getElementById('email').addEventListener('blur', function() {
+            const usernameInput = document.getElementById('username');
+            const email = this.value;
+            
+            if (email && !usernameInput.value) {
+                // Extract username from email (part before @)
+                const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (username) {
+                    usernameInput.value = username;
+                }
             }
         });
         
-        // Phone number formatting
-        document.addEventListener('DOMContentLoaded', function() {
-            const phoneInput = document.getElementById('phone');
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function(e) {
-                    let value = this.value.replace(/\D/g, '');
-                    
-                    // Format Nigerian phone numbers
-                    if (value.startsWith('0')) {
-                        value = value.replace(/^0/, '234');
-                    }
-                    
-                    if (value.length > 0) {
-                        if (value.length <= 3) {
-                            value = value;
-                        } else if (value.length <= 6) {
-                            value = `${value.slice(0,3)}-${value.slice(3)}`;
-                        } else if (value.length <= 10) {
-                            value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6)}`;
-                        } else {
-                            value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6,10)}`;
-                        }
-                    }
-                    
-                    this.value = value;
-                });
+        // Format phone number as user types
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            
+            // Format as 080-123-4567
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = value;
+                } else if (value.length <= 6) {
+                    value = `${value.slice(0,3)}-${value.slice(3)}`;
+                } else if (value.length <= 10) {
+                    value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6)}`;
+                } else {
+                    value = `${value.slice(0,4)}-${value.slice(4,7)}-${value.slice(7,11)}`;
+                }
+            }
+            
+            this.value = value;
+        });
+        
+        // Prevent form submission on Enter key in textarea
+        document.getElementById('address').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
             }
         });
     </script>
