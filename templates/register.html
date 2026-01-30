@@ -361,42 +361,38 @@
             {% else %}
                 <!-- Registration Form -->
                 <form method="POST" action="{{ url_for('customer_register') }}" id="registerForm">
-                    {% if config.get('CSRF_ENABLED', False) %}
-                    <!-- CSRF Token - Only if CSRF is enabled in your config -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
-                    {% endif %}
+                    <!-- CSRF Token - Required for Flask-WTF -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <label for="fullname" class="form-label fw-semibold">Full Name *</label>
+                            <label for="first_name" class="form-label fw-semibold">First Name *</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-user"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
-                                       id="fullname" 
-                                       name="fullname" 
-                                       placeholder="Enter your full name" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       placeholder="Enter your first name" 
                                        required
-                                       value="{{ request.form.fullname if request.form else '' }}">
+                                       value="{{ request.form.first_name if request.form else '' }}">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="username" class="form-label fw-semibold">Username</label>
+                            <label for="last_name" class="form-label fw-semibold">Last Name *</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i class="fas fa-at"></i>
+                                    <i class="fas fa-user"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
-                                       id="username" 
-                                       name="username" 
-                                       placeholder="Choose a username (optional)"
-                                       value="{{ request.form.username if request.form else '' }}">
-                            </div>
-                            <div class="form-text">
-                                If not provided, email will be used as username
+                                       id="last_name" 
+                                       name="last_name" 
+                                       placeholder="Enter your last name" 
+                                       required
+                                       value="{{ request.form.last_name if request.form else '' }}">
                             </div>
                         </div>
                     </div>
@@ -442,7 +438,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="address" class="form-label fw-semibold">Delivery Address</label>
+                        <label for="address" class="form-label fw-semibold">Delivery Address (Optional)</label>
                         <div class="input-group address-input">
                             <span class="input-group-text">
                                 <i class="fas fa-home"></i>
@@ -450,11 +446,11 @@
                             <textarea class="form-control" 
                                       id="address" 
                                       name="address" 
-                                      placeholder="Enter your delivery address (optional)"
+                                      placeholder="Enter your delivery address (you can add it later)"
                                       rows="3">{{ request.form.address if request.form else '' }}</textarea>
                         </div>
                         <div class="form-text">
-                            Add your address now for faster checkout (you can add it later)
+                            Add your address now for faster checkout
                         </div>
                     </div>
                     
@@ -630,6 +626,7 @@
             
             if (registerForm) {
                 registerForm.addEventListener('submit', function(e) {
+                    // Prevent default form submission to validate first
                     e.preventDefault();
                     
                     // Reset validation
@@ -645,7 +642,7 @@
                             submitBtn.disabled = true;
                         }
                         
-                        // Submit the form
+                        // Submit the form (after validation)
                         this.submit();
                     }
                 });
@@ -663,10 +660,17 @@
             function validateForm() {
                 let isValid = true;
                 
-                // Validate fullname
-                const fullname = document.getElementById('fullname');
-                if (!fullname.value.trim()) {
-                    showError(fullname, 'Full name is required');
+                // Validate first_name
+                const firstName = document.getElementById('first_name');
+                if (!firstName.value.trim()) {
+                    showError(firstName, 'First name is required');
+                    isValid = false;
+                }
+                
+                // Validate last_name
+                const lastName = document.getElementById('last_name');
+                if (!lastName.value.trim()) {
+                    showError(lastName, 'Last name is required');
                     isValid = false;
                 }
                 
@@ -752,25 +756,11 @@
             }, 5000);
         });
         
-        // Auto-focus fullname field when page loads
+        // Auto-focus first_name field when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            const fullnameInput = document.getElementById('fullname');
-            if (fullnameInput) {
-                fullnameInput.focus();
-            }
-        });
-        
-        // Auto-generate username from email
-        document.getElementById('email').addEventListener('blur', function() {
-            const usernameInput = document.getElementById('username');
-            const email = this.value;
-            
-            if (email && !usernameInput.value) {
-                // Extract username from email (part before @)
-                const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (username) {
-                    usernameInput.value = username;
-                }
+            const firstNameInput = document.getElementById('first_name');
+            if (firstNameInput) {
+                firstNameInput.focus();
             }
         });
         
@@ -778,28 +768,37 @@
         document.getElementById('phone').addEventListener('input', function(e) {
             let value = this.value.replace(/\D/g, '');
             
-            // Format as 080-123-4567
-            if (value.length > 0) {
-                if (value.length <= 3) {
-                    value = value;
-                } else if (value.length <= 6) {
-                    value = `${value.slice(0,3)}-${value.slice(3)}`;
-                } else if (value.length <= 10) {
-                    value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6)}`;
-                } else {
-                    value = `${value.slice(0,4)}-${value.slice(4,7)}-${value.slice(7,11)}`;
+            // Keep only digits
+            this.value = value;
+            
+            // Display warning if not exactly 11 digits
+            if (value.length > 0 && value.length !== 11) {
+                this.classList.add('is-invalid');
+                const existingError = this.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Phone number must be exactly 11 digits';
+                    this.parentNode.appendChild(errorDiv);
+                }
+            } else {
+                this.classList.remove('is-invalid');
+                const errorDiv = this.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
                 }
             }
-            
-            this.value = value;
         });
         
         // Prevent form submission on Enter key in textarea
-        document.getElementById('address').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-            }
-        });
+        const addressField = document.getElementById('address');
+        if (addressField) {
+            addressField.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                }
+            });
+        }
     </script>
 </body>
 </html>
