@@ -26,26 +26,25 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-20
 database_url = os.environ.get('DATABASE_URL')
 
 if not database_url:
-# Local development - use SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
-print("✅ Using SQLite database (local development)", file=sys.stderr)
+    # Local development - use SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
+    print("Using SQLite database (local development)", file=sys.stderr)
 elif database_url.startswith('postgres://'):
-# Fix Render/Heroku PostgreSQL URLs
-fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
-print("✅ Using PostgreSQL database (production)", file=sys.stderr)
+    # Fix Render/Heroku PostgreSQL URLs
+    fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
+    print("Using PostgreSQL database (production)", file=sys.stderr)
 else:
-# Already correct URL
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-print("✅ Using database from environment", file=sys.stderr)
+    # Already correct URL
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("Using database from environment", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-'pool_recycle': 300,
-'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_pre_ping': True,
 }
-
 # ========== CSRF PROTECTION ==========
 csrf = CSRFProtect(app)
 
