@@ -4,371 +4,797 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - {{ config.brand_name }}</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
+        :root {
+            --primary: #8B4513;
+            --primary-dark: #5D2906;
+            --primary-light: #A0522D;
+            --secondary: #D4AF37;
+            --secondary-light: #F4E4B3;
+            --dark: #1A1A1A;
+            --dark-light: #2D2D2D;
+            --light: #F8F5F0;
+            --gray: #8C8C8C;
+            --success: #27AE60;
+            --transition: all 0.3s ease;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --radius: 12px;
+            --radius-lg: 20px;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #f9f9f9;
+            color: var(--dark);
+            background-color: var(--light);
+            overflow-x: hidden;
         }
-
+        
         .container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 0 20px;
         }
-
+        
         /* Header */
         header {
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 1000;
+            padding: 1rem 0;
         }
-
+        
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
+            gap: 2rem;
         }
-
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #9d4edd;
+            font-family: 'Georgia', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
+        
         .tagline {
-            color: #666;
-            font-size: 14px;
-            margin-left: 10px;
+            color: var(--primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.9;
         }
-
+        
         .nav-links {
             display: flex;
-            gap: 30px;
+            gap: 2rem;
             align-items: center;
         }
-
+        
         .nav-links a {
             text-decoration: none;
-            color: #333;
+            color: var(--dark);
             font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #9d4edd;
-        }
-
-        .nav-links a.active {
-            color: #9d4edd;
-        }
-
-        .cart-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
             position: relative;
         }
-
-        .cart-count {
+        
+        .nav-links a:hover {
+            color: var(--primary);
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            background: rgba(139, 69, 19, 0.1);
+        }
+        
+        .nav-links a.active::after {
+            content: '';
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #9d4edd;
+            bottom: -2px;
+            left: 1rem;
+            right: 1rem;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+        
+        .cart-indicator {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .cart-indicator:hover {
+            background: rgba(139, 69, 19, 0.05);
+            color: var(--primary);
+        }
+        
+        .cart-count {
+            position: relative;
+            background: var(--primary);
             color: white;
-            font-size: 12px;
-            width: 18px;
-            height: 18px;
+            font-size: 0.75rem;
+            min-width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: 600;
         }
-
+        
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(45, 45, 45, 0.9) 100%), 
+                        url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
             color: white;
-            padding: 100px 0;
+            padding: 120px 0 80px;
             text-align: center;
+            margin-top: 0;
         }
-
+        
         .hero h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
-
+        
         .hero p {
-            font-size: 20px;
+            font-size: 1.25rem;
             max-width: 800px;
-            margin: 0 auto;
+            margin: 0 auto 2rem;
+            opacity: 0.9;
+            line-height: 1.8;
         }
-
-        /* About Content */
-        .about-content {
-            padding: 80px 0;
+        
+        /* Mission Section */
+        .mission-section {
+            padding: 100px 0;
             background: white;
+            position: relative;
         }
-
+        
         .section-title {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 60px;
         }
-
+        
         .section-title h2 {
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 15px;
+            font-size: 3rem;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
         }
-
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--secondary);
+        }
+        
         .section-title p {
-            color: #666;
-            font-size: 18px;
+            color: var(--gray);
+            font-size: 1.1rem;
             max-width: 600px;
-            margin: 0 auto;
+            margin: 1.5rem auto 0;
         }
-
-        .about-grid {
+        
+        .mission-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 40px;
+            margin-top: 60px;
         }
-
-        .about-card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 40px 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        
+        .mission-card {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 50px 40px;
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
-
-        .about-card:hover {
+        
+        .mission-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-lg);
         }
-
-        .about-icon {
-            font-size: 48px;
-            color: #9d4edd;
+        
+        .mission-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .mission-card h3 {
+            font-size: 1.75rem;
             margin-bottom: 20px;
+            color: var(--primary-dark);
         }
-
-        .about-card h3 {
-            font-size: 24px;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .about-card p {
-            color: #666;
+        
+        .mission-card p {
+            color: var(--gray);
             line-height: 1.8;
         }
-
-        /* Business Info */
-        .business-info {
-            background: #f8f9fa;
-            padding: 80px 0;
+        
+        /* Values Section */
+        .values-section {
+            padding: 100px 0;
+            background: var(--light);
         }
-
-        .info-grid {
+        
+        .values-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 30px;
         }
-
-        .info-card {
+        
+        .value-item {
+            text-align: center;
+            padding: 40px 30px;
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
         }
-
-        .info-card h3 {
-            color: #9d4edd;
-            margin-bottom: 15px;
-            font-size: 20px;
+        
+        .value-item:hover {
+            transform: translateY(-5px);
         }
-
-        .info-card p {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        /* Slogan Section */
-        .slogan-section {
-            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
-            color: white;
-            padding: 60px 0;
-            text-align: center;
-        }
-
-        .slogan-section h2 {
-            font-size: 32px;
+        
+        .value-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
             margin-bottom: 20px;
         }
-
-        .slogan-section p {
-            font-size: 20px;
-            max-width: 800px;
-            margin: 0 auto;
+        
+        .value-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+        }
+        
+        .value-item p {
+            color: var(--gray);
+            line-height: 1.7;
+        }
+        
+        /* Business Info */
+        .business-info {
+            padding: 100px 0;
+            background: white;
+            position: relative;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .info-card {
+            background: var(--light);
+            padding: 40px 30px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .info-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+        
+        .info-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+        }
+        
+        .info-card p {
+            color: var(--gray);
+            line-height: 1.7;
+            margin-bottom: 5px;
+        }
+        
+        /* Location Section */
+        .location-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark) 100%);
+            color: white;
+        }
+        
+        .location-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        
+        .location-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .location-text p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
             line-height: 1.8;
         }
-
-        /* Contact Section */
-        .contact-section {
-            padding: 80px 0;
+        
+        .location-details {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .detail-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+        
+        .detail-content h4 {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .detail-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+        
+        .location-map {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            height: 400px;
+        }
+        
+        .location-map iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Contact CTA */
+        .contact-cta {
+            padding: 100px 0;
             background: white;
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin-top: 40px;
-        }
-
-        .contact-item {
             text-align: center;
         }
-
-        .contact-icon {
-            font-size: 40px;
-            color: #9d4edd;
+        
+        .contact-cta h2 {
+            font-size: 2.5rem;
             margin-bottom: 20px;
+            color: var(--primary-dark);
         }
-
-        .contact-item h3 {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #333;
+        
+        .contact-cta p {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
         }
-
-        .contact-item p {
-            color: #666;
-            line-height: 1.6;
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
-
+        
+        .btn {
+            padding: 15px 40px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 69, 19, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--secondary-light);
+            transform: translateY(-2px);
+        }
+        
         /* Footer */
         footer {
-            background: #333;
+            background: var(--dark);
             color: white;
-            padding: 60px 0 30px;
+            padding: 80px 0 40px;
         }
-
+        
         .footer-content {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
         }
-
-        .footer-section h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #9d4edd;
+        
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-
-        .footer-section p {
-            color: #ccc;
-            line-height: 1.8;
+        
+        .footer-logo {
+            font-family: 'Georgia', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
             margin-bottom: 10px;
         }
-
-        .social-links {
+        
+        .footer-tagline {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links h4,
+        .footer-contact h4 {
+            color: var(--secondary);
+            margin-bottom: 25px;
+            font-size: 1.25rem;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .footer-links a:hover {
+            color: var(--secondary);
+            padding-left: 5px;
+        }
+        
+        .contact-item {
             display: flex;
             gap: 15px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
-
-        .social-links a {
-            color: white;
-            background: #9d4edd;
+        
+        .contact-icon {
             width: 40px;
             height: 40px;
+            background: rgba(212, 175, 55, 0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+        
+        .contact-details strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .contact-details p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+            line-height: 1.6;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .social-link {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            transition: var(--transition);
             text-decoration: none;
-            transition: background 0.3s;
         }
-
-        .social-links a:hover {
-            background: #7b2cbf;
+        
+        .social-link:hover {
+            background: var(--secondary);
+            color: var(--dark);
+            transform: translateY(-3px);
         }
-
-        .copyright {
-            text-align: center;
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 30px;
-            border-top: 1px solid #444;
-            color: #999;
-            font-size: 14px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
+        
+        .footer-bottom p {
+            margin-bottom: 10px;
+        }
+        
+        .footer-bottom a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-bottom a:hover {
+            color: var(--secondary);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
             .header-content {
                 flex-direction: column;
-                gap: 20px;
+                gap: 1rem;
             }
-
+            
             .nav-links {
-                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
             }
-
+            
             .hero h1 {
-                font-size: 36px;
+                font-size: 3rem;
             }
-
+            
+            .location-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .location-map {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                padding: 80px 0 60px;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
             .hero p {
-                font-size: 18px;
-                padding: 0 20px;
+                font-size: 1.1rem;
             }
-
+            
             .section-title h2 {
-                font-size: 28px;
+                font-size: 2.5rem;
+            }
+            
+            .mission-section,
+            .values-section,
+            .business-info,
+            .location-section,
+            .contact-cta {
+                padding: 60px 0;
+            }
+            
+            .mission-grid,
+            .values-grid,
+            .info-grid {
+                gap: 30px;
+            }
+            
+            .mission-card,
+            .value-item,
+            .info-card {
+                padding: 30px 25px;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
             }
             
             .nav-links a {
-                font-size: 14px;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
             }
         }
+        
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Header -->
     <header>
         <div class="container">
             <div class="header-content">
-                <div>
-                    <a href="{{ url_for('index') }}" class="logo">{{ config.brand_name }}</a>
+                <div class="logo-container">
+                    <a href="{{ url_for('index') }}" class="logo">
+                        <i class="fas fa-crown text-gold"></i>
+                        {{ config.brand_name }}
+                    </a>
                     <span class="tagline">{{ config.tagline }}</span>
                 </div>
+                
                 <nav class="nav-links">
                     <a href="{{ url_for('index') }}">Home</a>
                     <a href="{{ url_for('shop') }}">Shop</a>
                     <a href="{{ url_for('about') }}" class="active">About</a>
                     <a href="{{ url_for('contact') }}">Contact</a>
-                    {% if customer_id %}
-                    <a href="{{ url_for('account') }}">Account</a>
-                    <a href="{{ url_for('customer_logout') }}">Logout</a>
+                    
+                    {% if session.customer_id %}
+                    <a href="{{ url_for('account') }}">
+                        <i class="fas fa-user me-1"></i> Account
+                    </a>
+                    <a href="{{ url_for('customer_logout') }}">
+                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                    </a>
                     {% else %}
-                    <a href="{{ url_for('customer_login') }}">Login</a>
-                    <a href="{{ url_for('customer_register') }}">Register</a>
+                    <a href="{{ url_for('customer_login') }}">
+                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                    </a>
+                    <a href="{{ url_for('customer_register') }}">
+                        <i class="fas fa-user-plus me-1"></i> Register
+                    </a>
                     {% endif %}
+                    
                     <a href="{{ url_for('cart') }}" class="cart-indicator">
                         <i class="fas fa-shopping-cart"></i>
+                        <span>Cart</span>
                         {% if cart_count > 0 %}
                         <span class="cart-count">{{ cart_count }}</span>
                         {% endif %}
@@ -379,128 +805,199 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero">
+    <section class="hero fade-in">
         <div class="container">
             <h1>About {{ config.brand_name }}</h1>
             <p>{{ config.description }}</p>
+            <p class="mt-3" style="opacity: 0.95;">{{ config.slogan }}</p>
         </div>
     </section>
 
-    <!-- About Content -->
-    <section class="about-content">
+    <!-- Mission Section -->
+    <section class="mission-section">
         <div class="container">
-            <div class="section-title">
-                <h2>Our Story</h2>
-                <p>Founded with a vision to provide premium quality hair products at affordable wholesale prices.</p>
+            <div class="section-title fade-in">
+                <h2>Our Mission & Vision</h2>
+                <p>Delivering premium quality hair products with exceptional service</p>
             </div>
             
-            <div class="about-grid">
-                <div class="about-card">
-                    <div class="about-icon">
+            <div class="mission-grid">
+                <div class="mission-card fade-in" style="animation-delay: 0.1s;">
+                    <div class="mission-icon">
                         <i class="fas fa-gem"></i>
                     </div>
                     <h3>Premium Quality</h3>
-                    <p>We source only the finest human hair and materials, ensuring every product meets our strict quality standards.</p>
+                    <p>We source only 100% virgin human hair, ensuring every product meets the highest standards of quality, durability, and natural beauty.</p>
                 </div>
                 
-                <div class="about-card">
-                    <div class="about-icon">
+                <div class="mission-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="mission-icon">
                         <i class="fas fa-tag"></i>
                     </div>
-                    <h3>Wholesale Prices</h3>
-                    <p>By dealing directly with manufacturers, we offer luxury products at wholesale prices without compromising quality.</p>
+                    <h3>Wholesale Excellence</h3>
+                    <p>By working directly with manufacturers, we provide luxury hair products at wholesale prices without compromising on quality or service.</p>
                 </div>
                 
-                <div class="about-card">
-                    <div class="about-icon">
+                <div class="mission-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="mission-icon">
                         <i class="fas fa-heart"></i>
                     </div>
-                    <h3>Customer Satisfaction</h3>
-                    <p>Your satisfaction is our priority. We work tirelessly to ensure every customer gets the best value and service.</p>
+                    <h3>Customer First</h3>
+                    <p>Your satisfaction is our priority. We're committed to providing exceptional customer service and building lasting relationships.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Slogan Section -->
-    <section class="slogan-section">
+    <!-- Values Section -->
+    <section class="values-section">
         <div class="container">
-            <h2>{{ config.slogan }}</h2>
-            <p>Premium 100% human hair extensions, wigs, and hair products at wholesale prices.</p>
+            <div class="section-title fade-in">
+                <h2>Our Core Values</h2>
+                <p>The principles that guide everything we do</p>
+            </div>
+            
+            <div class="values-grid">
+                <div class="value-item fade-in" style="animation-delay: 0.1s;">
+                    <div class="value-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Quality First</h3>
+                    <p>Every product undergoes rigorous quality checks to ensure you receive only the best.</p>
+                </div>
+                
+                <div class="value-item fade-in" style="animation-delay: 0.2s;">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3>Integrity</h3>
+                    <p>We believe in honest business practices and transparent dealings with all our customers.</p>
+                </div>
+                
+                <div class="value-item fade-in" style="animation-delay: 0.3s;">
+                    <div class="value-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Community</h3>
+                    <p>Building a community of satisfied customers who trust us for all their hair needs.</p>
+                </div>
+                
+                <div class="value-item fade-in" style="animation-delay: 0.4s;">
+                    <div class="value-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3>Reliability</h3>
+                    <p>Timely delivery and consistent product quality you can always depend on.</p>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Business Information -->
     <section class="business-info">
         <div class="container">
-            <div class="section-title">
-                <h2>Our Business</h2>
-                <p>Located in the heart of Lagos, serving customers nationwide</p>
+            <div class="section-title fade-in">
+                <h2>Why Choose {{ config.brand_name }}</h2>
+                <p>Here's what sets us apart in the hair industry</p>
             </div>
             
             <div class="info-grid">
-                <div class="info-card">
-                    <i class="fas fa-map-marker-alt" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
-                    <h3>Our Location</h3>
-                    <p>{{ config.address }}</p>
+                <div class="info-card fade-in" style="animation-delay: 0.1s;">
+                    <div class="info-icon">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <h3>Fast Nationwide Delivery</h3>
+                    <p>We deliver to all states in Nigeria with reliable courier services.</p>
                 </div>
                 
-                <div class="info-card">
-                    <i class="fas fa-phone" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
-                    <h3>Contact Number</h3>
-                    <p>{{ config.phone }}</p>
-                    <p>WhatsApp: {{ config.phone }}</p>
+                <div class="info-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="info-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Quality Guarantee</h3>
+                    <p>30-day satisfaction guarantee on all our premium hair products.</p>
                 </div>
                 
-                <div class="info-card">
-                    <i class="fas fa-hashtag" style="font-size: 40px; color: #9d4edd; margin-bottom: 15px;"></i>
-                    <h3>Social Media</h3>
-                    <p>Instagram: @{{ config.instagram }}</p>
+                <div class="info-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="info-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>24/7 Support</h3>
+                    <p>Our customer support team is always ready to assist you.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Contact Section -->
-    <section class="contact-section">
+    <!-- Location Section -->
+    <section class="location-section">
         <div class="container">
-            <div class="section-title">
-                <h2>Get in Touch</h2>
-                <p>Contact us for wholesale inquiries, product information, or business partnerships</p>
+            <div class="location-content">
+                <div class="location-text fade-in">
+                    <h2>Visit Our Store</h2>
+                    <p>Located in the heart of Lagos, we welcome you to visit our physical store where you can see, touch, and feel our premium hair products in person.</p>
+                    
+                    <div class="location-details">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h4>Our Address</h4>
+                                <p>{{ config.address }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h4>Phone Number</h4>
+                                <p>{{ config.phone }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h4>Business Hours</h4>
+                                <p>Monday - Saturday: 9:00 AM - 7:00 PM</p>
+                                <p>Sunday: 12:00 PM - 5:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="location-map fade-in" style="animation-delay: 0.2s;">
+                    <!-- Google Maps Embed -->
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.636239806665!2d3.315947!3d6.447600!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8c8f8aae7bc7%3A0xa5c82c2d28de99f3!2sTrade%20Fair%20Complex%20Badagry%20Express%20Way!5e0!3m2!1sen!2sng!4v1627464000000!5m2!1sen!2sng" 
+                        allowfullscreen="" 
+                        loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact CTA -->
+    <section class="contact-cta">
+        <div class="container">
+            <div class="section-title fade-in">
+                <h2>Ready to Experience Premium Hair?</h2>
+                <p>Join thousands of satisfied customers who trust {{ config.brand_name }} for their hair needs</p>
             </div>
             
-            <div class="contact-grid">
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fas fa-store"></i>
-                    </div>
-                    <h3>Visit Our Store</h3>
-                    <p>{{ config.address }}</p>
-                </div>
-                
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fas fa-phone"></i>
-                    </div>
-                    <h3>Call Us</h3>
-                    <p>{{ config.phone }}</p>
-                </div>
-                
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fab fa-whatsapp"></i>
-                    </div>
-                    <h3>WhatsApp</h3>
-                    <p>{{ config.phone }}</p>
-                </div>
-                
-                <div class="contact-item">
-                    <div class="contact-icon">
-                        <i class="fab fa-instagram"></i>
-                    </div>
-                    <h3>Instagram</h3>
-                    <p>@{{ config.instagram }}</p>
-                </div>
+            <div class="cta-buttons fade-in" style="animation-delay: 0.2s;">
+                <a href="{{ url_for('shop') }}" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> Shop Now
+                </a>
+                <a href="{{ url_for('contact') }}" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i> Contact Us
+                </a>
             </div>
         </div>
     </section>
@@ -509,36 +1006,135 @@
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>{{ config.brand_name }}</h3>
-                    <p>{{ config.tagline }}</p>
-                    <p>{{ config.slogan }}</p>
+                <div class="footer-brand">
+                    <div class="footer-logo">{{ config.brand_name }}</div>
+                    <p class="footer-tagline">{{ config.tagline }}</p>
+                    <p style="color: rgba(255, 255, 255, 0.7);">{{ config.slogan }}</p>
                 </div>
                 
-                <div class="footer-section">
-                    <h3>Contact Info</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> {{ config.address }}</p>
-                    <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
-                    <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}"><i class="fas fa-chevron-right"></i> Home</a></li>
+                        <li><a href="{{ url_for('shop') }}"><i class="fas fa-chevron-right"></i> Shop</a></li>
+                        <li><a href="{{ url_for('about') }}"><i class="fas fa-chevron-right"></i> About Us</a></li>
+                        <li><a href="{{ url_for('contact') }}"><i class="fas fa-chevron-right"></i> Contact</a></li>
+                        <li><a href="{{ url_for('account') }}"><i class="fas fa-chevron-right"></i> My Account</a></li>
+                    </ul>
                 </div>
                 
-                <div class="footer-section">
-                    <h3>Connect With Us</h3>
-                    <div class="social-links">
-                        <a href="{{ config.whatsapp }}" target="_blank">
+                <div class="footer-contact">
+                    <h4>Contact Info</h4>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Address:</strong>
+                            <p>{{ config.address }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Phone:</strong>
+                            <p>{{ config.phone }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-details">
+                            <strong>Email:</strong>
+                            <p>{{ config.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-social">
+                        <a href="{{ config.whatsapp }}" target="_blank" class="social-link">
                             <i class="fab fa-whatsapp"></i>
                         </a>
-                        <a href="{{ config.instagram_url }}" target="_blank">
+                        <a href="{{ config.instagram_url }}" target="_blank" class="social-link">
                             <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="tel:{{ config.phone }}" class="social-link">
+                            <i class="fas fa-phone"></i>
+                        </a>
+                        <a href="mailto:{{ config.email }}" class="social-link">
+                            <i class="fas fa-envelope"></i>
                         </a>
                     </div>
                 </div>
             </div>
             
-            <div class="copyright">
-                <p>&copy; {{ now.year }} {{ config.brand_name }}. All rights reserved.</p>
+            <div class="footer-bottom">
+                <p>&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
+                <p style="font-size: 0.9rem; margin-top: 5px;">
+                    <a href="#">Privacy Policy</a> | 
+                    <a href="#">Terms of Service</a>
+                </p>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Add scroll animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            fadeElements.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(element);
+            });
+            
+            // Update cart count display
+            const cartCountElements = document.querySelectorAll('.cart-count');
+            cartCountElements.forEach(el => {
+                if (el.textContent === '0') {
+                    el.style.display = 'none';
+                }
+            });
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const target = document.querySelector(targetId);
+                if (target) {
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
