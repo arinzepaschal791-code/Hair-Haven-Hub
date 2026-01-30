@@ -1,61 +1,12 @@
-services:
-  - type: web
-    name: norahairline-ecommerce
-    env: python
-    region: oregon
-    plan: free
-    branch: main
-    buildCommand: |
-      pip install --upgrade pip setuptools wheel
-      pip install -r requirements.txt
-      python -c "
-      print('✅ Dependencies installed')
-      print('Python version:')
-      import sys
-      print(sys.version)
-      import PIL
-      print(f'Pillow version: {PIL.__version__}')
-      "
-    startCommand: gunicorn main:app
-    healthCheckPath: /health
-    autoDeploy: true
-    envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: ADMIN_EMAIL
-        value: admin@norahairline.com
-      - key: ADMIN_PASSWORD
-        value: admin123
-      - key: DEBUG
-        value: false
-      - key: FLASK_DEBUG
-        value: false
-      - key: ENV
-        value: production
-      - key: FLASK_ENV
-        value: production
-      - key: WTF_CSRF_ENABLED
-        value: true
-      - key: SESSION_COOKIE_SECURE
-        value: true
-      - key: SESSION_COOKIE_SAMESITE
-        value: 'Lax'
-      - key: PERMANENT_SESSION_LIFETIME
-        value: 86400
-      - key: SQLALCHEMY_TRACK_MODIFICATIONS
-        value: false
-      - key: SQLALCHEMY_ENGINE_OPTIONS
-        syncValue: '{"pool_recycle": 300, "pool_pre_ping": true}'
-      - key: MAX_CONTENT_LENGTH
-        value: 16777216
-      - key: UPLOAD_FOLDER
-        value: ./static/uploads
-      - key: ALLOWED_EXTENSIONS
-        value: png,jpg,jpeg,gif,webp
-
-# Optional: Uncomment to add a PostgreSQL database
-# databases:
-#   - name: norahairline_db
-#     plan: free
-#     databaseName: norahairline
-#     user: norahairline_user
+buildCommand: |
+  pip install --upgrade pip setuptools wheel
+  pip install pillow==9.4.0 --no-cache-dir --no-build-isolation
+  pip install -r requirements.txt
+  python -c "
+  print('✅ Dependencies installed')
+  print('Python version:')
+  import sys
+  print(sys.version)
+  import PIL
+  print(f'Pillow version: {PIL.__version__}')
+  "
