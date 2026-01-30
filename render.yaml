@@ -6,20 +6,20 @@ services:
     plan: free
     branch: main
     buildCommand: |
-      pip install --upgrade pip
+      pip install --upgrade pip setuptools wheel
       pip install -r requirements.txt
       python -c "
       print('✅ Dependencies installed')
       print('Python version:')
       import sys
       print(sys.version)
+      import PIL
+      print(f'Pillow version: {PIL.__version__}')
       "
     startCommand: gunicorn main:app
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.18
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
@@ -45,16 +45,13 @@ services:
       - key: SQLALCHEMY_TRACK_MODIFICATIONS
         value: false
       - key: SQLALCHEMY_ENGINE_OPTIONS
-        syncValue: '{\"pool_recycle\": 300, \"pool_pre_ping\": true}'
+        syncValue: '{"pool_recycle": 300, "pool_pre_ping": true}'
       - key: MAX_CONTENT_LENGTH
         value: 16777216
       - key: UPLOAD_FOLDER
         value: ./static/uploads
       - key: ALLOWED_EXTENSIONS
         value: png,jpg,jpeg,gif,webp
-
-    # Database configuration (Render will automatically provide DATABASE_URL)
-    # No need to manually set DATABASE_URL for PostgreSQL
 
 # Optional: Uncomment to add a PostgreSQL database
 # databases:
