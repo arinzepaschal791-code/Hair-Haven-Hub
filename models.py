@@ -1,4 +1,4 @@
-# models.py - COMPLETE FIXED VERSION (Matches main.py structure)
+# models.py - COMPLETE VERSION (Matches main.py structure EXACTLY)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -31,7 +31,7 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text)
-    image_url = db.Column(db.String(500), default='default-category.jpg')
+    image_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
@@ -44,30 +44,118 @@ class Product(db.Model):
     name = db.Column(db.String(200), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
     description = db.Column(db.Text)
-    price = db.Column(db.Float, nullable=False)
+    base_price = db.Column(db.Float, nullable=False, default=0.0)  # Renamed from price
     compare_price = db.Column(db.Float)
     sku = db.Column(db.String(100))
-    quantity = db.Column(db.Integer, default=0)
+    total_quantity = db.Column(db.Integer, default=0)  # Total across all variants
     featured = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    image_url = db.Column(db.String(500), default='default-product.jpg')
-    length = db.Column(db.String(50))
-    texture = db.Column(db.String(50))
+    is_bundle = db.Column(db.Boolean, default=False)
+    bundle_discount = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    category = db.relationship('Category', backref='products')
+    category = db.relationship('Category', backref='products', lazy='joined')
+    variants = db.relationship('ProductVariant', backref='product', lazy=True, cascade='all, delete-orphan')
+    images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
+    
+    @property
+    def stock(self):
+        """Calculate total stock across all variants"""
+        if self.variants:
+            return sum(variant.stock for variant in self.variants)
+        return self.total_quantity
+    
+    @property
+    def min_price(self):
+        """Get minimum variant price"""
+        if self.variants:
+            prices = [v.price for v in self.variants if v.price > 0]
+            return min(prices) if prices else self.base_price
+        return self.base_price
+    
+    @property
+    def max_price(self):
+        """Get maximum variant price"""
+        if self.variants:
+            prices = [v.price for v in self.variants if v.price > 0]
+            return max(prices) if prices else self.base_price
+        return self.base_price
     
     @property
     def display_price(self):
-        return float(self.price)
+        """Display price range for products with variants"""
+        if self.variants and len(set(v.price for v in self.variants)) > 1:
+            return f"₦{self.min_price:,.0f} - ₦{self.max_price:,.0f}"
+        return f"₦{self.min_price:,.0f}"
     
     @property
-    def formatted_price(self):
-        return f"₦{self.display_price:,.2f}"
+    def available_lengths(self):
+        """Get unique available lengths"""
+        if self.variants:
+            lengths = [v.length for v in self.variants if v.length and v.stock > 0]
+            return sorted(set(lengths))
+        return []
+    
+    @property
+    def available_textures(self):
+        """Get unique available textures"""
+        if self.variants:
+            textures = [v.texture for v in self.variants if v.texture and v.stock > 0]
+            return sorted(set(textures))
+        return []
+    
+    def get_default_variant(self):
+        """Get first available variant"""
+        if self.variants:
+            available = [v for v in self.variants if v.stock > 0]
+            return available[0] if available else self.variants[0]
+        return None
     
     def __repr__(self):
         return f'<Product {self.name}>'
+
+class ProductVariant(db.Model):
+    __tablename__ = 'product_variant'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    name = db.Column(db.String(200))
+    length = db.Column(db.String(50))
+    texture = db.Column(db.String(50))
+    color = db.Column(db.String(50))
+    price = db.Column(db.Float, nullable=False)
+    compare_price = db.Column(db.Float)
+    stock = db.Column(db.Integer, default=0)
+    sku = db.Column(db.String(100), unique=True)
+    is_default = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Index for faster queries
+    __table_args__ = (
+        db.Index('idx_variant_product', 'product_id'),
+        db.Index('idx_variant_stock', 'stock'),
+    )
+    
+    @property
+    def available(self):
+        return self.stock > 0
+    
+    def __repr__(self):
+        return f'<ProductVariant {self.name} - {self.length} {self.texture}>'
+
+class ProductImage(db.Model):
+    __tablename__ = 'product_image'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    image_url = db.Column(db.String(500), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<ProductImage {self.id}>'
 
 class Customer(db.Model):
     __tablename__ = 'customer'
@@ -106,6 +194,7 @@ class Order(db.Model):
     shipping_address = db.Column(db.Text, nullable=False)
     shipping_city = db.Column(db.String(100), nullable=False)
     shipping_state = db.Column(db.String(100), nullable=False)
+    shipping_area = db.Column(db.String(100))  # Added for Lagos areas
     total_amount = db.Column(db.Float, nullable=False)
     shipping_amount = db.Column(db.Float, default=0.0)
     final_amount = db.Column(db.Float, nullable=False)
@@ -116,7 +205,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<Order {self.order_number}>'
@@ -127,12 +216,15 @@ class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), nullable=True)
     product_name = db.Column(db.String(200), nullable=False)
+    variant_details = db.Column(db.String(200))  # Store variant info: "24\" Brazilian Body Wave"
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
     
     product = db.relationship('Product')
+    variant = db.relationship('ProductVariant')
     
     def __repr__(self):
         return f'<OrderItem {self.id}>'
@@ -147,6 +239,7 @@ class Review(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
     location = db.Column(db.String(100))
+    verified_purchase = db.Column(db.Boolean, default=False)
     approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -155,5 +248,20 @@ class Review(db.Model):
     def __repr__(self):
         return f'<Review {self.id}>'
 
-# Cart functionality is handled by session in main.py, so Cart/CartItem models are removed
-# Payment model can be added later if needed
+class BundleItem(db.Model):
+    __tablename__ = 'bundle_item'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    bundle_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    bundle = db.relationship('Product', foreign_keys=[bundle_id], backref='bundle_items')
+    product = db.relationship('Product', foreign_keys=[product_id])
+    
+    def __repr__(self):
+        return f'<BundleItem {self.id}>'
+
+# Note: Cart functionality is handled by session in main.py
+# No Cart/CartItem models needed
