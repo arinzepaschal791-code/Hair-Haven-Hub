@@ -6,7 +6,7 @@ SQLAlchemy==1.4.46
 psycopg2-binary==2.9.5
 Flask-WTF==1.1.1
 WTForms==3.0.1
-Pillow==10.3.0  # CHANGED FROM 9.5.0
+pillow==9.4.0  # LOWERCASE 'pillow'
 gunicorn==20.1.0
 python-dotenv==1.0.0
 setuptools>=68.0.0
