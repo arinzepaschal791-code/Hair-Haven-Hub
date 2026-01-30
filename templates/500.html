@@ -3,44 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 - Internal Server Error</title>
-    <!-- Bootstrap CSS -->
+    <title>500 - Internal Server Error | {{ config.brand_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --accent-color: #F5DEB3;
+            --dark-color: #2C1810;
+            --light-color: #FFF8F0;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
         
         .error-container {
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
-            padding: 20px;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .error-card {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             overflow: hidden;
+            border: 1px solid rgba(220, 53, 69, 0.1);
         }
         
         .error-header {
-            background: linear-gradient(to right, #dc3545, #e35d6a);
+            background: linear-gradient(to right, var(--error-color), #e35d6a);
             color: white;
-            padding: 30px 20px;
+            padding: 40px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .error-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            animation: float 20s linear infinite;
+            opacity: 0.2;
+        }
+        
+        @keyframes float {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         .error-icon {
-            font-size: 4rem;
+            font-size: 70px;
             margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .error-header h1 {
+            font-weight: 700;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .error-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
         }
         
         .error-body {
@@ -48,17 +106,69 @@
         }
         
         .error-code {
-            font-size: 5rem;
-            font-weight: bold;
-            color: #dc3545;
+            font-size: 100px;
+            font-weight: 900;
+            color: var(--error-color);
             text-align: center;
             margin-bottom: 20px;
+            text-shadow: 3px 3px 0 rgba(220, 53, 69, 0.1);
+            line-height: 1;
         }
         
         .error-message {
             text-align: center;
-            color: #666;
             margin-bottom: 30px;
+        }
+        
+        .error-message h3 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .error-message p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .brand-logo {
+            height: 50px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .troubleshoot-section {
+            background-color: #fff8f8;
+            border-left: 4px solid var(--error-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .troubleshoot-title {
+            color: var(--error-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .troubleshoot-list {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .troubleshoot-list li {
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .troubleshoot-list li:last-child {
+            margin-bottom: 0;
         }
         
         .error-actions {
@@ -66,72 +176,385 @@
             gap: 15px;
             justify-content: center;
             margin-top: 30px;
+            flex-wrap: wrap;
         }
         
-        @media (max-width: 576px) {
+        .error-actions .btn {
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            min-width: 160px;
+            justify-content: center;
+        }
+        
+        .btn-back {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-home {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-home:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-help {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .btn-help:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-contact {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-contact:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .error-footer {
+            padding: 20px 30px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .error-details {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #999;
+            word-break: break-all;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .error-header {
+                padding: 30px 20px;
+            }
+            
+            .error-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .error-icon {
+                font-size: 50px;
+            }
+            
+            .error-code {
+                font-size: 80px;
+            }
+            
+            .error-body {
+                padding: 30px 20px;
+            }
+            
             .error-actions {
                 flex-direction: column;
+                align-items: center;
             }
             
             .error-actions .btn {
                 width: 100%;
+                max-width: 300px;
             }
+        }
+        
+        @media (max-width: 480px) {
+            .error-code {
+                font-size: 60px;
+            }
+            
+            .error-header {
+                padding: 25px 15px;
+            }
+            
+            .error-body {
+                padding: 25px 15px;
+            }
+        }
+        
+        .support-contact {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .support-contact a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .support-contact a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner-border {
+            color: var(--primary-color);
         }
     </style>
 </head>
 <body>
     <div class="error-container">
         <div class="error-card">
+            <!-- Header with brand logo -->
             <div class="error-header">
+                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                     alt="{{ config.brand_name }} Logo" 
+                     class="brand-logo">
+                
                 <div class="error-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
+                    <i class="fas fa-server"></i>
                 </div>
-                <h1>Internal Server Error</h1>
+                
+                <h1>System Error</h1>
+                <p class="error-subtitle">{{ config.brand_name }} - Premium Hair Solutions</p>
             </div>
             
+            <!-- Error content -->
             <div class="error-body">
+                <!-- Error code -->
                 <div class="error-code">500</div>
                 
+                <!-- Error message -->
                 <div class="error-message">
-                    <h3>Oops! Something went wrong on our end.</h3>
-                    <p class="mb-0">We're experiencing technical difficulties. Our team has been notified and is working to fix the issue.</p>
+                    <h3>Internal Server Error</h3>
+                    <p>
+                        We're experiencing technical difficulties on our end. 
+                        Our team has been automatically notified and is working to resolve the issue.
+                        Please try again in a few moments.
+                    </p>
                 </div>
                 
-                <div class="alert alert-warning">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <strong>What you can do:</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>Try refreshing the page</li>
-                        <li>Go back to the previous page</li>
-                        <li>Contact support if the problem persists</li>
+                <!-- Troubleshooting section -->
+                <div class="troubleshoot-section">
+                    <div class="troubleshoot-title">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>Troubleshooting Steps</span>
+                    </div>
+                    <ul class="troubleshoot-list">
+                        <li>Refresh the page in a few minutes</li>
+                        <li>Clear your browser cache and cookies</li>
+                        <li>Check your internet connection</li>
+                        <li>Try using a different browser</li>
+                        <li>If the problem persists, contact our support team</li>
                     </ul>
                 </div>
                 
+                <!-- Action buttons -->
                 <div class="error-actions">
-                    <a href="javascript:history.back()" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i> Go Back
+                    <button type="button" class="btn btn-back" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Go Back
+                    </button>
+                    
+                    <a href="{{ url_for('index') }}" class="btn btn-home">
+                        <i class="fas fa-home"></i> Homepage
                     </a>
-                    <a href="{{ url_for('index') }}" class="btn btn-primary">
-                        <i class="fas fa-home me-2"></i> Go Home
-                    </a>
-                    {% if config and config.whatsapp %}
-                    <a href="{{ config.whatsapp }}" target="_blank" class="btn btn-success">
-                        <i class="fab fa-whatsapp me-2"></i> Get Help
+                    
+                    {% if config.whatsapp %}
+                    <a href="{{ config.whatsapp }}" target="_blank" class="btn btn-help">
+                        <i class="fab fa-whatsapp"></i> WhatsApp Support
                     </a>
                     {% endif %}
+                    
+                    <a href="{{ url_for('contact') }}" class="btn btn-contact">
+                        <i class="fas fa-headset"></i> Contact Us
+                    </a>
+                </div>
+                
+                <!-- Support contact info -->
+                <div class="support-contact">
+                    <p class="mb-2">
+                        Need immediate assistance?
+                        <a href="mailto:{{ config.support_email }}">{{ config.support_email }}</a>
+                        or call {{ config.phone }}
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-clock me-1"></i>
+                        Support Hours: Mon-Sat, 9 AM - 6 PM
+                    </p>
+                </div>
+                
+                <!-- Loading indicator (hidden by default) -->
+                <div class="loading-indicator" id="loadingIndicator">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Attempting to reconnect...</p>
                 </div>
             </div>
             
-            <div class="card-footer text-muted text-center">
-                <small>
-                    <i class="fas fa-clock me-1"></i>
-                    Error Reference: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}
-                </small>
+            <!-- Footer with timestamp -->
+            <div class="error-footer">
+                <div>
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Error Reference: <span id="errorTimestamp">{{ now.strftime('%Y%m%d-%H%M%S') }}</span>
+                </div>
+                <div class="error-details">
+                    Server: {{ config.brand_name }} | 
+                    Time: {{ now.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- JavaScript functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-refresh after 30 seconds (optional)
+            setTimeout(() => {
+                console.log('Attempting auto-refresh...');
+            }, 30000);
+            
+            // Add click handler for retry functionality
+            const refreshButtons = document.querySelectorAll('.btn-home, .btn-back');
+            refreshButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // If it's a regular link, let it proceed
+                    if (this.getAttribute('href') || this.getAttribute('onclick')) {
+                        return;
+                    }
+                    
+                    // Otherwise show loading and refresh
+                    const loadingIndicator = document.getElementById('loadingIndicator');
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'block';
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                });
+            });
+            
+            // Generate a unique error ID for reporting
+            const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            const timestampElement = document.getElementById('errorTimestamp');
+            if (timestampElement) {
+                timestampElement.textContent += '-' + errorId;
+            }
+            
+            // Try to log error (in a real app, this would send to your error tracking service)
+            try {
+                console.error('500 Error occurred:', {
+                    errorId: errorId,
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    userAgent: navigator.userAgent
+                });
+            } catch (e) {
+                // Silently fail
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // F5 or Ctrl+R to refresh
+                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                    e.preventDefault();
+                    window.location.reload();
+                }
+                
+                // Escape to go home
+                if (e.key === 'Escape') {
+                    window.location.href = "{{ url_for('index') }}";
+                }
+                
+                // B to go back
+                if (e.key === 'b' || e.key === 'B') {
+                    window.history.back();
+                }
+            });
+            
+            // Show helpful tooltip about keyboard shortcuts
+            setTimeout(() => {
+                console.log('Keyboard shortcuts: F5=Refresh, Esc=Home, B=Back');
+            }, 2000);
+            
+            // Check if page is still loading
+            if (document.readyState === 'complete') {
+                // Page loaded successfully, hide any loading indicators
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+            
+            // Add animation to buttons on hover
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+            
+            // Auto-focus on first button for accessibility
+            const firstButton = document.querySelector('.btn');
+            if (firstButton) {
+                firstButton.focus();
+            }
+        });
+        
+        // Handle browser back/forward buttons
+        window.onpopstate = function() {
+            window.location.reload();
+        };
+        
+        // Show error details for developers (if in debug mode)
+        {% if config and config.get('DEBUG', False) %}
+        console.warn('Debug mode is enabled');
+        {% endif %}
+    </script>
+    
+    <!-- Bootstrap JS (optional, for any Bootstrap components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
