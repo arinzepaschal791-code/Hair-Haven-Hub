@@ -3,79 +3,442 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found | {{ brand_name }}</title>
+    <title>404 - Page Not Found | {{ config.brand_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --accent-color: #F5DEB3;
+            --dark-color: #2C1810;
+            --light-color: #FFF8F0;
+        }
+        
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         .error-container {
             text-align: center;
-            padding: 40px;
+            padding: 50px 40px;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.1);
+            max-width: 700px;
+            width: 90%;
+            margin: 20px;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .error-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .error-icon {
+            font-size: 80px;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
         .error-code {
             font-size: 120px;
             font-weight: bold;
-            color: #8b4513;
+            color: var(--primary-color);
             line-height: 1;
+            text-shadow: 3px 3px 0 rgba(139, 69, 19, 0.1);
+            margin: 10px 0;
         }
-        .error-icon {
-            font-size: 80px;
-            color: #8b4513;
+        
+        .error-title {
+            font-size: 1.8rem;
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .brand-logo {
+            height: 60px;
             margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .search-container {
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+        
+        .search-container input {
+            border: 2px solid #e0e0e0;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+        }
+        
+        .search-container input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+        }
+        
+        .search-container .btn {
+            border-radius: 50px;
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .search-container .btn:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .section-title {
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background: var(--accent-color);
+        }
+        
+        .quick-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-links .btn {
+            border-radius: 50px;
+            padding: 10px 20px;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quick-links .btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .back-home-btn {
+            border-radius: 50px;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .back-home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.4);
+            color: white;
+        }
+        
+        .contact-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .contact-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .contact-info a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 40px 20px;
+                margin: 10px;
+            }
+            
+            .error-code {
+                font-size: 80px;
+            }
+            
+            .error-icon {
+                font-size: 60px;
+            }
+            
+            .error-title {
+                font-size: 1.5rem;
+            }
+            
+            .search-container {
+                margin-bottom: 25px;
+            }
+            
+            .quick-links {
+                gap: 8px;
+            }
+            
+            .quick-links .btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .error-code {
+                font-size: 60px;
+            }
+            
+            .quick-links {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .quick-links .btn {
+                width: 200px;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="error-container">
+        <!-- Brand Logo -->
+        <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+             alt="{{ config.brand_name }} Logo" 
+             class="brand-logo">
+        
+        <!-- Error Icon -->
         <div class="error-icon">
-            <i class="fas fa-exclamation-triangle"></i>
+            <i class="fas fa-search"></i>
         </div>
+        
+        <!-- Error Code -->
         <h1 class="error-code">404</h1>
-        <h2 class="mb-4">Page Not Found</h2>
-        <p class="text-muted mb-4">
-            Oops! The page you're looking for seems to have gone on vacation. 
-            It might have been moved, deleted, or perhaps you entered the wrong URL.
+        
+        <!-- Error Title -->
+        <h2 class="error-title">Page Not Found</h2>
+        
+        <!-- Error Message -->
+        <p class="error-message">
+            The page you're looking for seems to have wandered off! 
+            It might have been moved, deleted, or perhaps never existed.
+            But don't worry—we've got plenty of beautiful hair products waiting for you.
         </p>
         
-        <div class="mb-4">
-            <form action="/shop" method="get" class="d-flex">
-                <input type="text" name="search" class="form-control me-2" placeholder="Search products, categories...">
+        <!-- Search Form -->
+        <div class="search-container">
+            <h5 class="section-title">Search Our Store</h5>
+            <form action="{{ url_for('shop') }}" method="get" class="d-flex gap-2">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Search for hair, wigs, bundles..." 
+                       required>
                 <button class="btn btn-primary" type="submit">
                     <i class="fas fa-search"></i> Search
                 </button>
             </form>
         </div>
         
-        <h5 class="mb-3">Popular Pages:</h5>
-        <div class="d-flex justify-content-center flex-wrap gap-2">
-            <a href="/" class="btn btn-outline-primary">
+        <!-- Quick Links -->
+        <h5 class="section-title">Quick Navigation</h5>
+        <div class="quick-links">
+            <a href="{{ url_for('index') }}" class="btn">
                 <i class="fas fa-home"></i> Homepage
             </a>
-            <a href="/shop" class="btn btn-outline-primary">
-                <i class="fas fa-shopping-bag"></i> Shop
+            <a href="{{ url_for('shop') }}" class="btn">
+                <i class="fas fa-shopping-bag"></i> Shop All
             </a>
-            <a href="/about" class="btn btn-outline-primary">
+            <a href="{{ url_for('about') }}" class="btn">
                 <i class="fas fa-info-circle"></i> About Us
             </a>
-            <a href="/contact" class="btn btn-outline-primary">
+            <a href="{{ url_for('contact') }}" class="btn">
                 <i class="fas fa-envelope"></i> Contact
             </a>
         </div>
         
+        <!-- Popular Categories -->
+        {% if categories %}
+        <h5 class="section-title">Popular Categories</h5>
+        <div class="quick-links mb-4">
+            {% for category in categories[:4] %}
+            <a href="{{ url_for('shop') }}?category={{ category.id }}" class="btn">
+                <i class="fas fa-tag"></i> {{ category.name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Main Action Button -->
         <div class="mt-4">
-            <a href="/" class="btn btn-primary">
-                <i class="fas fa-arrow-left"></i> Go Back Home
+            <a href="{{ url_for('index') }}" class="btn back-home-btn">
+                <i class="fas fa-home"></i> Back to Homepage
             </a>
         </div>
+        
+        <!-- Contact Information -->
+        <div class="contact-info">
+            <p class="mb-2">
+                Still can't find what you're looking for? 
+                <a href="{{ url_for('contact') }}">Contact our support team</a>.
+            </p>
+            <p class="mb-0">
+                <i class="fas fa-phone me-1"></i> {{ config.phone }} | 
+                <i class="fas fa-envelope ms-3 me-1"></i> {{ config.email }}
+            </p>
+        </div>
     </div>
+
+    <!-- JavaScript for additional functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus search input
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                searchInput.focus();
+            }
+            
+            // Form validation
+            const searchForm = document.querySelector('form[action*="shop"]');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(e) {
+                    const searchInput = this.querySelector('input[name="search"]');
+                    if (searchInput && searchInput.value.trim() === '') {
+                        e.preventDefault();
+                        searchInput.focus();
+                        searchInput.classList.add('is-invalid');
+                        
+                        // Remove error state after 2 seconds
+                        setTimeout(() => {
+                            searchInput.classList.remove('is-invalid');
+                        }, 2000);
+                    }
+                });
+            }
+            
+            // Add keyboard shortcut for search (Ctrl+K or Cmd+K)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const searchInput = document.querySelector('input[name="search"]');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                
+                // Escape key clears search
+                if (e.key === 'Escape') {
+                    const searchInput = document.querySelector('input[name="search"]');
+                    if (searchInput && searchInput === document.activeElement) {
+                        searchInput.blur();
+                    }
+                }
+            });
+            
+            // Add loading state to search button
+            const searchButton = document.querySelector('.search-container button[type="submit"]');
+            if (searchButton) {
+                searchButton.addEventListener('click', function() {
+                    const searchInput = document.querySelector('input[name="search"]');
+                    if (searchInput && searchInput.value.trim() !== '') {
+                        this.disabled = true;
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+                        
+                        // Re-enable after 3 seconds in case of error
+                        setTimeout(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }, 3000);
+                    }
+                });
+            }
+            
+            // Animation for buttons on hover
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+        
+        // Add CSS for invalid state
+        const style = document.createElement('style');
+        style.textContent = `
+            .is-invalid {
+                border-color: #dc3545 !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right calc(0.375em + 0.1875rem) center;
+                background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+            }
+            
+            .is-invalid:focus {
+                box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
