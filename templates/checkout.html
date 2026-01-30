@@ -1,21 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Checkout - {{ brand_name }}{% endblock %}
+{% block title %}Checkout - {{ config.brand_name }}{% endblock %}
 
 {% block styles %}
 <style>
+    :root {
+        --primary: #8B4513;
+        --primary-dark: #5D2906;
+        --primary-light: #A0522D;
+        --secondary: #D4AF37;
+        --secondary-light: #F4E4B3;
+        --dark: #1A1A1A;
+        --dark-light: #2D2D2D;
+        --light: #F8F5F0;
+        --gray: #8C8C8C;
+        --success: #27AE60;
+        --warning: #F39C12;
+        --danger: #E74C3C;
+        --transition: all 0.3s ease;
+        --shadow: 0 5px 15px rgba(0,0,0,0.08);
+        --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+        --radius: 12px;
+        --radius-lg: 20px;
+    }
+    
     .checkout-header {
         background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
-                    url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+                    url('{{ url_for("static", filename="images/checkout-bg.jpg") }}');
         background-size: cover;
         background-position: center;
         color: white;
-        padding: 80px 0 40px;
-        margin-top: 76px;
+        padding: 120px 0 60px;
+        margin-top: 0;
     }
     
     .checkout-container {
-        padding: 40px 0;
+        padding: 60px 0;
     }
     
     .checkout-steps {
@@ -23,7 +43,6 @@
         justify-content: space-between;
         margin-bottom: 50px;
         position: relative;
-        counter-reset: step;
     }
     
     .checkout-steps::before {
@@ -33,7 +52,7 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: var(--light-gray);
+        background: rgba(0,0,0,0.1);
         z-index: 1;
     }
     
@@ -52,55 +71,64 @@
         justify-content: center;
         margin: 0 auto 15px;
         background: white;
-        color: var(--gray-color);
-        border: 3px solid var(--light-gray);
+        color: var(--gray);
+        border: 3px solid rgba(0,0,0,0.1);
         border-radius: 50%;
         font-weight: 600;
         font-size: 1.2rem;
-        position: relative;
+        transition: var(--transition);
     }
     
     .checkout-step.active .step-number {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-color: var(--primary);
         color: white;
+        transform: scale(1.1);
     }
     
     .checkout-step.completed .step-number {
-        background: var(--success-color);
-        border-color: var(--success-color);
+        background: var(--success);
+        border-color: var(--success);
         color: white;
     }
     
     .step-label {
         font-size: 0.95rem;
         font-weight: 500;
-        color: var(--gray-color);
+        color: var(--gray);
+        transition: var(--transition);
     }
     
     .checkout-step.active .step-label {
-        color: var(--primary-color);
+        color: var(--primary);
         font-weight: 600;
     }
     
     .checkout-step.completed .step-label {
-        color: var(--success-color);
+        color: var(--success);
     }
     
     .checkout-form-section {
         background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
         padding: 40px;
         margin-bottom: 30px;
     }
     
     .section-title {
         font-size: 1.4rem;
-        color: var(--secondary-color);
+        color: var(--primary-dark);
         margin-bottom: 25px;
         padding-bottom: 15px;
-        border-bottom: 2px solid var(--light-gray);
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        color: var(--primary);
     }
     
     .form-row {
@@ -114,6 +142,34 @@
         grid-column: 1 / -1;
     }
     
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--dark);
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: var(--transition);
+        background: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+    }
+    
+    .form-control::placeholder {
+        color: var(--gray);
+        opacity: 0.7;
+    }
+    
     .shipping-methods {
         display: flex;
         flex-direction: column;
@@ -125,19 +181,21 @@
         display: flex;
         align-items: center;
         padding: 20px;
-        border: 2px solid var(--light-gray);
-        border-radius: var(--border-radius-md);
+        border: 2px solid rgba(0,0,0,0.1);
+        border-radius: var(--radius);
         cursor: pointer;
-        transition: all var(--transition-fast);
+        transition: var(--transition);
+        background: white;
     }
     
     .shipping-method:hover {
-        border-color: var(--primary-color);
+        border-color: var(--primary);
+        transform: translateY(-2px);
     }
     
     .shipping-method.selected {
-        border-color: var(--primary-color);
-        background: rgba(138, 109, 59, 0.05);
+        border-color: var(--primary);
+        background: rgba(139, 69, 19, 0.05);
     }
     
     .method-radio {
@@ -148,9 +206,38 @@
         flex: 1;
     }
     
+    .method-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 5px;
+    }
+    
+    .method-description {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+    
     .method-price {
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+    
+    .delivery-note {
+        background: rgba(212, 175, 55, 0.1);
+        border-radius: var(--radius);
+        padding: 15px;
+        margin-top: 15px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    
+    .delivery-note i {
+        color: var(--secondary);
+        margin-right: 8px;
+    }
+    
+    .delivery-note small {
+        color: var(--gray);
     }
     
     .payment-methods {
@@ -163,34 +250,40 @@
     .payment-method {
         text-align: center;
         padding: 25px 20px;
-        border: 2px solid var(--light-gray);
-        border-radius: var(--border-radius-md);
+        border: 2px solid rgba(0,0,0,0.1);
+        border-radius: var(--radius);
         cursor: pointer;
-        transition: all var(--transition-fast);
+        transition: var(--transition);
+        background: white;
     }
     
     .payment-method:hover {
-        border-color: var(--primary-color);
+        border-color: var(--primary);
         transform: translateY(-5px);
     }
     
     .payment-method.selected {
-        border-color: var(--primary-color);
-        background: rgba(138, 109, 59, 0.05);
+        border-color: var(--primary);
+        background: rgba(139, 69, 19, 0.05);
     }
     
     .payment-icon {
         font-size: 2.5rem;
-        color: var(--primary-color);
+        color: var(--primary);
         margin-bottom: 15px;
+    }
+    
+    .payment-method h5 {
+        margin-bottom: 8px;
+        color: var(--dark);
     }
     
     .order-summary {
         position: sticky;
         top: 100px;
         background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
         padding: 30px;
     }
     
@@ -205,7 +298,7 @@
         display: flex;
         align-items: center;
         padding: 15px 0;
-        border-bottom: 1px solid var(--light-gray);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     
     .order-item:last-child {
@@ -215,10 +308,11 @@
     .order-item-image {
         width: 60px;
         height: 60px;
-        border-radius: var(--border-radius-sm);
+        border-radius: var(--radius);
         overflow: hidden;
         margin-right: 15px;
         flex-shrink: 0;
+        background: var(--light);
     }
     
     .order-item-image img {
@@ -234,11 +328,19 @@
     .order-item-name {
         font-weight: 500;
         margin-bottom: 5px;
+        color: var(--dark);
+        font-size: 0.95rem;
+    }
+    
+    .order-item-quantity {
+        color: var(--gray);
+        font-size: 0.85rem;
     }
     
     .order-item-price {
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--primary);
+        font-size: 0.95rem;
     }
     
     .summary-totals {
@@ -248,22 +350,40 @@
     .summary-row {
         display: flex;
         justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--light-gray);
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        color: var(--dark);
     }
     
     .summary-row.total {
         border-bottom: none;
         font-size: 1.3rem;
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--primary);
         padding-top: 20px;
         margin-top: 10px;
-        border-top: 2px solid var(--light-gray);
+        border-top: 2px solid rgba(0,0,0,0.05);
+    }
+    
+    .free-delivery {
+        color: var(--success);
+        font-weight: 500;
     }
     
     .terms-agreement {
         margin: 25px 0;
+        padding: 20px;
+        background: rgba(0,0,0,0.02);
+        border-radius: var(--radius);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.25);
     }
     
     .checkout-actions {
@@ -274,6 +394,57 @@
     
     .checkout-actions .btn {
         flex: 1;
+    }
+    
+    .security-badge {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(139, 69, 19, 0.05) 0%, rgba(139, 69, 19, 0.02) 100%);
+        border-radius: var(--radius);
+        margin-top: 25px;
+        border: 1px solid rgba(139, 69, 19, 0.1);
+    }
+    
+    .security-icon {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 10px;
+    }
+    
+    .area-selection {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(0,0,0,0.02);
+        border-radius: var(--radius);
+    }
+    
+    .area-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .area-option {
+        padding: 10px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.9rem;
+    }
+    
+    .area-option:hover {
+        border-color: var(--primary);
+        background: rgba(139, 69, 19, 0.05);
+    }
+    
+    .area-option.selected {
+        border-color: var(--primary);
+        background: rgba(139, 69, 19, 0.1);
+        color: var(--primary);
+        font-weight: 500;
     }
     
     @media (max-width: 992px) {
@@ -311,9 +482,17 @@
         }
     }
     
-    @media (max-width: 576px) {
+    @media (max-width: 768px) {
+        .checkout-header {
+            padding: 80px 0 40px;
+        }
+        
+        .checkout-container {
+            padding: 40px 0;
+        }
+        
         .checkout-form-section {
-            padding: 25px 20px;
+            padding: 30px 25px;
         }
         
         .checkout-actions {
@@ -329,6 +508,28 @@
         .method-radio {
             margin-right: 0;
         }
+        
+        .area-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .checkout-form-section {
+            padding: 25px 20px;
+        }
+        
+        .order-summary {
+            padding: 25px 20px;
+        }
+        
+        .area-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .payment-method {
+            padding: 20px 15px;
+        }
     }
 </style>
 {% endblock %}
@@ -338,13 +539,13 @@
 <section class="checkout-header">
     <div class="container">
         <h1 class="text-center mb-3">Checkout</h1>
-        <p class="text-center text-light mb-0">Complete your order in a few simple steps</p>
+        <p class="text-center text-light mb-0 opacity-90">Complete your order in a few simple steps</p>
         
         <nav aria-label="breadcrumb" class="mt-4">
             <ol class="breadcrumb justify-content-center">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
-                <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
-                <li class="breadcrumb-item active">Checkout</li>
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-light">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('cart') }}" class="text-light">Cart</a></li>
+                <li class="breadcrumb-item active text-light opacity-75">Checkout</li>
             </ol>
         </nav>
     </div>
@@ -374,61 +575,52 @@
                 <!-- Shipping Details -->
                 <div class="checkout-form-section" id="shippingSection">
                     <h3 class="section-title">
-                        <i class="fas fa-truck me-2"></i> Shipping Details
+                        <i class="fas fa-truck"></i> Shipping Details
                     </h3>
                     
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }} mb-4">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
                     <form id="shippingForm" method="POST" action="{{ url_for('checkout') }}">
-                        <!-- CSRF TOKEN ADDED HERE -->
+                        <!-- CSRF TOKEN -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">First Name *</label>
-                                <input type="text" class="form-control" name="first_name"
-                                       value="{{ session.user_name.split(' ')[0] if session.user_name else (customer.first_name if customer else '') }}"
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" name="name" 
+                                       value="{{ customer.first_name + ' ' + customer.last_name if customer else '' }}"
                                        required>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Last Name *</label>
-                                <input type="text" class="form-control" name="last_name"
-                                       value="{{ session.user_name.split(' ')[1] if session.user_name and session.user_name.split(' ')|length > 1 else (customer.last_name if customer else '') }}"
-                                       required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Email Address *</label>
                                 <input type="email" class="form-control" name="email"
-                                       value="{{ session.user_email if session.user_email else (customer.email if customer else '') }}"
+                                       value="{{ customer.email if customer else '' }}"
                                        required>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Phone Number *</label>
-                                <input type="tel" class="form-control" name="phone"
-                                       value="{{ session.user_phone if session.user_phone else (customer.phone if customer else '') }}"
-                                       required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group full-width">
-                            <label class="form-label">Address *</label>
-                            <input type="text" class="form-control" name="address" placeholder="Street address" required
-                                   value="{{ customer.address if customer else '' }}">
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">City *</label>
-                                <input type="text" class="form-control" name="city" required
-                                       value="{{ customer.city if customer else '' }}">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" name="phone"
+                                       value="{{ customer.phone if customer else '' }}"
+                                       required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">State *</label>
-                                <select class="form-select" name="state" required>
+                                <select class="form-select" name="state" id="stateSelect" required onchange="updateDeliveryFee()">
                                     <option value="">Select State</option>
                                     <option value="Lagos" {% if customer and customer.state == 'Lagos' %}selected{% endif %}>Lagos</option>
-                                    <option value="Abuja" {% if customer and customer.state == 'Abuja' %}selected{% endif %}>Abuja</option>
+                                    <option value="Abuja" {% if customer and customer.state == 'Abuja' %}selected{% endif %}>Abuja (FCT)</option>
                                     <option value="Rivers" {% if customer and customer.state == 'Rivers' %}selected{% endif %}>Rivers</option>
                                     <option value="Kano" {% if customer and customer.state == 'Kano' %}selected{% endif %}>Kano</option>
                                     <option value="Oyo" {% if customer and customer.state == 'Oyo' %}selected{% endif %}>Oyo</option>
@@ -439,14 +631,57 @@
                                     <option value="Enugu" {% if customer and customer.state == 'Enugu' %}selected{% endif %}>Enugu</option>
                                     <option value="Anambra" {% if customer and customer.state == 'Anambra' %}selected{% endif %}>Anambra</option>
                                     <option value="Akwa Ibom" {% if customer and customer.state == 'Akwa Ibom' %}selected{% endif %}>Akwa Ibom</option>
+                                    <option value="Other">Other States</option>
                                 </select>
                             </div>
                         </div>
                         
                         <div class="form-group full-width">
-                            <label class="form-label">Delivery Instructions (Optional)</label>
-                            <textarea class="form-control" name="notes" rows="3" 
-                                      placeholder="Any special delivery instructions..."></textarea>
+                            <label class="form-label">Address *</label>
+                            <input type="text" class="form-control" name="address" placeholder="Street address, Apartment, Suite, etc." required
+                                   value="{{ customer.address if customer else '' }}">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">City *</label>
+                                <input type="text" class="form-control" name="city" required
+                                       value="{{ customer.city if customer else '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Area (For Lagos Only)</label>
+                                <select class="form-select" name="area" id="areaSelect" onchange="updateDeliveryFee()">
+                                    <option value="">Select Area</option>
+                                    {% if delivery_areas and delivery_areas.lagos %}
+                                        {% for area in delivery_areas.lagos %}
+                                        <option value="{{ area }}">{{ area|title }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="ikeja">Ikeja</option>
+                                        <option value="vi">Victoria Island</option>
+                                        <option value="lekki">Lekki</option>
+                                        <option value="ikoyi">Ikoyi</option>
+                                        <option value="surulere">Surulere</option>
+                                        <option value="yaba">Yaba</option>
+                                        <option value="ajah">Ajah</option>
+                                        <option value="apapa">Apapa</option>
+                                        <option value="festac">Festac</option>
+                                        <option value="ojo">Ojo</option>
+                                        <option value="badagry">Badagry</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Fee Display -->
+                        <div id="deliveryInfo" class="delivery-note" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <small>
+                                <span id="deliveryText">Delivery fee will be calculated based on your location.</span>
+                                <span id="freeDeliveryText" style="display: none;" class="text-success fw-bold">
+                                    <i class="fas fa-check-circle"></i> Congratulations! You qualify for FREE delivery!
+                                </span>
+                            </small>
                         </div>
                         
                         <!-- Payment Method Selection -->
@@ -458,7 +693,7 @@
                                         <i class="fas fa-university"></i>
                                     </div>
                                     <h5>Bank Transfer</h5>
-                                    <p class="text-muted small">Pay via bank transfer to our account</p>
+                                    <p class="text-muted small">Pay directly to our bank account</p>
                                     <input type="radio" name="payment_method" value="bank_transfer" checked style="display: none;">
                                 </div>
                                 
@@ -473,20 +708,32 @@
                             </div>
                         </div>
                         
+                        <div class="form-group full-width">
+                            <label class="form-label">Order Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" rows="3" 
+                                      placeholder="Any special instructions or delivery notes..."></textarea>
+                        </div>
+                        
                         <!-- Terms Agreement -->
                         <div class="terms-agreement">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="termsAgreement" name="agree_terms" required>
                                 <label class="form-check-label small" for="termsAgreement">
-                                    I agree to the <a href="/terms">Terms & Conditions</a> and 
-                                    <a href="/privacy">Privacy Policy</a>
+                                    I agree to the <a href="#" class="text-primary">Terms & Conditions</a> and 
+                                    <a href="#" class="text-primary">Privacy Policy</a> of {{ config.brand_name }}
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="newsletter" name="subscribe_newsletter">
+                                <label class="form-check-label small" for="newsletter">
+                                    Subscribe to our newsletter for updates and promotions
                                 </label>
                             </div>
                         </div>
                         
                         <!-- Checkout Actions -->
                         <div class="checkout-actions">
-                            <a href="/cart" class="btn btn-outline-primary">
+                            <a href="{{ url_for('cart') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left me-2"></i> Back to Cart
                             </a>
                             <button type="submit" class="btn btn-primary" id="placeOrderBtn">
@@ -504,11 +751,14 @@
                     
                     <div class="order-items">
                         {% for item in cart_items %}
+                        {% set product = item.product %}
+                        {% set variant_info = item.variant_info %}
                         <div class="order-item">
                             <div class="order-item-image">
                                 {% if item.image_url %}
-                                <img src="{{ url_for('static', filename='uploads/' + item.image_url) if item.image_url.startswith('uploads/') else (item.image_url if item.image_url else url_for('static', filename='images/default-product.jpg')) }}" 
-                                     alt="{{ item.name }}">
+                                <img src="{{ item.image_url if item.image_url.startswith('http') else url_for('uploaded_file', filename=item.image_url) }}" 
+                                     alt="{{ item.name }}"
+                                     onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
                                 {% else %}
                                 <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
                                      alt="{{ item.name }}">
@@ -516,6 +766,9 @@
                             </div>
                             <div class="order-item-details">
                                 <div class="order-item-name">{{ item.name }}</div>
+                                {% if variant_info and variant_info.variant_name %}
+                                <div class="order-item-quantity small text-muted">{{ variant_info.variant_name }}</div>
+                                {% endif %}
                                 <div class="order-item-quantity">Qty: {{ item.quantity }}</div>
                             </div>
                             <div class="order-item-price">{{ format_price(item.price) }}</div>
@@ -525,29 +778,68 @@
                     
                     <div class="summary-totals">
                         <div class="summary-row">
-                            <span>Subtotal</span>
-                            <span>{{ format_price(subtotal) }}</span>
+                            <span>Subtotal ({{ cart_count }} item{% if cart_count != 1 %}s{% endif %})</span>
+                            <span id="subtotalAmount">{{ format_price(subtotal) }}</span>
                         </div>
                         
                         <div class="summary-row">
-                            <span>Shipping</span>
-                            <span>{{ format_price(delivery_fee) }}</span>
+                            <span>Shipping Fee</span>
+                            <span id="shippingAmount">
+                                {% if subtotal >= free_delivery_threshold %}
+                                <span class="free-delivery">FREE</span>
+                                {% else %}
+                                {{ format_price(delivery_fee) }}
+                                {% endif %}
+                            </span>
                         </div>
                         
+                        {% if subtotal < free_delivery_threshold %}
+                        <div class="summary-row">
+                            <span>Add for Free Delivery:</span>
+                            <span class="text-success">{{ format_price(free_delivery_threshold - subtotal) }}</span>
+                        </div>
+                        {% endif %}
+                        
                         <div class="summary-row total">
-                            <span>Total</span>
-                            <span>{{ format_price(total) }}</span>
+                            <span>Total Amount</span>
+                            <span id="totalAmount">{{ format_price(total) }}</span>
                         </div>
                     </div>
                     
                     <!-- Security Badge -->
-                    <div class="text-center mt-4">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <i class="fas fa-shield-alt text-success fs-4"></i>
-                            <div class="text-start">
-                                <div class="small fw-bold">Secure Checkout</div>
-                                <div class="small text-muted">Your information is protected</div>
+                    <div class="security-badge">
+                        <div class="security-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold mb-1">Secure Checkout</div>
+                            <div class="small text-muted">
+                                Your payment information is encrypted and secure
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Instructions (Hidden by default) -->
+                    <div id="bankInstructions" style="display: none;" class="mt-4">
+                        <h6 class="fw-bold mb-2">Bank Transfer Instructions:</h6>
+                        <div class="small">
+                            <p><strong>Account Name:</strong> {{ config.payment_name }}</p>
+                            <p><strong>Bank:</strong> {{ config.payment_bank }}</p>
+                            <p><strong>Account Number:</strong> {{ config.payment_account }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Support -->
+                    <div class="mt-4 pt-3 border-top">
+                        <p class="small text-muted mb-2">Need help with checkout?</p>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <a href="{{ config.whatsapp }}" target="_blank" 
+                               class="btn btn-outline-success btn-sm flex-grow-1">
+                                <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                            </a>
+                            <a href="tel:{{ config.phone }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                <i class="fas fa-phone me-1"></i> Call Us
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -571,12 +863,96 @@
         document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
             radio.checked = (radio.value === method);
         });
+        
+        // Show/hide payment instructions
+        const bankInstructions = document.getElementById('bankInstructions');
+        if (method === 'bank_transfer') {
+            bankInstructions.style.display = 'block';
+        } else {
+            bankInstructions.style.display = 'none';
+        }
+    }
+    
+    // Update delivery fee based on location
+    async function updateDeliveryFee() {
+        const state = document.getElementById('stateSelect').value;
+        const area = document.getElementById('areaSelect').value;
+        const subtotal = {{ subtotal }};
+        
+        if (!state) {
+            document.getElementById('deliveryInfo').style.display = 'none';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/calculate-delivery', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    city: '',
+                    state: state,
+                    area: area,
+                    subtotal: subtotal
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const deliveryInfo = document.getElementById('deliveryInfo');
+                const deliveryText = document.getElementById('deliveryText');
+                const freeDeliveryText = document.getElementById('freeDeliveryText');
+                const shippingAmount = document.getElementById('shippingAmount');
+                const totalAmount = document.getElementById('totalAmount');
+                
+                deliveryInfo.style.display = 'block';
+                
+                if (data.delivery_fee === 0) {
+                    deliveryText.style.display = 'none';
+                    freeDeliveryText.style.display = 'inline';
+                    shippingAmount.innerHTML = '<span class="free-delivery">FREE</span>';
+                } else {
+                    deliveryText.style.display = 'inline';
+                    freeDeliveryText.style.display = 'none';
+                    deliveryText.textContent = `Delivery fee to ${state}${area ? ' - ' + area : ''}: ${data.formatted_delivery_fee}`;
+                    shippingAmount.textContent = data.formatted_delivery_fee;
+                }
+                
+                totalAmount.textContent = data.formatted_total;
+            }
+        } catch (error) {
+            console.error('Error calculating delivery:', error);
+        }
     }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-        // Set default payment method
+        // Set default payment method and show instructions
         selectPaymentMethod(document.querySelector('.payment-method'), 'bank_transfer');
+        
+        // Show area selection for Lagos
+        const stateSelect = document.getElementById('stateSelect');
+        const areaGroup = document.getElementById('areaSelect').closest('.form-group');
+        
+        stateSelect.addEventListener('change', function() {
+            if (this.value === 'Lagos') {
+                areaGroup.style.display = 'block';
+            } else {
+                areaGroup.style.display = 'none';
+            }
+        });
+        
+        // Trigger initial check
+        if (stateSelect.value === 'Lagos') {
+            areaGroup.style.display = 'block';
+        }
+        
+        // Calculate delivery fee if state is already selected
+        if (stateSelect.value) {
+            updateDeliveryFee();
+        }
         
         // Form validation
         const form = document.getElementById('shippingForm');
@@ -587,15 +963,77 @@
             const termsCheckbox = document.getElementById('termsAgreement');
             if (!termsCheckbox.checked) {
                 e.preventDefault();
-                alert('Please agree to the terms and conditions');
+                showNotification('Please agree to the terms and conditions', 'warning');
                 termsCheckbox.focus();
                 return;
             }
             
             // Show loading state
-            placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+            const originalText = placeOrderBtn.innerHTML;
+            placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing Order...';
             placeOrderBtn.disabled = true;
+            
+            // Reset button after 10 seconds (in case of error)
+            setTimeout(() => {
+                placeOrderBtn.innerHTML = originalText;
+                placeOrderBtn.disabled = false;
+            }, 10000);
         });
+        
+        // Phone number formatting
+        const phoneInput = document.querySelector('input[name="phone"]');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0 && value[0] !== '0') {
+                value = '0' + value;
+            }
+            e.target.value = value;
+        });
+        
+        // Add notification function
+        window.showNotification = function(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                max-width: 400px;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        };
+        
+        // Add animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     });
 </script>
 {% endblock %}
