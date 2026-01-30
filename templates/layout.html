@@ -8,44 +8,77 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #8b4513;
-            --secondary-color: #d2691e;
-            --light-brown: #f5e6d3;
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-purple: #9d4edd;
+            --accent-gold: #d4af37;
+            --light-gray: #f8f9fa;
+            --text-dark: #333333;
+            --text-light: #6c757d;
+            --white: #ffffff;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             padding-top: 76px; /* For fixed navbar */
+        }
+        
+        main {
+            flex: 1;
         }
         
         .navbar-brand {
             font-weight: bold;
             font-size: 1.8rem;
+            color: white !important;
         }
         
         .navbar {
-            background-color: var(--primary-color) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--primary-dark), var(--accent-purple)) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: var(--accent-gold) !important;
+            transform: translateY(-2px);
+        }
+        
+        .nav-link.active {
+            color: var(--accent-gold) !important;
+            font-weight: 600;
         }
         
         .footer {
-            background-color: #333;
+            background-color: var(--primary-dark);
             color: white;
             margin-top: auto;
+            padding: 60px 0 30px;
         }
         
         .product-card {
             transition: transform 0.3s;
             border: 1px solid #eee;
+            border-radius: 10px;
+            overflow: hidden;
         }
         
         .product-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         
         .price {
-            color: var(--secondary-color);
+            color: var(--accent-purple);
             font-weight: bold;
             font-size: 1.2rem;
         }
@@ -66,26 +99,152 @@
             padding: 15px;
             font-size: 24px;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            text-decoration: none;
+        }
+        
+        .whatsapp-float:hover {
+            background: #128C7E;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
         }
         
         .hero-section {
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/static/images/hero-bg.jpg');
+            background: linear-gradient(rgba(26, 26, 46, 0.8), rgba(26, 26, 46, 0.8)), url('https://images.unsplash.com/photo-1522338140262-f46f5913618a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80');
             background-size: cover;
             background-position: center;
             color: white;
             padding: 100px 0;
             text-align: center;
+            border-radius: 0 0 20px 20px;
         }
         
         .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--accent-purple), #7b2cbf);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
         
         .btn-primary:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #7b2cbf, var(--accent-purple));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.3);
+        }
+        
+        .btn-warning {
+            background: var(--accent-gold);
+            border: none;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+        
+        .btn-warning:hover {
+            background: #c19b2e;
+            color: var(--primary-dark);
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .badge-cart {
+            font-size: 0.7rem;
+            padding: 0.25em 0.6em;
+            vertical-align: super;
+        }
+        
+        .social-links a {
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            transform: translateY(-3px);
+            opacity: 0.9;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 66px;
+            }
+            
+            .hero-section {
+                padding: 60px 0;
+            }
+            
+            .navbar-brand {
+                font-size: 1.4rem;
+            }
+            
+            .footer {
+                padding: 40px 0 20px;
+            }
+            
+            .whatsapp-float {
+                bottom: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+        
+        /* Animation for cart count */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .cart-badge {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7b2cbf;
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -94,8 +253,8 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-crown"></i> {{ config.brand_name }}
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-crown me-2"></i> {{ config.brand_name }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -103,55 +262,103 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'shop' %}active{% endif %}" href="/shop">Shop</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="/about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="/contact">Contact</a>
-                    </li>
-                    {% if current_user.is_authenticated and current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link text-warning" href="/admin/dashboard">
-                            <i class="fas fa-crown"></i> Admin
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i> Home
                         </a>
                     </li>
-                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'shop' %}active{% endif %}" href="{{ url_for('shop') }}">
+                            <i class="fas fa-store me-1"></i> Shop
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">
+                            <i class="fas fa-info-circle me-1"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">
+                            <i class="fas fa-envelope me-1"></i> Contact
+                        </a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav">
+                    <!-- Search Form -->
                     <li class="nav-item">
-                        <a class="nav-link" href="/cart">
+                        <form class="d-flex" action="{{ url_for('shop') }}" method="GET" style="min-width: 200px;">
+                            <input class="form-control me-2" type="search" placeholder="Search products..." 
+                                   name="search" value="{{ request.args.get('search', '') }}" 
+                                   aria-label="Search">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </li>
+                    
+                    <!-- Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cart') }}">
                             <i class="fas fa-shopping-cart"></i> Cart
                             {% if cart_count > 0 %}
-                            <span class="badge bg-danger">{{ cart_count }}</span>
+                            <span class="badge bg-danger badge-cart cart-badge">{{ cart_count }}</span>
                             {% endif %}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/track-order">
-                            <i class="fas fa-truck"></i> Track Order
-                        </a>
-                    </li>
-                    {% if current_user.is_authenticated %}
+                    
+                    <!-- Account Dropdown -->
+                    {% if session.get('customer_id') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> {{ current_user.username }}
+                            <i class="fas fa-user me-1"></i> 
+                            {{ session.get('customer_name', 'Account').split(' ')[0] }}
                         </a>
-                        <ul class="dropdown-menu">
-                            {% if current_user.is_admin %}
-                            <li><a class="dropdown-item" href="/admin/dashboard">Admin Dashboard</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('account') }}">
+                                <i class="fas fa-user-circle me-2"></i> My Account
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('customer_logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% elif session.get('admin_id') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_products') }}">
+                                <i class="fas fa-box me-2"></i> Products
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_orders') }}">
+                                <i class="fas fa-shopping-bag me-2"></i> Orders
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="/admin/logout">Logout</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a></li>
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/login">Login</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-sign-in-alt me-1"></i> Login
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('customer_login') }}">
+                                <i class="fas fa-user me-2"></i> Customer Login
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('customer_register') }}">
+                                <i class="fas fa-user-plus me-2"></i> Register
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_login') }}">
+                                <i class="fas fa-user-shield me-2"></i> Admin Login
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                 </ul>
@@ -179,12 +386,12 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer py-5 mt-5">
+    <footer class="footer">
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4">
                     <h4><i class="fas fa-crown"></i> {{ config.brand_name }}</h4>
-                    <p>{{ config.description }}</p>
+                    <p class="mt-3">{{ config.description }}</p>
                     <div class="social-links mt-3">
                         <a href="{{ config.whatsapp }}" target="_blank" class="text-white me-3">
                             <i class="fab fa-whatsapp fa-2x"></i>
@@ -200,26 +407,39 @@
                 <div class="col-lg-4 mb-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="/" class="text-white-50 text-decoration-none">Home</a></li>
-                        <li><a href="/shop" class="text-white-50 text-decoration-none">Shop</a></li>
-                        <li><a href="/about" class="text-white-50 text-decoration-none">About Us</a></li>
-                        <li><a href="/contact" class="text-white-50 text-decoration-none">Contact</a></li>
-                        <li><a href="/track-order" class="text-white-50 text-decoration-none">Track Order</a></li>
+                        <li class="mb-2"><a href="{{ url_for('index') }}" class="text-white-50 text-decoration-none">
+                            <i class="fas fa-chevron-right me-2"></i> Home
+                        </a></li>
+                        <li class="mb-2"><a href="{{ url_for('shop') }}" class="text-white-50 text-decoration-none">
+                            <i class="fas fa-chevron-right me-2"></i> Shop
+                        </a></li>
+                        <li class="mb-2"><a href="{{ url_for('about') }}" class="text-white-50 text-decoration-none">
+                            <i class="fas fa-chevron-right me-2"></i> About Us
+                        </a></li>
+                        <li class="mb-2"><a href="{{ url_for('contact') }}" class="text-white-50 text-decoration-none">
+                            <i class="fas fa-chevron-right me-2"></i> Contact
+                        </a></li>
+                        <li class="mb-2"><a href="{{ url_for('cart') }}" class="text-white-50 text-decoration-none">
+                            <i class="fas fa-chevron-right me-2"></i> View Cart
+                        </a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4 mb-4">
                     <h5>Contact Info</h5>
-                    <p><i class="fas fa-map-marker-alt me-2"></i> {{ config.address }}</p>
-                    <p><i class="fas fa-phone me-2"></i> {{ config.phone }}</p>
-                    <p><i class="fas fa-envelope me-2"></i> {{ config.email }}</p>
-                    <p><i class="fab fa-instagram me-2"></i> @{{ config.instagram }}</p>
-                    <p><i class="fas fa-clock me-2"></i> Mon-Sat: 9AM-6PM</p>
+                    <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> {{ config.address }}</p>
+                    <p class="mb-2"><i class="fas fa-phone me-2"></i> {{ config.phone }}</p>
+                    <p class="mb-2"><i class="fas fa-envelope me-2"></i> {{ config.email }}</p>
+                    <p class="mb-2"><i class="fab fa-instagram me-2"></i> @{{ config.instagram }}</p>
+                    <p class="mb-2"><i class="fas fa-clock me-2"></i> Mon-Sat: 9AM-6PM</p>
+                    <p class="mb-2"><i class="fas fa-truck me-2"></i> Nationwide Delivery</p>
                 </div>
             </div>
             <hr class="bg-white my-4">
             <div class="text-center">
-                <p class="mb-0">&copy; {{ config.year }} {{ config.brand_name }}. All rights reserved.</p>
-                <p class="small text-white-50 mb-0">Premium 100% Human Hair Extensions & Wigs</p>
+                <p class="mb-2">&copy; {{ now.year }} {{ config.brand_name }}. All rights reserved.</p>
+                <p class="small text-white-50 mb-0">
+                    <i class="fas fa-heart text-danger"></i> Premium 100% Human Hair Extensions & Wigs | {{ config.slogan }}
+                </p>
             </div>
         </div>
     </footer>
@@ -235,10 +455,43 @@
         setTimeout(function() {
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+                if (alert.classList.contains('show')) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
             });
         }, 5000);
+        
+        // Update cart badge with animation
+        let currentCartCount = {{ cart_count }};
+        
+        function updateCartCount() {
+            // This function can be called when cart is updated via AJAX
+            const cartBadge = document.querySelector('.cart-badge');
+            if (cartBadge) {
+                cartBadge.style.animation = 'none';
+                setTimeout(() => {
+                    cartBadge.style.animation = 'pulse 0.5s ease-in-out';
+                }, 10);
+            }
+        }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Highlight active nav item
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                if (currentPath === linkPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>
