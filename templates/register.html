@@ -8,28 +8,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #8B4513;
-            --secondary-color: #D2691E;
-            --accent-color: #F5DEB3;
-            --dark-color: #2C1810;
-            --light-color: #FFF8F0;
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-purple: #9d4edd;
+            --accent-gold: #d4af37;
+            --light-gray: #f8f9fa;
+            --text-dark: #333333;
+            --text-light: #6c757d;
+            --white: #ffffff;
         }
         
         body {
-            background-color: var(--light-color);
+            background: linear-gradient(135deg, var(--light-gray) 0%, #e6e6fa 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
+            padding: 20px;
         }
         
         .register-container {
             max-width: 500px;
             margin: 0 auto;
             padding: 40px;
-            background: white;
+            background: var(--white);
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(26, 26, 46, 0.1);
+            border: 1px solid rgba(157, 78, 221, 0.1);
         }
         
         .brand-header {
@@ -37,49 +42,107 @@
             margin-bottom: 30px;
         }
         
-        .brand-header h2 {
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-bottom: 10px;
+        .brand-header .logo-icon {
+            background: linear-gradient(135deg, var(--primary-dark), var(--accent-purple));
+            color: var(--white);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+            font-family: 'Playfair Display', serif;
         }
         
-        .brand-header .logo {
-            height: 60px;
-            width: auto;
-            margin-bottom: 15px;
+        .brand-header h2 {
+            color: var(--primary-dark);
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .brand-header .tagline {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+        }
+        
+        .benefit-list {
+            margin-top: 20px;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+        
+        .benefit-item i {
+            color: var(--accent-purple);
+            margin-right: 12px;
+            font-size: 1rem;
         }
         
         .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 0.2rem rgba(157, 78, 221, 0.25);
         }
         
         .btn-register {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            padding: 12px 30px;
-            font-weight: 500;
-            border-radius: 25px;
+            background: linear-gradient(135deg, var(--accent-purple), #7b2cbf);
+            border: none;
+            color: var(--white);
+            padding: 14px 30px;
+            font-weight: 600;
+            border-radius: 8px;
             transition: all 0.3s;
             width: 100%;
+            font-size: 1.1rem;
         }
         
         .btn-register:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            background: linear-gradient(135deg, #7b2cbf, var(--accent-purple));
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.3);
         }
         
         .login-link {
-            color: var(--primary-color);
+            color: var(--accent-purple);
             text-decoration: none;
             font-weight: 500;
+            transition: all 0.3s;
         }
         
         .login-link:hover {
-            color: var(--secondary-color);
+            color: #7b2cbf;
             text-decoration: underline;
+        }
+        
+        .password-input {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            z-index: 10;
         }
         
         .password-strength {
@@ -89,7 +152,7 @@
         
         .strength-bar {
             height: 5px;
-            background: #e9ecef;
+            background: var(--light-gray);
             border-radius: 3px;
             margin-top: 5px;
             overflow: hidden;
@@ -105,41 +168,115 @@
         .strength-weak { background-color: #dc3545; }
         .strength-fair { background-color: #ffc107; }
         .strength-good { background-color: #28a745; }
-        .strength-strong { background-color: #007bff; }
+        .strength-strong { background-color: var(--accent-purple); }
         
-        .benefit-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            color: #555;
+        .form-check-input:checked {
+            background-color: var(--accent-purple);
+            border-color: var(--accent-purple);
         }
         
-        .benefit-item i {
-            color: var(--primary-color);
-            margin-right: 10px;
-            font-size: 1.1rem;
+        .form-check-input:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 0.2rem rgba(157, 78, 221, 0.25);
         }
         
-        .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
+        .terms-link {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+        
+        .terms-link:hover {
+            text-decoration: underline;
+        }
+        
+        .back-home {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .back-home:hover {
+            color: var(--accent-purple);
+        }
+        
+        .input-group-text {
+            background-color: var(--light-gray);
+            border-color: #dee2e6;
+            color: var(--accent-purple);
+        }
+        
+        .alert {
+            border-radius: 8px;
             border: none;
-            color: #666;
-            cursor: pointer;
-            z-index: 2;
         }
         
-        .password-input {
-            position: relative;
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
         }
         
-        .welcome-message {
-            text-align: center;
-            margin-bottom: 30px;
-            color: var(--dark-color);
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert {
+            animation: slideIn 0.3s ease;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .register-container {
+                padding: 30px 25px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+            
+            .brand-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .welcome-message p {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Loader animation */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         /* Address field */
@@ -147,45 +284,37 @@
             resize: vertical;
             min-height: 80px;
         }
-        
-        /* CSRF error styling */
-        .csrf-error {
-            color: #dc3545;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="register-container">
             <div class="brand-header">
-                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                     alt="{{ config.brand_name }} Logo" 
-                     class="logo">
+                <div class="logo-icon">N</div>
                 <h2>{{ config.brand_name }}</h2>
-                <p class="text-muted">Create your account</p>
+                <p class="tagline">{{ config.tagline }}</p>
+                <p class="text-muted">Create Your Account</p>
             </div>
             
             <div class="welcome-message">
-                <p>Join thousands of satisfied customers and experience premium hair shopping.</p>
+                <p>Join our community of satisfied customers and experience premium hair shopping.</p>
                 
-                <div class="mt-3">
+                <div class="benefit-list">
                     <div class="benefit-item">
                         <i class="fas fa-check-circle"></i>
-                        <span>Fast and secure checkout</span>
+                        <span>Fast checkout with saved shipping details</span>
                     </div>
                     <div class="benefit-item">
                         <i class="fas fa-check-circle"></i>
-                        <span>Track your orders</span>
+                        <span>Track your orders in real-time</span>
                     </div>
                     <div class="benefit-item">
                         <i class="fas fa-check-circle"></i>
-                        <span>Exclusive member discounts</span>
+                        <span>Access to exclusive member discounts</span>
                     </div>
                     <div class="benefit-item">
                         <i class="fas fa-check-circle"></i>
-                        <span>Save your favorite products</span>
+                        <span>Save your favorite products for later</span>
                     </div>
                 </div>
             </div>
@@ -202,139 +331,222 @@
                 {% endif %}
             {% endwith %}
             
-            <!-- CSRF Error Display -->
-            {% if csrf_error %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                {{ csrf_error }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+            <!-- Check if already logged in -->
+            {% if session.get('customer_id') %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    You are already logged in as {{ session.get('customer_name', 'User') }}
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('account') }}" class="btn btn-register mb-3">
+                        <i class="fas fa-user-circle me-2"></i> Go to My Account
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i> Back to Home
+                    </a>
+                </div>
+            {% elif session.get('admin_id') %}
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    You are logged in as Admin. Logout to create a customer account.
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('admin_logout') }}" class="btn btn-register mb-3">
+                        <i class="fas fa-sign-out-alt me-2"></i> Admin Logout
+                    </a>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i> Admin Dashboard
+                    </a>
+                </div>
+            {% else %}
+                <!-- Registration Form -->
+                <form method="POST" action="{{ url_for('customer_register') }}" id="registerForm">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="first_name" class="form-label fw-semibold">First Name *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="first_name" 
+                                       name="first_name" 
+                                       placeholder="Enter first name" 
+                                       required
+                                       value="{{ request.form.first_name if request.form else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label fw-semibold">Last Name *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="last_name" 
+                                       name="last_name" 
+                                       placeholder="Enter last name" 
+                                       required
+                                       value="{{ request.form.last_name if request.form else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Email Address *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   placeholder="Enter your email address" 
+                                   required
+                                   value="{{ request.form.email if request.form else '' }}">
+                        </div>
+                        <div class="form-text">
+                            We'll use this email to send order confirmations and updates
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold">Phone Number *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-phone"></i>
+                            </span>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="phone" 
+                                   name="phone" 
+                                   placeholder="Enter your phone number" 
+                                   required
+                                   value="{{ request.form.phone if request.form else '' }}">
+                        </div>
+                        <div class="form-text">
+                            This will be used for delivery communication
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label fw-semibold">Delivery Address</label>
+                        <div class="input-group address-input">
+                            <span class="input-group-text">
+                                <i class="fas fa-home"></i>
+                            </span>
+                            <textarea class="form-control" 
+                                      id="address" 
+                                      name="address" 
+                                      placeholder="Enter your delivery address (optional)"
+                                      rows="2">{{ request.form.address if request.form else '' }}</textarea>
+                        </div>
+                        <div class="form-text">
+                            Add your address now for faster checkout (you can add it later)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">Password *</label>
+                        <div class="password-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Create a secure password" 
+                                       required
+                                       minlength="6">
+                                <button type="button" class="btn password-toggle" onclick="togglePassword('password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="password-strength">
+                            <span id="strength-text">Password strength: </span>
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strength-bar"></div>
+                            </div>
+                        </div>
+                        <div class="form-text">
+                            Minimum 6 characters. Use a mix of letters, numbers, and symbols for better security.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label fw-semibold">Confirm Password *</label>
+                        <div class="password-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="confirm_password" 
+                                       name="confirm_password" 
+                                       placeholder="Confirm your password" 
+                                       required
+                                       minlength="6">
+                                <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the 
+                                <a href="#" class="terms-link" target="_blank">Terms of Service</a> and 
+                                <a href="#" class="terms-link" target="_blank">Privacy Policy</a> *
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter" checked>
+                            <label class="form-check-label" for="newsletter">
+                                I want to receive updates, promotions, and exclusive offers
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-4">
+                        <button type="submit" class="btn btn-register" id="registerBtn">
+                            <i class="fas fa-user-plus me-2"></i> Create Account
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="mb-3">
+                            Already have an account? 
+                            <a href="{{ url_for('customer_login') }}" class="login-link">
+                                <i class="fas fa-sign-in-alt me-1"></i> Login here
+                            </a>
+                        </p>
+                        <p class="mb-3">
+                            <a href="{{ url_for('index') }}" class="back-home">
+                                <i class="fas fa-home me-1"></i> Back to Homepage
+                            </a>
+                        </p>
+                        <p class="mb-0 small text-muted">
+                            By creating an account, you agree to our Terms of Service and Privacy Policy
+                        </p>
+                    </div>
+                </form>
             {% endif %}
-            
-            <!-- FIXED: Simple form without file upload -->
-            <form method="POST" action="{{ url_for('customer_register') }}">
-                <!-- FIXED: CSRF Token -->
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="first_name" class="form-label">First Name *</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name" 
-                               placeholder="Enter first name" required
-                               value="{{ request.form.first_name if request.form }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="last_name" class="form-label">Last Name *</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name" 
-                               placeholder="Enter last name" required
-                               value="{{ request.form.last_name if request.form }}">
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address *</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               placeholder="Enter your email" required
-                               value="{{ request.form.email if request.form }}">
-                    </div>
-                    <div class="form-text">We'll never share your email with anyone else.</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="phone" class="form-label">Phone Number *</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                        <input type="tel" class="form-control" id="phone" name="phone" 
-                               placeholder="Enter phone number" required
-                               value="{{ request.form.phone if request.form }}">
-                    </div>
-                </div>
-                
-                <!-- Address Field -->
-                <div class="mb-3">
-                    <label for="address" class="form-label">Delivery Address</label>
-                    <div class="input-group address-input">
-                        <span class="input-group-text"><i class="fas fa-home"></i></span>
-                        <textarea class="form-control" id="address" name="address" 
-                                  placeholder="Enter your delivery address (optional)"
-                                  rows="2">{{ request.form.address if request.form }}</textarea>
-                    </div>
-                    <div class="form-text">For faster delivery, add your address now (optional)</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password *</label>
-                    <div class="password-input">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Create password" required minlength="6">
-                            <button type="button" class="btn password-toggle" onclick="togglePassword('password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="password-strength">
-                        <span id="strength-text">Password strength: </span>
-                        <div class="strength-bar">
-                            <div class="strength-fill" id="strength-bar"></div>
-                        </div>
-                    </div>
-                    <div class="form-text">Minimum 6 characters</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="confirm_password" class="form-label">Confirm Password *</label>
-                    <div class="password-input">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
-                                   placeholder="Confirm password" required minlength="6">
-                            <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
-                    <label class="form-check-label" for="terms">
-                        I agree to the 
-                        <a href="/terms" class="text-decoration-none" target="_blank">Terms of Service</a> and 
-                        <a href="/privacy" class="text-decoration-none" target="_blank">Privacy Policy</a>
-                    </label>
-                </div>
-                
-                <div class="form-check mb-4">
-                    <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter" checked>
-                    <label class="form-check-label" for="newsletter">
-                        I want to receive updates and promotional offers
-                    </label>
-                </div>
-                
-                <div class="d-grid gap-2 mb-4">
-                    <button type="submit" class="btn btn-register" id="registerBtn">
-                        <i class="fas fa-user-plus me-2"></i> Create Account
-                    </button>
-                </div>
-                
-                <div class="text-center">
-                    <p class="mb-2">Already have an account? 
-                        <a href="{{ url_for('customer_login') }}" class="login-link">Login here</a>
-                    </p>
-                    <p class="mb-2">
-                        <a href="{{ url_for('index') }}" class="text-decoration-none">
-                            <i class="fas fa-home me-1"></i> Back to Homepage
-                        </a>
-                    </p>
-                    <p class="mb-0 small text-muted">
-                        By creating an account, you agree to our Terms and Privacy Policy
-                    </p>
-                </div>
-            </form>
         </div>
     </div>
     
@@ -344,7 +556,7 @@
         // Toggle password visibility
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
-            const toggleButton = passwordInput.nextElementSibling.querySelector('i');
+            const toggleButton = passwordInput.parentNode.querySelector('.password-toggle i');
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -362,145 +574,237 @@
         const strengthBar = document.getElementById('strength-bar');
         const strengthText = document.getElementById('strength-text');
         
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
-            
-            // Length check
-            if (password.length >= 8) strength++;
-            if (password.length >= 12) strength++;
-            
-            // Character type checks
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[a-z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-            
-            // Update strength bar
-            const width = Math.min(strength * 20, 100);
-            strengthBar.style.width = width + '%';
-            
-            // Update colors and text
-            if (password.length === 0) {
-                strengthBar.className = 'strength-fill';
-                strengthText.textContent = 'Password strength: ';
-                return;
-            }
-            
-            if (strength <= 2) {
-                strengthBar.className = 'strength-fill strength-weak';
-                strengthText.textContent = 'Password strength: Weak';
-            } else if (strength <= 3) {
-                strengthBar.className = 'strength-fill strength-fair';
-                strengthText.textContent = 'Password strength: Fair';
-            } else if (strength <= 4) {
-                strengthBar.className = 'strength-fill strength-good';
-                strengthText.textContent = 'Password strength: Good';
-            } else {
-                strengthBar.className = 'strength-fill strength-strong';
-                strengthText.textContent = 'Password strength: Strong';
-            }
-        });
+        if (passwordInput && strengthBar && strengthText) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                // Length check
+                if (password.length >= 6) strength++;
+                if (password.length >= 8) strength++;
+                
+                // Character type checks
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[a-z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                // Update strength bar
+                const width = Math.min(strength * 20, 100);
+                strengthBar.style.width = width + '%';
+                
+                // Update colors and text
+                if (password.length === 0) {
+                    strengthBar.className = 'strength-fill';
+                    strengthText.textContent = 'Password strength: ';
+                    return;
+                }
+                
+                if (strength <= 2) {
+                    strengthBar.className = 'strength-fill strength-weak';
+                    strengthText.textContent = 'Password strength: Weak';
+                } else if (strength <= 3) {
+                    strengthBar.className = 'strength-fill strength-fair';
+                    strengthText.textContent = 'Password strength: Fair';
+                } else if (strength <= 4) {
+                    strengthBar.className = 'strength-fill strength-good';
+                    strengthText.textContent = 'Password strength: Good';
+                } else {
+                    strengthBar.className = 'strength-fill strength-strong';
+                    strengthText.textContent = 'Password strength: Strong';
+                }
+            });
+        }
         
         // Password confirmation validation
         document.addEventListener('DOMContentLoaded', function() {
             const password = document.getElementById('password');
             const confirmPassword = document.getElementById('confirm_password');
-            const form = document.querySelector('form');
+            const registerForm = document.getElementById('registerForm');
             
             function validatePassword() {
-                if (password.value !== confirmPassword.value) {
-                    confirmPassword.setCustomValidity("Passwords don't match");
-                    return false;
-                } else {
-                    confirmPassword.setCustomValidity('');
-                    return true;
+                if (password && confirmPassword) {
+                    if (password.value !== confirmPassword.value) {
+                        confirmPassword.setCustomValidity("Passwords don't match");
+                        return false;
+                    } else {
+                        confirmPassword.setCustomValidity('');
+                        return true;
+                    }
                 }
+                return true;
             }
             
-            password.onchange = validatePassword;
-            confirmPassword.onkeyup = validatePassword;
+            if (password) password.onchange = validatePassword;
+            if (confirmPassword) confirmPassword.onkeyup = validatePassword;
             
-            form.addEventListener('submit', function(e) {
-                if (!validatePassword()) {
-                    e.preventDefault();
-                    alert('Please make sure passwords match');
-                }
-                
-                // Validate terms agreement
-                const termsCheckbox = document.getElementById('terms');
-                if (!termsCheckbox.checked) {
-                    e.preventDefault();
-                    alert('You must agree to the Terms of Service and Privacy Policy');
-                    termsCheckbox.focus();
-                }
-            });
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    // Validate passwords match
+                    if (!validatePassword()) {
+                        e.preventDefault();
+                        showAlert('Please make sure passwords match', 'danger');
+                        confirmPassword.focus();
+                        return false;
+                    }
+                    
+                    // Validate terms agreement
+                    const termsCheckbox = document.getElementById('terms');
+                    if (termsCheckbox && !termsCheckbox.checked) {
+                        e.preventDefault();
+                        showAlert('You must agree to the Terms of Service and Privacy Policy', 'danger');
+                        termsCheckbox.focus();
+                        return false;
+                    }
+                    
+                    // Validate email format
+                    const emailInput = document.getElementById('email');
+                    if (emailInput && !validateEmail(emailInput.value)) {
+                        e.preventDefault();
+                        showAlert('Please enter a valid email address', 'danger');
+                        emailInput.focus();
+                        return false;
+                    }
+                    
+                    // Validate password length
+                    if (password && password.value.length < 6) {
+                        e.preventDefault();
+                        showAlert('Password must be at least 6 characters long', 'danger');
+                        password.focus();
+                        return false;
+                    }
+                    
+                    // Show loading state
+                    const submitBtn = document.getElementById('registerBtn');
+                    if (submitBtn) {
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Creating Account...';
+                        submitBtn.disabled = true;
+                        
+                        // Re-enable after 5 seconds (safety measure)
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }, 5000);
+                    }
+                });
+            }
         });
         
-        // Auto-dismiss alerts
+        // Auto-dismiss alerts after 5 seconds
         setTimeout(() => {
             document.querySelectorAll('.alert').forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+                if (alert.classList.contains('show')) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
             });
         }, 5000);
-        
-        // Form validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const firstName = document.getElementById('first_name').value;
-            const lastName = document.getElementById('last_name').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const password = document.getElementById('password').value;
-            
-            // Basic validation
-            if (!firstName || !lastName || !email || !phone || !password) {
-                e.preventDefault();
-                alert('Please fill in all required fields');
-                return false;
-            }
-            
-            if (!validateEmail(email)) {
-                e.preventDefault();
-                alert('Please enter a valid email address');
-                return false;
-            }
-            
-            if (password.length < 6) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters long');
-                return false;
-            }
-            
-            // Phone validation (basic)
-            if (!validatePhone(phone)) {
-                e.preventDefault();
-                alert('Please enter a valid phone number');
-                return false;
-            }
-            
-            return true;
-        });
         
         function validateEmail(email) {
             const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return re.test(email);
         }
         
-        function validatePhone(phone) {
-            // Basic phone validation - accepts Nigerian numbers and international format
-            const re = /^[\+]?[0-9\-\s\(\)]{10,}$/;
-            return re.test(phone);
+        function showAlert(message, type) {
+            // Remove existing alerts
+            document.querySelectorAll('.alert-dismissible').forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+            
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert after welcome message
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.parentNode.insertBefore(alertDiv, welcomeMessage.nextSibling);
+            } else {
+                const brandHeader = document.querySelector('.brand-header');
+                if (brandHeader) {
+                    brandHeader.parentNode.insertBefore(alertDiv, brandHeader.nextSibling);
+                }
+            }
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
         }
         
-        // Auto-focus first name field
-        document.getElementById('first_name').focus();
+        // Auto-focus first name field when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstNameInput = document.getElementById('first_name');
+            if (firstNameInput) {
+                firstNameInput.focus();
+            }
+        });
         
-        // Form loading state
-        document.querySelector('form').addEventListener('submit', function() {
-            const submitBtn = document.getElementById('registerBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Creating Account...';
+        // Save form data to localStorage on input change
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            if (form) {
+                const formFields = ['first_name', 'last_name', 'email', 'phone', 'address'];
+                
+                // Load saved data
+                formFields.forEach(field => {
+                    const input = document.getElementById(field);
+                    if (input) {
+                        const savedValue = localStorage.getItem(`register_${field}`);
+                        if (savedValue) {
+                            input.value = savedValue;
+                        }
+                        
+                        // Save on change
+                        input.addEventListener('input', function() {
+                            localStorage.setItem(`register_${field}`, this.value);
+                        });
+                    }
+                });
+                
+                // Clear saved data on successful form submission
+                form.addEventListener('submit', function() {
+                    formFields.forEach(field => {
+                        localStorage.removeItem(`register_${field}`);
+                    });
+                });
+            }
+        });
+        
+        // Phone number formatting
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = this.value.replace(/\D/g, '');
+                    
+                    // Format Nigerian phone numbers
+                    if (value.startsWith('0')) {
+                        value = value.replace(/^0/, '234');
+                    }
+                    
+                    if (value.length > 0) {
+                        if (value.length <= 3) {
+                            value = value;
+                        } else if (value.length <= 6) {
+                            value = `${value.slice(0,3)}-${value.slice(3)}`;
+                        } else if (value.length <= 10) {
+                            value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6)}`;
+                        } else {
+                            value = `${value.slice(0,3)}-${value.slice(3,6)}-${value.slice(6,10)}`;
+                        }
+                    }
+                    
+                    this.value = value;
+                });
+            }
         });
     </script>
 </body>
