@@ -54,7 +54,7 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
 
 # Create folder immediately
 if not os.path.exists(UPLOAD_FOLDER):
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 print(f"✅ Created uploads folder: {UPLOAD_FOLDER}", file=sys.stderr)
 else:
 print(f"✅ Uploads folder exists: {UPLOAD_FOLDER}", file=sys.stderr)
