@@ -1,1639 +1,806 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Products - {{ config.brand_name }} Admin</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<meta name="csrf-token" content="{{ csrf_token }}">
-<style>
-:root {
---primary: #9d4edd;
---primary-dark: #7b2cbf;
---secondary: #f72585;
---light: #f8f9fa;
---dark: #212529;
---gray: #6c757d;
---light-gray: #e9ecef;
---success: #38b000;
---danger: #e63946;
---warning: #ffba08;
---info: #4361ee;
-}
-
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
-
-body {
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-background-color: #f5f5f5;
-color: var(--dark);
-line-height: 1.6;
-}
-
-.admin-container {
-display: flex;
-min-height: 100vh;
-}
-
-/* Sidebar */
-.sidebar {
-width: 250px;
-background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-color: white;
-padding: 20px 0;
-box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-position: fixed;
-height: 100vh;
-overflow-y: auto;
-z-index: 100;
-}
-
-.sidebar-header {
-padding: 0 20px 20px;
-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-text-align: center;
-}
-
-.sidebar-header h2 {
-font-size: 1.5rem;
-margin-bottom: 5px;
-color: white;
-}
-
-.sidebar-header p {
-font-size: 0.9rem;
-opacity: 0.8;
-}
-
-.nav-links {
-list-style: none;
-padding: 20px 0;
-}
-
-.nav-links li {
-margin-bottom: 5px;
-}
-
-.nav-links a {
-display: flex;
-align-items: center;
-padding: 12px 20px;
-color: rgba(255, 255, 255, 0.9);
-text-decoration: none;
-transition: all 0.3s ease;
-border-left: 3px solid transparent;
-}
-
-.nav-links a:hover {
-background: rgba(255, 255, 255, 0.1);
-color: white;
-border-left: 3px solid white;
-}
-
-.nav-links a.active {
-background: rgba(255, 255, 255, 0.15);
-color: white;
-border-left: 3px solid white;
-font-weight: 600;
-}
-
-.nav-links i {
-margin-right: 10px;
-font-size: 1.2rem;
-}
-
-/* Main Content */
-.main-content {
-flex: 1;
-margin-left: 250px;
-padding: 20px;
-background-color: #f5f5f5;
-}
-
-/* Header */
-.header {
-background: white;
-padding: 20px;
-border-radius: 10px;
-margin-bottom: 20px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.header h1 {
-font-size: 1.8rem;
-color: var(--primary);
-margin-bottom: 5px;
-}
-
-.header p {
-color: var(--gray);
-font-size: 0.9rem;
-}
-
-.user-info {
-display: flex;
-align-items: center;
-gap: 15px;
-}
-
-.user-avatar {
-width: 40px;
-height: 40px;
-border-radius: 50%;
-background: var(--primary);
-color: white;
-display: flex;
-align-items: center;
-justify-content: center;
-font-weight: bold;
-}
-
-.logout-btn {
-background: var(--danger);
-color: white;
-border: none;
-padding: 8px 15px;
-border-radius: 5px;
-cursor: pointer;
-text-decoration: none;
-font-size: 0.9rem;
-}
-
-.logout-btn:hover {
-background: #c1121f;
-}
-
-/* Products Header */
-.products-header {
-background: white;
-padding: 25px;
-border-radius: 10px;
-margin-bottom: 20px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.header-left h2 {
-color: var(--primary);
-margin-bottom: 10px;
-}
-
-.header-left p {
-color: var(--gray);
-}
-
-.header-actions {
-display: flex;
-gap: 15px;
-align-items: center;
-}
-
-/* Buttons */
-.btn {
-padding: 10px 20px;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-weight: 600;
-text-decoration: none;
-display: inline-flex;
-align-items: center;
-gap: 8px;
-transition: all 0.3s ease;
-}
-
-.btn i {
-font-size: 1rem;
-}
-
-.btn-primary {
-background: var(--primary);
-color: white;
-}
-
-.btn-primary:hover {
-background: var(--primary-dark);
-transform: translateY(-2px);
-}
-
-.btn-success {
-background: var(--success);
-color: white;
-}
-
-.btn-success:hover {
-background: #2d9100;
-}
-
-.btn-danger {
-background: var(--danger);
-color: white;
-}
-
-.btn-danger:hover {
-background: #c1121f;
-}
-
-.btn-warning {
-background: var(--warning);
-color: var(--dark);
-}
-
-.btn-warning:hover {
-background: #e6a800;
-}
-
-.btn-sm {
-padding: 6px 12px;
-font-size: 0.85rem;
-}
-
-/* Category Filter */
-.category-filter {
-display: flex;
-gap: 10px;
-align-items: center;
-}
-
-.category-filter select {
-padding: 8px 15px;
-border: 1px solid var(--light-gray);
-border-radius: 5px;
-background: white;
-font-size: 0.9rem;
-}
-
-/* Products Table */
-.products-table-container {
-background: white;
-padding: 25px;
-border-radius: 10px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-overflow-x: auto;
-}
-
-.products-table {
-width: 100%;
-border-collapse: collapse;
-}
-
-.products-table th {
-background: var(--light-gray);
-padding: 15px;
-text-align: left;
-font-weight: 600;
-color: var(--dark);
-border-bottom: 2px solid var(--light-gray);
-}
-
-.products-table td {
-padding: 15px;
-border-bottom: 1px solid var(--light-gray);
-vertical-align: middle;
-}
-
-.products-table tr:hover {
-background: #f9f9f9;
-}
-
-/* Product Image */
-.product-image {
-width: 60px;
-height: 60px;
-object-fit: cover;
-border-radius: 5px;
-border: 1px solid var(--light-gray);
-}
-
-/* Stock Status */
-.stock-status {
-display: inline-block;
-padding: 5px 10px;
-border-radius: 20px;
-font-size: 0.8rem;
-font-weight: 600;
-}
-
-.stock-in {
-background: #d4edda;
-color: #155724;
-}
-
-.stock-low {
-background: #fff3cd;
-color: #856404;
-}
-
-.stock-out {
-background: #f8d7da;
-color: #721c24;
-}
-
-/* Featured Badge */
-.featured-badge {
-display: inline-block;
-padding: 5px 10px;
-background: #9d4edd;
-color: white;
-border-radius: 20px;
-font-size: 0.8rem;
-font-weight: 600;
-}
-
-/* Variant Badge */
-.variant-badge {
-display: inline-block;
-padding: 4px 8px;
-background: #4361ee;
-color: white;
-border-radius: 12px;
-font-size: 0.75rem;
-font-weight: 600;
-margin-top: 5px;
-}
-
-/* Bundle Badge */
-.bundle-badge {
-display: inline-block;
-padding: 4px 8px;
-background: #f72585;
-color: white;
-border-radius: 12px;
-font-size: 0.75rem;
-font-weight: 600;
-margin-left: 5px;
-}
-
-/* Action Buttons */
-.action-buttons {
-display: flex;
-gap: 8px;
-}
-
-/* Search Box */
-.search-box {
-position: relative;
-}
-
-.search-box input {
-padding: 10px 15px 10px 40px;
-border: 1px solid var(--light-gray);
-border-radius: 5px;
-width: 300px;
-font-size: 0.9rem;
-}
-
-.search-box i {
-position: absolute;
-left: 15px;
-top: 50%;
-transform: translateY(-50%);
-color: var(--gray);
-}
-
-/* Empty State */
-.empty-state {
-text-align: center;
-padding: 60px 20px;
-color: var(--gray);
-}
-
-.empty-state i {
-font-size: 48px;
-margin-bottom: 20px;
-color: var(--light-gray);
-}
-
-.empty-state h3 {
-margin-bottom: 10px;
-color: var(--dark);
-}
-
-/* Modal Styles */
-.modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: rgba(0, 0, 0, 0.5);
-display: none;
-align-items: center;
-justify-content: center;
-z-index: 1000;
-}
-
-.modal-overlay.active {
-display: flex;
-}
-
-.modal {
-background: white;
-border-radius: 10px;
-width: 90%;
-max-width: 700px;
-max-height: 90vh;
-overflow-y: auto;
-}
-
-.modal-header {
-padding: 20px;
-border-bottom: 1px solid var(--light-gray);
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.modal-header h3 {
-color: var(--primary);
-}
-
-.modal-close {
-background: none;
-border: none;
-font-size: 1.5rem;
-cursor: pointer;
-color: var(--gray);
-}
-
-.modal-body {
-padding: 20px;
-}
-
-.modal-footer {
-padding: 20px;
-border-top: 1px solid var(--light-gray);
-display: flex;
-justify-content: flex-end;
-gap: 10px;
-}
-
-/* Form Styles */
-.form-group {
-margin-bottom: 20px;
-}
-
-.form-label {
-display: block;
-margin-bottom: 8px;
-font-weight: 600;
-color: var(--dark);
-}
-
-.form-control {
-width: 100%;
-padding: 10px 15px;
-border: 1px solid var(--light-gray);
-border-radius: 5px;
-font-size: 0.95rem;
-transition: all 0.3s ease;
-}
-
-.form-control:focus {
-outline: none;
-border-color: var(--primary);
-box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
-}
-
-.form-text {
-font-size: 0.85rem;
-color: var(--gray);
-margin-top: 5px;
-}
-
-/* File Upload */
-.file-upload {
-position: relative;
-display: inline-block;
-width: 100%;
-}
-
-.file-upload-input {
-position: absolute;
-left: 0;
-top: 0;
-opacity: 0;
-width: 100%;
-height: 100%;
-cursor: pointer;
-}
-
-.file-upload-label {
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 40px;
-border: 2px dashed var(--light-gray);
-border-radius: 5px;
-background: white;
-cursor: pointer;
-text-align: center;
-transition: all 0.3s ease;
-}
-
-.file-upload-label:hover {
-border-color: var(--primary);
-background: #f9f5ff;
-}
-
-.file-upload-label i {
-font-size: 2rem;
-color: var(--primary);
-margin-bottom: 10px;
-}
-
-.file-upload-label span {
-display: block;
-color: var(--gray);
-}
-
-.image-preview {
-margin-top: 15px;
-display: none;
-}
-
-.image-preview img {
-max-width: 200px;
-max-height: 200px;
-border-radius: 5px;
-border: 1px solid var(--light-gray);
-}
-
-/* Checkbox and Radio Styles */
-.form-check {
-display: flex;
-align-items: center;
-gap: 10px;
-margin-bottom: 10px;
-}
-
-.form-check-input {
-width: 18px;
-height: 18px;
-}
-
-.form-check-label {
-cursor: pointer;
-}
-
-/* Toast Notification */
-.toast {
-position: fixed;
-top: 20px;
-right: 20px;
-padding: 15px 20px;
-border-radius: 5px;
-color: white;
-font-weight: 600;
-display: flex;
-align-items: center;
-justify-content: space-between;
-min-width: 300px;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-transform: translateX(150%);
-transition: transform 0.3s ease;
-z-index: 1001;
-}
-
-.toast.show {
-transform: translateX(0);
-}
-
-.toast-success {
-background: var(--success);
-}
-
-.toast-error {
-background: var(--danger);
-}
-
-.toast-close {
-background: none;
-border: none;
-color: white;
-font-size: 1.2rem;
-cursor: pointer;
-margin-left: 15px;
-}
-
-/* Bulk Actions */
-.bulk-actions {
-background: white;
-padding: 15px 25px;
-border-radius: 10px;
-margin-bottom: 20px;
-display: flex;
-align-items: center;
-gap: 15px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.bulk-select {
-display: flex;
-align-items: center;
-gap: 10px;
-}
-
-.bulk-select input {
-width: 18px;
-height: 18px;
-}
-
-/* Pagination */
-.pagination {
-display: flex;
-justify-content: center;
-gap: 10px;
-margin-top: 30px;
-}
-
-.page-item {
-list-style: none;
-}
-
-.page-link {
-display: inline-block;
-padding: 8px 15px;
-border: 1px solid var(--light-gray);
-border-radius: 5px;
-color: var(--dark);
-text-decoration: none;
-transition: all 0.3s ease;
-}
-
-.page-link:hover {
-background: var(--light-gray);
-}
-
-.page-link.active {
-background: var(--primary);
-color: white;
-border-color: var(--primary);
-}
-
-/* Status Toggle */
-.status-toggle {
-position: relative;
-display: inline-block;
-width: 50px;
-height: 24px;
-}
-
-.status-toggle input {
-opacity: 0;
-width: 0;
-height: 0;
-}
-
-.status-slider {
-position: absolute;
-cursor: pointer;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background-color: #ccc;
-transition: .4s;
-border-radius: 34px;
-}
-
-.status-slider:before {
-position: absolute;
-content: "";
-height: 16px;
-width: 16px;
-left: 4px;
-bottom: 4px;
-background-color: white;
-transition: .4s;
-border-radius: 50%;
-}
-
-input:checked + .status-slider {
-background-color: var(--success);
-}
-
-input:checked + .status-slider:before {
-transform: translateX(26px);
-}
-
-/* Price Range Display */
-.price-range {
-color: var(--primary);
-font-weight: 600;
-}
-
-/* Low Stock Filter Button */
-.filter-btn {
-padding: 8px 15px;
-border: 1px solid var(--light-gray);
-background: white;
-border-radius: 5px;
-cursor: pointer;
-display: flex;
-align-items: center;
-gap: 8px;
-transition: all 0.3s ease;
-}
-
-.filter-btn:hover {
-background: var(--light-gray);
-}
-
-.filter-btn.active {
-background: var(--primary);
-color: white;
-border-color: var(--primary);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-.sidebar {
-width: 70px;
-}
-
-.sidebar-header h2,
-.nav-links span,
-.sidebar-header p {
-display: none;
-}
-
-.main-content {
-margin-left: 70px;
-}
-
-.nav-links a {
-justify-content: center;
-padding: 15px;
-}
-
-.nav-links i {
-margin-right: 0;
-font-size: 1.5rem;
-}
-
-.products-header {
-flex-direction: column;
-gap: 20px;
-text-align: center;
-}
-
-.header-actions {
-flex-direction: column;
-width: 100%;
-}
-
-.search-box input {
-width: 100%;
-}
-
-.products-table {
-font-size: 0.9rem;
-}
-
-.action-buttons {
-flex-direction: column;
-}
-
-.bulk-actions {
-flex-direction: column;
-align-items: flex-start;
-}
-}
-
-@media (max-width: 576px) {
-.header {
-flex-direction: column;
-text-align: center;
-gap: 15px;
-}
-
-.user-info {
-justify-content: center;
-}
-
-.category-filter {
-flex-direction: column;
-align-items: stretch;
-}
-
-.modal {
-width: 95%;
-}
-}
-
-/* Quick Edit Form */
-.quick-edit-form {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 15px;
-}
-
-.quick-edit-form .full-width {
-grid-column: 1 / -1;
-}
-
-/* Import/Export */
-.import-export {
-background: white;
-padding: 20px;
-border-radius: 10px;
-margin-bottom: 20px;
-display: flex;
-gap: 15px;
-align-items: center;
-}
-
-/* Image Count Badge */
-.image-count {
-display: inline-block;
-padding: 2px 8px;
-background: var(--info);
-color: white;
-border-radius: 10px;
-font-size: 0.75rem;
-margin-left: 5px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - {{ config.brand_name }} Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-purple: #9d4edd;
+            --accent-gold: #d4af37;
+            --light-gray: #f8f9fa;
+            --text-dark: #333333;
+            --text-light: #6c757d;
+            --white: #ffffff;
+            --shadow: 0 5px 15px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: var(--primary-dark);
+            color: var(--white);
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+            transition: var(--transition);
+        }
+        
+        .sidebar .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .sidebar .nav-link {
+            color: #ccc;
+            padding: 1rem 1.5rem;
+            border-left: 3px solid transparent;
+            transition: var(--transition);
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: var(--white);
+            background: rgba(157, 78, 221, 0.1);
+            border-left-color: var(--accent-purple);
+        }
+        
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .navbar-top {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title h1 {
+            color: var(--primary-dark);
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: var(--shadow);
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+        
+        .card-header {
+            background: var(--white);
+            border-bottom: 2px solid rgba(157, 78, 221, 0.2);
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), #7b2cbf);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #7b2cbf, var(--accent-purple));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.3);
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--accent-purple);
+            color: var(--accent-purple);
+            background: transparent;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--accent-purple);
+            color: var(--white);
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: rgba(157, 78, 221, 0.05);
+            border-bottom: 2px solid rgba(157, 78, 221, 0.2);
+            color: var(--primary-dark);
+            font-weight: 600;
+            padding: 1rem;
+        }
+        
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(157, 78, 221, 0.02);
+        }
+        
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid var(--light-gray);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-draft {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .stock-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .stock-high {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .stock-none {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+            color: var(--white);
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .pagination .page-link {
+            color: var(--accent-purple);
+            border: 1px solid #dee2e6;
+            margin: 0 2px;
+            border-radius: 8px;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: var(--white);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar.active {
+                margin-left: 0;
+            }
+        }
+        
+        .image-preview-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .image-preview-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--accent-purple);
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-<div class="admin-container">
-<!-- Sidebar -->
-<aside class="sidebar">
-<div class="sidebar-header">
-<h2>{{ config.brand_name }}</h2>
-<p>Admin Panel</p>
-</div>
-<ul class="nav-links">
-<li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-<li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
-<li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-<li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-<li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-<li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
-<li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-<li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-</ul>
-</aside>
-
-<!-- Main Content -->
-<main class="main-content">
-<!-- Header -->
-<header class="header">
-<div>
-<h1>Manage Products</h1>
-<p>View and manage all products in your store</p>
-</div>
-<div class="user-info">
-<div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
-<a href="{{ url_for('admin_logout') }}" class="logout-btn">
-<i class="fas fa-sign-out-alt"></i> Logout
-</a>
-</div>
-</header>
-
-<!-- Import/Export -->
-<div class="import-export">
-<a href="#" class="btn btn-success" onclick="exportProducts()">
-<i class="fas fa-file-export"></i> Export Products
-</a>
-<button class="btn btn-primary" onclick="importProducts()">
-<i class="fas fa-file-import"></i> Import Products
-</button>
-</div>
-
-<!-- Products Header -->
-<div class="products-header">
-<div class="header-left">
-<h2>{{ products|length }} Products</h2>
-<p>Manage your store inventory</p>
-</div>
-<div class="header-actions">
-<div class="category-filter">
-<select id="categoryFilter" onchange="filterByCategory()">
-<option value="">All Categories</option>
-{% for category in categories %}
-<option value="{{ category.id }}" {% if request.args.get('category')|string == category.id|string %}selected{% endif %}>
-{{ category.name }}
-</option>
-{% endfor %}
-</select>
-<button class="filter-btn {% if low_stock %}active{% endif %}" onclick="toggleLowStockFilter()">
-<i class="fas fa-exclamation-triangle"></i>
-Low Stock
-</button>
-</div>
-<div class="search-box">
-<i class="fas fa-search"></i>
-<input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()" value="{{ request.args.get('search', '') }}">
-</div>
-<a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
-<i class="fas fa-plus"></i> Add Product
-</a>
-</div>
-</div>
-
-<!-- Bulk Actions -->
-<div class="bulk-actions" id="bulkActions" style="display: none;">
-<div class="bulk-select">
-<input type="checkbox" id="selectAllBulk" onchange="toggleAllBulk()">
-<span id="selectedCount">0</span> selected
-</div>
-<select id="bulkAction" class="form-control" style="width: 200px;">
-<option value="">Bulk Actions</option>
-<option value="activate">Activate</option>
-<option value="deactivate">Deactivate</option>
-<option value="feature">Make Featured</option>
-<option value="unfeature">Remove Featured</option>
-<option value="delete">Delete</option>
-</select>
-<button class="btn btn-primary" onclick="applyBulkAction()">Apply</button>
-<button class="btn btn-secondary" onclick="clearBulkSelection()">Clear</button>
-</div>
-
-<!-- Products Table -->
-<div class="products-table-container">
-{% if products %}
-<table class="products-table">
-<thead>
-<tr>
-<th width="30">
-<input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
-</th>
-<th>Image</th>
-<th>Product Name</th>
-<th>Category</th>
-<th>Price</th>
-<th>Stock</th>
-<th>Status</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody id="productsTableBody">
-{% for product in products %}
-<tr data-product-id="{{ product.id }}">
-<td>
-<input type="checkbox" class="product-checkbox" onchange="updateBulkActions()" value="{{ product.id }}">
-</td>
-<td>
-{% if product.images and product.images|length > 0 %}
-{% set primary_image = product.images|selectattr('is_primary')|first or product.images[0] %}
-<img src="{{ url_for('uploaded_file', filename=primary_image.image_url) }}"
-alt="{{ product.name }}"
-class="product-image"
-onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
-{% if product.images|length > 1 %}
-<span class="image-count">+{{ product.images|length - 1 }}</span>
-{% endif %}
-{% else %}
-<img src="{{ url_for('static', filename='images/default-product.jpg') }}"
-alt="{{ product.name }}"
-class="product-image">
-{% endif %}
-</td>
-<td>
-<strong>{{ product.name }}</strong>
-<br>
-<small style="color: var(--gray);">
-SKU: {{ product.sku or 'N/A' }}
-</small>
-<br>
-<small style="color: var(--gray);">
-{{ product.description[:50] }}{% if product.description|length > 50 %}...{% endif %}
-</small>
-<br>
-{% if product.is_bundle %}
-<span class="bundle-badge">Bundle</span>
-{% endif %}
-{% if product.featured %}
-<span class="featured-badge">Featured</span>
-{% endif %}
-{% if product.variants|length > 0 %}
-<span class="variant-badge">{{ product.variants|length }} variants</span>
-{% endif %}
-</td>
-<td>
-{% if product.category %}
-{{ product.category.name }}
-{% else %}
-<span style="color: var(--gray);">Uncategorized</span>
-{% endif %}
-</td>
-<td>
-{% if product.variants and product.variants|length > 1 %}
-<span class="price-range">{{ product.display_price }}</span>
-<br>
-<small style="color: var(--gray);">
-Base: {{ format_price(product.base_price) }}
-</small>
-{% else %}
-<strong>{{ format_price(product.base_price) }}</strong>
-{% endif %}
-{% if product.compare_price and product.compare_price > product.base_price %}
-<br>
-<small style="color: var(--gray); text-decoration: line-through;">
-{{ format_price(product.compare_price) }}
-</small>
-{% endif %}
-</td>
-<td>
-{% set total_stock = product.stock %}
-{% if total_stock > 20 %}
-<span class="stock-status stock-in">{{ total_stock }} in stock</span>
-{% elif total_stock > 0 %}
-<span class="stock-status stock-low">{{ total_stock }} left</span>
-{% else %}
-<span class="stock-status stock-out">Out of stock</span>
-{% endif %}
-{% if product.variants|length > 0 %}
-<br>
-<small style="color: var(--gray); font-size: 0.8rem;">
-{{ product.variants|selectattr('stock', 'gt', 0)|list|length }} variants available
-</small>
-{% endif %}
-</td>
-<td>
-<label class="status-toggle">
-<input type="checkbox" class="status-toggle-input"
-data-product-id="{{ product.id }}"
-{% if product.active %}checked{% endif %}
-onchange="toggleProductStatus({{ product.id }}, this.checked)">
-<span class="status-slider"></span>
-</label>
-</td>
-<td>
-<div class="action-buttons">
-<button class="btn btn-warning btn-sm" onclick="quickEditProduct({{ product.id }})">
-<i class="fas fa-edit"></i> Quick Edit
-</button>
-<a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-info btn-sm">
-<i class="fas fa-eye"></i> View
-</a>
-{% if product.variants|length > 0 %}
-<a href="{{ url_for('admin_product_variants', product_id=product.id) }}" class="btn btn-primary btn-sm">
-<i class="fas fa-list"></i> Variants
-</a>
-{% endif %}
-<button class="btn btn-danger btn-sm" onclick="deleteProduct({{ product.id }}, '{{ product.name }}')">
-<i class="fas fa-trash"></i>
-</button>
-</div>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-{% else %}
-<div class="empty-state">
-<i class="fas fa-box-open"></i>
-<h3>No products found</h3>
-<p>Get started by adding your first product</p>
-<a href="{{ url_for('admin_add_product') }}" class="btn btn-primary" style="margin-top: 20px;">
-<i class="fas fa-plus"></i> Add Your First Product
-</a>
-</div>
-{% endif %}
-</div>
-</main>
-</div>
-
-<!-- Quick Edit Modal -->
-<div class="modal-overlay" id="quickEditModal">
-<div class="modal">
-<div class="modal-header">
-<h3>Quick Edit Product</h3>
-<button class="modal-close" onclick="closeQuickEditModal()">&times;</button>
-</div>
-<div class="modal-body">
-<form id="quickEditForm" method="POST">
-<div class="form-group">
-<label class="form-label">Product Name</label>
-<input type="text" name="name" class="form-control" required>
-</div>
-<div class="form-group">
-<label class="form-label">Base Price (₦)</label>
-<input type="number" name="base_price" class="form-control" step="0.01" required>
-</div>
-<div class="form-group">
-<label class="form-label">Compare Price (₦)</label>
-<input type="number" name="compare_price" class="form-control" step="0.01">
-<div class="form-text">Leave empty if no compare price</div>
-</div>
-<div class="form-group">
-<label class="form-label">Total Quantity</label>
-<input type="number" name="total_quantity" class="form-control" required>
-<div class="form-text">Total stock across all variants</div>
-</div>
-<div class="form-group">
-<label class="form-label">Category</label>
-<select name="category_id" class="form-control" required>
-{% for category in categories %}
-<option value="{{ category.id }}">{{ category.name }}</option>
-{% endfor %}
-</select>
-</div>
-<div class="form-check">
-<input type="checkbox" name="featured" class="form-check-input" id="quickEditFeatured">
-<label class="form-check-label" for="quickEditFeatured">Featured Product</label>
-</div>
-<input type="hidden" name="product_id" id="quickEditProductId">
-</form>
-</div>
-<div class="modal-footer">
-<button class="btn btn-secondary" onclick="closeQuickEditModal()">Cancel</button>
-<button class="btn btn-primary" onclick="saveQuickEdit()">Save Changes</button>
-</div>
-</div>
-</div>
-
-<!-- Image Upload Modal -->
-<div class="modal-overlay" id="imageUploadModal">
-<div class="modal">
-<div class="modal-header">
-<h3>Upload Product Image</h3>
-<button class="modal-close" onclick="closeImageUploadModal()">&times;</button>
-</div>
-<div class="modal-body">
-<div class="form-group">
-<label class="form-label">Choose Image</label>
-<div class="file-upload">
-<input type="file" id="imageUpload" class="file-upload-input" accept="image/*" onchange="previewImage(this)">
-<label for="imageUpload" class="file-upload-label">
-<div>
-<i class="fas fa-cloud-upload-alt"></i>
-<span>Click to upload or drag and drop</span>
-<span style="font-size: 0.85rem;">PNG, JPG, GIF up to 5MB</span>
-</div>
-</label>
-</div>
-<div class="image-preview" id="imagePreview">
-<img id="previewImage" src="" alt="Preview">
-</div>
-</div>
-<input type="hidden" id="uploadProductId">
-</div>
-<div class="modal-footer">
-<button class="btn btn-secondary" onclick="closeImageUploadModal()">Cancel</button>
-<button class="btn btn-primary" onclick="uploadProductImage()">Upload Image</button>
-</div>
-</div>
-</div>
-
-<!-- Toast Notification -->
-<div class="toast" id="toast">
-<span id="toastMessage"></span>
-<button class="toast-close" onclick="hideToast()">&times;</button>
-</div>
-
-<!-- JavaScript Libraries -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<script>
-// Get CSRF Token
-function getCSRFToken() {
-const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-return csrfTokenMeta ? csrfTokenMeta.content : '';
-}
-
-// Category filter
-function filterByCategory() {
-const categoryId = document.getElementById('categoryFilter').value;
-const search = document.getElementById('searchInput').value;
-let url = '/admin/products?';
-
-if (categoryId) url += `category=${categoryId}&`;
-if (search) url += `search=${search}`;
-{% if low_stock %}url += 'low_stock=true';{% endif %}
-
-window.location.href = url;
-}
-
-// Toggle low stock filter
-function toggleLowStockFilter() {
-const categoryId = document.getElementById('categoryFilter').value;
-const search = document.getElementById('searchInput').value;
-let url = '/admin/products?';
-
-if (categoryId) url += `category=${categoryId}&`;
-if (search) url += `search=${search}&`;
-url += 'low_stock=true';
-
-window.location.href = url;
-}
-
-// Search products
-function searchProducts() {
-const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-const rows = document.querySelectorAll('#productsTableBody tr');
-
-rows.forEach(row => {
-const productName = row.querySelector('td:nth-child(3) strong').textContent.toLowerCase();
-const productSKU = row.querySelector('td:nth-child(3) small').textContent.toLowerCase();
-
-if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
-row.style.display = '';
-} else {
-row.style.display = 'none';
-}
-});
-}
-
-// Toggle all products for bulk actions
-function toggleAllProducts() {
-const selectAll = document.getElementById('selectAll');
-const checkboxes = document.querySelectorAll('.product-checkbox');
-
-checkboxes.forEach(checkbox => {
-checkbox.checked = selectAll.checked;
-});
-
-updateBulkActions();
-}
-
-// Update bulk actions visibility
-function updateBulkActions() {
-const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-const bulkActions = document.getElementById('bulkActions');
-const selectedCount = document.getElementById('selectedCount');
-
-selectedCount.textContent = checkboxes.length;
-
-if (checkboxes.length > 0) {
-bulkActions.style.display = 'flex';
-} else {
-bulkActions.style.display = 'none';
-document.getElementById('selectAll').checked = false;
-}
-}
-
-// Toggle all bulk selection
-function toggleAllBulk() {
-const selectAllBulk = document.getElementById('selectAllBulk');
-const checkboxes = document.querySelectorAll('.product-checkbox');
-
-checkboxes.forEach(checkbox => {
-checkbox.checked = selectAllBulk.checked;
-});
-
-updateBulkActions();
-}
-
-// Clear bulk selection
-function clearBulkSelection() {
-const checkboxes = document.querySelectorAll('.product-checkbox');
-checkboxes.forEach(checkbox => checkbox.checked = false);
-
-document.getElementById('selectAll').checked = false;
-document.getElementById('selectAllBulk').checked = false;
-updateBulkActions();
-}
-
-// Apply bulk action
-async function applyBulkAction() {
-const action = document.getElementById('bulkAction').value;
-const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-const productIds = Array.from(checkboxes).map(cb => cb.value);
-
-if (!action || productIds.length === 0) {
-showToast('Please select an action and products', 'error');
-return;
-}
-
-if (action === 'delete' && !confirm(`Are you sure you want to delete ${productIds.length} products?`)) {
-return;
-}
-
-try {
-const response = await fetch('/admin/products/bulk-action', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-'X-CSRFToken': getCSRFToken()
-},
-body: JSON.stringify({
-action: action,
-product_ids: productIds
-})
-});
-
-const data = await response.json();
-
-if (response.ok) {
-showToast(`Bulk action applied to ${data.count} products`, 'success');
-setTimeout(() => location.reload(), 1500);
-} else {
-throw new Error(data.error || 'Failed to apply bulk action');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to apply bulk action', 'error');
-}
-}
-
-// Toggle product status
-async function toggleProductStatus(productId, active) {
-try {
-const response = await fetch(`/admin/products/${productId}/toggle-status`, {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-'X-CSRFToken': getCSRFToken()
-},
-body: JSON.stringify({ active: active })
-});
-
-const data = await response.json();
-
-if (response.ok) {
-showToast(`Product status ${active ? 'activated' : 'deactivated'}`, 'success');
-} else {
-throw new Error(data.error || 'Failed to update status');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to update status', 'error');
-// Revert toggle on error
-const toggle = document.querySelector(`input[data-product-id="${productId}"]`);
-if (toggle) toggle.checked = !active;
-}
-}
-
-// Quick edit product
-async function quickEditProduct(productId) {
-try {
-const response = await fetch(`/admin/products/${productId}/quick-edit`);
-const data = await response.json();
-
-if (response.ok) {
-// Fill form
-document.getElementById('quickEditProductId').value = data.id;
-document.querySelector('#quickEditForm input[name="name"]').value = data.name;
-document.querySelector('#quickEditForm input[name="base_price"]').value = data.price;
-document.querySelector('#quickEditForm input[name="compare_price"]').value = data.compare_price || '';
-document.querySelector('#quickEditForm input[name="total_quantity"]').value = data.total_quantity || data.quantity;
-document.querySelector('#quickEditForm select[name="category_id"]').value = data.category_id;
-document.getElementById('quickEditFeatured').checked = data.featured;
-
-// Show modal
-document.getElementById('quickEditModal').classList.add('active');
-} else {
-throw new Error(data.error || 'Failed to load product data');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to load product data', 'error');
-}
-}
-
-// Save quick edit
-async function saveQuickEdit() {
-const form = document.getElementById('quickEditForm');
-const formData = new FormData(form);
-const productId = formData.get('product_id');
-
-try {
-const response = await fetch(`/admin/products/${productId}/quick-update`, {
-method: 'POST',
-body: formData,
-headers: {
-'X-CSRFToken': getCSRFToken()
-}
-});
-
-const data = await response.json();
-
-if (response.ok) {
-showToast('Product updated successfully', 'success');
-closeQuickEditModal();
-setTimeout(() => location.reload(), 1500);
-} else {
-throw new Error(data.error || 'Failed to update product');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to update product', 'error');
-}
-}
-
-// Close quick edit modal
-function closeQuickEditModal() {
-document.getElementById('quickEditModal').classList.remove('active');
-}
-
-// Delete product
-async function deleteProduct(productId, productName) {
-if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
-return;
-}
-
-try {
-const response = await fetch(`/admin/products/delete/${productId}`, {
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-'X-CSRFToken': getCSRFToken()
-},
-body: `csrf_token=${encodeURIComponent(getCSRFToken())}`
-});
-
-if (response.ok) {
-showToast(`"${productName}" deleted successfully`, 'success');
-// Remove row from table
-const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-if (row) {
-row.style.opacity = '0';
-setTimeout(() => row.remove(), 300);
-}
-} else {
-throw new Error('Failed to delete product');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to delete product', 'error');
-}
-}
-
-// Open image upload modal
-function openImageUploadModal(productId) {
-document.getElementById('uploadProductId').value = productId;
-document.getElementById('imageUploadModal').classList.add('active');
-}
-
-// Close image upload modal
-function closeImageUploadModal() {
-document.getElementById('imageUploadModal').classList.remove('active');
-document.getElementById('imagePreview').style.display = 'none';
-document.getElementById('previewImage').src = '';
-document.getElementById('imageUpload').value = '';
-}
-
-// Preview image before upload
-function previewImage(input) {
-const preview = document.getElementById('previewImage');
-const previewContainer = document.getElementById('imagePreview');
-
-if (input.files && input.files[0]) {
-const reader = new FileReader();
-
-reader.onload = function(e) {
-preview.src = e.target.result;
-previewContainer.style.display = 'block';
-}
-
-reader.readAsDataURL(input.files[0]);
-}
-}
-
-// Upload product image
-async function uploadProductImage() {
-const productId = document.getElementById('uploadProductId').value;
-const fileInput = document.getElementById('imageUpload');
-
-if (!fileInput.files[0]) {
-showToast('Please select an image file', 'error');
-return;
-}
-
-const formData = new FormData();
-formData.append('image', fileInput.files[0]);
-
-try {
-const response = await fetch(`/admin/products/${productId}/upload-image`, {
-method: 'POST',
-body: formData,
-headers: {
-'X-CSRFToken': getCSRFToken()
-}
-});
-
-const data = await response.json();
-
-if (response.ok) {
-showToast('Image uploaded successfully', 'success');
-closeImageUploadModal();
-setTimeout(() => location.reload(), 1500);
-} else {
-throw new Error(data.error || 'Failed to upload image');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to upload image', 'error');
-}
-}
-
-// Export products
-function exportProducts() {
-// Create export URL with current filters
-let url = '/admin/products/export?';
-const categoryId = document.getElementById('categoryFilter').value;
-const search = document.getElementById('searchInput').value;
-
-if (categoryId) url += `category=${categoryId}&`;
-if (search) url += `search=${search}`;
-{% if low_stock %}url += 'low_stock=true';{% endif %}
-
-window.location.href = url;
-}
-
-// Import products
-function importProducts() {
-// Create file input for import
-const input = document.createElement('input');
-input.type = 'file';
-input.accept = '.csv,.json,.xlsx';
-input.onchange = async (e) => {
-const file = e.target.files[0];
-if (!file) return;
-
-const formData = new FormData();
-formData.append('file', file);
-formData.append('csrf_token', getCSRFToken());
-
-try {
-const response = await fetch('/admin/products/import', {
-method: 'POST',
-body: formData
-});
-
-if (response.ok) {
-showToast('Products imported successfully', 'success');
-setTimeout(() => location.reload(), 1500);
-} else {
-throw new Error('Failed to import products');
-}
-} catch (error) {
-console.error('Error:', error);
-showToast('Failed to import products', 'error');
-}
-};
-
-input.click();
-}
-
-// Toast functions
-function showToast(message, type = 'success') {
-const toast = document.getElementById('toast');
-const toastMessage = document.getElementById('toastMessage');
-
-toastMessage.textContent = message;
-toast.className = `toast toast-${type} show`;
-
-setTimeout(() => {
-hideToast();
-}, 5000);
-}
-
-function hideToast() {
-const toast = document.getElementById('toast');
-toast.classList.remove('show');
-}
-
-// Check for flash messages on page load
-document.addEventListener('DOMContentLoaded', function() {
-// Initialize Select2
-$('#categoryFilter').select2({
-width: '200px'
-});
-
-// Show any flash messages from server
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-showToast('{{ message }}', '{{ category }}');
-{% endfor %}
-{% endif %}
-{% endwith %}
-
-// Initialize bulk actions
-updateBulkActions();
-});
-
-// Close modals on ESC key
-document.addEventListener('keydown', function(e) {
-if (e.key === 'Escape') {
-closeQuickEditModal();
-closeImageUploadModal();
-}
-});
-
-// Close modals when clicking outside
-document.addEventListener('click', function(e) {
-if (e.target.classList.contains('modal-overlay')) {
-closeQuickEditModal();
-closeImageUploadModal();
-}
-});
-</script>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h3><i class="fas fa-crown"></i> {{ config.brand_name }}</h3>
+            <p class="text-muted mb-0">Admin Panel</p>
+        </div>
+        <nav class="nav flex-column mt-3">
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link active" href="{{ url_for('admin_products') }}">
+                <i class="fas fa-box"></i> Products
+            </a>
+            <a class="nav-link" href="{{ url_for('admin_categories') }}">
+                <i class="fas fa-tags"></i> Categories
+            </a>
+            <a class="nav-link" href="{{ url_for('admin_orders') }}">
+                <i class="fas fa-shopping-cart"></i> Orders
+            </a>
+            <a class="nav-link" href="{{ url_for('admin_customers') }}">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            <a class="nav-link" href="{{ url_for('admin_logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar-top">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="page-title">
+                        <h1><i class="fas fa-box me-2"></i> Manage Products</h1>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="fas fa-plus"></i> Add New Product
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Products Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">All Products ({{ products|length }})</h5>
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control" placeholder="Search products..." id="searchInput" style="width: 250px;">
+                    <select class="form-select" style="width: 150px;" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-select" style="width: 150px;" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Featured</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td><strong>#{{ product.id }}</strong></td>
+                                <td>
+                                    {% if product.image_url %}
+                                        <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                                             alt="{{ product.name }}" 
+                                             class="product-image"
+                                             onerror="this.src='https://via.placeholder.com/60x60?text=No+Image'">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/60x60?text=No+Image" 
+                                             alt="{{ product.name }}" 
+                                             class="product-image">
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ product.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ product.description[:50] }}...</small>
+                                </td>
+                                <td>{{ product.category.name if product.category else 'Uncategorized' }}</td>
+                                <td><strong>{{ product.display_price }}</strong></td>
+                                <td>
+                                    {% if product.stock > 10 %}
+                                        <span class="stock-badge stock-high">{{ product.stock }} units</span>
+                                    {% elif product.stock > 0 %}
+                                        <span class="stock-badge stock-low">{{ product.stock }} units</span>
+                                    {% else %}
+                                        <span class="stock-badge stock-none">Out of stock</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.status == 'active' %}
+                                        <span class="status-badge status-active">
+                                            <i class="fas fa-check-circle"></i> Active
+                                        </span>
+                                    {% elif product.status == 'draft' %}
+                                        <span class="status-badge status-draft">
+                                            <i class="fas fa-pen"></i> Draft
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-out-of-stock">
+                                            <i class="fas fa-times-circle"></i> Out of Stock
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.featured %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-star"></i> Featured
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Regular</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.created_at.strftime('%Y-%m-%d') if product.created_at else 'N/A' }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('edit_product', id=product.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button onclick="confirmDelete({{ product.id }})" 
+                                                class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <a href="{{ url_for('product_detail', id=product.id) }}" 
+                                           target="_blank" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                    <h5>No Products Found</h5>
+                                    <p class="text-muted">Add your first product to get started</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <nav aria-label="Product pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if current_page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_products', page=current_page-1) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in range(1, total_pages + 1) %}
+                            {% if page_num == 1 or page_num == total_pages or (page_num >= current_page - 2 and page_num <= current_page + 2) %}
+                            <li class="page-item {% if page_num == current_page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_products', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                            {% elif page_num == current_page - 3 or page_num == current_page + 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if current_page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_products', page=current_page+1) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addProductModalLabel">
+                            <i class="fas fa-plus-circle me-2"></i> Add New Product
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Product Details -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Product Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="price" class="form-label">Price (₦) *</label>
+                                            <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="compare_price" class="form-label">Compare Price (₦)</label>
+                                            <input type="number" class="form-control" id="compare_price" name="compare_price" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="stock" class="form-label">Stock Quantity *</label>
+                                            <input type="number" class="form-control" id="stock" name="stock" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="sku" class="form-label">SKU</label>
+                                            <input type="text" class="form-control" id="sku" name="sku">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">Category *</label>
+                                    <select class="form-select" id="category_id" name="category_id" required>
+                                        <option value="">Select Category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="active" selected>Active</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="out_of_stock">Out of Stock</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="featured" name="featured">
+                                        <label class="form-check-label" for="featured">
+                                            Mark as Featured Product
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Product Images</label>
+                                    <div class="upload-area" onclick="document.getElementById('images').click()">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <p class="mb-2">Click to upload images</p>
+                                        <p class="text-muted small">PNG, JPG up to 5MB</p>
+                                    </div>
+                                    <input type="file" class="form-control d-none" id="images" name="images" 
+                                           accept="image/*" multiple onchange="previewImages(event)">
+                                    
+                                    <div class="image-preview-container mt-3" id="imagePreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="length" class="form-label">Length (for hair products)</label>
+                                    <input type="text" class="form-control" id="length" name="length" placeholder="e.g., 12, 14, 16, 18, 20, 22, 24, 26, 28, 30">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="texture" class="form-label">Texture (for hair products)</label>
+                                    <select class="form-select" id="texture" name="texture">
+                                        <option value="">Select Texture</option>
+                                        <option value="Straight">Straight</option>
+                                        <option value="Body Wave">Body Wave</option>
+                                        <option value="Deep Wave">Deep Wave</option>
+                                        <option value="Loose Wave">Loose Wave</option>
+                                        <option value="Curly">Curly</option>
+                                        <option value="Kinky Curly">Kinky Curly</option>
+                                        <option value="Coily">Coily</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Image preview
+        function previewImages(event) {
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'image-preview-wrapper';
+                    wrapper.innerHTML = `
+                        <img src="${e.target.result}" class="image-preview">
+                        <span class="remove-image" onclick="removeImage(this)">×</span>
+                        <input type="hidden" name="image_urls[]" value="${e.target.result}">
+                    `;
+                    previewContainer.appendChild(wrapper);
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function removeImage(element) {
+            element.parentElement.remove();
+        }
+        
+        // Filter products
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+        
+        document.getElementById('categoryFilter').addEventListener('change', function(e) {
+            const selectedCategory = e.target.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (!selectedCategory) {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const categoryCell = row.querySelector('td:nth-child(4)');
+                if (categoryCell && categoryCell.textContent.includes(selectedCategory)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        document.getElementById('statusFilter').addEventListener('change', function(e) {
+            const selectedStatus = e.target.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (!selectedStatus) {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const statusCell = row.querySelector('td:nth-child(7)');
+                if (statusCell) {
+                    const statusText = statusCell.textContent.toLowerCase();
+                    if (selectedStatus === 'active' && statusText.includes('active')) {
+                        row.style.display = '';
+                    } else if (selectedStatus === 'draft' && statusText.includes('draft')) {
+                        row.style.display = '';
+                    } else if (selectedStatus === 'out_of_stock' && statusText.includes('out of stock')) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+        
+        // Confirm delete
+        function confirmDelete(productId) {
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                window.location.href = `/admin/delete_product/${productId}`;
+            }
+        }
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const price = document.getElementById('price').value;
+            if (price <= 0) {
+                e.preventDefault();
+                alert('Price must be greater than 0');
+                return false;
+            }
+            
+            const stock = document.getElementById('stock').value;
+            if (stock < 0) {
+                e.preventDefault();
+                alert('Stock cannot be negative');
+                return false;
+            }
+        });
+        
+        // Auto-generate SKU
+        document.getElementById('name').addEventListener('blur', function() {
+            const skuField = document.getElementById('sku');
+            if (!skuField.value) {
+                const name = this.value;
+                const sku = name.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10) + 
+                           Date.now().toString().substring(9);
+                skuField.value = sku;
+            }
+        });
+    </script>
 </body>
 </html>
