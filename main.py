@@ -30,10 +30,10 @@ if not database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///norahairline.db'
     print("✅ Using SQLite database (local development)", file=sys.stderr)
 elif database_url.startswith('postgres://'):
-# Fix Render/Heroku PostgreSQL URLs
-fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
-print("✅ Using PostgreSQL database (production)", file=sys.stderr)
+    # Fix Render/Heroku PostgreSQL URLs
+    fixed_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = fixed_url
+    print("✅ Using PostgreSQL database (production)", file=sys.stderr)
 else:
     # Already correct URL
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
