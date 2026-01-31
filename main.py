@@ -1,4 +1,4 @@
-# main.py - NORA HAIR LINE E-COMMERCE - ENHANCED VERSION
+# main.py - NORA HAIR LINE E-COMMERCE - PRODUCTION READY
 import os
 import sys
 import traceback
@@ -111,10 +111,10 @@ class Product(db.Model):
     name = db.Column(db.String(200), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
     description = db.Column(db.Text)
-    base_price = db.Column(db.Float, nullable=False, default=0.0)  # Renamed from price
+    base_price = db.Column(db.Float, nullable=False, default=0.0)
     compare_price = db.Column(db.Float)
     sku = db.Column(db.String(100))
-    total_quantity = db.Column(db.Integer, default=0)  # Total across all variants
+    total_quantity = db.Column(db.Integer, default=0)
     featured = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -261,7 +261,7 @@ class Order(db.Model):
     shipping_address = db.Column(db.Text, nullable=False)
     shipping_city = db.Column(db.String(100), nullable=False)
     shipping_state = db.Column(db.String(100), nullable=False)
-    shipping_area = db.Column(db.String(100))  # Added for Lagos areas
+    shipping_area = db.Column(db.String(100))
     total_amount = db.Column(db.Float, nullable=False)
     shipping_amount = db.Column(db.Float, default=0.0)
     final_amount = db.Column(db.Float, nullable=False)
@@ -285,7 +285,7 @@ class OrderItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), nullable=True)
     product_name = db.Column(db.String(200), nullable=False)
-    variant_details = db.Column(db.String(200))  # Store variant info: "24\" Brazilian Body Wave"
+    variant_details = db.Column(db.String(200))
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
@@ -314,21 +314,6 @@ class Review(db.Model):
 
     def __repr__(self):
         return f'<Review {self.id}>'
-
-class BundleItem(db.Model):
-    __tablename__ = 'bundle_item'
-
-    id = db.Column(db.Integer, primary_key=True)
-    bundle_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    bundle = db.relationship('Product', foreign_keys=[bundle_id], backref='bundle_items')
-    product = db.relationship('Product', foreign_keys=[product_id])
-
-    def __repr__(self):
-        return f'<BundleItem {self.id}>'
 
 # ========== BUSINESS CONFIGURATION ==========
 BUSINESS_CONFIG = {
@@ -380,15 +365,6 @@ def generate_order_number():
     random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f'NORA-{timestamp}-{random_str}'
 
-def calculate_cart_total():
-    total = 0
-    if 'cart' in session:
-        for item in session['cart']:
-            price = item.get('price', 0)
-            quantity = item.get('quantity', 1)
-            total += float(price) * quantity
-    return total
-
 def calculate_cart_with_variants():
     """Calculate cart total with variant-specific pricing"""
     total = 0
@@ -401,17 +377,6 @@ def calculate_cart_with_variants():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def safe_format_number(value, default=0):
-    """Safely format number for display"""
-    try:
-        if value is None:
-            return default
-        if isinstance(value, (int, float)):
-            return f"{value:,.2f}"
-        return str(value)
-    except:
-        return str(default)
 
 def calculate_delivery_fee(city, state, area=None, subtotal=0):
     """Calculate delivery fee based on location"""
@@ -448,7 +413,6 @@ def check_stock_availability(product_id, variant_id=None, quantity=1):
                 return False, "Product not found"
 
             if product.variants:
-                # For products with variants, we need to check specific variant
                 return False, "Please select a variant"
 
             if product.total_quantity < quantity:
@@ -465,12 +429,9 @@ def update_product_stock(product_id, variant_id=None, quantity_change=0):
             variant = ProductVariant.query.get(variant_id)
             if variant:
                 variant.stock = max(0, variant.stock - quantity_change)
-
-                # Update product total quantity
                 product = Product.query.get(product_id)
                 if product:
                     product.total_quantity = sum(v.stock for v in product.variants)
-
                 db.session.commit()
                 return True
         else:
@@ -487,14 +448,12 @@ def update_product_stock(product_id, variant_id=None, quantity_change=0):
 
 def generate_unique_slug(base_name, model_class, current_id=None):
     """Generate unique slug for product or category"""
-    # Clean the base name
     base_slug = re.sub(r'[^\w\s-]', '', base_name.lower())
     base_slug = re.sub(r'[-\s]+', '-', base_slug).strip('-')
     
     slug = base_slug
     counter = 1
     
-    # Check for existing slugs
     while True:
         query = model_class.query.filter(func.lower(model_class.slug) == slug.lower())
         if current_id:
@@ -511,17 +470,14 @@ def generate_unique_slug(base_name, model_class, current_id=None):
 def generate_unique_sku(base_sku=None):
     """Generate unique SKU"""
     if base_sku:
-        # Check if base_sku already exists
         if ProductVariant.query.filter_by(sku=base_sku).first() is None:
             return base_sku
     
-    # Generate new unique SKU
     while True:
         sku = f"HAIR-{random.randint(10000, 99999)}-{random.randint(100, 999)}"
         if ProductVariant.query.filter_by(sku=sku).first() is None:
             return sku
 
-# ========== FILE UPLOAD FUNCTION ==========
 def save_uploaded_file(file):
     """Save uploaded file to uploads folder"""
     if not file or file.filename == '':
@@ -539,14 +495,13 @@ def save_uploaded_file(file):
         unique_filename = f"{timestamp}_{random_str}_{filename}"
 
         upload_folder = app.config['UPLOAD_FOLDER']
-
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder, exist_ok=True)
 
         upload_path = os.path.join(upload_folder, unique_filename)
         file.save(upload_path)
 
-        print(f"✅ File saved successfully: {unique_filename}", file=sys.stderr)
+        print(f"✅ File saved: {unique_filename}", file=sys.stderr)
         return unique_filename
 
     except Exception as e:
@@ -592,7 +547,6 @@ def inject_global_vars():
         cart_count = sum(item.get('quantity', 1) for item in session['cart'])
         cart_total = calculate_cart_with_variants()
 
-    # FIXED: Return the actual CSRF token string, not a function
     csrf_token_value = ""
     try:
         csrf_token_value = generate_csrf()
@@ -607,12 +561,11 @@ def inject_global_vars():
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
         format_price=format_price,
-        safe_format_number=safe_format_number,
-        csrf_token=csrf_token_value,  # FIXED: This is now a string
-        min=min,  # ADDED for template functions
-        max=max,  # ADDED for template functions
-        random=random,  # ADDED for random in templates
-        check_stock=check_stock_availability  # Added for stock checking
+        csrf_token=csrf_token_value,
+        min=min,
+        max=max,
+        random=random,
+        check_stock=check_stock_availability
     )
 
 # ========== ERROR HANDLERS ==========
@@ -626,16 +579,9 @@ def internal_error(error):
     traceback.print_exc(file=sys.stderr)
     return render_template('500.html', config=BUSINESS_CONFIG), 500
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Handle all exceptions"""
-    print(f"❌ Unhandled Exception: {str(e)}", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    return render_template('500.html', config=BUSINESS_CONFIG), 500
-
 # ========== DATABASE INITIALIZATION ==========
 def init_db():
-    """Initialize database with tables and sample data"""
+    """Initialize database with tables and sample data - NO BROKEN IMAGES"""
     print("🔄 Initializing database...", file=sys.stderr)
 
     try:
@@ -680,23 +626,24 @@ def init_db():
 
                 print("✅ Sample categories added", file=sys.stderr)
 
-            # Create sample products with variants if none exist
+            # Create sample products with variants if none exist - NO IMAGES
             if Product.query.count() == 0:
                 categories = Category.query.all()
 
                 sample_products = [
-                    ('Brazilian Body Wave', 12999.99, 15999.99, 'hair-bundles',
-                     'Premium Brazilian body wave hair, 100% human hair'),
-                    ('Peruvian Straight', 14999.99, 17999.99, 'hair-bundles',
-                     'Silky straight Peruvian hair, natural black'),
+                    ('Brazilian Body Wave Hair Bundle', 12999.99, 15999.99, 'hair-bundles',
+                     'Premium Brazilian body wave hair, 100% human hair, silky and luxurious'),
+                    ('Peruvian Straight Hair Bundle', 14999.99, 17999.99, 'hair-bundles',
+                     'Silky straight Peruvian hair, natural black, minimal shedding'),
                     ('13x4 Lace Frontal Wig', 19999.99, 23999.99, 'lace-wigs',
-                     'HD lace frontal wig with natural hairline'),
+                     'HD lace frontal wig with natural hairline, pre-plucked'),
+                    ('360 Lace Frontal Wig', 24999.99, 28999.99, '360-wigs',
+                     '360 lace wig for full perimeter styling, ready to wear'),
                 ]
 
                 for i, (name, price, compare_price, category_slug, desc) in enumerate(sample_products):
                     category = Category.query.filter_by(slug=category_slug).first()
                     if category:
-                        # Generate unique slug
                         slug = generate_unique_slug(name, Product)
                         
                         product = Product(
@@ -707,53 +654,53 @@ def init_db():
                             compare_price=compare_price,
                             sku=f'HAIR-{i+1:03d}',
                             category_id=category.id,
-                            featured=(i < 3),
+                            featured=True,
+                            total_quantity=0
                         )
                         db.session.add(product)
-                        db.session.flush()  # Get product ID
+                        db.session.flush()
 
-                        # Add product images
-                        for img_num in range(1, 4):
-                            product_image = ProductImage(
-                                product_id=product.id,
-                                image_url=f'product-{i+1}-{img_num}.jpg',
-                                is_primary=(img_num == 1),
-                                sort_order=img_num
-                            )
-                            db.session.add(product_image)
+                        # NO IMAGES CREATED - Add images via admin panel
 
-                        # Add variants for hair bundles
+                        # Add variants
+                        total_stock = 0
                         if category_slug == 'hair-bundles':
-                            lengths = ['20"', '22"', '24"', '26"', '28"']
-                            textures = ['Body Wave', 'Straight', 'Curly', 'Wavy']
-                            for length in lengths:
-                                for texture in textures[:2]:  # Only add 2 textures per length
-                                    sku = generate_unique_sku()
+                            lengths = ['20"', '22"', '24"']
+                            textures = ['Body Wave', 'Straight']
+                            
+                            for length_idx, length in enumerate(lengths):
+                                for texture_idx, texture in enumerate(textures):
+                                    stock_value = random.randint(5, 20)
+                                    total_stock += stock_value
+                                    
                                     variant = ProductVariant(
                                         product_id=product.id,
                                         name=f"{name} {length}",
                                         length=length,
                                         texture=texture,
-                                        price=price + (len(lengths) * 1000),  # Price increases with length
-                                        stock=random.randint(5, 20),
-                                        sku=sku,
-                                        is_default=(length == '22"' and texture == 'Body Wave')
+                                        price=price + (length_idx * 1000),
+                                        stock=stock_value,
+                                        sku=generate_unique_sku(),
+                                        is_default=(length_idx == 0 and texture_idx == 0)
                                     )
                                     db.session.add(variant)
                         else:
-                            # Add single variant for non-bundle products
-                            sku = generate_unique_sku()
+                            stock_value = random.randint(5, 15)
+                            total_stock = stock_value
+                            
                             variant = ProductVariant(
                                 product_id=product.id,
                                 name=name,
                                 price=price,
-                                stock=random.randint(5, 20),
-                                sku=sku,
+                                stock=stock_value,
+                                sku=generate_unique_sku(),
                                 is_default=True
                             )
                             db.session.add(variant)
+                        
+                        product.total_quantity = total_stock
 
-                print("✅ Sample products with variants added", file=sys.stderr)
+                print("✅ Sample products with variants added (no images)", file=sys.stderr)
 
             # Create sample reviews if none exist
             if Review.query.count() == 0:
@@ -778,7 +725,7 @@ def init_db():
                 print("✅ Sample reviews added", file=sys.stderr)
 
             db.session.commit()
-            print("✅ Database initialization complete", file=sys.stderr)
+            print("✅ Database initialization complete - NO BROKEN IMAGES", file=sys.stderr)
             return True
     except Exception as e:
         db.session.rollback()
@@ -832,7 +779,7 @@ def index():
 
 @app.route('/shop')
 def shop():
-    """Shop page with advanced filtering"""
+    """Shop page with filtering"""
     try:
         category_id = request.args.get('category', type=int)
         search = request.args.get('search', '')
@@ -852,16 +799,15 @@ def shop():
         if search:
             query = query.filter(Product.name.ilike(f'%{search}%'))
 
-        # Filter by length (using variants) - FIXED BUG
+        # Filter by length
         if length:
-            # Get product IDs that have variants with this length
             variant_products_subquery = db.session.query(ProductVariant.product_id)\
                 .filter(ProductVariant.length == length, ProductVariant.stock > 0)\
                 .distinct()\
                 .subquery()
             query = query.filter(Product.id.in_(variant_products_subquery))
 
-        # Filter by texture (using variants) - FIXED BUG
+        # Filter by texture
         if texture:
             variant_products_subquery = db.session.query(ProductVariant.product_id)\
                 .filter(ProductVariant.texture == texture, ProductVariant.stock > 0)\
@@ -869,27 +815,24 @@ def shop():
                 .subquery()
             query = query.filter(Product.id.in_(variant_products_subquery))
 
-        # Filter by price range
+        # Filter by price
         if min_price is not None:
-            # Check against variant min prices
             query = query.filter(Product.base_price >= min_price)
         if max_price is not None:
             query = query.filter(Product.base_price <= max_price)
 
         products = query.order_by(Product.created_at.desc()).all()
 
-        # Get unique lengths and textures for filters
+        # Get unique lengths and textures
         all_lengths = db.session.query(ProductVariant.length)\
             .filter(ProductVariant.length.isnot(None), ProductVariant.stock > 0)\
             .distinct()\
-            .order_by(ProductVariant.length)\
             .all()
         lengths = [l[0] for l in all_lengths if l[0]]
 
         all_textures = db.session.query(ProductVariant.texture)\
             .filter(ProductVariant.texture.isnot(None), ProductVariant.stock > 0)\
             .distinct()\
-            .order_by(ProductVariant.texture)\
             .all()
         textures = [t[0] for t in all_textures if t[0]]
 
@@ -937,7 +880,7 @@ def shop():
 
 @app.route('/product/<int:id>')
 def product_detail(id):
-    """Product detail page with variants"""
+    """Product detail page"""
     try:
         product = Product.query\
             .options(joinedload(Product.category))\
@@ -947,19 +890,16 @@ def product_detail(id):
             flash('This product is currently unavailable.', 'warning')
             return redirect(url_for('shop'))
 
-        # Get product variants
         variants = ProductVariant.query\
             .filter_by(product_id=id)\
             .order_by(ProductVariant.length, ProductVariant.texture)\
             .all()
 
-        # Get product images
         images = ProductImage.query\
             .filter_by(product_id=id)\
             .order_by(ProductImage.sort_order, ProductImage.is_primary.desc())\
             .all()
 
-        # Group variants by length for display
         variants_by_length = {}
         for variant in variants:
             if variant.length not in variants_by_length:
@@ -990,7 +930,7 @@ def product_detail(id):
 
 @app.route('/product/<int:id>/variants')
 def get_product_variants(id):
-    """Get product variants for AJAX requests"""
+    """Get product variants for AJAX"""
     try:
         product = Product.query.get_or_404(id)
         variants = ProductVariant.query.filter_by(product_id=id).all()
@@ -1019,10 +959,9 @@ def get_product_variants(id):
 
 @app.route('/cart')
 def cart():
-    """Shopping cart page with variant info"""
+    """Shopping cart page"""
     cart_items = session.get('cart', [])
 
-    # Enhance cart items with variant info
     enhanced_cart = []
     for item in cart_items:
         product = Product.query.get(item['id'])
@@ -1057,7 +996,7 @@ def cart():
 
 @app.route('/add-to-cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
-    """Add product to cart with variant selection"""
+    """Add product to cart"""
     try:
         product = Product.query.get_or_404(product_id)
 
@@ -1068,27 +1007,19 @@ def add_to_cart(product_id):
         quantity = int(request.form.get('quantity', 1))
         variant_id = request.form.get('variant_id', type=int)
 
-        # Validate quantity
-        if quantity <= 0:
-            flash('Quantity must be at least 1.', 'warning')
-            return redirect(request.referrer or url_for('product_detail', id=product.id))
-        
-        if quantity > 100:
-            flash('Maximum quantity is 100 per order.', 'warning')
+        if quantity <= 0 or quantity > 100:
+            flash('Quantity must be between 1 and 100.', 'warning')
             return redirect(request.referrer or url_for('product_detail', id=product.id))
 
-        # Check if product has variants
         if product.variants and not variant_id:
             flash('Please select a variant (length/texture) before adding to cart.', 'warning')
             return redirect(request.referrer or url_for('product_detail', id=product.id))
 
-        # Check stock availability
         stock_available, message = check_stock_availability(product_id, variant_id, quantity)
         if not stock_available:
             flash(message, 'warning')
             return redirect(request.referrer or url_for('product_detail', id=product.id))
 
-        # Get price from variant if selected, otherwise use product base price
         if variant_id:
             variant = ProductVariant.query.get(variant_id)
             if not variant:
@@ -1105,22 +1036,17 @@ def add_to_cart(product_id):
 
         cart = session['cart']
 
-        # Check if product already in cart (with same variant)
         for item in cart:
             if item['id'] == product_id and item.get('variant_id') == variant_id:
                 new_quantity = item['quantity'] + quantity
-
-                # Re-check stock for new total
                 stock_available, message = check_stock_availability(product_id, variant_id, new_quantity)
                 if not stock_available:
                     flash(message, 'warning')
                     return redirect(request.referrer or url_for('cart'))
-
                 item['quantity'] = new_quantity
                 flash(f'Added {quantity} more to cart.', 'success')
                 return redirect(request.referrer or url_for('cart'))
 
-        # Add new item to cart
         cart_item = {
             'id': product_id,
             'name': product.name,
@@ -1148,7 +1074,7 @@ def add_to_cart(product_id):
 
 @app.route('/update-cart/<int:product_id>', methods=['POST'])
 def update_cart(product_id):
-    """Update cart item quantity with variant support"""
+    """Update cart item quantity"""
     try:
         if 'cart' not in session:
             return redirect(url_for('cart'))
@@ -1157,13 +1083,8 @@ def update_cart(product_id):
         quantity = int(request.form.get('quantity', 1))
         variant_id = request.form.get('variant_id', type=int)
         
-        # Validate quantity
-        if quantity <= 0:
-            flash('Quantity must be at least 1.', 'warning')
-            return redirect(url_for('cart'))
-        
-        if quantity > 100:
-            flash('Maximum quantity is 100 per order.', 'warning')
+        if quantity <= 0 or quantity > 100:
+            flash('Quantity must be between 1 and 100.', 'warning')
             return redirect(url_for('cart'))
 
         for item in cart:
@@ -1171,7 +1092,6 @@ def update_cart(product_id):
                 if quantity <= 0:
                     cart.remove(item)
                 else:
-                    # Check stock
                     stock_available, message = check_stock_availability(product_id, variant_id, quantity)
                     if not stock_available:
                         flash(message, 'warning')
@@ -1188,7 +1108,7 @@ def update_cart(product_id):
 
 @app.route('/remove-from-cart/<int:product_id>')
 def remove_from_cart(product_id):
-    """Remove item from cart with variant support"""
+    """Remove item from cart"""
     try:
         variant_id = request.args.get('variant_id', type=int)
 
@@ -1212,7 +1132,7 @@ def clear_cart():
     flash('Cart cleared successfully!', 'info')
     return redirect(url_for('cart'))
 
-# ========== CUSTOMER AUTHENTICATION ROUTES ==========
+# ========== CUSTOMER AUTHENTICATION ==========
 
 @app.route('/register', methods=['GET', 'POST'])
 def customer_register():
@@ -1226,7 +1146,6 @@ def customer_register():
             phone = request.form.get('phone')
             address = request.form.get('address', '')
 
-            # Basic validation
             if not email or '@' not in email:
                 flash('Please enter a valid email address.', 'danger')
                 return redirect(url_for('customer_register'))
@@ -1235,14 +1154,12 @@ def customer_register():
                 flash('Password must be at least 6 characters.', 'danger')
                 return redirect(url_for('customer_register'))
 
-            # Check if customer exists
             existing_customer = Customer.query.filter_by(email=email).first()
 
             if existing_customer:
                 flash('Email already registered. Please login.', 'danger')
                 return redirect(url_for('customer_login'))
 
-            # Create new customer
             customer = Customer(
                 email=email,
                 first_name=first_name,
@@ -1255,7 +1172,6 @@ def customer_register():
             db.session.add(customer)
             db.session.commit()
 
-            # Auto login after registration
             session['customer_id'] = customer.id
             session['customer_name'] = f"{customer.first_name} {customer.last_name}"
             session.pop('pending_checkout', None)
@@ -1322,53 +1238,11 @@ def account():
         flash('Error loading account information.', 'danger')
         return redirect(url_for('index'))
 
-# ========== ACCOUNT MANAGEMENT ROUTES ==========
-
-@app.route('/update-address', methods=['POST'])
-@customer_required
-def update_address():
-    """Update customer address"""
-    try:
-        customer = Customer.query.get(session['customer_id'])
-        customer.address = request.form.get('address', '')
-        customer.city = request.form.get('city', '')
-        customer.state = request.form.get('state', '')
-        customer.phone = request.form.get('phone', '')
-
-        db.session.commit()
-        flash('Address updated successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Update address error: {str(e)}", file=sys.stderr)
-        flash('Error updating address. Please try again.', 'danger')
-
-    return redirect(url_for('account'))
-
-@app.route('/update-profile', methods=['POST'])
-@customer_required
-def update_profile():
-    """Update customer profile"""
-    try:
-        customer = Customer.query.get(session['customer_id'])
-        customer.first_name = request.form.get('first_name', '')
-        customer.last_name = request.form.get('last_name', '')
-        customer.email = request.form.get('email', '')
-        customer.phone = request.form.get('phone', '')
-
-        db.session.commit()
-        flash('Profile updated successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Update profile error: {str(e)}", file=sys.stderr)
-        flash('Error updating profile. Please try again.', 'danger')
-
-    return redirect(url_for('account'))
-
 # ========== CHECKOUT ROUTES ==========
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    """Checkout page with delivery logic"""
+    """Checkout page"""
     if 'customer_id' not in session:
         session['pending_checkout'] = True
         flash('Please login to complete your order', 'warning')
@@ -1397,11 +1271,9 @@ def checkout():
                 flash('Please fill in all required fields.', 'danger')
                 return redirect(url_for('checkout'))
 
-            # Calculate delivery fee based on location
             delivery_fee = calculate_delivery_fee(city, state, area, subtotal)
             total = subtotal + delivery_fee
 
-            # Create order
             order = Order(
                 order_number=generate_order_number(),
                 customer_id=session['customer_id'],
@@ -1422,13 +1294,11 @@ def checkout():
             db.session.add(order)
             db.session.flush()
 
-            # Add order items and update stock
             for item in cart_items:
                 product = Product.query.get(item['id'])
                 variant_id = item.get('variant_id')
                 variant = ProductVariant.query.get(variant_id) if variant_id else None
 
-                # Create order item
                 order_item = OrderItem(
                     order_id=order.id,
                     product_id=product.id,
@@ -1441,7 +1311,6 @@ def checkout():
                 )
                 db.session.add(order_item)
 
-                # Update stock
                 update_product_stock(product.id, variant_id, item['quantity'])
 
             db.session.commit()
@@ -1458,7 +1327,6 @@ def checkout():
             flash('Error processing order. Please try again.', 'danger')
             return redirect(url_for('checkout'))
 
-    # GET request - calculate delivery fee based on customer's default address
     customer = Customer.query.get(session['customer_id']) if 'customer_id' in session else None
     delivery_fee = calculate_delivery_fee(
         customer.city if customer else None,
@@ -1498,89 +1366,6 @@ def calculate_delivery():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/about')
-def about():
-    """About page"""
-    return render_template('about.html')
-
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-    """Contact page"""
-    if request.method == 'POST':
-        try:
-            name = request.form.get('name')
-            email = request.form.get('email')
-            subject = request.form.get('subject')
-            message = request.form.get('message')
-
-            if not all([name, email, subject, message]):
-                flash('All fields are required.', 'danger')
-                return redirect(url_for('contact'))
-
-            # In production, you would send an email here
-            print(f"📧 Contact form submission: {name} <{email}> - {subject}", file=sys.stderr)
-
-            flash('Your message has been sent successfully! We will contact you soon.', 'success')
-            return redirect(url_for('contact'))
-
-        except Exception as e:
-            flash('Error sending message. Please try again.', 'danger')
-
-    return render_template('contact.html')
-
-# ========== REVIEW ROUTES ==========
-
-@app.route('/add-review/<int:product_id>', methods=['POST'])
-@customer_required
-def add_review(product_id):
-    """Add product review"""
-    try:
-        product = Product.query.get_or_404(product_id)
-
-        rating = int(request.form.get('rating', 5))
-        comment = request.form.get('comment', '')
-
-        if not comment:
-            flash('Please provide a review comment.', 'warning')
-            return redirect(url_for('product_detail', id=product_id))
-        
-        if rating < 1 or rating > 5:
-            flash('Rating must be between 1 and 5.', 'warning')
-            return redirect(url_for('product_detail', id=product_id))
-
-        customer = Customer.query.get(session['customer_id'])
-
-        # Check if customer has purchased this product
-        has_purchased = OrderItem.query\
-            .join(Order)\
-            .filter(
-                Order.customer_id == customer.id,
-                OrderItem.product_id == product_id
-            ).first() is not None
-
-        review = Review(
-            product_id=product_id,
-            customer_name=f"{customer.first_name} {customer.last_name}",
-            email=customer.email,
-            rating=rating,
-            comment=comment,
-            location=customer.city or 'Unknown',
-            verified_purchase=has_purchased,
-            approved=False
-        )
-
-        db.session.add(review)
-        db.session.commit()
-
-        flash('Thank you for your review! It will be visible after approval.', 'success')
-        return redirect(url_for('product_detail', id=product_id))
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Add review error: {str(e)}", file=sys.stderr)
-        flash('Error submitting review. Please try again.', 'danger')
-        return redirect(url_for('product_detail', id=product_id))
 
 # ========== ADMIN ROUTES ==========
 
@@ -1639,7 +1424,6 @@ def admin_dashboard():
         recent_orders = Order.query.order_by(Order.created_at.desc()).limit(8).all()
         recent_customers = Customer.query.order_by(Customer.created_at.desc()).limit(5).all()
 
-        # Get low stock products (across all variants)
         low_stock_products = []
         all_products = Product.query.all()
         for product in all_products:
@@ -1648,44 +1432,15 @@ def admin_dashboard():
             if len(low_stock_products) >= 5:
                 break
 
-        total_reviews = Review.query.count()
-        top_products = Product.query.filter_by(featured=True).limit(5).all()
-
-        # Today's stats
-        today = datetime.utcnow().date()
-        today_orders = Order.query.filter(db.func.date(Order.created_at) == today).count()
-        today_revenue_result = db.session.query(db.func.sum(Order.final_amount)).filter(db.func.date(Order.created_at) == today).scalar()
-        today_revenue = float(today_revenue_result) if today_revenue_result is not None else 0.0
-
-        # Get variant-based stats
-        total_variants = ProductVariant.query.count()
-        low_stock_variants = ProductVariant.query.filter(ProductVariant.stock > 0, ProductVariant.stock <= 5).count()
-
         return render_template('admin/admin_dashboard.html',
                                total_orders=total_orders,
                                total_products=total_products,
                                total_customers=total_customers,
-                               total_reviews=total_reviews,
-                               total_variants=total_variants,
                                pending_orders=pending_orders,
                                revenue=revenue,
                                recent_orders=recent_orders,
                                recent_customers=recent_customers,
-                               low_stock_products=low_stock_products,
-                               low_stock_variants=low_stock_variants,
-                               top_products=top_products,
-                               today_revenue=today_revenue,
-                               today_orders=today_orders,
-                               today_customers=0,
-                               new_customers_week=0,
-                               conversion_rate=0,
-                               inventory_health=100,
-                               avg_rating=4.5,
-                               server_load=30,
-                               disk_usage="1.2GB / 10GB",
-                               disk_percent=12,
-                               uptime="2 days",
-                               environment="Production")
+                               low_stock_products=low_stock_products)
     except Exception as e:
         print(f"❌ Admin dashboard error: {str(e)}", file=sys.stderr)
         flash('Error loading dashboard.', 'danger')
@@ -1693,20 +1448,16 @@ def admin_dashboard():
                                total_orders=0,
                                total_products=0,
                                total_customers=0,
-                               total_reviews=0,
-                               total_variants=0,
                                pending_orders=0,
                                revenue=0,
                                recent_orders=[],
                                recent_customers=[],
-                               low_stock_products=[],
-                               low_stock_variants=0,
-                               top_products=[])
+                               low_stock_products=[])
 
 @app.route('/admin/products')
 @admin_required
 def admin_products():
-    """Admin products list with variant info"""
+    """Admin products list"""
     try:
         category_id = request.args.get('category', type=int)
         search = request.args.get('search', '')
@@ -1746,7 +1497,7 @@ def admin_products():
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product with variants and multiple images"""
+    """Add product with variants and images"""
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -1756,21 +1507,14 @@ def admin_add_product():
             category_id = int(request.form.get('category_id'))
             featured = 'featured' in request.form
             active = 'active' in request.form
-            is_bundle = 'is_bundle' in request.form
-            bundle_discount = float(request.form.get('bundle_discount', 0))
 
-            # Generate unique slug
             slug = generate_unique_slug(name, Product)
-            
-            # Generate base SKU
             sku = f"HAIR-{random.randint(1000, 9999)}"
 
-            # Validate price
             if base_price < 0:
                 flash('Price cannot be negative.', 'danger')
                 return redirect(url_for('admin_add_product'))
 
-            # Create product
             product = Product(
                 name=name,
                 slug=slug,
@@ -1780,23 +1524,20 @@ def admin_add_product():
                 category_id=category_id,
                 featured=featured,
                 active=active,
-                is_bundle=is_bundle,
-                bundle_discount=bundle_discount,
                 sku=sku
             )
 
             db.session.add(product)
-            db.session.flush()  # Get product ID
+            db.session.flush()
 
             # Handle image uploads
-            image_uploaded = False
             if 'images' in request.files:
                 files = request.files.getlist('images')
                 for i, file in enumerate(files):
                     if file and file.filename != '':
                         uploaded_filename = save_uploaded_file(file)
                         if uploaded_filename:
-                            is_primary = (i == 0) and not image_uploaded
+                            is_primary = (i == 0)
                             product_image = ProductImage(
                                 product_id=product.id,
                                 image_url=uploaded_filename,
@@ -1804,26 +1545,20 @@ def admin_add_product():
                                 sort_order=i
                             )
                             db.session.add(product_image)
-                            image_uploaded = True
 
-            # Handle variants - FIXED BUG: Calculate total stock from form data
+            # Handle variants
             variant_names = request.form.getlist('variant_name[]')
             variant_lengths = request.form.getlist('variant_length[]')
             variant_textures = request.form.getlist('variant_texture[]')
             variant_colors = request.form.getlist('variant_color[]')
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
-            variant_skus = request.form.getlist('variant_sku[]')
 
             total_stock = 0
             for i in range(len(variant_names)):
                 if variant_names[i]:
-                    # Calculate stock from form data BEFORE creating variant
                     stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
                     total_stock += stock_value
-                    
-                    # Generate unique SKU for variant
-                    variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
                     
                     variant = ProductVariant(
                         product_id=product.id,
@@ -1833,17 +1568,16 @@ def admin_add_product():
                         color=variant_colors[i] if i < len(variant_colors) else None,
                         price=float(variant_prices[i]) if variant_prices[i] else base_price,
                         stock=stock_value,
-                        sku=variant_sku,
+                        sku=generate_unique_sku(),
                         is_default=(i == 0)
                     )
                     db.session.add(variant)
 
-            # Update total quantity
             product.total_quantity = total_stock
 
             db.session.commit()
 
-            flash(f'Product "{name}" added successfully with {len(variant_names)} variants!', 'success')
+            flash(f'Product "{name}" added successfully!', 'success')
             return redirect(url_for('admin_products'))
 
         except Exception as e:
@@ -1858,7 +1592,7 @@ def admin_add_product():
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(id):
-    """Edit product with variants"""
+    """Edit product"""
     product = Product.query.options(
         joinedload(Product.category),
         joinedload(Product.variants),
@@ -1875,10 +1609,7 @@ def admin_edit_product(id):
             product.category_id = int(request.form.get('category_id'))
             product.featured = 'featured' in request.form
             product.active = 'active' in request.form
-            product.is_bundle = 'is_bundle' in request.form
-            product.bundle_discount = float(request.form.get('bundle_discount', 0))
 
-            # Generate unique slug
             product.slug = generate_unique_slug(product.name, Product, product.id)
 
             # Handle image uploads
@@ -1905,9 +1636,7 @@ def admin_edit_product(id):
             variant_colors = request.form.getlist('variant_color[]')
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
-            variant_skus = request.form.getlist('variant_sku[]')
 
-            # Update existing variants
             existing_variant_ids = [int(vid) for vid in variant_ids if vid]
             for variant in product.variants:
                 if variant.id not in existing_variant_ids:
@@ -1917,7 +1646,6 @@ def admin_edit_product(id):
             for i in range(len(variant_names)):
                 if variant_names[i]:
                     if i < len(variant_ids) and variant_ids[i]:
-                        # Update existing variant
                         variant = ProductVariant.query.get(int(variant_ids[i]))
                         if variant:
                             variant.name = variant_names[i]
@@ -1926,21 +1654,14 @@ def admin_edit_product(id):
                             variant.color = variant_colors[i] if i < len(variant_colors) else None
                             variant.price = float(variant_prices[i]) if variant_prices[i] else product.base_price
                             
-                            # Update stock from form data
                             stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
                             variant.stock = stock_value
                             total_stock += stock_value
                             
-                            # Update SKU
-                            if i < len(variant_skus) and variant_skus[i]:
-                                variant.sku = variant_skus[i]
                             variant.is_default = (i == 0)
                     else:
-                        # Add new variant
                         stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
                         total_stock += stock_value
-                        
-                        variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
                         
                         variant = ProductVariant(
                             product_id=product.id,
@@ -1950,12 +1671,11 @@ def admin_edit_product(id):
                             color=variant_colors[i] if i < len(variant_colors) else None,
                             price=float(variant_prices[i]) if variant_prices[i] else product.base_price,
                             stock=stock_value,
-                            sku=variant_sku,
+                            sku=generate_unique_sku(),
                             is_default=(i == 0)
                         )
                         db.session.add(variant)
 
-            # Update total quantity
             product.total_quantity = total_stock
 
             db.session.commit()
@@ -1979,7 +1699,6 @@ def admin_delete_product(id):
         product = Product.query.get_or_404(id)
         product_name = product.name
 
-        # Check if product has orders
         has_orders = OrderItem.query.filter_by(product_id=id).first() is not None
         if has_orders:
             flash(f'Cannot delete product "{product_name}" because it has existing orders. You can deactivate it instead.', 'danger')
@@ -1996,239 +1715,6 @@ def admin_delete_product(id):
         print(f"❌ Delete product error: {str(e)}", file=sys.stderr)
         flash('Error deleting product. Please try again.', 'danger')
         return redirect(url_for('admin_products'))
-
-# ========== VARIANT MANAGEMENT ROUTES ==========
-
-@app.route('/admin/products/<int:product_id>/variants')
-@admin_required
-def admin_product_variants(product_id):
-    """Manage product variants"""
-    try:
-        product = Product.query.get_or_404(product_id)
-        variants = ProductVariant.query.filter_by(product_id=product_id).all()
-
-        return render_template('admin/variants.html',
-                               product=product,
-                               variants=variants)
-    except Exception as e:
-        flash('Error loading variants.', 'danger')
-        return redirect(url_for('admin_products'))
-
-@app.route('/admin/variants/add/<int:product_id>', methods=['POST'])
-@admin_required
-def admin_add_variant(product_id):
-    """Add variant to product"""
-    try:
-        product = Product.query.get_or_404(product_id)
-
-        name = request.form.get('name')
-        length = request.form.get('length')
-        texture = request.form.get('texture')
-        color = request.form.get('color')
-        price = float(request.form.get('price', product.base_price))
-        stock = int(request.form.get('stock', 0))
-
-        # Generate unique SKU
-        sku = generate_unique_sku()
-
-        variant = ProductVariant(
-            product_id=product_id,
-            name=name,
-            length=length,
-            texture=texture,
-            color=color,
-            price=price,
-            stock=stock,
-            sku=sku
-        )
-
-        db.session.add(variant)
-
-        # Update product total quantity
-        product.total_quantity = sum(v.stock for v in product.variants) + stock
-
-        db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Variant added successfully!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/admin/variants/update/<int:variant_id>', methods=['POST'])
-@admin_required
-def admin_update_variant(variant_id):
-    """Update variant"""
-    try:
-        variant = ProductVariant.query.get_or_404(variant_id)
-
-        variant.name = request.form.get('name')
-        variant.length = request.form.get('length')
-        variant.texture = request.form.get('texture')
-        variant.color = request.form.get('color')
-        variant.price = float(request.form.get('price', variant.price))
-        variant.stock = int(request.form.get('stock', variant.stock))
-
-        db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Variant updated successfully!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/admin/variants/delete/<int:variant_id>', methods=['POST'])
-@admin_required
-def admin_delete_variant(variant_id):
-    """Delete variant"""
-    try:
-        variant = ProductVariant.query.get_or_404(variant_id)
-        product_id = variant.product_id
-
-        db.session.delete(variant)
-
-        # Update product total quantity
-        product = Product.query.get(product_id)
-        if product:
-            product.total_quantity = sum(v.stock for v in product.variants)
-
-        db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Variant deleted successfully!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ========== NEW PRODUCT MANAGEMENT ROUTES ==========
-
-@app.route('/admin/products/bulk-action', methods=['POST'])
-@admin_required
-def admin_bulk_action():
-    """Handle bulk actions for products"""
-    try:
-        data = request.json
-        action = data.get('action')
-        product_ids = data.get('product_ids', [])
-
-        if action == 'activate':
-            Product.query.filter(Product.id.in_(product_ids)).update({Product.active: True})
-        elif action == 'deactivate':
-            Product.query.filter(Product.id.in_(product_ids)).update({Product.active: False})
-        elif action == 'feature':
-            Product.query.filter(Product.id.in_(product_ids)).update({Product.featured: True})
-        elif action == 'unfeature':
-            Product.query.filter(Product.id.in_(product_ids)).update({Product.featured: False})
-        elif action == 'delete':
-            Product.query.filter(Product.id.in_(product_ids)).delete()
-        else:
-            return jsonify({'error': 'Invalid action'}), 400
-
-        db.session.commit()
-        return jsonify({'success': True, 'count': len(product_ids)})
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Bulk action error: {str(e)}", file=sys.stderr)
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/products/<int:id>/toggle-status', methods=['POST'])
-@admin_required
-def admin_toggle_product_status(id):
-    """Toggle product active status"""
-    try:
-        product = Product.query.get_or_404(id)
-        product.active = request.json.get('active', not product.active)
-        db.session.commit()
-        return jsonify({'success': True, 'active': product.active})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/products/<int:id>/quick-edit')
-@admin_required
-def admin_quick_edit_product(id):
-    """Get product data for quick edit"""
-    try:
-        product = Product.query.get_or_404(id)
-        return jsonify({
-            'id': product.id,
-            'name': product.name,
-            'base_price': product.base_price,
-            'compare_price': product.compare_price,
-            'total_quantity': product.total_quantity,
-            'category_id': product.category_id,
-            'featured': product.featured
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 404
-
-@app.route('/admin/products/<int:id>/quick-update', methods=['POST'])
-@admin_required
-def admin_quick_update_product(id):
-    """Quick update product details"""
-    try:
-        product = Product.query.get_or_404(id)
-        product.name = request.form.get('name')
-        product.base_price = float(request.form.get('base_price', 0))
-        compare_price = request.form.get('compare_price')
-        product.compare_price = float(compare_price) if compare_price else None
-        product.total_quantity = int(request.form.get('total_quantity', 0))
-        product.category_id = int(request.form.get('category_id'))
-        product.featured = 'featured' in request.form
-
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Product updated successfully!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/products/<int:id>/upload-image', methods=['POST'])
-@admin_required
-def admin_upload_product_image(id):
-    """Upload product image - FIXED: Now shows image immediately after upload"""
-    try:
-        product = Product.query.get_or_404(id)
-
-        if 'image' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-
-        if not allowed_file(file.filename):
-            return jsonify({'error': 'File type not allowed. Allowed: png, jpg, jpeg, gif, webp'}), 400
-
-        uploaded_filename = save_uploaded_file(file)
-        if uploaded_filename:
-            # Check if product has any images
-            has_images = ProductImage.query.filter_by(product_id=product.id).first() is not None
-            
-            # Add as product image
-            product_image = ProductImage(
-                product_id=product.id,
-                image_url=uploaded_filename,
-                is_primary=not has_images,  # Set as primary if first image
-                sort_order=ProductImage.query.filter_by(product_id=product.id).count()
-            )
-            db.session.add(product_image)
-            db.session.commit()
-            
-            # Return full URL for immediate display
-            image_url = url_for('uploaded_file', filename=uploaded_filename, _external=False)
-            return jsonify({
-                'success': True, 
-                'image_url': image_url,
-                'filename': uploaded_filename,
-                'is_primary': not has_images
-            })
-        else:
-            return jsonify({'error': 'Failed to save file'}), 500
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Upload image error: {str(e)}", file=sys.stderr)
-        return jsonify({'error': str(e)}), 500
-
-# ========== ORDER MANAGEMENT ==========
 
 @app.route('/admin/orders')
 @admin_required
@@ -2273,221 +1759,6 @@ def admin_order_detail(id):
         flash('Error loading order details.', 'danger')
         return redirect(url_for('admin_orders'))
 
-@app.route('/admin/orders/update-status/<int:id>', methods=['POST'])
-@admin_required
-def admin_update_order_status(id):
-    """Update order status"""
-    try:
-        order = Order.query.get_or_404(id)
-        new_status = request.form.get('status')
-
-        if new_status:
-            order.status = new_status
-            order.updated_at = datetime.utcnow()
-
-            # If order is cancelled, restore stock
-            if new_status == 'cancelled':
-                for item in order.items:
-                    if item.variant_id:
-                        variant = ProductVariant.query.get(item.variant_id)
-                        if variant:
-                            variant.stock += item.quantity
-                    else:
-                        product = Product.query.get(item.product_id)
-                        if product:
-                            product.total_quantity += item.quantity
-
-            db.session.commit()
-
-            flash(f'Order #{order.order_number} status updated to {new_status}', 'success')
-            return redirect(url_for('admin_order_detail', id=id))
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Update order status error: {str(e)}", file=sys.stderr)
-        flash('Error updating order status.', 'danger')
-        return redirect(url_for('admin_order_detail', id=id))
-
-# ========== CUSTOMER MANAGEMENT ==========
-
-@app.route('/admin/customers')
-@admin_required
-def admin_customers():
-    """Admin customers list"""
-    try:
-        customers = Customer.query.order_by(Customer.created_at.desc()).all()
-        return render_template('admin/customers.html', customers=customers)
-    except Exception as e:
-        print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
-        flash('Error loading customers.', 'danger')
-        return render_template('admin/customers.html', customers=[])
-
-# ========== REVIEW MANAGEMENT ==========
-
-@app.route('/admin/reviews')
-@admin_required
-def admin_reviews():
-    """Admin reviews"""
-    try:
-        reviews = Review.query.order_by(Review.created_at.desc()).all()
-
-        total_reviews = len(reviews)
-        approved_reviews = len([r for r in reviews if r.approved])
-        pending_reviews = len([r for r in reviews if not r.approved])
-        avg_rating = sum([r.rating for r in reviews]) / total_reviews if total_reviews > 0 else 0
-
-        review_stats = {
-            'total': total_reviews,
-            'approved': approved_reviews,
-            'pending': pending_reviews,
-            'avg_rating': round(avg_rating, 1)
-        }
-
-        return render_template('admin/reviews.html',
-                               reviews=reviews,
-                               review_stats=review_stats)
-    except Exception as e:
-        print(f"❌ Admin reviews error: {str(e)}", file=sys.stderr)
-        flash('Error loading reviews.', 'danger')
-        return render_template('admin/reviews.html',
-                               reviews=[],
-                               review_stats={'total': 0, 'approved': 0, 'pending': 0, 'avg_rating': 0})
-
-@app.route('/admin/reviews/approve/<int:id>', methods=['POST'])
-@admin_required
-def admin_approve_review(id):
-    """Approve review"""
-    try:
-        review = Review.query.get_or_404(id)
-        review.approved = True
-        db.session.commit()
-
-        flash('Review approved successfully!', 'success')
-        return redirect(url_for('admin_reviews'))
-
-    except Exception as e:
-        db.session.rollback()
-        flash('Error approving review.', 'danger')
-        return redirect(url_for('admin_reviews'))
-
-@app.route('/admin/reviews/delete/<int:id>', methods=['POST'])
-@admin_required
-def admin_delete_review(id):
-    """Delete review"""
-    try:
-        review = Review.query.get_or_404(id)
-        db.session.delete(review)
-        db.session.commit()
-
-        flash('Review deleted successfully!', 'success')
-        return redirect(url_for('admin_reviews'))
-
-    except Exception as e:
-        db.session.rollback()
-        flash('Error deleting review.', 'danger')
-        return redirect(url_for('admin_reviews'))
-
-# ========== CATEGORY MANAGEMENT ==========
-
-@app.route('/admin/categories')
-@admin_required
-def admin_categories():
-    """Admin categories"""
-    try:
-        categories = Category.query.order_by(Category.name).all()
-        return render_template('admin/categories.html', categories=categories)
-    except Exception as e:
-        print(f"❌ Admin categories error: {str(e)}", file=sys.stderr)
-        flash('Error loading categories.', 'danger')
-        return render_template('admin/categories.html', categories=[])
-
-@app.route('/admin/categories/add', methods=['GET', 'POST'])
-@admin_required
-def admin_add_category():
-    """Add category"""
-    if request.method == 'POST':
-        try:
-            name = request.form.get('name')
-            description = request.form.get('description')
-            slug = request.form.get('slug', '').lower().replace(' ', '-')
-
-            if not slug:
-                slug = name.lower().replace(' ', '-')
-            
-            # Generate unique slug
-            slug = generate_unique_slug(slug if slug else name, Category)
-
-            category = Category(
-                name=name,
-                slug=slug,
-                description=description
-            )
-
-            db.session.add(category)
-            db.session.commit()
-
-            flash(f'Category "{name}" added successfully!', 'success')
-            return redirect(url_for('admin_categories'))
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"❌ Add category error: {str(e)}", file=sys.stderr)
-            flash('Error adding category. Please try again.', 'danger')
-
-    return render_template('admin/add_category.html')
-
-@app.route('/admin/categories/edit/<int:id>', methods=['GET', 'POST'])
-@admin_required
-def admin_edit_category(id):
-    """Edit category"""
-    category = Category.query.get_or_404(id)
-
-    if request.method == 'POST':
-        try:
-            category.name = request.form.get('name')
-            category.description = request.form.get('description')
-            slug = request.form.get('slug', '').lower().replace(' ', '-')
-
-            if slug:
-                category.slug = generate_unique_slug(slug, Category, category.id)
-
-            db.session.commit()
-
-            flash(f'Category "{category.name}" updated successfully!', 'success')
-            return redirect(url_for('admin_categories'))
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"❌ Edit category error: {str(e)}", file=sys.stderr)
-            flash('Error updating category. Please try again.', 'danger')
-
-    return render_template('admin/edit_category.html', category=category)
-
-@app.route('/admin/categories/delete/<int:id>', methods=['POST'])
-@admin_required
-def admin_delete_category(id):
-    """Delete category"""
-    try:
-        category = Category.query.get_or_404(id)
-        category_name = category.name
-
-        # Check if category has products
-        if category.products:
-            flash(f'Cannot delete category "{category_name}" because it has products. Please reassign or delete products first.', 'danger')
-            return redirect(url_for('admin_categories'))
-
-        db.session.delete(category)
-        db.session.commit()
-
-        flash(f'Category "{category_name}" deleted successfully!', 'success')
-        return redirect(url_for('admin_categories'))
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Delete category error: {str(e)}", file=sys.stderr)
-        flash('Error deleting category. Please try again.', 'danger')
-        return redirect(url_for('admin_categories'))
-
 # ========== STATIC FILE SERVING ==========
 
 @app.route('/static/uploads/<filename>')
@@ -2498,7 +1769,6 @@ def uploaded_file(filename):
         return send_from_directory(upload_folder, filename)
     except Exception as e:
         print(f"❌ Error serving file {filename}: {str(e)}", file=sys.stderr)
-        # Try static uploads as fallback
         return send_from_directory('static/uploads', filename, as_attachment=False)
 
 # ========== HEALTH CHECK ==========
@@ -2513,7 +1783,6 @@ def health_check():
             'timestamp': datetime.utcnow().isoformat(),
             'service': 'Nora Hair Line E-commerce',
             'version': '2.0.0',
-            'features': ['variants', 'multiple-images', 'delivery-logic', 'stock-management']
         }), 200
     except Exception as e:
         return jsonify({
@@ -2521,39 +1790,6 @@ def health_check():
             'error': str(e),
             'timestamp': datetime.utcnow().isoformat()
         }), 500
-
-# ========== TEST ROUTE ==========
-@app.route('/test')
-def test():
-    """Test route for debugging"""
-    try:
-        # Test database connection
-        db.session.execute(text('SELECT 1'))
-        db_status = 'connected'
-
-        # Test variant functionality
-        variant_count = ProductVariant.query.count()
-
-    except Exception as e:
-        db_status = f'error: {str(e)}'
-        variant_count = 0
-
-    return jsonify({
-        'status': 'ok',
-        'database': db_status,
-        'upload_folder_exists': os.path.exists(app.config['UPLOAD_FOLDER']),
-        'upload_folder': app.config['UPLOAD_FOLDER'],
-        'session_keys': list(session.keys()),
-        'has_admin': User.query.count() > 0,
-        'has_products': Product.query.count() > 0,
-        'has_variants': variant_count > 0,
-        'variant_count': variant_count
-    })
-
-# ========== APPLICATION FACTORY ==========
-def create_app():
-    """Application factory for Gunicorn"""
-    return app
 
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
@@ -2575,20 +1811,12 @@ if __name__ == '__main__':
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"🚀 NORA HAIR LINE E-COMMERCE - PRODUCTION READY", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"✅ CSRF Protection: ENABLED", file=sys.stderr)
     print(f"✅ Database Connection: READY", file=sys.stderr)
-    print(f"✅ File Upload: ENABLED", file=sys.stderr)
+    print(f"✅ File Upload: READY", file=sys.stderr)
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
-    print(f"✅ Health Check: /health", file=sys.stderr)
-    print(f"✅ Debug Mode: {'ON' if debug else 'OFF'}", file=sys.stderr)
     print(f"✅ Variant System: ENABLED", file=sys.stderr)
-    print(f"✅ Multiple Images: ENABLED", file=sys.stderr)
-    print(f"✅ Delivery Logic: ENABLED", file=sys.stderr)
-    print(f"✅ Stock Management: ENABLED", file=sys.stderr)
-    print(f"✅ ALL BUGS FIXED: YES", file=sys.stderr)
+    print(f"✅ NO BROKEN IMAGES: YES", file=sys.stderr)
     print(f"🌐 Server: http://localhost:{port}", file=sys.stderr)
-    print(f"📱 Mobile Friendly: YES", file=sys.stderr)
-    print(f"🔒 Secure: HTTPS Ready", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
 
     app.run(host='0.0.0.0', port=port, debug=debug)
