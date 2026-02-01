@@ -764,7 +764,7 @@
             <div class="header-content">
                 <div class="logo-container">
                     <a href="{{ url_for('index') }}" class="logo">
-                        <i class="fas fa-crown text-gold"></i>
+                        <i class="fas fa-crown"></i>
                         {{ config.brand_name }}
                     </a>
                     <span class="tagline">{{ config.tagline }}</span>
@@ -778,17 +778,17 @@
                     
                     {% if session.customer_id %}
                     <a href="{{ url_for('account') }}">
-                        <i class="fas fa-user me-1"></i> Account
+                        <i class="fas fa-user"></i> Account
                     </a>
                     <a href="{{ url_for('customer_logout') }}">
-                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                     {% else %}
                     <a href="{{ url_for('customer_login') }}">
-                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                        <i class="fas fa-sign-in-alt"></i> Login
                     </a>
                     <a href="{{ url_for('customer_register') }}">
-                        <i class="fas fa-user-plus me-1"></i> Register
+                        <i class="fas fa-user-plus"></i> Register
                     </a>
                     {% endif %}
                     
