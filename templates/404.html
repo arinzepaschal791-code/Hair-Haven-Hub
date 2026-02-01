@@ -277,12 +277,17 @@
 <body>
     <div class="error-container">
         <!-- Brand Logo -->
-        {% set logo_url = url_for('static', filename='images/' + config.site_logo) %}
-        {% set fallback_logo = url_for('static', filename='images/logo.png') %}
-        <img src="{{ logo_url }}" 
-             alt="{{ config.brand_name }} Logo" 
-             class="brand-logo"
-             onerror="this.onerror=null; this.src='{{ fallback_logo }}';">
+        {% if config.site_logo %}
+            <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                 alt="{{ config.brand_name }} Logo" 
+                 class="brand-logo"
+                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/logo.png') }}'; this.style.display='none'; this.nextElementSibling.style.display='block'">
+        {% else %}
+            <div class="text-center mb-4">
+                <i class="fas fa-store fa-3x text-primary"></i>
+                <h3 class="mt-2">{{ config.brand_name }}</h3>
+            </div>
+        {% endif %}
         
         <!-- Error Icon -->
         <div class="error-icon">
@@ -461,6 +466,24 @@
                     }
                 });
             });
+            
+            // Fix broken images
+            document.querySelectorAll('img').forEach(img => {
+                img.addEventListener('error', function() {
+                    console.log('Image failed to load:', this.src);
+                    this.style.display = 'none';
+                    const parent = this.parentElement;
+                    if (parent && !parent.querySelector('.image-fallback')) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'image-fallback text-center';
+                        fallback.innerHTML = `
+                            <i class="fas fa-store fa-3x text-muted"></i>
+                            <p class="mt-2 small text-muted">{{ config.brand_name }}</p>
+                        `;
+                        parent.appendChild(fallback);
+                    }
+                });
+            });
         });
         
         // Add CSS for invalid state
@@ -487,38 +510,153 @@
             .fa-spinner {
                 animation: spin 1s linear infinite;
             }
+            
+            /* Image fallback */
+            .image-fallback {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 60px;
+            }
+            
+            /* Accessibility improvements */
+            .btn:focus {
+                outline: 2px solid var(--primary-color);
+                outline-offset: 2px;
+            }
+            
+            /* Print styles */
+            @media print {
+                .error-container {
+                    box-shadow: none;
+                    border: 1px solid #ddd;
+                }
+                
+                .btn {
+                    border: 1px solid #000;
+                    background: none !important;
+                    color: #000 !important;
+                }
+                
+                a::after {
+                    content: " (" attr(href) ")";
+                    font-size: 0.8em;
+                    color: #666;
+                }
+            }
         `;
         document.head.appendChild(style);
         
-        // Add error handling for broken images
-        document.addEventListener('error', function(e) {
-            if (e.target.tagName.toLowerCase() === 'img') {
-                const fallbackSrc = e.target.getAttribute('data-fallback');
-                if (fallbackSrc && e.target.src !== fallbackSrc) {
-                    e.target.src = fallbackSrc;
-                } else {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = `
-                        <div class="text-center">
-                            <i class="fas fa-store fa-3x text-muted"></i>
-                            <p class="mt-2 small text-muted">{{ config.brand_name }}</p>
-                        </div>
-                    `;
-                }
-            }
-        }, true);
-        
-        // Initialize when DOM is loaded
+        // Initialize page
         console.log('404 Error Page - {{ config.brand_name }}');
         
-        // Add page view tracking
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'page_view', {
-                'page_title': '404 - Page Not Found',
-                'page_location': window.location.href,
-                'send_to': 'YOUR_GA_ID'
+        // Track page view for analytics (optional)
+        try {
+            // You can add your analytics code here
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'page_view', {
+                    'page_title': '404 - Page Not Found',
+                    'page_location': window.location.href
+                });
+            }
+        } catch (e) {
+            console.log('Analytics not available:', e);
+        }
+        
+        // Service worker registration (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').catch(error => {
+                    console.log('ServiceWorker registration failed:', error);
+                });
             });
         }
+        
+        // Offline detection
+        window.addEventListener('online', () => {
+            console.log('You are now online');
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('You are now offline');
+            // Show offline message
+            const offlineMsg = document.createElement('div');
+            offlineMsg.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-0 end-0 m-3';
+            offlineMsg.style.zIndex = '9999';
+            offlineMsg.innerHTML = `
+                <i class="fas fa-wifi-slash me-2"></i>
+                You are currently offline. Some features may be limited.
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(offlineMsg);
+        });
+        
+        // Check initial connection status
+        if (!navigator.onLine) {
+            window.dispatchEvent(new Event('offline'));
+        }
+        
+        // Add copy URL functionality
+        function copyCurrentURL() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                // Show success message
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-0 end-0 m-3';
+                msg.style.zIndex = '9999';
+                msg.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    URL copied to clipboard
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+                document.body.appendChild(msg);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    if (msg.parentNode) msg.remove();
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+            });
+        }
+        
+        // Add copy URL button functionality (optional)
+        const copyURLBtn = document.createElement('button');
+        copyURLBtn.className = 'btn btn-sm btn-outline-secondary position-fixed bottom-3 right-3';
+        copyURLBtn.innerHTML = '<i class="fas fa-link me-1"></i> Copy URL';
+        copyURLBtn.onclick = copyCurrentURL;
+        copyURLBtn.style.zIndex = '999';
+        document.body.appendChild(copyURLBtn);
+        
+        // Keyboard shortcuts for accessibility
+        document.addEventListener('keydown', function(e) {
+            // Alt + C to copy URL
+            if (e.altKey && e.key === 'c') {
+                e.preventDefault();
+                copyCurrentURL();
+            }
+            
+            // Alt + H to go home
+            if (e.altKey && e.key === 'h') {
+                e.preventDefault();
+                window.location.href = "{{ url_for('index') }}";
+            }
+            
+            // Alt + S to focus search
+            if (e.altKey && e.key === 's') {
+                e.preventDefault();
+                const searchInput = document.querySelector('input[name="search"]');
+                if (searchInput) searchInput.focus();
+            }
+        });
+        
+        // Add help text for keyboard shortcuts
+        const helpText = document.createElement('div');
+        helpText.className = 'position-fixed bottom-3 left-3 small text-muted d-none d-md-block';
+        helpText.style.zIndex = '999';
+        helpText.innerHTML = 'Press <kbd>Alt+S</kbd> to search, <kbd>Alt+H</kbd> for home';
+        document.body.appendChild(helpText);
     </script>
 </body>
 </html>
