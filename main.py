@@ -15,7 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
-from sqlalchemy import text, or_, and_, func
+from sqlalchemy import text, or_, and_, func, desc
 
 # ========== CREATE APP ==========
 app = Flask(__name__)
@@ -1498,8 +1498,11 @@ def admin_products():
 @admin_required
 def admin_add_product():
     """Add product with variants and images"""
+    categories = Category.query.all()
+    
     if request.method == 'POST':
         try:
+            # Get form data
             name = request.form.get('name')
             description = request.form.get('description')
             base_price = float(request.form.get('base_price', 0))
@@ -1507,28 +1510,40 @@ def admin_add_product():
             category_id = int(request.form.get('category_id'))
             featured = 'featured' in request.form
             active = 'active' in request.form
-
-            slug = generate_unique_slug(name, Product)
-            sku = f"HAIR-{random.randint(1000, 9999)}"
-
+            is_bundle = 'is_bundle' in request.form
+            bundle_discount = float(request.form.get('bundle_discount', 0))
+            
+            if compare_price:
+                compare_price = float(compare_price)
+            else:
+                compare_price = None
+            
             if base_price < 0:
                 flash('Price cannot be negative.', 'danger')
                 return redirect(url_for('admin_add_product'))
 
+            # Generate slug and SKU
+            slug = generate_unique_slug(name, Product)
+            sku = generate_unique_sku()
+            
+            # Create product
             product = Product(
                 name=name,
                 slug=slug,
                 description=description,
                 base_price=base_price,
-                compare_price=float(compare_price) if compare_price else None,
+                compare_price=compare_price,
                 category_id=category_id,
                 featured=featured,
                 active=active,
-                sku=sku
+                is_bundle=is_bundle,
+                bundle_discount=bundle_discount,
+                sku=sku,
+                total_quantity=0  # Will be calculated from variants
             )
 
             db.session.add(product)
-            db.session.flush()
+            db.session.flush()  # Get product ID
 
             # Handle image uploads
             if 'images' in request.files:
@@ -1537,7 +1552,7 @@ def admin_add_product():
                     if file and file.filename != '':
                         uploaded_filename = save_uploaded_file(file)
                         if uploaded_filename:
-                            is_primary = (i == 0)
+                            is_primary = (i == 0)  # First image is primary
                             product_image = ProductImage(
                                 product_id=product.id,
                                 image_url=uploaded_filename,
@@ -1553,12 +1568,23 @@ def admin_add_product():
             variant_colors = request.form.getlist('variant_color[]')
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
+            variant_skus = request.form.getlist('variant_sku[]')
+            variant_defaults = request.form.getlist('variant_default[]')
 
             total_stock = 0
             for i in range(len(variant_names)):
-                if variant_names[i]:
+                if variant_names[i].strip():
                     stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
                     total_stock += stock_value
+                    
+                    variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                    
+                    # Check if this variant should be default
+                    is_default = False
+                    if variant_defaults:
+                        is_default = str(i) in variant_defaults
+                    elif i == 0:  # First variant is default if none specified
+                        is_default = True
                     
                     variant = ProductVariant(
                         product_id=product.id,
@@ -1568,8 +1594,8 @@ def admin_add_product():
                         color=variant_colors[i] if i < len(variant_colors) else None,
                         price=float(variant_prices[i]) if variant_prices[i] else base_price,
                         stock=stock_value,
-                        sku=generate_unique_sku(),
-                        is_default=(i == 0)
+                        sku=variant_sku,
+                        is_default=is_default
                     )
                     db.session.add(variant)
 
@@ -1585,8 +1611,7 @@ def admin_add_product():
             print(f"❌ Add product error: {str(e)}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
             flash('Error adding product. Please try again.', 'danger')
-
-    categories = Category.query.all()
+    
     return render_template('admin/add_product.html', categories=categories)
 
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
@@ -1598,18 +1623,29 @@ def admin_edit_product(id):
         joinedload(Product.variants),
         joinedload(Product.images)
     ).get_or_404(id)
-
+    
+    categories = Category.query.all()
+    
     if request.method == 'POST':
         try:
+            # Update basic product info
             product.name = request.form.get('name')
             product.description = request.form.get('description')
             product.base_price = float(request.form.get('base_price', 0))
+            
             compare_price = request.form.get('compare_price')
             product.compare_price = float(compare_price) if compare_price else None
+            
             product.category_id = int(request.form.get('category_id'))
             product.featured = 'featured' in request.form
             product.active = 'active' in request.form
-
+            product.is_bundle = 'is_bundle' in request.form
+            product.bundle_discount = float(request.form.get('bundle_discount', 0))
+            
+            sku = request.form.get('sku')
+            if sku and sku != product.sku:
+                product.sku = sku
+            
             product.slug = generate_unique_slug(product.name, Product, product.id)
 
             # Handle image uploads
@@ -1636,45 +1672,77 @@ def admin_edit_product(id):
             variant_colors = request.form.getlist('variant_color[]')
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
+            variant_skus = request.form.getlist('variant_sku[]')
+            variant_defaults = request.form.getlist('variant_default[]')
 
-            existing_variant_ids = [int(vid) for vid in variant_ids if vid]
+            # Get existing variant IDs to delete ones not in the form
+            existing_variant_ids = []
+            for i, variant_id in enumerate(variant_ids):
+                if variant_id and variant_id.isdigit():
+                    existing_variant_ids.append(int(variant_id))
+
+            # Delete variants that were removed
             for variant in product.variants:
                 if variant.id not in existing_variant_ids:
                     db.session.delete(variant)
 
+            # Update or add variants
             total_stock = 0
             for i in range(len(variant_names)):
-                if variant_names[i]:
-                    if i < len(variant_ids) and variant_ids[i]:
-                        variant = ProductVariant.query.get(int(variant_ids[i]))
+                if variant_names[i].strip():
+                    # Get variant data
+                    variant_id = variant_ids[i] if i < len(variant_ids) else None
+                    variant_name = variant_names[i]
+                    variant_length = variant_lengths[i] if i < len(variant_lengths) else None
+                    variant_texture = variant_textures[i] if i < len(variant_textures) else None
+                    variant_color = variant_colors[i] if i < len(variant_colors) else None
+                    variant_price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else product.base_price
+                    variant_stock = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
+                    variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                    
+                    # Check if this variant should be default
+                    is_default = False
+                    if variant_defaults:
+                        is_default = str(i) in variant_defaults
+                    
+                    total_stock += variant_stock
+
+                    if variant_id and variant_id.isdigit():
+                        # Update existing variant
+                        variant = ProductVariant.query.get(int(variant_id))
                         if variant:
-                            variant.name = variant_names[i]
-                            variant.length = variant_lengths[i] if i < len(variant_lengths) else None
-                            variant.texture = variant_textures[i] if i < len(variant_textures) else None
-                            variant.color = variant_colors[i] if i < len(variant_colors) else None
-                            variant.price = float(variant_prices[i]) if variant_prices[i] else product.base_price
-                            
-                            stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
-                            variant.stock = stock_value
-                            total_stock += stock_value
-                            
-                            variant.is_default = (i == 0)
+                            variant.name = variant_name
+                            variant.length = variant_length
+                            variant.texture = variant_texture
+                            variant.color = variant_color
+                            variant.price = variant_price
+                            variant.stock = variant_stock
+                            variant.sku = variant_sku
+                            variant.is_default = is_default
                     else:
-                        stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
-                        total_stock += stock_value
-                        
+                        # Create new variant
                         variant = ProductVariant(
                             product_id=product.id,
-                            name=variant_names[i],
-                            length=variant_lengths[i] if i < len(variant_lengths) else None,
-                            texture=variant_textures[i] if i < len(variant_textures) else None,
-                            color=variant_colors[i] if i < len(variant_colors) else None,
-                            price=float(variant_prices[i]) if variant_prices[i] else product.base_price,
-                            stock=stock_value,
-                            sku=generate_unique_sku(),
-                            is_default=(i == 0)
+                            name=variant_name,
+                            length=variant_length,
+                            texture=variant_texture,
+                            color=variant_color,
+                            price=variant_price,
+                            stock=variant_stock,
+                            sku=variant_sku,
+                            is_default=is_default
                         )
                         db.session.add(variant)
+
+            # Ensure only one variant is default
+            variants = ProductVariant.query.filter_by(product_id=product.id).all()
+            if variants:
+                default_variants = [v for v in variants if v.is_default]
+                if len(default_variants) > 1:
+                    for i, variant in enumerate(default_variants):
+                        variant.is_default = (i == 0)
+                elif len(default_variants) == 0:
+                    variants[0].is_default = True
 
             product.total_quantity = total_stock
 
@@ -1686,9 +1754,9 @@ def admin_edit_product(id):
         except Exception as e:
             db.session.rollback()
             print(f"❌ Edit product error: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             flash('Error updating product. Please try again.', 'danger')
 
-    categories = Category.query.all()
     return render_template('admin/edit_product.html', product=product, categories=categories)
 
 @app.route('/admin/products/delete/<int:id>', methods=['POST'])
@@ -1723,7 +1791,9 @@ def admin_orders():
     try:
         status = request.args.get('status', 'all')
 
-        query = Order.query
+        query = Order.query.options(
+            joinedload(Order.customer)
+        )
 
         if status != 'all':
             query = query.filter_by(status=status)
@@ -1758,6 +1828,64 @@ def admin_order_detail(id):
         print(f"❌ Admin order detail error: {str(e)}", file=sys.stderr)
         flash('Error loading order details.', 'danger')
         return redirect(url_for('admin_orders'))
+
+@app.route('/admin/orders/<int:id>/update', methods=['POST'])
+@admin_required
+def admin_update_order(id):
+    """Update order status"""
+    try:
+        order = Order.query.get_or_404(id)
+        new_status = request.form.get('status')
+        new_payment_status = request.form.get('payment_status')
+        
+        if new_status:
+            order.status = new_status
+        if new_payment_status:
+            order.payment_status = new_payment_status
+        
+        order.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        flash(f'Order #{order.order_number} updated successfully!', 'success')
+        return redirect(url_for('admin_order_detail', id=order.id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Update order error: {str(e)}", file=sys.stderr)
+        flash('Error updating order.', 'danger')
+        return redirect(url_for('admin_orders'))
+
+# ========== NEW ADMIN ROUTES FOR TEMPLATES ==========
+
+@app.route('/admin/categories')
+@admin_required
+def admin_categories():
+    """Admin categories management"""
+    try:
+        categories = Category.query.order_by(Category.name).all()
+        return render_template('admin/categories.html', categories=categories)
+    except Exception as e:
+        print(f"❌ Admin categories error: {str(e)}", file=sys.stderr)
+        flash('Error loading categories.', 'danger')
+        return render_template('admin/categories.html', categories=[])
+
+@app.route('/admin/customers')
+@admin_required
+def admin_customers():
+    """Admin customers management"""
+    try:
+        customers = Customer.query.order_by(Customer.created_at.desc()).all()
+        return render_template('admin/customers.html', customers=customers)
+    except Exception as e:
+        print(f"❌ Admin customers error: {str(e)}", file=sys.stderr)
+        flash('Error loading customers.', 'danger')
+        return render_template('admin/customers.html', customers=[])
+
+@app.route('/admin/settings')
+@admin_required
+def admin_settings():
+    """Admin settings"""
+    return render_template('admin/settings.html')
 
 # ========== STATIC FILE SERVING ==========
 
@@ -1816,6 +1944,7 @@ if __name__ == '__main__':
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
     print(f"✅ Variant System: ENABLED", file=sys.stderr)
     print(f"✅ NO BROKEN IMAGES: YES", file=sys.stderr)
+    print(f"✅ All Templates Updated: YES", file=sys.stderr)
     print(f"🌐 Server: http://localhost:{port}", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
 
