@@ -49,7 +49,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="text-white-50 mb-1">Pending</h6>
-                            <h2 class="text-white mb-0">{{ review_stats.pending }}</h3>
+                            <h2 class="text-white mb-0">{{ review_stats.pending }}</h2>
                             <small class="text-white-50">Awaiting approval</small>
                         </div>
                         <div class="stat-icon">
@@ -91,7 +91,7 @@
                 <div class="col-md-3">
                     <label for="status" class="form-label-admin">Review Status</label>
                     <select name="status" id="status" class="form-control-admin">
-                        <option value="all" {% if not status_filter %}selected{% endif %}>All Reviews</option>
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Reviews</option>
                         <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved Only</option>
                         <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Only</option>
                     </select>
@@ -100,7 +100,7 @@
                 <div class="col-md-3">
                     <label for="rating" class="form-label-admin">Rating</label>
                     <select name="rating" id="rating" class="form-control-admin">
-                        <option value="all" {% if not rating_filter %}selected{% endif %}>All Ratings</option>
+                        <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All Ratings</option>
                         <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 Stars</option>
                         <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 Stars</option>
                         <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 Stars</option>
@@ -114,7 +114,7 @@
                     <select name="product" id="product" class="form-control-admin">
                         <option value="">All Products</option>
                         {% for product in products|default([]) %}
-                        <option value="{{ product.id }}" {% if product_filter|string == product.id|string %}selected{% endif %}>
+                        <option value="{{ product.id }}" {% if product_filter and product.id == product_filter %}selected{% endif %}>
                             {{ product.name|truncate(30) }}
                         </option>
                         {% endfor %}
@@ -187,9 +187,16 @@
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
                                         {% if review.product and review.product.images and review.product.images|length > 0 %}
-                                        <img src="{{ url_for('static', filename='uploads/' + review.product.images[0].image_url) }}" 
-                                             alt="{{ review.product.name }}" 
-                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            {% if review.product.images[0].image_url.startswith('http') %}
+                                                <img src="{{ review.product.images[0].image_url }}" 
+                                                     alt="{{ review.product.name }}" 
+                                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            {% else %}
+                                                <img src="{{ url_for('uploaded_file', filename=review.product.images[0].image_url) }}" 
+                                                     alt="{{ review.product.name }}" 
+                                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50?text=No+Image';">
+                                            {% endif %}
                                         {% else %}
                                         <div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 4px; 
                                                    display: flex; align-items: center; justify-content: center;">
@@ -199,10 +206,14 @@
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <div class="fw-medium">
+                                            {% if review.product %}
                                             <a href="{{ url_for('product_detail', id=review.product.id) }}" 
                                                target="_blank" class="text-decoration-none">
-                                                {{ review.product.name|truncate(40) if review.product else 'Product Deleted' }}
+                                                {{ review.product.name|truncate(40) }}
                                             </a>
+                                            {% else %}
+                                            <span class="text-muted">Product Deleted</span>
+                                            {% endif %}
                                         </div>
                                         <div class="mt-1">
                                             <small class="text-muted">
@@ -235,7 +246,7 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="review-comment">
+                                <div class="review-comment" data-full-comment="{{ review.comment|escape }}">
                                     {{ review.comment|truncate(150) }}
                                     {% if review.comment|length > 150 %}
                                     <a href="#" class="text-primary" onclick="showReviewDetails({{ review.id }})">
@@ -245,8 +256,10 @@
                                 </div>
                             </td>
                             <td>
-                                <div>{{ review.created_at.strftime('%b %d') }}</div>
+                                <div>{{ review.created_at.strftime('%b %d') if review.created_at else 'N/A' }}</div>
+                                {% if review.created_at %}
                                 <small class="text-muted">{{ review.created_at.strftime('%Y') }}</small>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if review.approved %}
@@ -268,7 +281,7 @@
                                     {% endif %}
                                     
                                     <button class="btn btn-outline-danger" 
-                                            onclick="deleteReview({{ review.id }}, '{{ review.customer_name }}')"
+                                            onclick="deleteReview({{ review.id }}, '{{ review.customer_name|escapejs }}')"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             title="Delete Review">
@@ -292,8 +305,14 @@
                                 <div class="empty-state">
                                     <i class="fas fa-star fa-3x text-muted mb-3 d-block"></i>
                                     <h5>No Reviews Found</h5>
-                                    <p class="text-muted mb-0">No reviews match your current filters.</p>
-                                    {% if status_filter or rating_filter or product_filter or search_query %}
+                                    <p class="text-muted mb-0">
+                                        {% if status_filter != 'all' or rating_filter != 'all' or product_filter or search_query %}
+                                        No reviews match your current filters.
+                                        {% else %}
+                                        No reviews have been submitted yet.
+                                        {% endif %}
+                                    </p>
+                                    {% if status_filter != 'all' or rating_filter != 'all' or product_filter or search_query %}
                                     <a href="{{ url_for('admin_reviews') }}" class="btn btn-primary-admin mt-3">
                                         <i class="fas fa-redo me-2"></i> Reset Filters
                                     </a>
@@ -319,7 +338,6 @@
                         <option value="">Bulk Actions</option>
                         <option value="approve">Approve Selected</option>
                         <option value="delete">Delete Selected</option>
-                        <option value="export">Export Selected</option>
                     </select>
                     <button class="btn btn-sm btn-primary-admin" onclick="applyBulkAction()">Apply</button>
                     <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">Clear</button>
@@ -398,6 +416,80 @@
 
 {% block scripts %}
 <script>
+    // Get CSRF token
+    function getCSRFToken() {
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        const csrfInput = document.querySelector('input[name="csrf_token"]');
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+        
+        return '';
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 3000
+        });
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            toastElement.remove();
+        });
+    }
+
+    // Show loading indicator
+    function showLoading() {
+        let loadingOverlay = document.querySelector('.loading-overlay');
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+            loadingOverlay.style.cssText = 'background: rgba(0,0,0,0.5); z-index: 9999;';
+            loadingOverlay.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+        }
+        loadingOverlay.style.display = 'flex';
+    }
+
+    // Hide loading indicator
+    function hideLoading() {
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
     // Variables
     let currentReviewId = null;
     
@@ -471,53 +563,53 @@
             case 'delete':
                 deleteMultipleReviews(selectedIds);
                 break;
-            case 'export':
-                exportSelectedReviews(selectedIds);
-                break;
         }
     }
     
     // Review Actions
     function approveReview(reviewId) {
-        showLoading();
-        
-        fetch(`/admin/reviews/approve/${reviewId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideLoading();
+        if (confirm('Are you sure you want to approve this review?')) {
+            showLoading();
             
-            if (data.success) {
-                // Update UI
-                const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
-                const statusBadge = row.querySelector('.badge-admin');
-                const approveBtn = row.querySelector('.btn-outline-success');
-                
-                if (statusBadge) {
-                    statusBadge.className = statusBadge.className.replace(/badge-\w+/, '');
-                    statusBadge.classList.add('badge-success');
-                    statusBadge.textContent = 'Approved';
+            fetch(`/admin/reviews/approve/${reviewId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
                 
-                if (approveBtn) {
-                    approveBtn.remove();
+                if (data.success) {
+                    // Update UI
+                    const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
+                    if (row) {
+                        const statusBadge = row.querySelector('.badge-admin');
+                        const approveBtn = row.querySelector('.btn-outline-success');
+                        
+                        if (statusBadge) {
+                            statusBadge.className = statusBadge.className.replace(/badge-\w+/, '');
+                            statusBadge.classList.add('badge-success');
+                            statusBadge.textContent = 'Approved';
+                        }
+                        
+                        if (approveBtn) {
+                            approveBtn.remove();
+                        }
+                    }
+                    
+                    showToast('Review approved successfully!', 'success');
+                } else {
+                    showToast(data.error || 'Failed to approve review', 'error');
                 }
-                
-                showToast('Review approved successfully!', 'success');
-                updateReviewStats();
-            } else {
-                showToast(data.error || 'Failed to approve review', 'error');
-            }
-        })
-        .catch(error => {
-            hideLoading();
-            console.error('Error:', error);
-            showToast('Failed to approve review', 'error');
-        });
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                showToast('Failed to approve review', 'error');
+            });
+        }
     }
     
     function deleteReview(reviewId, customerName) {
@@ -540,7 +632,6 @@
                     if (row) {
                         row.remove();
                         showToast('Review deleted successfully', 'success');
-                        updateReviewStats();
                     }
                 } else {
                     showToast(data.error || 'Failed to delete review', 'error');
@@ -595,7 +686,6 @@
                     
                     showToast(`Approved ${data.approved} review(s)`, 'success');
                     clearSelection();
-                    updateReviewStats();
                 } else {
                     showToast(data.error || 'Failed to approve reviews', 'error');
                 }
@@ -637,7 +727,6 @@
                     
                     showToast(`Deleted ${data.deleted} review(s)`, 'success');
                     clearSelection();
-                    updateReviewStats();
                 } else {
                     showToast(data.error || 'Failed to delete reviews', 'error');
                 }
@@ -652,34 +741,48 @@
     
     // Show Review Details
     function showReviewDetails(reviewId) {
-        showLoading();
-        
         // Find the review row
         const row = document.querySelector(`tr[data-review-id="${reviewId}"]`);
         if (row) {
-            const productName = row.querySelector('.fw-medium a')?.textContent.trim() || 'Product Deleted';
+            const productName = row.querySelector('.fw-medium a')?.textContent.trim() || 
+                              row.querySelector('.fw-medium .text-muted')?.textContent.trim() || 'Product Deleted';
             const customerName = row.querySelector('.text-muted .fa-user')?.parentElement?.textContent.trim() || '';
             const location = row.querySelector('.fa-map-marker-alt')?.parentElement?.textContent.trim() || '';
             const rating = row.querySelector('.star-rating .text-muted')?.textContent.trim() || '';
-            const comment = row.querySelector('.review-comment')?.textContent.trim() || '';
+            const commentElement = row.querySelector('.review-comment');
+            const comment = commentElement ? commentElement.getAttribute('data-full-comment') || 
+                          commentElement.textContent.trim() : '';
             const date = row.querySelector('td:nth-child(5) div')?.textContent.trim() + ' ' + 
-                         row.querySelector('td:nth-child(5) small')?.textContent.trim() || '';
+                         (row.querySelector('td:nth-child(5) small')?.textContent.trim() || '');
             const isVerified = row.querySelector('.badge-success') ? true : false;
             const isApproved = row.querySelector('.badge-admin')?.textContent.trim() === 'Approved';
             
-            // Get full comment from data attribute if available
-            const fullComment = row.querySelector('.review-comment')?.dataset.fullComment || comment;
+            // Get image
+            let productImage = '';
+            const imgElement = row.querySelector('img');
+            if (imgElement) {
+                productImage = imgElement.outerHTML;
+            } else {
+                productImage = `
+                    <div style="width: 100px; height: 100px; background: #f8f9fa; border-radius: 8px; 
+                               display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-image fa-2x text-muted"></i>
+                    </div>
+                `;
+            }
+            
+            // Create star rating HTML
+            const ratingNum = rating.split('/')[0] || '0';
+            let starsHTML = '';
+            for (let i = 0; i < 5; i++) {
+                starsHTML += `<i class="fas fa-star ${i < ratingNum ? 'text-warning' : 'text-muted'}"></i>`;
+            }
             
             const content = `
                 <div class="row">
                     <div class="col-md-3 text-center mb-4">
                         <div class="product-image mb-3">
-                            ${row.querySelector('img') ? row.querySelector('img').outerHTML : `
-                                <div style="width: 100px; height: 100px; background: #f8f9fa; border-radius: 8px; 
-                                           display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-                                    <i class="fas fa-image fa-2x text-muted"></i>
-                                </div>
-                            `}
+                            ${productImage}
                         </div>
                         <h6>${productName}</h6>
                     </div>
@@ -691,7 +794,7 @@
                                     <h5>${customerName}</h5>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="star-rating fs-5">
-                                            ${rating}
+                                            ${starsHTML}
                                         </div>
                                         <div class="text-muted">
                                             <i class="far fa-calendar me-1"></i> ${date}
@@ -709,7 +812,7 @@
                         <div class="review-content">
                             <h6>Review:</h6>
                             <div class="p-3 bg-light rounded">
-                                ${fullComment.replace(/\n/g, '<br>')}
+                                ${comment.replace(/\n/g, '<br>')}
                             </div>
                         </div>
                     </div>
@@ -728,20 +831,20 @@
             // Update button click handlers
             approveBtn.onclick = function() { 
                 approveReview(reviewId);
-                bootstrap.Modal.getInstance(document.getElementById('reviewDetailsModal')).hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('reviewDetailsModal'));
+                if (modal) modal.hide();
             };
             
             deleteBtn.onclick = function() { 
                 deleteReview(reviewId, customerName);
-                bootstrap.Modal.getInstance(document.getElementById('reviewDetailsModal')).hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('reviewDetailsModal'));
+                if (modal) modal.hide();
             };
             
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('reviewDetailsModal'));
             modal.show();
         }
-        
-        hideLoading();
     }
     
     // Export Functions
@@ -752,7 +855,8 @@
                 product: cells[1].querySelector('.fw-medium')?.textContent.trim() || '',
                 customer: cells[1].querySelector('.fa-user')?.parentElement?.textContent.trim() || '',
                 rating: cells[2].querySelector('.text-muted')?.textContent.trim() || '',
-                comment: cells[3].querySelector('.review-comment')?.textContent.trim() || '',
+                comment: cells[3].querySelector('.review-comment')?.getAttribute('data-full-comment') || 
+                         cells[3].querySelector('.review-comment')?.textContent.trim() || '',
                 date: cells[4].textContent.trim(),
                 status: cells[5].textContent.trim()
             };
@@ -761,28 +865,42 @@
         exportToCSV(reviews, 'reviews.csv');
     }
     
-    function exportSelectedReviews(reviewIds) {
-        const selectedReviews = reviewIds.map(id => {
-            const row = document.querySelector(`tr[data-review-id="${id}"]`);
-            if (row) {
-                const cells = row.querySelectorAll('td');
-                return {
-                    product: cells[1].querySelector('.fw-medium')?.textContent.trim() || '',
-                    customer: cells[1].querySelector('.fa-user')?.parentElement?.textContent.trim() || '',
-                    rating: cells[2].querySelector('.text-muted')?.textContent.trim() || '',
-                    comment: cells[3].querySelector('.review-comment')?.textContent.trim() || '',
-                    date: cells[4].textContent.trim(),
-                    status: cells[5].textContent.trim()
-                };
-            }
-        }).filter(review => review);
-        
-        if (selectedReviews.length === 0) {
-            showToast('No reviews to export', 'warning');
+    function exportToCSV(data, filename) {
+        if (data.length === 0) {
+            showToast('No data to export', 'warning');
             return;
         }
         
-        exportToCSV(selectedReviews, `reviews-${new Date().toISOString().split('T')[0]}.csv`);
+        // Create CSV content
+        const headers = ['Product', 'Customer', 'Rating', 'Comment', 'Date', 'Status'];
+        const csvRows = [
+            headers.join(','),
+            ...data.map(row => [
+                `"${row.product.replace(/"/g, '""')}"`,
+                `"${row.customer.replace(/"/g, '""')}"`,
+                row.rating,
+                `"${row.comment.replace(/"/g, '""')}"`,
+                `"${row.date}"`,
+                `"${row.status}"`
+            ].join(','))
+        ];
+        
+        const csvContent = csvRows.join('\n');
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Reviews exported successfully', 'success');
     }
     
     // Utility Functions
@@ -791,12 +909,6 @@
         setTimeout(() => {
             location.reload();
         }, 500);
-    }
-    
-    function updateReviewStats() {
-        // This would typically fetch updated stats from the server
-        // For now, we'll just note that stats should be refreshed
-        console.log('Review stats should be refreshed');
     }
 </script>
 {% endblock %}
