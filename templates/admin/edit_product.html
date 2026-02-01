@@ -1,1532 +1,1501 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Edit Product - {{ config.brand_name }} Admin</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<style>
-:root {
---primary: #8B4513;
---primary-dark: #5D2906;
---primary-light: #A0522D;
---secondary: #F5E6D3;
---light: #ffffff;
---dark: #333333;
---gray: #666666;
---light-gray: #f5f5f5;
---border: #dddddd;
---success: #28a745;
---danger: #dc3545;
---warning: #ffc107;
---info: #17a2b8;
-}
-
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
-
-body {
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-background-color: #f8f9fa;
-color: var(--dark);
-line-height: 1.6;
-}
-
-.admin-container {
-display: flex;
-min-height: 100vh;
-}
-
-/* Sidebar Styles */
-.sidebar {
-width: 250px;
-background: var(--primary-dark);
-color: white;
-padding: 20px 0;
-box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-position: fixed;
-height: 100vh;
-overflow-y: auto;
-}
-
-.sidebar-header {
-padding: 0 20px 20px;
-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-text-align: center;
-}
-
-.sidebar-header h2 {
-font-size: 1.5rem;
-margin-bottom: 5px;
-color: white;
-}
-
-.sidebar-header p {
-font-size: 0.9rem;
-opacity: 0.8;
-}
-
-.nav-links {
-list-style: none;
-padding: 20px 0;
-}
-
-.nav-links li {
-margin-bottom: 5px;
-}
-
-.nav-links a {
-display: flex;
-align-items: center;
-padding: 12px 20px;
-color: rgba(255, 255, 255, 0.9);
-text-decoration: none;
-transition: all 0.3s ease;
-border-left: 3px solid transparent;
-}
-
-.nav-links a:hover {
-background: rgba(255, 255, 255, 0.1);
-color: white;
-border-left: 3px solid var(--secondary);
-}
-
-.nav-links a.active {
-background: rgba(255, 255, 255, 0.15);
-color: white;
-border-left: 3px solid var(--secondary);
-font-weight: 600;
-}
-
-.nav-links i {
-margin-right: 10px;
-font-size: 1.1rem;
-}
-
-/* Main Content */
-.main-content {
-flex: 1;
-margin-left: 250px;
-padding: 20px;
-background-color: #f8f9fa;
-}
-
-/* Header */
-.header {
-background: white;
-padding: 20px;
-border-radius: 10px;
-margin-bottom: 20px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.header h1 {
-font-size: 1.8rem;
-color: var(--primary);
-margin-bottom: 5px;
-}
-
-.header p {
-color: var(--gray);
-font-size: 0.9rem;
-}
-
-.user-info {
-display: flex;
-align-items: center;
-gap: 15px;
-}
-
-.user-avatar {
-width: 40px;
-height: 40px;
-border-radius: 50%;
-background: var(--primary);
-color: white;
-display: flex;
-align-items: center;
-justify-content: center;
-font-weight: bold;
-}
-
-.logout-btn {
-background: var(--danger);
-color: white;
-border: none;
-padding: 8px 15px;
-border-radius: 5px;
-cursor: pointer;
-text-decoration: none;
-font-size: 0.9rem;
-}
-
-.logout-btn:hover {
-background: #c1121f;
-}
-
-/* Form Container */
-.form-container {
-background: white;
-padding: 30px;
-border-radius: 10px;
-box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-margin-bottom: 30px;
-}
-
-.form-group {
-margin-bottom: 25px;
-}
-
-.form-group label {
-display: block;
-margin-bottom: 8px;
-font-weight: 600;
-color: var(--dark);
-}
-
-.form-control {
-width: 100%;
-padding: 12px 15px;
-border: 1px solid var(--border);
-border-radius: 5px;
-font-size: 1rem;
-transition: border-color 0.3s ease;
-}
-
-.form-control:focus {
-outline: none;
-border-color: var(--primary);
-box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
-}
-
-textarea.form-control {
-min-height: 120px;
-resize: vertical;
-}
-
-.form-row {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-gap: 20px;
-}
-
-/* File Upload */
-.file-upload-container {
-margin-top: 10px;
-}
-
-.file-upload-area {
-border: 2px dashed var(--border);
-border-radius: 10px;
-padding: 40px 20px;
-text-align: center;
-cursor: pointer;
-transition: all 0.3s ease;
-background: #fafafa;
-}
-
-.file-upload-area:hover {
-border-color: var(--primary);
-background: var(--secondary);
-}
-
-.file-upload-area i {
-font-size: 48px;
-color: var(--gray);
-margin-bottom: 15px;
-}
-
-.file-upload-area p {
-margin-bottom: 10px;
-color: var(--gray);
-}
-
-#imagePreview {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-gap: 15px;
-margin-top: 15px;
-}
-
-.preview-item {
-position: relative;
-border: 1px solid var(--border);
-border-radius: 5px;
-overflow: hidden;
-}
-
-.preview-item img {
-width: 100%;
-height: 150px;
-object-fit: cover;
-}
-
-.remove-btn {
-position: absolute;
-top: 5px;
-right: 5px;
-background: var(--danger);
-color: white;
-border: none;
-width: 25px;
-height: 25px;
-border-radius: 50%;
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-
-/* Switch */
-.switch {
-position: relative;
-display: inline-block;
-width: 60px;
-height: 30px;
-}
-
-.switch input {
-opacity: 0;
-width: 0;
-height: 0;
-}
-
-.slider {
-position: absolute;
-cursor: pointer;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background-color: #ccc;
-transition: .4s;
-}
-
-.slider:before {
-position: absolute;
-content: "";
-height: 22px;
-width: 22px;
-left: 4px;
-bottom: 4px;
-background-color: white;
-transition: .4s;
-}
-
-input:checked + .slider {
-background-color: var(--primary);
-}
-
-input:checked + .slider:before {
-transform: translateX(30px);
-}
-
-.slider.round {
-border-radius: 34px;
-}
-
-.slider.round:before {
-border-radius: 50%;
-}
-
-/* Form Help Text */
-.form-help {
-display: block;
-color: var(--gray);
-margin-top: 5px;
-font-size: 0.85rem;
-}
-
-/* Buttons */
-.form-actions {
-display: flex;
-gap: 15px;
-padding-top: 20px;
-border-top: 1px solid var(--light-gray);
-margin-top: 20px;
-flex-wrap: wrap;
-}
-
-.btn {
-padding: 12px 25px;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-size: 1rem;
-font-weight: 600;
-transition: all 0.3s ease;
-text-decoration: none;
-display: inline-flex;
-align-items: center;
-justify-content: center;
-min-width: 140px;
-}
-
-.btn i {
-margin-right: 8px;
-}
-
-.btn-primary {
-background: var(--primary);
-color: white;
-}
-
-.btn-primary:hover {
-background: var(--primary-dark);
-transform: translateY(-2px);
-box-shadow: 0 5px 15px rgba(139, 69, 19, 0.2);
-}
-
-.btn-secondary {
-background: var(--gray);
-color: white;
-}
-
-.btn-secondary:hover {
-background: #5a6268;
-}
-
-.btn-success {
-background: var(--success);
-color: white;
-}
-
-.btn-success:hover {
-background: #218838;
-}
-
-.btn-danger {
-background: var(--danger);
-color: white;
-}
-
-.btn-danger:hover {
-background: #c82333;
-}
-
-.btn-outline {
-background: transparent;
-border: 2px solid var(--primary);
-color: var(--primary);
-}
-
-.btn-outline:hover {
-background: var(--primary);
-color: white;
-}
-
-/* Alert Messages */
-.alert {
-padding: 15px;
-border-radius: 5px;
-margin-bottom: 20px;
-border-left: 5px solid;
-animation: slideIn 0.3s ease;
-}
-
-.alert-success {
-background: #d4edda;
-border-color: var(--success);
-color: #155724;
-}
-
-.alert-danger {
-background: #f8d7da;
-border-color: var(--danger);
-color: #721c24;
-}
-
-.alert-warning {
-background: #fff3cd;
-border-color: var(--warning);
-color: #856404;
-}
-
-@keyframes slideIn {
-from {
-transform: translateY(-10px);
-opacity: 0;
-}
-to {
-transform: translateY(0);
-opacity: 1;
-}
-}
-
-/* Loading Overlay */
-.loading-overlay {
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: rgba(0, 0, 0, 0.5);
-display: none;
-align-items: center;
-justify-content: center;
-z-index: 9999;
-}
-
-.loading-overlay.active {
-display: flex;
-}
-
-.spinner {
-width: 50px;
-height: 50px;
-border: 5px solid rgba(255, 255, 255, 0.3);
-border-radius: 50%;
-border-top-color: white;
-animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-to {
-transform: rotate(360deg);
-}
-}
-
-/* Error States */
-.error-message {
-color: var(--danger);
-font-size: 0.85rem;
-margin-top: 5px;
-display: none;
-}
-
-.has-error .form-control {
-border-color: var(--danger);
-}
-
-.has-error .error-message {
-display: block;
-}
-
-/* Modal */
-.modal {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: rgba(0,0,0,0.5);
-z-index: 10000;
-align-items: center;
-justify-content: center;
-}
-
-.modal-content {
-background: white;
-padding: 30px;
-border-radius: 10px;
-max-width: 500px;
-width: 90%;
-animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-from {
-transform: translateY(-20px);
-opacity: 0;
-}
-to {
-transform: translateY(0);
-opacity: 1;
-}
-}
-
-/* Variants Section */
-.variants-section {
-background: #f8f9fa;
-padding: 20px;
-border-radius: 10px;
-margin: 25px 0;
-border: 1px solid var(--border);
-}
-
-.section-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 20px;
-}
-
-.section-header h3 {
-color: var(--primary);
-font-size: 1.3rem;
-margin: 0;
-}
-
-.variants-table {
-width: 100%;
-border-collapse: collapse;
-background: white;
-border-radius: 5px;
-overflow: hidden;
-box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.variants-table th {
-background: var(--light-gray);
-padding: 12px;
-text-align: left;
-font-weight: 600;
-color: var(--dark);
-border-bottom: 2px solid var(--light-gray);
-}
-
-.variants-table td {
-padding: 12px;
-border-bottom: 1px solid var(--light-gray);
-vertical-align: middle;
-}
-
-.variants-table tr:hover {
-background: #f9f9f9;
-}
-
-/* Variant Badge */
-.variant-badge {
-display: inline-block;
-padding: 4px 8px;
-background: var(--info);
-color: white;
-border-radius: 12px;
-font-size: 0.75rem;
-font-weight: 600;
-margin-left: 5px;
-}
-
-/* Bundle Options */
-.bundle-section {
-background: #fff8e1;
-padding: 20px;
-border-radius: 10px;
-margin: 25px 0;
-border: 1px solid #ffd54f;
-}
-
-.bundle-section h3 {
-color: #ff8f00;
-margin-bottom: 15px;
-}
-
-/* Image Gallery */
-.image-gallery {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-gap: 15px;
-margin-top: 15px;
-}
-
-.gallery-item {
-position: relative;
-border: 1px solid var(--border);
-border-radius: 5px;
-overflow: hidden;
-}
-
-.gallery-item img {
-width: 100%;
-height: 150px;
-object-fit: cover;
-}
-
-.image-overlay {
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: rgba(0,0,0,0.5);
-display: flex;
-align-items: center;
-justify-content: center;
-opacity: 0;
-transition: opacity 0.3s ease;
-}
-
-.gallery-item:hover .image-overlay {
-opacity: 1;
-}
-
-.image-actions {
-display: flex;
-gap: 10px;
-}
-
-.image-btn {
-width: 35px;
-height: 35px;
-border-radius: 50%;
-background: white;
-border: none;
-color: var(--dark);
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 0.9rem;
-}
-
-.image-btn:hover {
-background: var(--primary);
-color: white;
-}
-
-.primary-badge {
-position: absolute;
-top: 5px;
-left: 5px;
-background: var(--success);
-color: white;
-padding: 3px 8px;
-border-radius: 3px;
-font-size: 0.75rem;
-font-weight: 600;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-.sidebar {
-width: 70px;
-overflow: hidden;
-}
-
-.sidebar-header h2,
-.nav-links span,
-.sidebar-header p {
-display: none;
-}
-
-.main-content {
-margin-left: 70px;
-}
-
-.nav-links a {
-justify-content: center;
-padding: 15px;
-}
-
-.nav-links i {
-margin-right: 0;
-font-size: 1.3rem;
-}
-
-.form-row {
-grid-template-columns: 1fr;
-}
-
-.form-actions {
-flex-direction: column;
-}
-
-.btn {
-width: 100%;
-}
-
-.variants-table {
-display: block;
-overflow-x: auto;
-}
-}
-
-@media (max-width: 576px) {
-.header {
-flex-direction: column;
-text-align: center;
-gap: 15px;
-}
-
-.user-info {
-justify-content: center;
-}
-
-.form-container {
-padding: 20px;
-}
-}
-
-/* Current Image Display */
-.current-images {
-margin-bottom: 20px;
-}
-
-.image-preview-container {
-display: flex;
-gap: 15px;
-flex-wrap: wrap;
-margin-top: 10px;
-}
-
-.image-preview-container img {
-width: 120px;
-height: 120px;
-object-fit: cover;
-border-radius: 5px;
-border: 2px solid var(--border);
-}
-
-/* Toggle Container */
-.toggle-container {
-display: flex;
-align-items: center;
-gap: 15px;
-margin: 10px 0;
-}
-
-/* Add Variant Form */
-.add-variant-form {
-background: white;
-padding: 20px;
-border-radius: 5px;
-border: 1px solid var(--border);
-margin-top: 20px;
-}
-
-.variant-fields {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-gap: 15px;
-margin-bottom: 15px;
-}
-
-.form-actions {
-display: flex;
-gap: 10px;
-justify-content: flex-end;
-}
-
-/* Stock Status */
-.stock-status {
-display: inline-block;
-padding: 4px 8px;
-border-radius: 12px;
-font-size: 0.75rem;
-font-weight: 600;
-}
-
-.stock-in {
-background: #d4edda;
-color: #155724;
-}
-
-.stock-low {
-background: #fff3cd;
-color: #856404;
-}
-
-.stock-out {
-background: #f8d7da;
-color: #721c24;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - {{ config.brand_name }} Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --primary-dark: #0f0f1a;
+            --primary-light: #16213e;
+            --secondary: #d4af37;
+            --light: #ffffff;
+            --dark: #333333;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --border: #dddddd;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--primary);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 3px solid var(--secondary);
+        }
+
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 3px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #c1121f;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* File Upload */
+        .file-upload-container {
+            margin-top: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: #f0f2f5;
+        }
+
+        .file-upload-area i {
+            font-size: 48px;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .file-upload-area p {
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+
+        #imagePreview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* Form Help Text */
+        .form-help {
+            display: block;
+            color: var(--gray);
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 26, 46, 0.2);
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error States */
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .has-error .form-control {
+            border-color: var(--danger);
+        }
+
+        .has-error .error-message {
+            display: block;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Variants Section */
+        .variants-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border: 1px solid var(--border);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .variants-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .variants-table th {
+            background: var(--light-gray);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .variants-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--light-gray);
+            vertical-align: middle;
+        }
+
+        .variants-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Variant Badge */
+        .variant-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--info);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        /* Bundle Options */
+        .bundle-section {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border: 1px solid #ffd54f;
+        }
+
+        .bundle-section h3 {
+            color: #ff8f00;
+            margin-bottom: 15px;
+        }
+
+        /* Image Gallery */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .image-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            color: var(--dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .image-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .primary-badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: var(--success);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+
+            .sidebar-header h2,
+            .nav-links span,
+            .sidebar-header p {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+
+            .nav-links i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .variants-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .user-info {
+                justify-content: center;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+        }
+
+        /* Current Image Display */
+        .current-images {
+            margin-bottom: 20px;
+        }
+
+        .image-preview-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .image-preview-container img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid var(--border);
+        }
+
+        /* Toggle Container */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        /* Add Variant Form */
+        .add-variant-form {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        .variant-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Stock Status */
+        .stock-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stock-in {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
 </head>
 <body>
 <div class="admin-container">
-<!-- Sidebar -->
-<aside class="sidebar">
-<div class="sidebar-header">
-<h2>{{ config.brand_name }}</h2>
-<p>Admin Panel</p>
-</div>
-<ul class="nav-links">
-<li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-<li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
-<li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-<li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-<li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-<li><a href="{{ url_for('admin_reviews') }}"><i class="fas fa-star"></i> <span>Reviews</span></a></li>
-<li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-<li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-</ul>
-</aside>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ config.brand_name }}</h2>
+            <p>Admin Panel</p>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
+            <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
+            <!-- Note: These routes need to be created in your main.py -->
+            <!-- <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li> -->
+            <!-- <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li> -->
+            <!-- <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li> -->
+            <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+        </ul>
+    </aside>
 
-<!-- Main Content -->
-<main class="main-content">
-<!-- Header -->
-<header class="header">
-<div>
-<h1>Edit Product</h1>
-<p>Update product information, variants, and images</p>
-</div>
-<div class="user-info">
-<div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
-<a href="{{ url_for('admin_logout') }}" class="logout-btn">
-<i class="fas fa-sign-out-alt"></i> Logout
-</a>
-</div>
-</header>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <h1>Edit Product</h1>
+                <p>Update product information, variants, and images</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ session.get('admin_name', 'A')[0]|upper }}</div>
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </header>
 
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-<div class="alert alert-{{ category }}">
-{{ message }}
-</div>
-{% endfor %}
-{% endif %}
-{% endwith %}
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-<!-- Form Container -->
-<div class="form-container">
-<form id="editProductForm" method="POST" action="{{ url_for('admin_edit_product', id=product.id) }}" enctype="multipart/form-data">
-<!-- CRITICAL FIX: CSRF Token -->
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <!-- Form Container -->
+        <div class="form-container">
+            <form id="editProductForm" method="POST" action="{{ url_for('admin_edit_product', id=product.id) }}" enctype="multipart/form-data">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-<div class="form-row">
-<div class="form-group">
-<label for="name">Product Name *</label>
-<input type="text" id="name" name="name" class="form-control"
-value="{{ product.name if product.name else '' }}" required>
-<span class="form-help">Use descriptive names that customers can easily understand</span>
-<div class="error-message" id="nameError"></div>
-</div>
-<div class="form-group">
-<label for="category_id">Category *</label>
-<select id="category_id" name="category_id" class="form-control" required>
-<option value="">Select Category</option>
-{% for category in categories %}
-<option value="{{ category.id }}"
-{% if product.category_id == category.id %}selected{% endif %}>
-{{ category.name }}
-</option>
-{% endfor %}
-</select>
-<span class="form-help">Select the main category for this product</span>
-<div class="error-message" id="categoryError"></div>
-</div>
-</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Product Name *</label>
+                        <input type="text" id="name" name="name" class="form-control"
+                               value="{{ product.name if product.name else '' }}" required>
+                        <span class="form-help">Use descriptive names that customers can easily understand</span>
+                        <div class="error-message" id="nameError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="category_id">Category *</label>
+                        <select id="category_id" name="category_id" class="form-control" required>
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}"
+                                        {% if product.category_id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="form-help">Select the main category for this product</span>
+                        <div class="error-message" id="categoryError"></div>
+                    </div>
+                </div>
 
-<div class="form-row">
-<div class="form-group">
-<label for="sku">SKU (Stock Keeping Unit)</label>
-<input type="text" id="sku" name="sku" class="form-control"
-value="{{ product.sku if product.sku else '' }}" placeholder="e.g., NHR-24BS-BLK">
-<span class="form-help">Leave empty to auto-generate</span>
-</div>
-</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sku">SKU (Stock Keeping Unit)</label>
+                        <input type="text" id="sku" name="sku" class="form-control"
+                               value="{{ product.sku if product.sku else '' }}" placeholder="e.g., HAIR-001">
+                        <span class="form-help">Leave empty to auto-generate</span>
+                    </div>
+                </div>
 
-<div class="form-group">
-<label for="description">Description *</label>
-<textarea id="description" name="description" class="form-control"
-placeholder="Describe the product features, quality, length, texture, etc."
-rows="4" required>{{ product.description if product.description else '' }}</textarea>
-<span class="form-help">Include details about texture, length, quality, and care instructions</span>
-<div class="error-message" id="descriptionError"></div>
-</div>
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea id="description" name="description" class="form-control"
+                              placeholder="Describe the product features, quality, length, texture, etc."
+                              rows="4" required>{{ product.description if product.description else '' }}</textarea>
+                    <span class="form-help">Include details about texture, length, quality, and care instructions</span>
+                    <div class="error-message" id="descriptionError"></div>
+                </div>
 
-<!-- Pricing and Stock -->
-<div class="form-row">
-<div class="form-group">
-<label for="base_price">Base Price (₦) *</label>
-<input type="number" id="base_price" name="base_price" class="form-control"
-value="{{ product.base_price if product.base_price else 0 }}" min="0" step="0.01" required>
-<span class="form-help">Base price for products without variants</span>
-<div class="error-message" id="basePriceError"></div>
-</div>
-<div class="form-group">
-<label for="compare_price">Compare Price (₦)</label>
-<input type="number" id="compare_price" name="compare_price" class="form-control"
-value="{{ product.compare_price if product.compare_price else '' }}" min="0" step="0.01">
-<span class="form-help">Original price to show discount (optional)</span>
-</div>
-<div class="form-group">
-<label for="total_quantity">Total Stock *</label>
-<input type="number" id="total_quantity" name="total_quantity" class="form-control"
-value="{{ product.total_quantity if product.total_quantity else product.stock if product.stock else 0 }}" min="0" required>
-<span class="form-help">Total quantity across all variants</span>
-<div class="error-message" id="totalQuantityError"></div>
-</div>
-</div>
+                <!-- Pricing and Stock -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="base_price">Base Price (₦) *</label>
+                        <input type="number" id="base_price" name="base_price" class="form-control"
+                               value="{{ product.base_price if product.base_price else 0 }}" min="0" step="0.01" required>
+                        <span class="form-help">Base price for products without variants</span>
+                        <div class="error-message" id="basePriceError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="compare_price">Compare Price (₦)</label>
+                        <input type="number" id="compare_price" name="compare_price" class="form-control"
+                               value="{{ product.compare_price if product.compare_price else '' }}" min="0" step="0.01">
+                        <span class="form-help">Original price to show discount (optional)</span>
+                    </div>
+                </div>
 
-<!-- Bundle Options -->
-<div class="bundle-section">
-<h3><i class="fas fa-boxes"></i> Bundle Options</h3>
-<div class="form-row">
-<div class="form-group">
-<label for="is_bundle">Is this a bundle product?</label>
-<div class="toggle-container">
-<label class="switch">
-<input type="checkbox" id="is_bundle" name="is_bundle" {% if product.is_bundle %}checked{% endif %}>
-<span class="slider round"></span>
-</label>
-<span>Bundle product</span>
-</div>
-<span class="form-help">Bundle products contain multiple products sold together</span>
-</div>
-<div class="form-group">
-<label for="bundle_discount">Bundle Discount (%)</label>
-<input type="number" id="bundle_discount" name="bundle_discount" class="form-control"
-value="{{ product.bundle_discount if product.bundle_discount else 0 }}" min="0" max="100" step="0.1">
-<span class="form-help">Discount percentage for bundle purchase</span>
-</div>
-</div>
-</div>
+                <!-- Bundle Options -->
+                <div class="bundle-section">
+                    <h3><i class="fas fa-boxes"></i> Bundle Options</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="is_bundle">Is this a bundle product?</label>
+                            <div class="toggle-container">
+                                <label class="switch">
+                                    <input type="checkbox" id="is_bundle" name="is_bundle" {% if product.is_bundle %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Bundle product</span>
+                            </div>
+                            <span class="form-help">Bundle products contain multiple products sold together</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="bundle_discount">Bundle Discount (%)</label>
+                            <input type="number" id="bundle_discount" name="bundle_discount" class="form-control"
+                                   value="{{ product.bundle_discount if product.bundle_discount else 0 }}" min="0" max="100" step="0.1">
+                            <span class="form-help">Discount percentage for bundle purchase</span>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Variants Section -->
-<div class="variants-section">
-<div class="section-header">
-<h3><i class="fas fa-list-alt"></i> Product Variants</h3>
-<span class="variant-badge">{{ product.variants|length if product.variants else 0 }} variants</span>
-</div>
+                <!-- Variants Section -->
+                <div class="variants-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-list-alt"></i> Product Variants</h3>
+                        <span class="variant-badge">{{ product.variants|length if product.variants else 0 }} variants</span>
+                    </div>
 
-{% if product.variants and product.variants|length > 0 %}
-<div class="variants-table-container">
-<table class="variants-table">
-<thead>
-<tr>
-<th>Name</th>
-<th>Length</th>
-<th>Texture</th>
-<th>Color</th>
-<th>Price (₦)</th>
-<th>Stock</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-{% for variant in product.variants %}
-<tr>
-<td>{{ variant.name or 'N/A' }}</td>
-<td>{{ variant.length or 'N/A' }}</td>
-<td>{{ variant.texture or 'N/A' }}</td>
-<td>{{ variant.color or 'N/A' }}</td>
-<td>{{ format_price(variant.price) }}</td>
-<td>
-<span class="stock-status {% if variant.stock > 20 %}stock-in{% elif variant.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
-{{ variant.stock }}
-</span>
-</td>
-<td>
-{% if variant.is_default %}
-<i class="fas fa-check-circle" style="color: var(--success);"></i>
-{% endif %}
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-{% else %}
-<p style="text-align: center; color: var(--gray); padding: 20px;">
-<i class="fas fa-info-circle"></i> No variants created yet. Add variants below.
-</p>
-{% endif %}
+                    {% if product.variants and product.variants|length > 0 %}
+                        <div class="variants-table-container">
+                            <table class="variants-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Length</th>
+                                        <th>Texture</th>
+                                        <th>Color</th>
+                                        <th>Price (₦)</th>
+                                        <th>Stock</th>
+                                        <th>Default</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for variant in product.variants %}
+                                        <tr>
+                                            <td>{{ variant.name or variant.id }}</td>
+                                            <td>{{ variant.length or 'N/A' }}</td>
+                                            <td>{{ variant.texture or 'N/A' }}</td>
+                                            <td>{{ variant.color or 'N/A' }}</td>
+                                            <td>{{ format_price(variant.price) }}</td>
+                                            <td>
+                                                <span class="stock-status {% if variant.stock > 20 %}stock-in{% elif variant.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                                                    {{ variant.stock }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if variant.is_default %}
+                                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="text-align: center; color: var(--gray); padding: 20px;">
+                            <i class="fas fa-info-circle"></i> No variants created yet. Add variants below.
+                        </p>
+                    {% endif %}
 
-<!-- Add Variant Form -->
-<div class="add-variant-form">
-<h4><i class="fas fa-plus-circle"></i> Add New Variant</h4>
-<div id="variantForms">
-<div class="variant-form" data-index="0">
-<input type="hidden" name="variant_id[]" value="">
-<div class="variant-fields">
-<div>
-<label>Variant Name</label>
-<input type="text" name="variant_name[]" class="form-control" placeholder="e.g., 24\" Brazilian Straight">
-</div>
-<div>
-<label>Length</label>
-<input type="text" name="variant_length[]" class="form-control" placeholder="e.g., 24 inches">
-</div>
-<div>
-<label>Texture</label>
-<input type="text" name="variant_texture[]" class="form-control" placeholder="e.g., Straight, Curly, Wavy">
-</div>
-<div>
-<label>Color</label>
-<input type="text" name="variant_color[]" class="form-control" placeholder="e.g., Natural Black">
-</div>
-<div>
-<label>Price (₦)</label>
-<input type="number" name="variant_price[]" class="form-control" value="{{ product.base_price }}" step="0.01" min="0">
-</div>
-<div>
-<label>Stock</label>
-<input type="number" name="variant_stock[]" class="form-control" value="0" min="0">
-</div>
-<div>
-<label>SKU</label>
-<input type="text" name="variant_sku[]" class="form-control" placeholder="Auto-generated">
-</div>
-<div>
-<label>Default</label>
-<div class="toggle-container">
-<input type="checkbox" name="variant_default[]" value="0">
-<span>Default variant</span>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="form-actions">
-<button type="button" class="btn btn-secondary" onclick="addVariantForm()">
-<i class="fas fa-plus"></i> Add Another Variant
-</button>
-</div>
-</div>
-</div>
+                    <!-- Add/Edit Variants -->
+                    <div class="add-variant-form">
+                        <h4><i class="fas fa-edit"></i> Edit Existing Variants / Add New Variants</h4>
+                        
+                        <!-- Existing Variants -->
+                        {% for variant in product.variants %}
+                            <div class="variant-form" data-index="{{ loop.index0 }}">
+                                <input type="hidden" name="variant_id[]" value="{{ variant.id }}">
+                                <div class="variant-fields">
+                                    <div>
+                                        <label>Variant Name</label>
+                                        <input type="text" name="variant_name[]" class="form-control" 
+                                               value="{{ variant.name or '' }}" 
+                                               placeholder="e.g., 24\" Brazilian Straight">
+                                    </div>
+                                    <div>
+                                        <label>Length</label>
+                                        <input type="text" name="variant_length[]" class="form-control" 
+                                               value="{{ variant.length or '' }}" 
+                                               placeholder="e.g., 24 inches">
+                                    </div>
+                                    <div>
+                                        <label>Texture</label>
+                                        <input type="text" name="variant_texture[]" class="form-control" 
+                                               value="{{ variant.texture or '' }}" 
+                                               placeholder="e.g., Straight, Curly, Wavy">
+                                    </div>
+                                    <div>
+                                        <label>Color</label>
+                                        <input type="text" name="variant_color[]" class="form-control" 
+                                               value="{{ variant.color or '' }}" 
+                                               placeholder="e.g., Natural Black">
+                                    </div>
+                                    <div>
+                                        <label>Price (₦)</label>
+                                        <input type="number" name="variant_price[]" class="form-control" 
+                                               value="{{ variant.price or product.base_price }}" 
+                                               step="0.01" min="0">
+                                    </div>
+                                    <div>
+                                        <label>Stock</label>
+                                        <input type="number" name="variant_stock[]" class="form-control" 
+                                               value="{{ variant.stock or 0 }}" min="0">
+                                    </div>
+                                    <div>
+                                        <label>SKU</label>
+                                        <input type="text" name="variant_sku[]" class="form-control" 
+                                               value="{{ variant.sku or '' }}" 
+                                               placeholder="Auto-generated">
+                                    </div>
+                                    <div>
+                                        <label>Default</label>
+                                        <div class="toggle-container">
+                                            <input type="checkbox" name="variant_default[]" 
+                                                   value="{{ loop.index0 }}"
+                                                   {% if variant.is_default %}checked{% endif %}>
+                                            <span>Default variant</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
 
-<!-- Image Upload -->
-<div class="form-group">
-<label>Product Images</label>
-<div class="file-upload-container">
-<!-- Current Images -->
-{% if product.images and product.images|length > 0 %}
-<div class="current-images">
-<p><strong>Current Images ({{ product.images|length }})</strong></p>
-<div class="image-gallery">
-{% for image in product.images|sort(attribute='sort_order') %}
-<div class="gallery-item">
-{% if image.is_primary %}
-<span class="primary-badge">Primary</span>
-{% endif %}
-<img src="{{ url_for('uploaded_file', filename=image.image_url) }}"
-alt="Product Image {{ loop.index }}">
-<div class="image-overlay">
-<div class="image-actions">
-{% if not image.is_primary %}
-<button type="button" class="image-btn" title="Set as Primary">
-<i class="fas fa-star"></i>
-</button>
-{% endif %}
-<button type="button" class="image-btn" title="Delete">
-<i class="fas fa-trash"></i>
-</button>
-</div>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
+                        <!-- New Variant Template -->
+                        <div id="newVariantTemplate" style="display: none;">
+                            <div class="variant-form">
+                                <input type="hidden" name="variant_id[]" value="">
+                                <div class="variant-fields">
+                                    <div>
+                                        <label>Variant Name</label>
+                                        <input type="text" name="variant_name[]" class="form-control" 
+                                               placeholder="e.g., 24\" Brazilian Straight">
+                                    </div>
+                                    <div>
+                                        <label>Length</label>
+                                        <input type="text" name="variant_length[]" class="form-control" 
+                                               placeholder="e.g., 24 inches">
+                                    </div>
+                                    <div>
+                                        <label>Texture</label>
+                                        <input type="text" name="variant_texture[]" class="form-control" 
+                                               placeholder="e.g., Straight, Curly, Wavy">
+                                    </div>
+                                    <div>
+                                        <label>Color</label>
+                                        <input type="text" name="variant_color[]" class="form-control" 
+                                               placeholder="e.g., Natural Black">
+                                    </div>
+                                    <div>
+                                        <label>Price (₦)</label>
+                                        <input type="number" name="variant_price[]" class="form-control" 
+                                               value="{{ product.base_price }}" step="0.01" min="0">
+                                    </div>
+                                    <div>
+                                        <label>Stock</label>
+                                        <input type="number" name="variant_stock[]" class="form-control" 
+                                               value="0" min="0">
+                                    </div>
+                                    <div>
+                                        <label>SKU</label>
+                                        <input type="text" name="variant_sku[]" class="form-control" 
+                                               placeholder="Auto-generated">
+                                    </div>
+                                    <div>
+                                        <label>Default</label>
+                                        <div class="toggle-container">
+                                            <input type="checkbox" name="variant_default[]" 
+                                                   value="new">
+                                            <span>Default variant</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: flex-end;">
+                                        <button type="button" class="btn btn-danger" 
+                                                onclick="removeVariantForm(this)" 
+                                                style="padding: 8px 15px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-<!-- New Image Upload -->
-<div class="file-upload-area" onclick="document.getElementById('images').click()">
-<i class="fas fa-cloud-upload-alt"></i>
-<p>Click to upload new product images</p>
-<p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
-<div class="btn btn-primary" style="display: inline-block; padding: 10px 20px; margin-top: 10px;">
-Browse Files
-</div>
-</div>
-<input type="file" id="images" name="images" accept="image/*"
-style="display: none;" multiple onchange="previewImages(this)">
-<div id="imagePreview"></div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="addNewVariant()">
+                                <i class="fas fa-plus"></i> Add New Variant
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-<span class="form-help">Upload multiple images. First image will be set as primary.</span>
-</div>
-</div>
+                <!-- Image Upload -->
+                <div class="form-group">
+                    <label>Product Images</label>
+                    <div class="file-upload-container">
+                        <!-- Current Images -->
+                        {% if product.images and product.images|length > 0 %}
+                            <div class="current-images">
+                                <p><strong>Current Images ({{ product.images|length }})</strong></p>
+                                <div class="image-gallery">
+                                    {% for image in product.images %}
+                                        {% if image.image_url %}
+                                            <div class="gallery-item">
+                                                {% if image.is_primary %}
+                                                    <span class="primary-badge">Primary</span>
+                                                {% endif %}
+                                                <img src="{{ url_for('uploaded_file', filename=image.image_url) }}" 
+                                                     alt="Product Image {{ loop.index }}" 
+                                                     onerror="this.src='/static/images/placeholder.jpg'">
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
 
-<!-- Product Status -->
-<div class="form-row">
-<div class="form-group">
-<label>Featured Product</label>
-<div class="toggle-container">
-<label class="switch">
-<input type="checkbox" id="featured" name="featured" {% if product.featured %}checked{% endif %}>
-<span class="slider round"></span>
-</label>
-<span>Show on homepage</span>
-</div>
-</div>
-<div class="form-group">
-<label>Status</label>
-<div class="toggle-container">
-<label class="switch">
-<input type="checkbox" id="active" name="active" {% if product.active %}checked{% endif %}>
-<span class="slider round"></span>
-</label>
-<span>Active (Available for sale)</span>
-</div>
-</div>
-</div>
+                        <!-- New Image Upload -->
+                        <div class="file-upload-area" onclick="document.getElementById('images').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload new product images</p>
+                            <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
+                            <div class="btn btn-primary" style="display: inline-block; padding: 10px 20px; margin-top: 10px;">
+                                Browse Files
+                            </div>
+                        </div>
+                        <input type="file" id="images" name="images" accept="image/*"
+                               style="display: none;" multiple onchange="previewImages(this)">
+                        <div id="imagePreview"></div>
 
-<!-- Form Actions -->
-<div class="form-actions">
-<button type="submit" class="btn btn-success">
-<i class="fas fa-save"></i> Update Product
-</button>
-<a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
-<i class="fas fa-times"></i> Cancel
-</a>
-<a href="{{ url_for('product_detail', id=product.id) }}" target="_blank" class="btn btn-outline">
-<i class="fas fa-eye"></i> Preview
-</a>
-<a href="{{ url_for('admin_product_variants', product_id=product.id) }}" class="btn btn-primary">
-<i class="fas fa-list"></i> Manage Variants
-</a>
-<button type="button" class="btn btn-danger" onclick="confirmDelete()">
-<i class="fas fa-trash"></i> Delete
-</button>
-</div>
-</form>
-</div>
-</main>
+                        <span class="form-help">Upload multiple images. First image will be set as primary.</span>
+                    </div>
+                </div>
+
+                <!-- Product Status -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Featured Product</label>
+                        <div class="toggle-container">
+                            <label class="switch">
+                                <input type="checkbox" id="featured" name="featured" {% if product.featured %}checked{% endif %}>
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Show on homepage</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <div class="toggle-container">
+                            <label class="switch">
+                                <input type="checkbox" id="active" name="active" {% if product.active %}checked{% endif %}>
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Active (Available for sale)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Update Product
+                    </button>
+                    <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <a href="{{ url_for('product_detail', id=product.id) }}" target="_blank" class="btn btn-outline">
+                        <i class="fas fa-eye"></i> Preview
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="modal">
-<div class="modal-content">
-<h3 style="color: var(--danger); margin-bottom: 15px;">Delete Product</h3>
-<p>Are you sure you want to delete <strong>"{{ product.name }}"</strong>?</p>
-<p style="color: var(--danger); margin: 15px 0; padding: 10px; background: #f8d7da; border-radius: 5px;">
-<i class="fas fa-exclamation-triangle"></i> This action cannot be undone. All product data including variants and images will be permanently deleted.
-</p>
-<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-<button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-<form method="POST" action="{{ url_for('admin_delete_product', id=product.id) }}" style="display: inline;">
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<button type="submit" class="btn btn-danger">Delete Product</button>
-</form>
-</div>
-</div>
+    <div class="modal-content">
+        <h3 style="color: var(--danger); margin-bottom: 15px;">Delete Product</h3>
+        <p>Are you sure you want to delete <strong>"{{ product.name }}"</strong>?</p>
+        <p style="color: var(--danger); margin: 15px 0; padding: 10px; background: #f8d7da; border-radius: 5px;">
+            <i class="fas fa-exclamation-triangle"></i> This action cannot be undone. All product data including variants and images will be permanently deleted.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <form method="POST" action="{{ url_for('admin_delete_product', id=product.id) }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-danger">Delete Product</button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
-<div class="spinner"></div>
+    <div class="spinner"></div>
 </div>
 
 <script>
-// DOM Elements
-const editProductForm = document.getElementById('editProductForm');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const deleteModal = document.getElementById('deleteModal');
-const imagePreview = document.getElementById('imagePreview');
-const variantForms = document.getElementById('variantForms');
-let variantIndex = 1;
+    // DOM Elements
+    const editProductForm = document.getElementById('editProductForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const deleteModal = document.getElementById('deleteModal');
+    const imagePreview = document.getElementById('imagePreview');
+    let variantCount = {{ product.variants|length if product.variants else 0 }};
 
-// Auto-generate SKU on name/category change
-function autoGenerateSKU() {
-const name = document.getElementById('name').value;
-const categorySelect = document.getElementById('category_id');
-const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-const currentSKU = document.getElementById('sku').value;
+    // Auto-generate SKU
+    function autoGenerateSKU() {
+        const name = document.getElementById('name').value;
+        const categorySelect = document.getElementById('category_id');
+        const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+        const currentSKU = document.getElementById('sku').value;
 
-// Only auto-generate if SKU is empty
-if (!currentSKU && name && categoryText) {
-const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
-const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
-const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-const sku = `NHL-${namePrefix}-${categoryPrefix}-${randomNum}`;
-document.getElementById('sku').value = sku;
+        if (!currentSKU && name && categoryText) {
+            const namePrefix = name.substring(0, 3).toUpperCase().replace(/\s/g, '');
+            const categoryPrefix = categoryText.substring(0, 2).toUpperCase();
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            document.getElementById('sku').value = `HAIR-${randomNum}`;
+        }
+    }
 
-// Also update variant SKUs
-updateVariantSKUs(sku);
-}
-}
+    // Add new variant form
+    function addNewVariant() {
+        const template = document.getElementById('newVariantTemplate');
+        const newVariant = template.cloneNode(true);
+        newVariant.id = '';
+        newVariant.style.display = 'block';
+        
+        // Update index
+        const index = variantCount++;
+        const variantDefaultCheckbox = newVariant.querySelector('input[name="variant_default[]"]');
+        variantDefaultCheckbox.value = index;
+        
+        // Add to form
+        template.parentNode.insertBefore(newVariant, document.querySelector('.form-actions'));
+    }
 
-// Update variant SKUs based on product SKU
-function updateVariantSKUs(productSKU) {
-const variantSKUInputs = document.querySelectorAll('input[name="variant_sku[]"]');
-variantSKUInputs.forEach((input, index) => {
-if (!input.value) {
-input.value = `${productSKU}-V${index + 1}`;
-}
-});
-}
+    // Remove variant form
+    function removeVariantForm(button) {
+        const form = button.closest('.variant-form');
+        form.remove();
+    }
 
-// Add variant form
-function addVariantForm() {
-const newForm = document.createElement('div');
-newForm.className = 'variant-form';
-newForm.dataset.index = variantIndex;
+    // Preview images
+    function previewImages(input) {
+        imagePreview.innerHTML = '';
 
-newForm.innerHTML = `
-<div class="variant-fields">
-<div>
-<label>Variant Name</label>
-<input type="text" name="variant_name[]" class="form-control" placeholder="e.g., 24\\" Brazilian Straight">
-</div>
-<div>
-<label>Length</label>
-<input type="text" name="variant_length[]" class="form-control" placeholder="e.g., 24 inches">
-</div>
-<div>
-<label>Texture</label>
-<input type="text" name="variant_texture[]" class="form-control" placeholder="e.g., Straight, Curly, Wavy">
-</div>
-<div>
-<label>Color</label>
-<input type="text" name="variant_color[]" class="form-control" placeholder="e.g., Natural Black">
-</div>
-<div>
-<label>Price (₦)</label>
-<input type="number" name="variant_price[]" class="form-control" value="{{ product.base_price }}" step="0.01" min="0">
-</div>
-<div>
-<label>Stock</label>
-<input type="number" name="variant_stock[]" class="form-control" value="0" min="0">
-</div>
-<div>
-<label>SKU</label>
-<input type="text" name="variant_sku[]" class="form-control" placeholder="Auto-generated">
-</div>
-<div>
-<label>Default</label>
-<div class="toggle-container">
-<input type="checkbox" name="variant_default[]" value="${variantIndex}">
-<span>Default variant</span>
-</div>
-</div>
-<div style="display: flex; align-items: flex-end;">
-<button type="button" class="btn btn-danger" onclick="removeVariantForm(this)" style="padding: 8px 15px;">
-<i class="fas fa-trash"></i>
-</button>
-</div>
-</div>
-`;
+        if (input.files && input.files.length > 0) {
+            Array.from(input.files).forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
 
-variantForms.appendChild(newForm);
+                    reader.onload = function(e) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
 
-// Generate SKU for new variant
-const productSKU = document.getElementById('sku').value;
-const skuInput = newForm.querySelector('input[name="variant_sku[]"]');
-if (productSKU && !skuInput.value) {
-skuInput.value = `${productSKU}-V${variantIndex + 1}`;
-}
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = `Product Image ${index + 1}`;
 
-variantIndex++;
-}
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.innerHTML = '×';
+                        removeBtn.onclick = function() {
+                            imagePreview.removeChild(previewItem);
+                            // Remove file from input
+                            const dt = new DataTransfer();
+                            Array.from(input.files).forEach((f, i) => {
+                                if (i !== index) dt.items.add(f);
+                            });
+                            input.files = dt.files;
+                        };
 
-// Remove variant form
-function removeVariantForm(button) {
-const form = button.closest('.variant-form');
-form.remove();
-}
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        imagePreview.appendChild(previewItem);
+                    };
 
-// Preview images
-function previewImages(input) {
-imagePreview.innerHTML = '';
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    }
 
-if (input.files && input.files.length > 0) {
-Array.from(input.files).forEach((file, index) => {
-if (file.type.startsWith('image/')) {
-const reader = new FileReader();
+    // Form Validation
+    function validateForm() {
+        let isValid = true;
 
-reader.onload = function(e) {
-const previewItem = document.createElement('div');
-previewItem.className = 'preview-item';
+        // Clear previous errors
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+        });
 
-const img = document.createElement('img');
-img.src = e.target.result;
-img.alt = `Product Image ${index + 1}`;
+        document.querySelectorAll('.form-group').forEach(el => {
+            el.classList.remove('has-error');
+        });
 
-const removeBtn = document.createElement('button');
-removeBtn.className = 'remove-btn';
-removeBtn.innerHTML = '×';
-removeBtn.onclick = function() {
-imagePreview.removeChild(previewItem);
-// Remove file from input
-const dt = new DataTransfer();
-Array.from(input.files).forEach((f, i) => {
-if (i !== index) dt.items.add(f);
-});
-input.files = dt.files;
-};
+        // Validate required fields
+        const requiredFields = [
+            { id: 'name', message: 'Product name is required' },
+            { id: 'category_id', message: 'Category is required' },
+            { id: 'description', message: 'Description is required' },
+            { id: 'base_price', message: 'Base price is required' }
+        ];
 
-previewItem.appendChild(img);
-previewItem.appendChild(removeBtn);
-imagePreview.appendChild(previewItem);
-};
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            const errorElement = document.getElementById(field.id + 'Error');
 
-reader.readAsDataURL(file);
-}
-});
-}
-}
+            if (!element.value.trim()) {
+                isValid = false;
+                element.parentElement.classList.add('has-error');
+                errorElement.textContent = field.message;
+                errorElement.style.display = 'block';
+            } else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
+                isValid = false;
+                element.parentElement.classList.add('has-error');
+                errorElement.textContent = 'Base price must be greater than 0';
+                errorElement.style.display = 'block';
+            }
+        });
 
-// Form Validation
-function validateForm() {
-let isValid = true;
+        return isValid;
+    }
 
-// Clear previous errors
-document.querySelectorAll('.error-message').forEach(el => {
-el.style.display = 'none';
-el.textContent = '';
-});
+    // Form Submission
+    editProductForm.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            alert('Please fix the errors in the form');
+            return;
+        }
 
-document.querySelectorAll('.form-group').forEach(el => {
-el.classList.remove('has-error');
-});
+        // Show loading
+        loadingOverlay.classList.add('active');
+    });
 
-// Validate required fields
-const requiredFields = [
-{ id: 'name', message: 'Product name is required' },
-{ id: 'category_id', message: 'Category is required' },
-{ id: 'description', message: 'Description is required' },
-{ id: 'base_price', message: 'Base price is required' },
-{ id: 'total_quantity', message: 'Total stock is required' }
-];
+    // Delete product confirmation
+    function confirmDelete() {
+        deleteModal.style.display = 'flex';
+    }
 
-requiredFields.forEach(field => {
-const element = document.getElementById(field.id);
-const errorElement = document.getElementById(field.id + 'Error');
+    function closeDeleteModal() {
+        deleteModal.style.display = 'none';
+    }
 
-if (!element.value.trim()) {
-isValid = false;
-element.parentElement.classList.add('has-error');
-errorElement.textContent = field.message;
-errorElement.style.display = 'block';
-} else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
-isValid = false;
-element.parentElement.classList.add('has-error');
-errorElement.textContent = 'Base price must be greater than 0';
-errorElement.style.display = 'block';
-} else if (field.id === 'total_quantity' && parseInt(element.value) < 0) {
-isValid = false;
-element.parentElement.classList.add('has-error');
-errorElement.textContent = 'Total stock cannot be negative';
-errorElement.style.display = 'block';
-}
-});
+    // Close modal when clicking outside
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
 
-return isValid;
-}
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
 
-// Form Submission
-editProductForm.addEventListener('submit', function(e) {
-e.preventDefault();
+    // Notification function
+    function showNotification(message, type = 'success') {
+        // Remove any existing notification
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
 
-if (!validateForm()) {
-showNotification('Please fix the errors in the form', 'error');
-return;
-}
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} notification`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            min-width: 300px;
+            max-width: 400px;
+        `;
 
-// Show loading
-loadingOverlay.classList.add('active');
+        const icon = type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                    'fa-exclamation-triangle';
 
-// Submit form
-this.submit();
-});
+        notification.innerHTML = `
+            <i class="fas ${icon}" style="margin-right: 10px;"></i>
+            ${message}
+        `;
 
-// Delete product confirmation
-function confirmDelete() {
-deleteModal.style.display = 'flex';
-}
+        document.body.appendChild(notification);
 
-function closeDeleteModal() {
-deleteModal.style.display = 'none';
-}
+        // Remove after 5 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 5000);
 
-// Close modal when clicking outside
-deleteModal.addEventListener('click', function(e) {
-if (e.target === this) {
-closeDeleteModal();
-}
-});
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-if (e.key === 'Escape') {
-closeDeleteModal();
-}
-});
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners for auto SKU generation
+        document.getElementById('name').addEventListener('blur', autoGenerateSKU);
+        document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
 
-// Notification function
-function showNotification(message, type = 'success') {
-// Remove any existing notification
-const existingNotification = document.querySelector('.notification');
-if (existingNotification) {
-existingNotification.remove();
-}
+        // Auto-generate SKU if empty
+        if (!document.getElementById('sku').value) {
+            autoGenerateSKU();
+        }
+    });
 
-// Create notification element
-const notification = document.createElement('div');
-notification.className = `alert alert-${type} notification`;
-notification.style.cssText = `
-position: fixed;
-top: 20px;
-right: 20px;
-z-index: 10000;
-animation: slideIn 0.3s ease;
-min-width: 300px;
-max-width: 400px;
-`;
-
-const icon = type === 'success' ? 'fa-check-circle' :
-type === 'error' ? 'fa-exclamation-circle' :
-'fa-exclamation-triangle';
-
-notification.innerHTML = `
-<i class="fas ${icon}" style="margin-right: 10px;"></i>
-${message}
-`;
-
-document.body.appendChild(notification);
-
-// Remove after 5 seconds
-setTimeout(() => {
-notification.style.animation = 'slideOut 0.3s ease';
-setTimeout(() => {
-if (notification.parentElement) {
-notification.remove();
-}
-}, 300);
-}, 5000);
-
-// Add slideOut animation
-const style = document.createElement('style');
-style.textContent = `
-@keyframes slideOut {
-from {
-transform: translateX(0);
-opacity: 1;
-}
-to {
-transform: translateX(100%);
-opacity: 0;
-}
-}
-`;
-document.head.appendChild(style);
-}
-
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-// Add event listeners for auto SKU generation
-document.getElementById('name').addEventListener('blur', autoGenerateSKU);
-document.getElementById('category_id').addEventListener('change', autoGenerateSKU);
-
-// Auto-generate SKU if empty
-if (!document.getElementById('sku').value) {
-autoGenerateSKU();
-}
-
-// Format prices on blur
-const priceInputs = ['base_price', 'compare_price', 'bundle_discount'];
-priceInputs.forEach(id => {
-const input = document.getElementById(id);
-if (input) {
-input.addEventListener('blur', function() {
-if (this.value) {
-if (id === 'bundle_discount') {
-this.value = parseFloat(this.value).toFixed(1);
-} else {
-this.value = parseFloat(this.value).toFixed(2);
-}
-}
-});
-}
-});
-});
-
-// Handle page unload to prevent accidental navigation
-window.addEventListener('beforeunload', function(e) {
-if (loadingOverlay.classList.contains('active')) {
-e.preventDefault();
-e.returnValue = 'Changes are being saved. Are you sure you want to leave?';
-}
-});
+    // Handle page unload to prevent accidental navigation
+    window.addEventListener('beforeunload', function(e) {
+        if (loadingOverlay.classList.contains('active')) {
+            e.preventDefault();
+            e.returnValue = 'Changes are being saved. Are you sure you want to leave?';
+        }
+    });
 </script>
 </body>
 </html>
