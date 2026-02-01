@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- CSRF Token for Forms -->
-    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+    <meta name="csrf-token" content="{{ csrf_token if csrf_token else '' }}">
     
-    <title>{% block title %}Admin Panel - {{ config.get('brand_name', 'Store') }}{% endblock %}</title>
+    <title>{% block title %}Admin Panel - {{ config.brand_name }}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,9 +18,10 @@
     
     <style>
         :root {
-            --primary: #9d4edd;
-            --primary-dark: #7b2cbf;
-            --secondary: #f72585;
+            --primary: #1a1a2e;
+            --primary-dark: #0f0f1a;
+            --primary-light: #16213e;
+            --secondary: #d4af37;
             --light: #f8f9fa;
             --dark: #212529;
             --gray-100: #f8f9fa;
@@ -67,7 +68,7 @@
         /* Sidebar Styling */
         .admin-sidebar {
             width: 250px;
-            background: linear-gradient(180deg, var(--dark) 0%, var(--gray-900) 100%);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
             position: fixed;
             height: 100vh;
@@ -75,6 +76,7 @@
             z-index: 1000;
             transition: var(--transition);
             box-shadow: var(--shadow-lg);
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
         
         .sidebar-header {
@@ -94,7 +96,7 @@
         .brand-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: linear-gradient(135deg, var(--secondary), #b8941e);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -126,14 +128,14 @@
         .user-avatar {
             width: 45px;
             height: 45px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: linear-gradient(135deg, var(--secondary), #b8941e);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 1.2rem;
-            color: white;
+            color: var(--primary);
         }
         
         .user-details h6 {
@@ -168,13 +170,13 @@
         .nav-link:hover {
             background: rgba(255,255,255,0.1);
             color: white;
-            border-left-color: var(--primary);
+            border-left-color: var(--secondary);
         }
         
         .nav-link.active {
-            background: linear-gradient(90deg, rgba(157, 78, 221, 0.2), transparent);
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.2), transparent);
             color: white;
-            border-left-color: var(--primary);
+            border-left-color: var(--secondary);
             font-weight: 600;
         }
         
@@ -282,12 +284,12 @@
         }
         
         .btn-primary-admin {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
         }
         
         .btn-primary-admin:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
             color: white;
             transform: translateY(-1px);
             box-shadow: var(--shadow-sm);
@@ -324,8 +326,30 @@
             to { transform: rotate(360deg); }
         }
         
+        /* Mobile Toggle Button */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: block;
+            }
+            
             .admin-sidebar {
                 margin-left: -250px;
             }
@@ -337,6 +361,7 @@
             .admin-main {
                 margin-left: 0;
                 padding: 15px;
+                padding-top: 70px;
             }
             
             .main-header {
@@ -363,11 +388,72 @@
             background: rgba(255,255,255,0.2);
             border-radius: 3px;
         }
+        
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-icon.orders {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: white;
+        }
+        
+        .stat-icon.products {
+            background: linear-gradient(135deg, #f72585, #7209b7);
+            color: white;
+        }
+        
+        .stat-icon.customers {
+            background: linear-gradient(135deg, #ff9e00, #ff0054);
+            color: white;
+        }
+        
+        .stat-icon.revenue {
+            background: linear-gradient(135deg, #38b000, #008000);
+            color: white;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
     </style>
     
     {% block styles %}{% endblock %}
 </head>
 <body>
+    <!-- Mobile Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
@@ -375,14 +461,14 @@
 
     <div class="admin-wrapper">
         <!-- Sidebar -->
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-header">
                 <a href="{{ url_for('admin_dashboard') }}" class="brand">
                     <div class="brand-icon">
                         <i class="fas fa-crown"></i>
                     </div>
                     <div class="brand-text">
-                        <h5>{{ config.get('brand_name', 'Store') }}</h5>
+                        <h5>{{ config.brand_name }}</h5>
                         <small>Admin Panel</small>
                     </div>
                 </a>
@@ -411,7 +497,7 @@
                 
                 <!-- Products -->
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_products') }}" class="nav-link {% if request.endpoint in ['admin_products', 'add_product', 'edit_product'] %}active{% endif %}">
+                    <a href="{{ url_for('admin_products') }}" class="nav-link {% if request.endpoint in ['admin_products', 'admin_add_product', 'admin_edit_product'] %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="fas fa-box"></i>
                         </div>
@@ -421,7 +507,7 @@
                 
                 <!-- Categories -->
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_categories') }}" class="nav-link {% if request.endpoint in ['admin_categories', 'add_category', 'edit_category'] %}active{% endif %}">
+                    <a href="{{ url_for('admin_categories') }}" class="nav-link {% if request.endpoint in ['admin_categories', 'admin_add_category', 'admin_edit_category'] %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="fas fa-tags"></i>
                         </div>
@@ -431,7 +517,7 @@
                 
                 <!-- Orders -->
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_orders') }}" class="nav-link {% if request.endpoint in ['admin_orders', 'view_order'] %}active{% endif %}">
+                    <a href="{{ url_for('admin_orders') }}" class="nav-link {% if request.endpoint in ['admin_orders', 'admin_order_detail'] %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="fas fa-shopping-bag"></i>
                         </div>
@@ -462,7 +548,7 @@
             
             <div class="sidebar-footer">
                 <!-- Logout Button -->
-                <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout
                 </a>
@@ -515,7 +601,7 @@
 
             <!-- Footer -->
             <footer class="text-center text-muted mt-4">
-                <p class="small mb-0">&copy; {{ now.year if now else '2024' }} {{ config.get('brand_name', 'Store') }} Admin Panel.</p>
+                <p class="small mb-0">&copy; {{ config.year if config else now.year }} {{ config.brand_name }} Admin Panel. All rights reserved.</p>
             </footer>
         </main>
     </div>
@@ -590,11 +676,36 @@
                 if (typeof callback === 'function') {
                     callback();
                 }
+                return true;
             }
+            return false;
         }
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Mobile sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const adminSidebar = document.getElementById('adminSidebar');
+            
+            if (sidebarToggle && adminSidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    adminSidebar.classList.toggle('active');
+                    this.innerHTML = adminSidebar.classList.contains('active') 
+                        ? '<i class="fas fa-times"></i>' 
+                        : '<i class="fas fa-bars"></i>';
+                });
+            }
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 && adminSidebar && adminSidebar.classList.contains('active')) {
+                    if (!adminSidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                        adminSidebar.classList.remove('active');
+                        sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                    }
+                }
+            });
+            
             // Auto-dismiss alerts after 5 seconds
             setTimeout(() => {
                 const alerts = document.querySelectorAll('.alert');
@@ -603,14 +714,6 @@
                     bsAlert.close();
                 });
             }, 5000);
-            
-            // Mobile sidebar toggle
-            const sidebarToggle = document.querySelector('.sidebar-toggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    document.querySelector('.admin-sidebar').classList.toggle('active');
-                });
-            }
             
             // Add active class to parent of active nav link
             const activeNavLink = document.querySelector('.nav-link.active');
@@ -633,6 +736,31 @@
             window.addEventListener('load', function() {
                 hideLoading();
             });
+            
+            // Update clock every minute
+            function updateClock() {
+                const now = new Date();
+                const timeElement = document.querySelector('.header-right small');
+                const dateElement = document.querySelector('.header-right span');
+                
+                if (timeElement && dateElement) {
+                    timeElement.textContent = now.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    dateElement.textContent = now.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                }
+            }
+            
+            // Update clock every minute
+            setInterval(updateClock, 60000);
+            updateClock(); // Initial call
         });
 
         // Format price
@@ -654,10 +782,42 @@
 
         // Handle window resize for mobile sidebar
         window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                document.querySelector('.admin-sidebar').classList.remove('active');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const adminSidebar = document.getElementById('adminSidebar');
+            
+            if (window.innerWidth > 768 && adminSidebar) {
+                adminSidebar.classList.remove('active');
+                if (sidebarToggle) {
+                    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                }
             }
         });
+
+        // Handle CSRF token for AJAX requests
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+
+        // Make AJAX request with CSRF token
+        function makeRequest(url, method = 'GET', data = null) {
+            return fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: data ? JSON.stringify(data) : null
+            });
+        }
+
+        // Check if user is authenticated
+        function checkAuth() {
+            if (!{{ 'true' if session.get('admin_id') else 'false' }}) {
+                window.location.href = "{{ url_for('admin_login') }}";
+                return false;
+            }
+            return true;
+        }
     </script>
     
     {% block scripts %}{% endblock %}
