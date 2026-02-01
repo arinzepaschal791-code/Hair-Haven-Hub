@@ -346,14 +346,6 @@
             border-radius: 50%;
         }
 
-        /* Additional Product Fields */
-        .form-group small {
-            display: block;
-            color: var(--gray);
-            margin-top: 5px;
-            font-size: 0.85rem;
-        }
-
         /* Variant Section */
         .variant-section {
             margin-top: 30px;
@@ -370,12 +362,26 @@
 
         .variant-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
             gap: 15px;
             margin-bottom: 15px;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 5px;
+            align-items: center;
+        }
+
+        .variant-row h5 {
+            grid-column: 1 / -1;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .variant-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
         }
 
         .variant-actions {
@@ -383,6 +389,14 @@
             gap: 10px;
             align-items: center;
             margin-top: 20px;
+        }
+
+        /* Additional Product Fields */
+        .form-group small {
+            display: block;
+            color: var(--gray);
+            margin-top: 5px;
+            font-size: 0.85rem;
         }
 
         /* Buttons */
@@ -601,10 +615,6 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
-            .variant-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
         }
 
         @media (max-width: 576px) {
@@ -640,9 +650,8 @@
                 <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
                 <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-                <li><a href="{{ url_for('admin_categories') }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-                <li><a href="{{ url_for('admin_customers') }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="{{ url_for('admin_categories') if 'admin_categories' in url_for else '#' }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
+                <li><a href="{{ url_for('admin_customers') if 'admin_customers' in url_for else '#' }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
                 <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
             </ul>
         </aside>
@@ -728,46 +737,6 @@
                         </div>
                     </div>
 
-                    <!-- Stock and SKU -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="total_quantity">Stock Quantity *</label>
-                            <input type="number" id="total_quantity" name="total_quantity" class="form-control" 
-                                   placeholder="100" min="0" required>
-                            <small>Available quantity in inventory</small>
-                            <div class="error-message" id="stockError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="sku">SKU (Stock Keeping Unit)</label>
-                            <input type="text" id="sku" name="sku" class="form-control" 
-                                   placeholder="e.g., BRZ-BW-24">
-                            <small>Unique identifier for inventory management</small>
-                        </div>
-                    </div>
-
-                    <!-- Product Specifications -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="length">Length (for hair products)</label>
-                            <input type="text" id="length" name="length" class="form-control" 
-                                   placeholder="e.g., 12, 14, 16, 18, 20, 22, 24, 26, 28, 30">
-                            <small>Separate multiple lengths with commas</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="texture">Texture (for hair products)</label>
-                            <select id="texture" name="texture" class="form-control">
-                                <option value="">Select Texture</option>
-                                <option value="Straight">Straight</option>
-                                <option value="Body Wave">Body Wave</option>
-                                <option value="Deep Wave">Deep Wave</option>
-                                <option value="Loose Wave">Loose Wave</option>
-                                <option value="Curly">Curly</option>
-                                <option value="Kinky Curly">Kinky Curly</option>
-                                <option value="Coily">Coily</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <!-- Product Settings -->
                     <div class="form-row">
                         <div class="form-group">
@@ -792,23 +761,31 @@
                         </div>
                     </div>
 
-                    <!-- Bundle Settings -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Bundle Product</label>
-                            <div style="margin-top: 10px;">
-                                <label class="switch">
-                                    <input type="checkbox" id="is_bundle" name="is_bundle" value="1">
-                                    <span class="slider round"></span>
-                                </label>
-                                <span style="margin-left: 10px; color: var(--gray);">This is a bundle product</span>
-                            </div>
+                    <!-- Variant Section -->
+                    <div class="variant-section">
+                        <div class="variant-header">
+                            <h3>Product Variants</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
+                                <i class="fas fa-plus"></i> Add Variant
+                            </button>
                         </div>
-                        <div class="form-group" id="bundleDiscountGroup" style="display: none;">
-                            <label for="bundle_discount">Bundle Discount (%)</label>
-                            <input type="number" id="bundle_discount" name="bundle_discount" class="form-control" 
-                                   placeholder="0" min="0" max="100" step="1" value="0">
-                            <small>Discount percentage for bundle purchase</small>
+                        
+                        <p class="text-muted mb-4">
+                            Add different variants of this product (different lengths, textures, colors).
+                            If no variants are added, the product will be sold as a single item.
+                        </p>
+
+                        <div id="variantsContainer">
+                            <!-- Variants will be added here dynamically -->
+                        </div>
+
+                        <div class="variant-actions">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
+                                <i class="fas fa-plus"></i> Add Another Variant
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearAllVariants()">
+                                <i class="fas fa-trash"></i> Clear All
+                            </button>
                         </div>
                     </div>
 
@@ -820,11 +797,11 @@
                             <div class="file-upload-area" onclick="document.getElementById('images').click()">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p>Click to upload product images (multiple allowed)</p>
-                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP</small></p>
+                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP (Max 16MB)</small></p>
                                 <div class="btn btn-outline">Browse Files</div>
                             </div>
                             <input type="file" id="images" name="images" accept="image/*" 
-                                   style="display: none;" multiple onchange="previewImages(this)" required>
+                                   style="display: none;" multiple onchange="previewImages(this)">
                             <div id="imagePreview"></div>
                             <small>First image will be set as primary. Click on image to set as primary.</small>
                         </div>
@@ -863,14 +840,132 @@
         const toastMessage = document.getElementById('toastMessage');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const imagePreview = document.getElementById('imagePreview');
-        const bundleDiscountGroup = document.getElementById('bundleDiscountGroup');
-        const isBundleCheckbox = document.getElementById('is_bundle');
+        const variantsContainer = document.getElementById('variantsContainer');
 
-        // Bundle toggle
-        if (isBundleCheckbox && bundleDiscountGroup) {
-            isBundleCheckbox.addEventListener('change', function() {
-                bundleDiscountGroup.style.display = this.checked ? 'block' : 'none';
-            });
+        // Variant Counter
+        let variantCounter = 0;
+
+        // Add new variant row
+        function addVariant() {
+            const variantId = `variant_${variantCounter}`;
+            
+            const variantRow = document.createElement('div');
+            variantRow.className = 'variant-row';
+            variantRow.id = variantId;
+            
+            variantRow.innerHTML = `
+                <h5>Variant ${variantCounter + 1}</h5>
+                <div>
+                    <label>Variant Name</label>
+                    <input type="text" name="variant_name[]" class="form-control" 
+                           placeholder="e.g., Brazilian Straight 24 inches">
+                </div>
+                <div>
+                    <label>Length</label>
+                    <select name="variant_length[]" class="form-control">
+                        <option value="">Select Length</option>
+                        <option value="8">8 inches</option>
+                        <option value="10">10 inches</option>
+                        <option value="12">12 inches</option>
+                        <option value="14">14 inches</option>
+                        <option value="16">16 inches</option>
+                        <option value="18">18 inches</option>
+                        <option value="20">20 inches</option>
+                        <option value="22">22 inches</option>
+                        <option value="24">24 inches</option>
+                        <option value="26">26 inches</option>
+                        <option value="28">28 inches</option>
+                        <option value="30">30 inches</option>
+                        <option value="32">32 inches</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Texture</label>
+                    <select name="variant_texture[]" class="form-control">
+                        <option value="">Select Texture</option>
+                        <option value="Straight">Straight</option>
+                        <option value="Body Wave">Body Wave</option>
+                        <option value="Deep Wave">Deep Wave</option>
+                        <option value="Loose Wave">Loose Wave</option>
+                        <option value="Curly">Curly</option>
+                        <option value="Kinky Curly">Kinky Curly</option>
+                        <option value="Coily">Coily</option>
+                        <option value="Bundles">Bundles</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Price (₦)</label>
+                    <input type="number" name="variant_price[]" class="form-control" 
+                           placeholder="0.00" min="0" step="0.01" value="{{ product.base_price if product else '' }}">
+                </div>
+                <div>
+                    <label>Stock</label>
+                    <input type="number" name="variant_stock[]" class="form-control" 
+                           placeholder="0" min="0" value="0">
+                </div>
+                <div>
+                    <label>Actions</label>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant('${variantId}')" style="width: 100%;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            variantsContainer.appendChild(variantRow);
+            variantCounter++;
+            
+            // Auto-fill variant name based on selections
+            const nameInput = variantRow.querySelector('input[name="variant_name[]"]');
+            const lengthSelect = variantRow.querySelector('select[name="variant_length[]"]');
+            const textureSelect = variantRow.querySelector('select[name="variant_texture[]"]');
+            
+            function updateVariantName() {
+                const length = lengthSelect.value;
+                const texture = textureSelect.value;
+                const productName = document.getElementById('name').value;
+                
+                let variantName = '';
+                if (texture && length) {
+                    variantName = `${texture} ${length} inches`;
+                } else if (texture) {
+                    variantName = texture;
+                } else if (length) {
+                    variantName = `${length} inches`;
+                }
+                
+                if (variantName) {
+                    nameInput.value = variantName;
+                }
+            }
+            
+            lengthSelect.addEventListener('change', updateVariantName);
+            textureSelect.addEventListener('change', updateVariantName);
+        }
+
+        // Remove variant row
+        function removeVariant(variantId) {
+            const variantRow = document.getElementById(variantId);
+            if (variantRow) {
+                variantRow.remove();
+                variantCounter--;
+                
+                // Update variant numbers
+                const variantRows = variantsContainer.querySelectorAll('.variant-row');
+                variantRows.forEach((row, index) => {
+                    const heading = row.querySelector('h5');
+                    if (heading) {
+                        heading.textContent = `Variant ${index + 1}`;
+                    }
+                });
+            }
+        }
+
+        // Clear all variants
+        function clearAllVariants() {
+            if (confirm('Are you sure you want to remove all variants?')) {
+                variantsContainer.innerHTML = '';
+                variantCounter = 0;
+            }
         }
 
         // Multiple Image Preview
@@ -880,6 +975,20 @@
             if (input.files && input.files.length > 0) {
                 for (let i = 0; i < input.files.length; i++) {
                     const file = input.files[i];
+                    
+                    // Check file size (max 16MB)
+                    if (file.size > 16 * 1024 * 1024) {
+                        showToast(`File ${file.name} is too large. Maximum size is 16MB`, 'error');
+                        continue;
+                    }
+                    
+                    // Check file type
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        showToast(`File ${file.name} is not a supported image format`, 'error');
+                        continue;
+                    }
+                    
                     const reader = new FileReader();
                     
                     reader.onload = function(e) {
@@ -948,9 +1057,6 @@
                     
                     reader.readAsDataURL(file);
                 }
-                
-                // Hide the HTML5 required validation message
-                input.setCustomValidity('');
             }
         }
 
@@ -972,16 +1078,6 @@
             previewItems.forEach((item, index) => {
                 item.dataset.index = index;
             });
-            
-            // Check if any files remain
-            if (fileInput.files.length === 0) {
-                fileInput.setCustomValidity('Please upload at least one product image');
-                document.getElementById('imagesError').textContent = 'Please upload at least one product image';
-                document.getElementById('imagesError').style.display = 'block';
-            } else {
-                fileInput.setCustomValidity('');
-                document.getElementById('imagesError').style.display = 'none';
-            }
         }
 
         // Form Validation
@@ -1003,8 +1099,7 @@
                 { id: 'name', message: 'Product name is required' },
                 { id: 'category_id', message: 'Category is required' },
                 { id: 'description', message: 'Description is required' },
-                { id: 'base_price', message: 'Price is required' },
-                { id: 'total_quantity', message: 'Stock quantity is required' }
+                { id: 'base_price', message: 'Price is required' }
             ];
 
             requiredFields.forEach(field => {
@@ -1020,11 +1115,6 @@
                     isValid = false;
                     element.parentElement.classList.add('has-error');
                     errorElement.textContent = 'Price must be greater than 0';
-                    errorElement.style.display = 'block';
-                } else if (field.id === 'total_quantity' && parseInt(element.value) < 0) {
-                    isValid = false;
-                    element.parentElement.classList.add('has-error');
-                    errorElement.textContent = 'Stock cannot be negative';
                     errorElement.style.display = 'block';
                 }
             });
@@ -1056,23 +1146,15 @@
             // Show loading
             loadingOverlay.classList.add('active');
 
-            // Submit form (with delay to show loading)
+            // Submit form
             setTimeout(() => {
                 this.submit();
             }, 500);
         });
 
-        // Auto-generate SKU from product name
+        // Auto-generate SKU from product name (you can add this functionality)
         document.getElementById('name').addEventListener('blur', function() {
-            const skuField = document.getElementById('sku');
-            if (!skuField.value && this.value) {
-                const name = this.value;
-                const sku = name.toUpperCase()
-                    .replace(/[^A-Z0-9\s]/g, '')
-                    .replace(/\s+/g, '-')
-                    .substring(0, 20);
-                skuField.value = sku;
-            }
+            // You can implement SKU generation logic here
         });
 
         // Toast Functions
@@ -1115,15 +1197,29 @@
             });
         });
 
-        // Auto-hide loading on page load (in case of back navigation)
+        // Auto-hide loading on page load
         window.addEventListener('load', function() {
             loadingOverlay.classList.remove('active');
+            
+            // Add one default variant on page load
+            addVariant();
         });
 
         // Prevent form resubmission on page refresh
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
+
+        // Variant price sync with base price
+        document.getElementById('base_price').addEventListener('change', function() {
+            const basePrice = parseFloat(this.value) || 0;
+            const variantPriceInputs = document.querySelectorAll('input[name="variant_price[]"]');
+            variantPriceInputs.forEach(input => {
+                if (!input.value || input.value === '0') {
+                    input.value = basePrice.toFixed(2);
+                }
+            });
+        });
     </script>
 </body>
 </html>
