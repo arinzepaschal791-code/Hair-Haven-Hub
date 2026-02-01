@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>500 - Internal Server Error | {{ config.brand_name }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #8B4513;
@@ -136,8 +136,11 @@
         
         .brand-logo {
             height: 50px;
+            width: auto;
             margin-bottom: 20px;
             opacity: 0.9;
+            max-width: 200px;
+            object-fit: contain;
         }
         
         .troubleshoot-section {
@@ -189,6 +192,7 @@
             transition: all 0.3s ease;
             min-width: 160px;
             justify-content: center;
+            text-decoration: none;
         }
         
         .btn-back {
@@ -305,6 +309,11 @@
             .error-body {
                 padding: 25px 15px;
             }
+            
+            .error-actions .btn {
+                min-width: unset;
+                width: 100%;
+            }
         }
         
         .support-contact {
@@ -341,9 +350,12 @@
         <div class="error-card">
             <!-- Header with brand logo -->
             <div class="error-header">
-                <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
+                {% set logo_url = url_for('static', filename='images/' + config.site_logo) %}
+                {% set fallback_logo = url_for('static', filename='images/logo.png') %}
+                <img src="{{ logo_url }}" 
                      alt="{{ config.brand_name }} Logo" 
-                     class="brand-logo">
+                     class="brand-logo"
+                     onerror="this.onerror=null; this.src='{{ fallback_logo }}';">
                 
                 <div class="error-icon">
                     <i class="fas fa-server"></i>
@@ -408,7 +420,7 @@
                 <div class="support-contact">
                     <p class="mb-2">
                         Need immediate assistance?
-                        <a href="mailto:{{ config.support_email }}">{{ config.support_email }}</a>
+                        <a href="mailto:{{ config.email }}">{{ config.email }}</a>
                         or call {{ config.phone }}
                     </p>
                     <p class="mb-0">
@@ -434,7 +446,7 @@
                 </div>
                 <div class="error-details">
                     Server: {{ config.brand_name }} | 
-                    Time: {{ now.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                    Time: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}
                 </div>
             </div>
         </div>
@@ -442,17 +454,78 @@
 
     <!-- JavaScript functionality -->
     <script>
+        // Get CSRF token (if available)
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+        
+        // Show toast notification (compatible with your base.html)
+        function showToast(title, message, type = 'info') {
+            // This function is from your base.html
+            if (typeof window.showToast === 'function') {
+                window.showToast(title, message, type);
+                return;
+            }
+            
+            // Fallback implementation
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 30px;
+                z-index: 9999;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                padding: 15px 20px;
+                animation: slideInRight 0.3s ease-out;
+                border-left: 4px solid #8B4513;
+                min-width: 300px;
+            `;
+            
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="toast-icon" style="font-size: 1.5rem;">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 5px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem;">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #666; cursor: pointer; padding: 5px;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Auto-refresh after 30 seconds (optional)
-            setTimeout(() => {
-                console.log('Attempting auto-refresh...');
+            const autoRefreshTimer = setTimeout(() => {
+                console.log('Attempting auto-refresh due to 500 error...');
+                showToast('Reconnecting', 'Attempting to refresh the page...', 'info');
+                window.location.reload();
             }, 30000);
+            
+            // Clear timer if user interacts
+            document.addEventListener('click', function() {
+                clearTimeout(autoRefreshTimer);
+            });
             
             // Add click handler for retry functionality
             const refreshButtons = document.querySelectorAll('.btn-home, .btn-back');
             refreshButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    // If it's a regular link, let it proceed
+                    // If it's a regular link or has onclick, let it proceed
                     if (this.getAttribute('href') || this.getAttribute('onclick')) {
                         return;
                     }
@@ -476,17 +549,35 @@
                 timestampElement.textContent += '-' + errorId;
             }
             
-            // Try to log error (in a real app, this would send to your error tracking service)
+            // Log error details (in production, this would send to error tracking service)
             try {
-                console.error('500 Error occurred:', {
+                const errorDetails = {
                     errorId: errorId,
                     timestamp: new Date().toISOString(),
                     url: window.location.href,
-                    referrer: document.referrer,
-                    userAgent: navigator.userAgent
-                });
+                    referrer: document.referrer || 'none',
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    errorType: '500_internal_server_error'
+                };
+                
+                console.error('500 Error Details:', errorDetails);
+                
+                // Send error report (only if user consents)
+                if (localStorage.getItem('allowErrorReporting') === 'true') {
+                    fetch('/api/error-report', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify(errorDetails)
+                    }).catch(() => {
+                        // Silently fail if error reporting fails
+                    });
+                }
             } catch (e) {
-                // Silently fail
+                // Silently fail if error logging fails
             }
             
             // Keyboard shortcuts
@@ -494,23 +585,39 @@
                 // F5 or Ctrl+R to refresh
                 if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
                     e.preventDefault();
+                    showToast('Refreshing', 'Reloading page...', 'info');
                     window.location.reload();
                 }
                 
                 // Escape to go home
                 if (e.key === 'Escape') {
+                    e.preventDefault();
                     window.location.href = "{{ url_for('index') }}";
                 }
                 
                 // B to go back
                 if (e.key === 'b' || e.key === 'B') {
-                    window.history.back();
+                    e.preventDefault();
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = "{{ url_for('index') }}";
+                    }
+                }
+                
+                // R to retry (refresh)
+                if (e.key === 'r' || e.key === 'R') {
+                    if (e.ctrlKey || e.metaKey) {
+                        return; // Let Ctrl+R handle it
+                    }
+                    e.preventDefault();
+                    window.location.reload();
                 }
             });
             
             // Show helpful tooltip about keyboard shortcuts
             setTimeout(() => {
-                console.log('Keyboard shortcuts: F5=Refresh, Esc=Home, B=Back');
+                console.log('Keyboard shortcuts: F5=Refresh, Esc=Home, B=Back, R=Retry');
             }, 2000);
             
             // Check if page is still loading
@@ -534,27 +641,137 @@
                     this.style.transform = 'translateY(0)';
                     this.style.boxShadow = 'none';
                 });
+                
+                // Add ripple effect
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(255, 255, 255, 0.7);
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        width: ${size}px;
+                        height: ${size}px;
+                        top: ${y}px;
+                        left: ${x}px;
+                        pointer-events: none;
+                    `;
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        if (ripple.parentElement) {
+                            ripple.remove();
+                        }
+                    }, 600);
+                });
             });
+            
+            // Add CSS for ripple animation
+            const rippleStyle = document.createElement('style');
+            rippleStyle.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(rippleStyle);
             
             // Auto-focus on first button for accessibility
             const firstButton = document.querySelector('.btn');
             if (firstButton) {
                 firstButton.focus();
             }
+            
+            // Handle image errors
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName.toLowerCase() === 'img') {
+                    const fallbackSrc = e.target.getAttribute('data-fallback');
+                    if (fallbackSrc && e.target.src !== fallbackSrc) {
+                        e.target.src = fallbackSrc;
+                    } else {
+                        e.target.style.display = 'none';
+                        const parent = e.target.parentElement;
+                        if (parent) {
+                            const fallbackDiv = document.createElement('div');
+                            fallbackDiv.className = 'brand-logo-fallback';
+                            fallbackDiv.innerHTML = `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-store fa-2x text-muted"></i>
+                                    <p style="margin-top: 5px; font-size: 0.9rem; color: #666;">{{ config.brand_name }}</p>
+                                </div>
+                            `;
+                            parent.insertBefore(fallbackDiv, e.target.nextSibling);
+                        }
+                    }
+                }
+            }, true);
         });
         
         // Handle browser back/forward buttons
         window.onpopstate = function() {
+            console.log('Navigating back/forward, reloading page');
             window.location.reload();
         };
         
-        // Show error details for developers (if in debug mode)
-        {% if config and config.get('DEBUG', False) %}
-        console.warn('Debug mode is enabled');
-        {% endif %}
+        // Check if page is working by trying to fetch a simple endpoint
+        function checkServerStatus() {
+            return fetch('/health', {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            }).then(response => {
+                return response.ok;
+            }).catch(() => {
+                return false;
+            });
+        }
+        
+        // Periodically check if server is back online
+        if (window.location.hostname !== 'localhost') {
+            setInterval(() => {
+                checkServerStatus().then(isOnline => {
+                    if (isOnline) {
+                        console.log('Server is back online');
+                        showToast('Server Online', 'The server is back online. Refreshing...', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                });
+            }, 10000); // Check every 10 seconds
+        }
+        
+        // Add error reporting consent
+        if (!localStorage.getItem('allowErrorReporting')) {
+            console.log('Error reporting not configured. To help improve the service, enable error reporting in settings.');
+        }
+        
+        // Add dark mode support (optional)
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDarkMode) {
+            document.documentElement.style.setProperty('--light-color', '#2d2d2d');
+            document.documentElement.style.setProperty('--dark-color', '#f8f9fa');
+        }
     </script>
     
-    <!-- Bootstrap JS (optional, for any Bootstrap components) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
