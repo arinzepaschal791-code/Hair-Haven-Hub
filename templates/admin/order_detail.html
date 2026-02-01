@@ -92,9 +92,15 @@
                                 <td class="align-middle">
                                     <div class="product-thumbnail">
                                         {% if item.product and item.product.images and item.product.images|length > 0 %}
-                                            <img src="{{ url_for('static', filename='uploads/' + item.product.images[0].image_url) }}" 
-                                                 alt="{{ item.product_name }}" 
-                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            {% if item.product.images[0].image_url.startswith('http') %}
+                                                <img src="{{ item.product.images[0].image_url }}" 
+                                                     alt="{{ item.product_name }}" 
+                                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            {% else %}
+                                                <img src="{{ url_for('uploaded_file', filename=item.product.images[0].image_url) }}" 
+                                                     alt="{{ item.product_name }}" 
+                                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            {% endif %}
                                         {% else %}
                                             <div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 4px; 
                                                        display: flex; align-items: center; justify-content: center;">
@@ -279,7 +285,7 @@
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Delivery</span>
                             <span class="text-success">
-                                Free (Order over ₦{{ BUSINESS_CONFIG.free_delivery_threshold|default(150000) }})
+                                Free (Order over ₦{{ config.free_delivery_threshold|default(150000) }})
                             </span>
                         </div>
                         {% endif %}
@@ -303,9 +309,11 @@
                     <!-- Update Status -->
                     <div class="mb-4">
                         <h6 class="mb-3">Update Order Status</h6>
-                        <form method="POST" action="{{ url_for('admin_update_order_status', id=order.id) }}" 
+                        <form method="POST" action="{{ url_for('admin_update_order', id=order.id) }}" 
                               id="statusForm">
+                            {{ csrf_token() if csrf_token }}
                             <div class="mb-3">
+                                <label for="orderStatus" class="form-label-admin">Order Status</label>
                                 <select class="form-control-admin" name="status" id="orderStatus" required>
                                     <option value="" disabled selected>Select new status</option>
                                     <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>
@@ -327,21 +335,30 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label for="trackingNumber" class="form-label-admin">Tracking Number</label>
-                                <input type="text" class="form-control-admin" id="trackingNumber" 
-                                       placeholder="Enter tracking number for shipping" 
-                                       name="tracking_number">
+                                <label for="payment_status" class="form-label-admin">Payment Status</label>
+                                <select class="form-control-admin" name="payment_status" id="payment_status">
+                                    <option value="" disabled>Select payment status</option>
+                                    <option value="pending" {% if order.payment_status == 'pending' %}selected{% endif %}>
+                                        Pending
+                                    </option>
+                                    <option value="paid" {% if order.payment_status == 'paid' %}selected{% endif %}>
+                                        Paid
+                                    </option>
+                                    <option value="failed" {% if order.payment_status == 'failed' %}selected{% endif %}>
+                                        Failed
+                                    </option>
+                                </select>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="statusNotes" class="form-label-admin">Notes</label>
+                                <label for="statusNotes" class="form-label-admin">Notes (Optional)</label>
                                 <textarea class="form-control-admin" id="statusNotes" rows="2" 
-                                          placeholder="Add any notes about this status update..."
+                                          placeholder="Add any notes about this update..."
                                           name="notes"></textarea>
                             </div>
                             
                             <button type="submit" class="btn btn-primary-admin w-100">
-                                <i class="fas fa-save me-2"></i> Update Status
+                                <i class="fas fa-save me-2"></i> Update Order
                             </button>
                         </form>
                     </div>
@@ -457,7 +474,8 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to mark order <strong>{{ order.order_number }}</strong> as paid?</p>
-                <form id="paymentForm" method="POST" action="{{ url_for('admin_update_order_status', id=order.id) }}">
+                <form id="paymentForm" method="POST" action="{{ url_for('admin_update_order', id=order.id) }}">
+                    {{ csrf_token() if csrf_token }}
                     <input type="hidden" name="status" value="{{ order.status }}">
                     <input type="hidden" name="payment_status" value="paid">
                     <div class="mb-3">
@@ -474,7 +492,7 @@
                         <label for="paymentNotes" class="form-label-admin">Payment Notes</label>
                         <textarea class="form-control-admin" id="paymentNotes" rows="3" 
                                   placeholder="Add payment details or reference..."
-                                  name="payment_notes"></textarea>
+                                  name="notes"></textarea>
                     </div>
                 </form>
             </div>
@@ -537,6 +555,82 @@
 
 {% block scripts %}
 <script>
+    // Get CSRF token from meta tag or form
+    function getCSRFToken() {
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        const csrfInput = document.querySelector('input[name="csrf_token"]');
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+        
+        return '';
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 3000
+        });
+        toast.show();
+        
+        // Remove toast after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            toastElement.remove();
+        });
+    }
+
+    // Show loading indicator
+    function showLoading() {
+        let loadingOverlay = document.querySelector('.loading-overlay');
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+            loadingOverlay.style.cssText = 'background: rgba(0,0,0,0.5); z-index: 9999;';
+            loadingOverlay.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+        }
+        loadingOverlay.style.display = 'flex';
+    }
+
+    // Hide loading indicator
+    function hideLoading() {
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         initFormValidation();
@@ -586,7 +680,7 @@
         if (confirm('Are you sure you want to cancel this order? This action cannot be undone and will restock the items.')) {
             showLoading();
             
-            fetch("{{ url_for('admin_update_order_status', id=order.id) }}", {
+            fetch("{{ url_for('admin_update_order', id=order.id) }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -594,6 +688,7 @@
                 },
                 body: new URLSearchParams({
                     'status': 'cancelled',
+                    'payment_status': '{{ order.payment_status }}',
                     'notes': 'Order cancelled by admin',
                     'csrf_token': getCSRFToken()
                 })
@@ -602,30 +697,11 @@
             .then(data => {
                 hideLoading();
                 
-                if (data.success) {
-                    // Update status badge
-                    const statusBadge = document.querySelector('.badge-admin[class*="badge-"]:first-child');
-                    if (statusBadge) {
-                        statusBadge.className = statusBadge.className.replace(/badge-\w+/, '');
-                        statusBadge.classList.add('badge-danger');
-                        statusBadge.textContent = 'Cancelled';
-                    }
-                    
-                    // Update status select
-                    const statusSelect = document.getElementById('orderStatus');
-                    if (statusSelect) {
-                        statusSelect.value = 'cancelled';
-                    }
-                    
-                    // Remove cancel button
-                    const cancelBtn = document.querySelector('button[onclick="cancelOrder()"]');
-                    if (cancelBtn) {
-                        cancelBtn.style.display = 'none';
-                    }
-                    
-                    showToast('Order cancelled successfully', 'success');
+                if (data.success || data.message) {
+                    // Reload the page to show updated status
+                    window.location.reload();
                 } else {
-                    showToast(data.error || 'Failed to cancel order', 'error');
+                    showToast('Failed to cancel order', 'error');
                 }
             })
             .catch(error => {
@@ -638,11 +714,11 @@
     
     // Send Tracking Information
     function sendTracking() {
-        const trackingNumber = document.getElementById('trackingNumber').value;
+        const trackingNumber = document.getElementById('trackingNumber')?.value;
         
         if (!trackingNumber) {
-            showToast('Please enter a tracking number first', 'warning');
-            document.getElementById('trackingNumber').focus();
+            showToast('Please enter a tracking number first in the status update form', 'warning');
+            document.getElementById('orderStatus').focus();
             return;
         }
         
@@ -662,7 +738,7 @@ Best regards,
 {{ config.phone }}
 {{ config.email }}`;
         
-        window.location.href = `mailto:{{ order.customer_email }}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(`mailto:{{ order.customer_email }}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
     }
     
     // Email Invoice
@@ -670,7 +746,7 @@ Best regards,
         const subject = 'Your Invoice - Order #{{ order.order_number }} - {{ config.brand_name }}';
         const body = generateInvoiceText();
         
-        window.location.href = `mailto:{{ order.customer_email }}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(`mailto:{{ order.customer_email }}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
     }
     
     // Copy Order Number
@@ -686,19 +762,7 @@ Best regards,
     function printOrder() {
         const printWindow = window.open('', '_blank');
         
-        const itemsHTML = Array.from(document.querySelectorAll('#orderItemsTable tbody tr')).map(row => {
-            const cells = row.querySelectorAll('td');
-            return `
-                <tr>
-                    <td>${cells[1].textContent}</td>
-                    <td>${cells[2].textContent}</td>
-                    <td class="text-center">${cells[3].textContent}</td>
-                    <td class="text-end">${cells[4].textContent}</td>
-                </tr>
-            `;
-        }).join('');
-        
-        printWindow.document.write(`
+        const itemsHTML = `
             <html>
             <head>
                 <title>Invoice - Order #{{ order.order_number }} - {{ config.brand_name }}</title>
@@ -822,10 +886,14 @@ Best regards,
                 </div>
             </body>
             </html>
-        `);
+        `;
         
+        printWindow.document.write(itemsHTML);
         printWindow.document.close();
-        printWindow.print();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
     }
     
     // Generate invoice text for email
