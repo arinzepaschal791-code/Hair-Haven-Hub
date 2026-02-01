@@ -1,522 +1,1038 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - {{ config.brand_name }} Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #9d4edd;
-            --primary-dark: #7b2cbf;
-            --secondary: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
-            --success: #38b000;
-            --danger: #e63946;
-            --warning: #ffba08;
-            --info: #4361ee;
-        }
+{% extends "admin/base.html" %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: var(--dark);
-            line-height: 1.6;
-        }
+{% block title %}Add Product - {{ config.brand_name }} Admin{% endblock %}
 
-        .admin-container {
-            display: flex;
-            min-height: 100vh;
-        }
+{% block styles %}
+<style>
+    :root {
+        --primary: #9d4edd;
+        --primary-dark: #7b2cbf;
+        --secondary: #f72585;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --light-gray: #e9ecef;
+        --success: #38b000;
+        --danger: #e63946;
+        --warning: #ffba08;
+        --info: #4361ee;
+    }
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
+    .form-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
 
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
+    .form-group {
+        margin-bottom: 25px;
+    }
 
-        .sidebar-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: white;
-        }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--dark);
+    }
 
-        .sidebar-header p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--light-gray);
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
 
-        .nav-links {
-            list-style: none;
-            padding: 20px 0;
-        }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+    }
 
-        .nav-links li {
-            margin-bottom: 5px;
-        }
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
 
-        .nav-links a {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
 
-        .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-left: 3px solid white;
-        }
+    /* File Upload */
+    .file-upload-container {
+        margin-top: 10px;
+    }
 
-        .nav-links a.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border-left: 3px solid white;
-            font-weight: 600;
-        }
+    .file-upload-area {
+        border: 2px dashed var(--light-gray);
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #fafafa;
+    }
 
-        .nav-links i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
+    .file-upload-area:hover {
+        border-color: var(--primary);
+        background: #f5f0ff;
+    }
 
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
+    .file-upload-area i {
+        font-size: 48px;
+        color: var(--gray);
+        margin-bottom: 15px;
+    }
 
-        /* Header */
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .file-upload-area p {
+        margin-bottom: 10px;
+        color: var(--gray);
+    }
 
-        .header h1 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
+    #imagePreview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
 
-        .header p {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
+    .preview-item {
+        position: relative;
+        border: 1px solid var(--light-gray);
+        border-radius: 5px;
+        overflow: hidden;
+        height: 150px;
+    }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+    .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: var(--danger);
+        color: white;
+        border: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
+    .primary-badge {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        background: var(--primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        display: none;
+    }
 
-        .logout-btn:hover {
-            background: #c1121f;
-        }
+    .primary-badge.show {
+        display: block;
+    }
 
-        /* Form Container */
-        .form-container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
+    /* Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-        }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+    }
 
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+    }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
-        }
+    input:checked + .slider {
+        background-color: var(--primary);
+    }
 
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-        }
+    input:checked + .slider:before {
+        transform: translateX(30px);
+    }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
+    .slider.round {
+        border-radius: 34px;
+    }
 
-        /* File Upload */
-        .file-upload-container {
-            margin-top: 10px;
-        }
+    .slider.round:before {
+        border-radius: 50%;
+    }
 
-        .file-upload-area {
-            border: 2px dashed var(--light-gray);
-            border-radius: 10px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
+    /* Variant Section */
+    .variant-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid var(--light-gray);
+    }
 
-        .file-upload-area:hover {
-            border-color: var(--primary);
-            background: #f5f0ff;
-        }
+    .variant-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 
-        .file-upload-area i {
-            font-size: 48px;
-            color: var(--gray);
-            margin-bottom: 15px;
-        }
+    .variant-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 0.5fr;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        align-items: center;
+    }
 
-        .file-upload-area p {
-            margin-bottom: 10px;
-            color: var(--gray);
-        }
+    .variant-row h5 {
+        grid-column: 1 / -1;
+        margin-bottom: 10px;
+        color: var(--primary);
+    }
 
-        #imagePreview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .preview-item {
-            position: relative;
-            border: 1px solid var(--light-gray);
-            border-radius: 5px;
-            overflow: hidden;
-            height: 150px;
-        }
-
-        .preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--danger);
-            color: white;
-            border: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .primary-badge {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background: var(--primary);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 0.8rem;
-            display: none;
-        }
-
-        .primary-badge.show {
-            display: block;
-        }
-
-        /* Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-
-        input:checked + .slider {
-            background-color: var(--primary);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(30px);
-        }
-
-        .slider.round {
-            border-radius: 34px;
-        }
-
-        .slider.round:before {
-            border-radius: 50%;
-        }
-
-        /* Variant Section */
-        .variant-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid var(--light-gray);
-        }
-
-        .variant-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
+    @media (max-width: 768px) {
         .variant-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.5fr;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            align-items: center;
+            grid-template-columns: 1fr;
+            gap: 10px;
         }
+    }
 
-        .variant-row h5 {
-            grid-column: 1 / -1;
-            margin-bottom: 10px;
-            color: var(--primary);
+    .variant-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    /* Additional Product Fields */
+    .form-group small {
+        display: block;
+        color: var(--gray);
+        margin-top: 5px;
+        font-size: 0.85rem;
+    }
+
+    /* Buttons */
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        padding-top: 20px;
+        border-top: 1px solid var(--light-gray);
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn i {
+        margin-right: 8px;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(157, 78, 221, 0.2);
+    }
+
+    .btn-secondary {
+        background: var(--gray);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #2d9100;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Error States */
+    .error-message {
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+    }
+
+    .has-error .form-control {
+        border-color: var(--danger);
+    }
+
+    .has-error .error-message {
+        display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
         }
+    }
 
-        @media (max-width: 768px) {
-            .variant-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
+    @media (max-width: 576px) {
+        .form-container {
+            padding: 20px;
+        }
+        .form-actions {
+            flex-direction: column;
+        }
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Add New Product{% endblock %}
+
+{% block page_subtitle %}Add new hair products to your store inventory{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
+        <!-- CSRF Token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Product Basic Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">Product Name *</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       placeholder="e.g., Premium Brazilian Body Wave" required>
+                <small>Use descriptive names that customers can easily understand</small>
+                <div class="error-message" id="nameError"></div>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Category *</label>
+                <select id="category_id" name="category_id" class="form-control" required>
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <small>Select the main category for this product</small>
+                <div class="error-message" id="categoryError"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea id="description" name="description" class="form-control" 
+                      placeholder="Describe the product features, quality, length, texture, etc." 
+                      rows="4" required></textarea>
+            <small>Include details about texture, length, quality, and care instructions</small>
+            <div class="error-message" id="descriptionError"></div>
+        </div>
+
+        <!-- Pricing Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="base_price">Base Price (₦) *</label>
+                <input type="number" id="base_price" name="base_price" class="form-control" 
+                       placeholder="0.00" min="0" step="0.01" required>
+                <small>Base selling price for this product</small>
+                <div class="error-message" id="priceError"></div>
+            </div>
+            <div class="form-group">
+                <label for="compare_price">Compare Price (₦)</label>
+                <input type="number" id="compare_price" name="compare_price" class="form-control" 
+                       placeholder="0.00" min="0" step="0.01">
+                <small>Original price to show discount (optional)</small>
+            </div>
+        </div>
+
+        <!-- SKU Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sku">SKU (Stock Keeping Unit)</label>
+                <input type="text" id="sku" name="sku" class="form-control" 
+                       placeholder="e.g., HAIR-001">
+                <small>Leave blank to auto-generate SKU</small>
+            </div>
+            <div class="form-group">
+                <label for="total_quantity">Total Quantity</label>
+                <input type="number" id="total_quantity" name="total_quantity" class="form-control" 
+                       placeholder="0" min="0" value="0">
+                <small>Leave 0 if using variants with individual stock</small>
+            </div>
+        </div>
+
+        <!-- Product Settings -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Featured Product</label>
+                <div style="margin-top: 10px;">
+                    <label class="switch">
+                        <input type="checkbox" id="featured" name="featured" value="1">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <div style="margin-top: 10px;">
+                    <label class="switch">
+                        <input type="checkbox" id="active" name="active" value="1" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bundle Options -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Bundle Product</label>
+                <div style="margin-top: 10px;">
+                    <label class="switch">
+                        <input type="checkbox" id="is_bundle" name="is_bundle" value="1">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; color: var(--gray);">This is a bundle product</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="bundle_discount">Bundle Discount (%)</label>
+                <input type="number" id="bundle_discount" name="bundle_discount" class="form-control" 
+                       placeholder="0" min="0" max="100" step="0.1" value="0">
+                <small>Discount percentage for bundle purchases</small>
+            </div>
+        </div>
+
+        <!-- Variant Section -->
+        <div class="variant-section">
+            <div class="variant-header">
+                <h3>Product Variants</h3>
+                <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
+                    <i class="fas fa-plus"></i> Add Variant
+                </button>
+            </div>
+            
+            <p class="text-muted mb-4">
+                Add different variants of this product (different lengths, textures, colors).
+                If no variants are added, the product will be sold as a single item.
+            </p>
+
+            <div id="variantsContainer">
+                <!-- Variants will be added here dynamically -->
+            </div>
+
+            <div class="variant-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
+                    <i class="fas fa-plus"></i> Add Another Variant
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="clearAllVariants()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Multiple Image Upload -->
+        <div class="form-group">
+            <label for="images">Product Images *</label>
+            <small>Upload multiple images for this product</small>
+            <div class="file-upload-container">
+                <div class="file-upload-area" onclick="document.getElementById('images').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click to upload product images (multiple allowed)</p>
+                    <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP (Max 16MB)</small></p>
+                    <div class="btn btn-outline">Browse Files</div>
+                </div>
+                <input type="file" id="images" name="images" accept="image/*" 
+                       style="display: none;" multiple onchange="previewImages(this)">
+                <div id="imagePreview"></div>
+                <small>First image will be set as primary. Click on image to set as primary.</small>
+            </div>
+            <div class="error-message" id="imagesError"></div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Save Product
+            </button>
+            <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // DOM Elements
+    const addProductForm = document.getElementById('addProductForm');
+    const imagePreview = document.getElementById('imagePreview');
+    const variantsContainer = document.getElementById('variantsContainer');
+
+    // Variant Counter
+    let variantCounter = 0;
+
+    // Add new variant row
+    function addVariant() {
+        const variantId = `variant_${variantCounter}`;
+        
+        const variantRow = document.createElement('div');
+        variantRow.className = 'variant-row';
+        variantRow.id = variantId;
+        
+        variantRow.innerHTML = `
+            <h5>Variant ${variantCounter + 1}</h5>
+            <div>
+                <label>Variant Name</label>
+                <input type="text" name="variant_name[]" class="form-control" 
+                       placeholder="e.g., Brazilian Straight 24 inches">
+            </div>
+            <div>
+                <label>Length</label>
+                <select name="variant_length[]" class="form-control">
+                    <option value="">Select Length</option>
+                    <option value="8">8 inches</option>
+                    <option value="10">10 inches</option>
+                    <option value="12">12 inches</option>
+                    <option value="14">14 inches</option>
+                    <option value="16">16 inches</option>
+                    <option value="18">18 inches</option>
+                    <option value="20">20 inches</option>
+                    <option value="22">22 inches</option>
+                    <option value="24">24 inches</option>
+                    <option value="26">26 inches</option>
+                    <option value="28">28 inches</option>
+                    <option value="30">30 inches</option>
+                    <option value="32">32 inches</option>
+                    <option value="Custom">Custom</option>
+                </select>
+            </div>
+            <div>
+                <label>Texture</label>
+                <select name="variant_texture[]" class="form-control">
+                    <option value="">Select Texture</option>
+                    <option value="Straight">Straight</option>
+                    <option value="Body Wave">Body Wave</option>
+                    <option value="Deep Wave">Deep Wave</option>
+                    <option value="Loose Wave">Loose Wave</option>
+                    <option value="Curly">Curly</option>
+                    <option value="Kinky Curly">Kinky Curly</option>
+                    <option value="Coily">Coily</option>
+                    <option value="Bundles">Bundles</option>
+                </select>
+            </div>
+            <div>
+                <label>Color</label>
+                <select name="variant_color[]" class="form-control">
+                    <option value="">Select Color</option>
+                    <option value="Natural Black">Natural Black</option>
+                    <option value="Off Black">Off Black</option>
+                    <option value="Dark Brown">Dark Brown</option>
+                    <option value="Medium Brown">Medium Brown</option>
+                    <option value="Light Brown">Light Brown</option>
+                    <option value="Blonde">Blonde</option>
+                    <option value="Platinum">Platinum</option>
+                    <option value="Mixed">Mixed</option>
+                </select>
+            </div>
+            <div>
+                <label>Price (₦)</label>
+                <input type="number" name="variant_price[]" class="form-control" 
+                       placeholder="0.00" min="0" step="0.01" value="{{ product.base_price if product else '' }}">
+            </div>
+            <div>
+                <label>Stock</label>
+                <input type="number" name="variant_stock[]" class="form-control" 
+                       placeholder="0" min="0" value="10">
+            </div>
+            <div>
+                <label>SKU</label>
+                <input type="text" name="variant_sku[]" class="form-control" 
+                       placeholder="Auto-generated">
+            </div>
+            <div>
+                <label>Actions</label>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant('${variantId}')" style="width: 100%;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        variantsContainer.appendChild(variantRow);
+        variantCounter++;
+        
+        // Auto-fill variant name based on selections
+        const nameInput = variantRow.querySelector('input[name="variant_name[]"]');
+        const lengthSelect = variantRow.querySelector('select[name="variant_length[]"]');
+        const textureSelect = variantRow.querySelector('select[name="variant_texture[]"]');
+        const colorSelect = variantRow.querySelector('select[name="variant_color[]"]');
+        
+        function updateVariantName() {
+            const length = lengthSelect.value;
+            const texture = textureSelect.value;
+            const color = colorSelect.value;
+            const productName = document.getElementById('name').value;
+            
+            let variantName = '';
+            if (texture && length) {
+                variantName = `${texture} ${length}`;
+                if (color && color !== 'Natural Black') {
+                    variantName += ` ${color}`;
+                }
+            } else if (texture) {
+                variantName = texture;
+            } else if (length) {
+                variantName = `${length}`;
+            }
+            
+            if (variantName) {
+                nameInput.value = variantName;
             }
         }
+        
+        lengthSelect.addEventListener('change', updateVariantName);
+        textureSelect.addEventListener('change', updateVariantName);
+        colorSelect.addEventListener('change', updateVariantName);
+    }
 
-        .variant-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 20px;
+    // Remove variant row
+    function removeVariant(variantId) {
+        const variantRow = document.getElementById(variantId);
+        if (variantRow) {
+            variantRow.remove();
+            variantCounter--;
+            
+            // Update variant numbers
+            const variantRows = variantsContainer.querySelectorAll('.variant-row');
+            variantRows.forEach((row, index) => {
+                const heading = row.querySelector('h5');
+                if (heading) {
+                    heading.textContent = `Variant ${index + 1}`;
+                }
+            });
+        }
+    }
+
+    // Clear all variants
+    function clearAllVariants() {
+        if (confirm('Are you sure you want to remove all variants?')) {
+            variantsContainer.innerHTML = '';
+            variantCounter = 0;
+        }
+    }
+
+    // Multiple Image Preview
+    function previewImages(input) {
+        imagePreview.innerHTML = '';
+        
+        if (input.files && input.files.length > 0) {
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                
+                // Check file size (max 16MB)
+                if (file.size > 16 * 1024 * 1024) {
+                    showNotification(`File ${file.name} is too large. Maximum size is 16MB`, 'danger');
+                    continue;
+                }
+                
+                // Check file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showNotification(`File ${file.name} is not a supported image format`, 'danger');
+                    continue;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.dataset.index = i;
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Product Preview';
+                    
+                    const primaryBadge = document.createElement('div');
+                    primaryBadge.className = i === 0 ? 'primary-badge show' : 'primary-badge';
+                    primaryBadge.innerHTML = '<i class="fas fa-star"></i> Primary';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        imagePreview.removeChild(previewItem);
+                        updateFileInput(previewItem.dataset.index);
+                    };
+                    
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(primaryBadge);
+                    previewItem.appendChild(removeBtn);
+                    previewItem.onclick = function() {
+                        // Set as primary (move to front and update badges)
+                        const currentIndex = this.dataset.index;
+                        imagePreview.insertBefore(this, imagePreview.firstChild);
+                        
+                        // Update all badges
+                        document.querySelectorAll('.primary-badge').forEach(badge => {
+                            badge.classList.remove('show');
+                        });
+                        
+                        // Update the clicked item's badge
+                        this.querySelector('.primary-badge').classList.add('show');
+                        
+                        // Update file order (move to first position)
+                        const fileInput = document.getElementById('images');
+                        const dataTransfer = new DataTransfer();
+                        
+                        // Add clicked file first
+                        dataTransfer.items.add(fileInput.files[currentIndex]);
+                        
+                        // Add remaining files
+                        for (let i = 0; i < fileInput.files.length; i++) {
+                            if (i !== parseInt(currentIndex)) {
+                                dataTransfer.items.add(fileInput.files[i]);
+                            }
+                        }
+                        
+                        fileInput.files = dataTransfer.files;
+                        
+                        // Update all preview indexes
+                        const previewItems = imagePreview.querySelectorAll('.preview-item');
+                        previewItems.forEach((item, index) => {
+                            item.dataset.index = index;
+                        });
+                    };
+                    
+                    imagePreview.appendChild(previewItem);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
+    // Update file input after removing an image
+    function updateFileInput(removedIndex) {
+        const fileInput = document.getElementById('images');
+        const dataTransfer = new DataTransfer();
+        
+        for (let i = 0; i < fileInput.files.length; i++) {
+            if (i != removedIndex) {
+                dataTransfer.items.add(fileInput.files[i]);
+            }
+        }
+        
+        fileInput.files = dataTransfer.files;
+        
+        // Update preview indexes
+        const previewItems = imagePreview.querySelectorAll('.preview-item');
+        previewItems.forEach((item, index) => {
+            item.dataset.index = index;
+        });
+    }
+
+    // Form Validation
+    function validateForm() {
+        let isValid = true;
+        
+        // Clear previous errors
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+        });
+        
+        document.querySelectorAll('.form-group').forEach(el => {
+            el.classList.remove('has-error');
+        });
+
+        // Validate required fields
+        const requiredFields = [
+            { id: 'name', message: 'Product name is required' },
+            { id: 'category_id', message: 'Category is required' },
+            { id: 'description', message: 'Description is required' },
+            { id: 'base_price', message: 'Price is required' }
+        ];
+
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            const errorElement = document.getElementById(field.id + 'Error');
+            
+            if (!element.value.trim()) {
+                isValid = false;
+                element.parentElement.classList.add('has-error');
+                errorElement.textContent = field.message;
+                errorElement.style.display = 'block';
+            } else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
+                isValid = false;
+                element.parentElement.classList.add('has-error');
+                errorElement.textContent = 'Price must be greater than 0';
+                errorElement.style.display = 'block';
+            }
+        });
+
+        // Validate at least one image
+        const imagesInput = document.getElementById('images');
+        if (imagesInput.files.length === 0) {
+            isValid = false;
+            imagesInput.setCustomValidity('Please upload at least one product image');
+            document.getElementById('imagesError').textContent = 'Please upload at least one product image';
+            document.getElementById('imagesError').style.display = 'block';
+            showNotification('Please upload at least one product image', 'danger');
+        } else {
+            imagesInput.setCustomValidity('');
+            document.getElementById('imagesError').style.display = 'none';
         }
 
-        /* Additional Product Fields */
-        .form-group small {
-            display: block;
-            color: var(--gray);
-            margin-top: 5px;
-            font-size: 0.85rem;
-        }
+        return isValid;
+    }
 
-        /* Buttons */
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            padding-top: 20px;
-            border-top: 1px solid var(--light-gray);
-            margin-top: 20px;
+    // Form Submission
+    addProductForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
         }
+        
+        // Show loading
+        showLoading();
+        
+        // Submit form
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
 
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+    // Auto-generate SKU from product name
+    document.getElementById('name').addEventListener('blur', function() {
+        const productName = this.value.trim();
+        if (productName && !document.getElementById('sku').value) {
+            // Generate a simple SKU from product name
+            const sku = productName
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, '')
+                .substring(0, 8)
+                + '-' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('sku').value = sku;
         }
+    });
 
-        .btn i {
-            margin-right: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.2);
-        }
-
-        .btn-secondary {
-            background: var(--gray);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #2d9100;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 8px 15px;
-            font-size: 0.9rem;
-        }
-
-        /* Toast Notification */
-        .toast {
+    // Show notification
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show`;
+        notification.style.cssText = `
             position: fixed;
-            top: 20px;
+            top: 100px;
             right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            z-index: 9999;
             min-width: 300px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
+            max-width: 400px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
 
-        .toast.show {
-            transform: translateX(0);
-        }
+    // Show loading
+    function showLoading() {
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
 
-        .toast-success {
-            background: var(--success);
-        }
+    // Initialize form validation on input
+    document.querySelectorAll('input, textarea, select').forEach(element => {
+        element.addEventListener('input', function() {
+            const errorElement = document.getElementById(this.id + 'Error');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+                this.parentElement.classList.remove('has-error');
+            }
+        });
+    });
 
-        .toast-error {
-            background: var(--danger);
-        }
+    // Show validation errors on blur
+    document.querySelectorAll('input[required], textarea[required], select[required]').forEach(element => {
+        element.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                const errorId = this.id + 'Error';
+                const errorElement = document.getElementById(errorId);
+                if (errorElement) {
+                    errorElement.textContent = 'Please fill in this field';
+                    errorElement.style.display = 'block';
+                    this.parentElement.classList.add('has-error');
+                }
+            }
+        });
+    });
 
-        .toast-warning {
-            background: var(--warning);
-            color: var(--dark);
-        }
+    // Auto-hide loading on page load
+    window.addEventListener('load', function() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.remove();
+        
+        // Add one default variant on page load
+        addVariant();
+    });
 
-        .toast-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin-left: 15px;
-        }
+    // Prevent form resubmission on page refresh
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
 
-        /* Loading Overlay */
+    // Variant price sync with base price
+    document.getElementById('base_price').addEventListener('change', function() {
+        const basePrice = parseFloat(this.value) || 0;
+        const variantPriceInputs = document.querySelectorAll('input[name="variant_price[]"]');
+        variantPriceInputs.forEach(input => {
+            if (!input.value || input.value === '0') {
+                input.value = basePrice.toFixed(2);
+            }
+        });
+    });
+
+    // Auto-generate variant SKUs
+    function generateVariantSKU(baseSKU, variantNumber) {
+        return baseSKU + '-V' + variantNumber.toString().padStart(2, '0');
+    }
+
+    // Auto-generate variant SKUs on base SKU change
+    document.getElementById('sku').addEventListener('change', function() {
+        const baseSKU = this.value;
+        if (baseSKU) {
+            const variantSKUInputs = document.querySelectorAll('input[name="variant_sku[]"]');
+            variantSKUInputs.forEach((input, index) => {
+                if (!input.value) {
+                    input.value = generateVariantSKU(baseSKU, index + 1);
+                }
+            });
+        }
+    });
+
+    // Add CSS for animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -524,702 +1040,17 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 9999;
         }
-
-        .loading-overlay.active {
-            display: flex;
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
         }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Error States */
-        .error-message {
-            color: var(--danger);
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .has-error .form-control {
-            border-color: var(--danger);
-        }
-
-        .has-error .error-message {
-            display: block;
-        }
-
-        /* Alert Messages */
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 5px solid;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            border-color: var(--success);
-            color: #155724;
-        }
-
-        .alert-danger {
-            background: #f8d7da;
-            border-color: var(--danger);
-            color: #721c24;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: var(--warning);
-            color: #856404;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
-            }
-            .sidebar-header h2,
-            .nav-links span,
-            .sidebar-header p {
-                display: none;
-            }
-            .main-content {
-                margin-left: 70px;
-            }
-            .nav-links a {
-                justify-content: center;
-                padding: 15px;
-            }
-            .nav-links i {
-                margin-right: 0;
-                font-size: 1.5rem;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            .user-info {
-                justify-content: center;
-            }
-            .form-container {
-                padding: 20px;
-            }
-            .form-actions {
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>{{ config.brand_name }}</h2>
-                <p>Admin Panel</p>
-            </div>
-            <ul class="nav-links">
-                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                <li><a href="{{ url_for('admin_products') }}" class="active"><i class="fas fa-box"></i> <span>Products</span></a></li>
-                <li><a href="{{ url_for('admin_orders') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a></li>
-                <li><a href="{{ url_for('admin_categories') if 'admin_categories' in url_for else '#' }}"><i class="fas fa-tags"></i> <span>Categories</span></a></li>
-                <li><a href="{{ url_for('admin_customers') if 'admin_customers' in url_for else '#' }}"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-            </ul>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div>
-                    <h1>Add New Product</h1>
-                    <p>Add new hair products to your store inventory</p>
-                </div>
-                <div class="user-info">
-                    <div class="user-avatar">{{ session.get('admin_name', 'A')[0] }}</div>
-                    <a href="{{ url_for('admin_logout') }}" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
-            </header>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- Form Container -->
-            <div class="form-container">
-                <form id="addProductForm" method="POST" action="{{ url_for('admin_add_product') }}" enctype="multipart/form-data">
-                    <!-- CSRF Token -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <!-- Product Basic Information -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="name">Product Name *</label>
-                            <input type="text" id="name" name="name" class="form-control" 
-                                   placeholder="e.g., Premium Brazilian Body Wave" required>
-                            <small>Use descriptive names that customers can easily understand</small>
-                            <div class="error-message" id="nameError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="category_id">Category *</label>
-                            <select id="category_id" name="category_id" class="form-control" required>
-                                <option value="">Select Category</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <small>Select the main category for this product</small>
-                            <div class="error-message" id="categoryError"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="description">Description *</label>
-                        <textarea id="description" name="description" class="form-control" 
-                                  placeholder="Describe the product features, quality, length, texture, etc." 
-                                  rows="4" required></textarea>
-                        <small>Include details about texture, length, quality, and care instructions</small>
-                        <div class="error-message" id="descriptionError"></div>
-                    </div>
-
-                    <!-- Pricing Information -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="base_price">Base Price (₦) *</label>
-                            <input type="number" id="base_price" name="base_price" class="form-control" 
-                                   placeholder="0.00" min="0" step="0.01" required>
-                            <small>Base selling price for this product</small>
-                            <div class="error-message" id="priceError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="compare_price">Compare Price (₦)</label>
-                            <input type="number" id="compare_price" name="compare_price" class="form-control" 
-                                   placeholder="0.00" min="0" step="0.01">
-                            <small>Original price to show discount (optional)</small>
-                        </div>
-                    </div>
-
-                    <!-- Product Settings -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Featured Product</label>
-                            <div style="margin-top: 10px;">
-                                <label class="switch">
-                                    <input type="checkbox" id="featured" name="featured" value="1">
-                                    <span class="slider round"></span>
-                                </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Show on homepage</span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <div style="margin-top: 10px;">
-                                <label class="switch">
-                                    <input type="checkbox" id="active" name="active" value="1" checked>
-                                    <span class="slider round"></span>
-                                </label>
-                                <span style="margin-left: 10px; color: var(--gray);">Active (Available for sale)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Variant Section -->
-                    <div class="variant-section">
-                        <div class="variant-header">
-                            <h3>Product Variants</h3>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
-                                <i class="fas fa-plus"></i> Add Variant
-                            </button>
-                        </div>
-                        
-                        <p class="text-muted mb-4">
-                            Add different variants of this product (different lengths, textures, colors).
-                            If no variants are added, the product will be sold as a single item.
-                        </p>
-
-                        <div id="variantsContainer">
-                            <!-- Variants will be added here dynamically -->
-                        </div>
-
-                        <div class="variant-actions">
-                            <button type="button" class="btn btn-outline btn-sm" onclick="addVariant()">
-                                <i class="fas fa-plus"></i> Add Another Variant
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearAllVariants()">
-                                <i class="fas fa-trash"></i> Clear All
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Multiple Image Upload -->
-                    <div class="form-group">
-                        <label for="images">Product Images *</label>
-                        <small>Upload multiple images for this product</small>
-                        <div class="file-upload-container">
-                            <div class="file-upload-area" onclick="document.getElementById('images').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Click to upload product images (multiple allowed)</p>
-                                <p><small>Supported formats: PNG, JPG, JPEG, GIF, WEBP (Max 16MB)</small></p>
-                                <div class="btn btn-outline">Browse Files</div>
-                            </div>
-                            <input type="file" id="images" name="images" accept="image/*" 
-                                   style="display: none;" multiple onchange="previewImages(this)">
-                            <div id="imagePreview"></div>
-                            <small>First image will be set as primary. Click on image to set as primary.</small>
-                        </div>
-                        <div class="error-message" id="imagesError"></div>
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Save Product
-                        </button>
-                        <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </main>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <span id="toastMessage">Product added successfully!</span>
-        <button class="toast-close" onclick="hideToast()">&times;</button>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-    </div>
-
-    <script>
-        // DOM Elements
-        const addProductForm = document.getElementById('addProductForm');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toastMessage');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const imagePreview = document.getElementById('imagePreview');
-        const variantsContainer = document.getElementById('variantsContainer');
-
-        // Variant Counter
-        let variantCounter = 0;
-
-        // Add new variant row
-        function addVariant() {
-            const variantId = `variant_${variantCounter}`;
-            
-            const variantRow = document.createElement('div');
-            variantRow.className = 'variant-row';
-            variantRow.id = variantId;
-            
-            variantRow.innerHTML = `
-                <h5>Variant ${variantCounter + 1}</h5>
-                <div>
-                    <label>Variant Name</label>
-                    <input type="text" name="variant_name[]" class="form-control" 
-                           placeholder="e.g., Brazilian Straight 24 inches">
-                </div>
-                <div>
-                    <label>Length</label>
-                    <select name="variant_length[]" class="form-control">
-                        <option value="">Select Length</option>
-                        <option value="8">8 inches</option>
-                        <option value="10">10 inches</option>
-                        <option value="12">12 inches</option>
-                        <option value="14">14 inches</option>
-                        <option value="16">16 inches</option>
-                        <option value="18">18 inches</option>
-                        <option value="20">20 inches</option>
-                        <option value="22">22 inches</option>
-                        <option value="24">24 inches</option>
-                        <option value="26">26 inches</option>
-                        <option value="28">28 inches</option>
-                        <option value="30">30 inches</option>
-                        <option value="32">32 inches</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Texture</label>
-                    <select name="variant_texture[]" class="form-control">
-                        <option value="">Select Texture</option>
-                        <option value="Straight">Straight</option>
-                        <option value="Body Wave">Body Wave</option>
-                        <option value="Deep Wave">Deep Wave</option>
-                        <option value="Loose Wave">Loose Wave</option>
-                        <option value="Curly">Curly</option>
-                        <option value="Kinky Curly">Kinky Curly</option>
-                        <option value="Coily">Coily</option>
-                        <option value="Bundles">Bundles</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Price (₦)</label>
-                    <input type="number" name="variant_price[]" class="form-control" 
-                           placeholder="0.00" min="0" step="0.01" value="{{ product.base_price if product else '' }}">
-                </div>
-                <div>
-                    <label>Stock</label>
-                    <input type="number" name="variant_stock[]" class="form-control" 
-                           placeholder="0" min="0" value="0">
-                </div>
-                <div>
-                    <label>Actions</label>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant('${variantId}')" style="width: 100%;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            
-            variantsContainer.appendChild(variantRow);
-            variantCounter++;
-            
-            // Auto-fill variant name based on selections
-            const nameInput = variantRow.querySelector('input[name="variant_name[]"]');
-            const lengthSelect = variantRow.querySelector('select[name="variant_length[]"]');
-            const textureSelect = variantRow.querySelector('select[name="variant_texture[]"]');
-            
-            function updateVariantName() {
-                const length = lengthSelect.value;
-                const texture = textureSelect.value;
-                const productName = document.getElementById('name').value;
-                
-                let variantName = '';
-                if (texture && length) {
-                    variantName = `${texture} ${length} inches`;
-                } else if (texture) {
-                    variantName = texture;
-                } else if (length) {
-                    variantName = `${length} inches`;
-                }
-                
-                if (variantName) {
-                    nameInput.value = variantName;
-                }
-            }
-            
-            lengthSelect.addEventListener('change', updateVariantName);
-            textureSelect.addEventListener('change', updateVariantName);
-        }
-
-        // Remove variant row
-        function removeVariant(variantId) {
-            const variantRow = document.getElementById(variantId);
-            if (variantRow) {
-                variantRow.remove();
-                variantCounter--;
-                
-                // Update variant numbers
-                const variantRows = variantsContainer.querySelectorAll('.variant-row');
-                variantRows.forEach((row, index) => {
-                    const heading = row.querySelector('h5');
-                    if (heading) {
-                        heading.textContent = `Variant ${index + 1}`;
-                    }
-                });
-            }
-        }
-
-        // Clear all variants
-        function clearAllVariants() {
-            if (confirm('Are you sure you want to remove all variants?')) {
-                variantsContainer.innerHTML = '';
-                variantCounter = 0;
-            }
-        }
-
-        // Multiple Image Preview
-        function previewImages(input) {
-            imagePreview.innerHTML = '';
-            
-            if (input.files && input.files.length > 0) {
-                for (let i = 0; i < input.files.length; i++) {
-                    const file = input.files[i];
-                    
-                    // Check file size (max 16MB)
-                    if (file.size > 16 * 1024 * 1024) {
-                        showToast(`File ${file.name} is too large. Maximum size is 16MB`, 'error');
-                        continue;
-                    }
-                    
-                    // Check file type
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                        showToast(`File ${file.name} is not a supported image format`, 'error');
-                        continue;
-                    }
-                    
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        const previewItem = document.createElement('div');
-                        previewItem.className = 'preview-item';
-                        previewItem.dataset.index = i;
-                        
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.alt = 'Product Preview';
-                        
-                        const primaryBadge = document.createElement('div');
-                        primaryBadge.className = i === 0 ? 'primary-badge show' : 'primary-badge';
-                        primaryBadge.innerHTML = '<i class="fas fa-star"></i> Primary';
-                        
-                        const removeBtn = document.createElement('button');
-                        removeBtn.className = 'remove-btn';
-                        removeBtn.innerHTML = '×';
-                        removeBtn.onclick = function(e) {
-                            e.stopPropagation();
-                            imagePreview.removeChild(previewItem);
-                            updateFileInput(previewItem.dataset.index);
-                        };
-                        
-                        previewItem.appendChild(img);
-                        previewItem.appendChild(primaryBadge);
-                        previewItem.appendChild(removeBtn);
-                        previewItem.onclick = function() {
-                            // Set as primary (move to front and update badges)
-                            const currentIndex = this.dataset.index;
-                            imagePreview.insertBefore(this, imagePreview.firstChild);
-                            
-                            // Update all badges
-                            document.querySelectorAll('.primary-badge').forEach(badge => {
-                                badge.classList.remove('show');
-                            });
-                            
-                            // Update the clicked item's badge
-                            this.querySelector('.primary-badge').classList.add('show');
-                            
-                            // Update file order (move to first position)
-                            const fileInput = document.getElementById('images');
-                            const dataTransfer = new DataTransfer();
-                            
-                            // Add clicked file first
-                            dataTransfer.items.add(fileInput.files[currentIndex]);
-                            
-                            // Add remaining files
-                            for (let i = 0; i < fileInput.files.length; i++) {
-                                if (i !== parseInt(currentIndex)) {
-                                    dataTransfer.items.add(fileInput.files[i]);
-                                }
-                            }
-                            
-                            fileInput.files = dataTransfer.files;
-                            
-                            // Update all preview indexes
-                            const previewItems = imagePreview.querySelectorAll('.preview-item');
-                            previewItems.forEach((item, index) => {
-                                item.dataset.index = index;
-                            });
-                        };
-                        
-                        imagePreview.appendChild(previewItem);
-                    };
-                    
-                    reader.readAsDataURL(file);
-                }
-            }
-        }
-
-        // Update file input after removing an image
-        function updateFileInput(removedIndex) {
-            const fileInput = document.getElementById('images');
-            const dataTransfer = new DataTransfer();
-            
-            for (let i = 0; i < fileInput.files.length; i++) {
-                if (i != removedIndex) {
-                    dataTransfer.items.add(fileInput.files[i]);
-                }
-            }
-            
-            fileInput.files = dataTransfer.files;
-            
-            // Update preview indexes
-            const previewItems = imagePreview.querySelectorAll('.preview-item');
-            previewItems.forEach((item, index) => {
-                item.dataset.index = index;
-            });
-        }
-
-        // Form Validation
-        function validateForm() {
-            let isValid = true;
-            
-            // Clear previous errors
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.style.display = 'none';
-                el.textContent = '';
-            });
-            
-            document.querySelectorAll('.form-group').forEach(el => {
-                el.classList.remove('has-error');
-            });
-
-            // Validate required fields
-            const requiredFields = [
-                { id: 'name', message: 'Product name is required' },
-                { id: 'category_id', message: 'Category is required' },
-                { id: 'description', message: 'Description is required' },
-                { id: 'base_price', message: 'Price is required' }
-            ];
-
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                const errorElement = document.getElementById(field.id + 'Error');
-                
-                if (!element.value.trim()) {
-                    isValid = false;
-                    element.parentElement.classList.add('has-error');
-                    errorElement.textContent = field.message;
-                    errorElement.style.display = 'block';
-                } else if (field.id === 'base_price' && parseFloat(element.value) <= 0) {
-                    isValid = false;
-                    element.parentElement.classList.add('has-error');
-                    errorElement.textContent = 'Price must be greater than 0';
-                    errorElement.style.display = 'block';
-                }
-            });
-
-            // Validate at least one image
-            const imagesInput = document.getElementById('images');
-            if (imagesInput.files.length === 0) {
-                isValid = false;
-                imagesInput.setCustomValidity('Please upload at least one product image');
-                document.getElementById('imagesError').textContent = 'Please upload at least one product image';
-                document.getElementById('imagesError').style.display = 'block';
-                showToast('Please upload at least one product image', 'error');
-            } else {
-                imagesInput.setCustomValidity('');
-                document.getElementById('imagesError').style.display = 'none';
-            }
-
-            return isValid;
-        }
-
-        // Form Submission
-        addProductForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (!validateForm()) {
-                return;
-            }
-            
-            // Show loading
-            loadingOverlay.classList.add('active');
-
-            // Submit form
-            setTimeout(() => {
-                this.submit();
-            }, 500);
-        });
-
-        // Auto-generate SKU from product name (you can add this functionality)
-        document.getElementById('name').addEventListener('blur', function() {
-            // You can implement SKU generation logic here
-        });
-
-        // Toast Functions
-        function showToast(message, type = 'success') {
-            toastMessage.textContent = message;
-            toast.className = `toast toast-${type} show`;
-            
-            setTimeout(() => {
-                hideToast();
-            }, 5000);
-        }
-
-        function hideToast() {
-            toast.classList.remove('show');
-        }
-
-        // Initialize form validation on input
-        document.querySelectorAll('input, textarea, select').forEach(element => {
-            element.addEventListener('input', function() {
-                const errorElement = document.getElementById(this.id + 'Error');
-                if (errorElement) {
-                    errorElement.style.display = 'none';
-                    this.parentElement.classList.remove('has-error');
-                }
-            });
-        });
-
-        // Show validation errors on blur
-        document.querySelectorAll('input[required], textarea[required], select[required]').forEach(element => {
-            element.addEventListener('blur', function() {
-                if (!this.value.trim()) {
-                    const errorId = this.id + 'Error';
-                    const errorElement = document.getElementById(errorId);
-                    if (errorElement) {
-                        errorElement.textContent = 'Please fill in this field';
-                        errorElement.style.display = 'block';
-                        this.parentElement.classList.add('has-error');
-                    }
-                }
-            });
-        });
-
-        // Auto-hide loading on page load
-        window.addEventListener('load', function() {
-            loadingOverlay.classList.remove('active');
-            
-            // Add one default variant on page load
-            addVariant();
-        });
-
-        // Prevent form resubmission on page refresh
-        if (window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.href);
-        }
-
-        // Variant price sync with base price
-        document.getElementById('base_price').addEventListener('change', function() {
-            const basePrice = parseFloat(this.value) || 0;
-            const variantPriceInputs = document.querySelectorAll('input[name="variant_price[]"]');
-            variantPriceInputs.forEach(input => {
-                if (!input.value || input.value === '0') {
-                    input.value = basePrice.toFixed(2);
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
