@@ -18,6 +18,13 @@
         body {
             background-color: var(--light-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main {
+            flex: 1;
         }
         
         .navbar-brand img {
@@ -34,7 +41,7 @@
             font-weight: 500;
         }
         
-        .nav-link:hover {
+        .nav-link:hover, .nav-link.active {
             color: var(--primary-color) !important;
         }
         
@@ -51,6 +58,13 @@
             padding: 100px 0;
             margin-bottom: 50px;
             border-radius: 0 0 20px 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 60px 0;
+                margin-bottom: 30px;
+            }
         }
         
         .filter-section {
@@ -89,10 +103,11 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             height: 100%;
             border: 1px solid #eee;
+            position: relative;
         }
         
         .product-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.1);
             border-color: var(--primary-color);
         }
@@ -101,6 +116,7 @@
             height: 250px;
             overflow: hidden;
             position: relative;
+            background: #f8f9fa;
         }
         
         .product-img {
@@ -124,6 +140,7 @@
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 500;
+            z-index: 2;
         }
         
         .product-category {
@@ -136,6 +153,7 @@
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 500;
+            z-index: 2;
         }
         
         .product-info {
@@ -295,6 +313,7 @@
             color: #666;
             text-decoration: none;
             transition: color 0.3s;
+            display: block;
         }
         
         .category-filter a:hover, .category-filter a.active {
@@ -341,6 +360,9 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
         
         .empty-state i {
@@ -364,7 +386,7 @@
             margin-right: 8px;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
             .filter-section {
                 position: fixed;
                 top: 0;
@@ -411,6 +433,17 @@
             }
         }
         
+        @media (max-width: 768px) {
+            .product-card {
+                margin-bottom: 20px;
+            }
+            
+            .product-title {
+                height: auto;
+                min-height: 50px;
+            }
+        }
+        
         .loading-spinner {
             display: none;
             text-align: center;
@@ -422,15 +455,104 @@
             height: 3rem;
             color: var(--primary-color);
         }
+        
+        /* Stock overlay */
+        .stock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        
+        .stock-overlay-text {
+            background: var(--danger);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        /* Sale badge */
+        .sale-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 2;
+        }
+        
+        /* Sticky header */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Quick view button */
+        .quick-view-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.9);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 2;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .product-card:hover .quick-view-btn {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .custom-toast {
+            background: white;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light">
+    <nav class="navbar navbar-expand-lg navbar-light sticky-header">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
+                {% if config.site_logo %}
                 <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                     alt="{{ config.brand_name }} Logo">
+                     alt="{{ config.brand_name }} Logo" onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
+                {% else %}
+                <span class="fw-bold text-primary">{{ config.brand_name }}</span>
+                {% endif %}
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -445,27 +567,21 @@
                     <li class="nav-item">
                         <a class="nav-link active" href="{{ url_for('shop') }}">Shop</a>
                     </li>
-                    {% for category in categories %}
+                    {% for category in categories[:6] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('shop') }}?category={{ category.id }}">{{ category.name }}</a>
                     </li>
                     {% endfor %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
-                    </li>
                 </ul>
                 
                 <div class="d-flex align-items-center">
                     {% if 'customer_id' in session %}
                     <a href="{{ url_for('account') }}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-user"></i> Account
+                        <i class="fas fa-user"></i> <span class="d-none d-md-inline">Account</span>
                     </a>
                     {% else %}
                     <a href="{{ url_for('customer_login') }}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-sign-in-alt"></i> Login
+                        <i class="fas fa-sign-in-alt"></i> <span class="d-none d-md-inline">Login</span>
                     </a>
                     {% endif %}
                     
@@ -483,20 +599,20 @@
     </nav>
 
     <!-- Hero Section -->
-    <div class="hero-section">
+    <section class="hero-section">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1 class="display-4 fw-bold mb-3">Premium Hair Collection</h1>
                     <p class="lead mb-4">Discover our exclusive range of 100% human hair extensions, wigs, and hair care products. Luxury quality at affordable prices.</p>
-                    <div class="d-flex gap-3">
+                    <div class="d-flex flex-wrap gap-3">
                         <div class="bg-white text-dark p-3 rounded">
                             <i class="fas fa-check-circle text-success me-2"></i>
                             <span>100% Human Hair</span>
                         </div>
                         <div class="bg-white text-dark p-3 rounded">
                             <i class="fas fa-truck text-success me-2"></i>
-                            <span>Fast Delivery</span>
+                            <span>Nationwide Delivery</span>
                         </div>
                         <div class="bg-white text-dark p-3 rounded">
                             <i class="fas fa-shield-alt text-success me-2"></i>
@@ -506,10 +622,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Main Content -->
-    <div class="container">
+    <main class="container mb-5">
         <!-- Mobile Filter Button -->
         <button class="filter-mobile-btn" id="filterMobileBtn">
             <i class="fas fa-filter"></i> Filter Products
@@ -531,11 +647,10 @@
                     
                     <!-- Search -->
                     <div class="mb-4">
-                        <form method="GET" action="{{ url_for('shop') }}">
-                            <input type="hidden" name="category" value="{{ category_id if category_id }}">
+                        <form method="GET" action="{{ url_for('shop') }}" id="searchForm">
                             <div class="input-group">
                                 <input type="text" class="form-control" name="search" 
-                                       placeholder="Search products..." value="{{ search_query }}">
+                                       placeholder="Search products..." value="{{ search_query or '' }}">
                                 <button class="btn btn-outline-primary" type="submit">
                                     <i class="fas fa-search"></i>
                                 </button>
@@ -555,12 +670,9 @@
                             </li>
                             {% for category in categories %}
                             <li>
-                                <a href="{{ url_for('shop') }}?category={{ category.id }}" 
+                                <a href="{{ url_for('shop') }}?category={{ category.id }}{% if search_query %}&search={{ search_query }}{% endif %}" 
                                    class="{% if category_id == category.id %}active{% endif %}">
                                     {{ category.name }}
-                                    <span class="badge bg-light text-dark float-end">
-                                        {{ category.products|length if category.products else 0 }}
-                                    </span>
                                 </a>
                             </li>
                             {% endfor %}
@@ -572,21 +684,21 @@
                     <div class="mb-4">
                         <h6 class="mb-3 fw-bold">Length</h6>
                         <form method="GET" action="{{ url_for('shop') }}" id="lengthForm">
-                            <input type="hidden" name="category" value="{{ category_id if category_id }}">
-                            <input type="hidden" name="search" value="{{ search_query }}">
+                            <input type="hidden" name="category" value="{{ category_id or '' }}">
+                            <input type="hidden" name="search" value="{{ search_query or '' }}">
                             <div class="d-flex flex-wrap gap-2">
                                 {% for length in lengths %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="length" 
                                            value="{{ length }}" id="length{{ loop.index }}"
-                                           {% if selected_length == length %}checked{% endif %}>
+                                           {% if selected_length == length %}checked{% endif %}
+                                           onchange="this.form.submit()">
                                     <label class="form-check-label" for="length{{ loop.index }}">
                                         {{ length }}
                                     </label>
                                 </div>
                                 {% endfor %}
                             </div>
-                            <button type="submit" class="btn btn-sm btn-primary mt-2">Apply</button>
                         </form>
                     </div>
                     {% endif %}
@@ -596,21 +708,21 @@
                     <div class="mb-4">
                         <h6 class="mb-3 fw-bold">Texture</h6>
                         <form method="GET" action="{{ url_for('shop') }}" id="textureForm">
-                            <input type="hidden" name="category" value="{{ category_id if category_id }}">
-                            <input type="hidden" name="search" value="{{ search_query }}">
+                            <input type="hidden" name="category" value="{{ category_id or '' }}">
+                            <input type="hidden" name="search" value="{{ search_query or '' }}">
                             <div class="d-flex flex-wrap gap-2">
                                 {% for texture in textures %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="texture" 
                                            value="{{ texture }}" id="texture{{ loop.index }}"
-                                           {% if selected_texture == texture %}checked{% endif %}>
+                                           {% if selected_texture == texture %}checked{% endif %}
+                                           onchange="this.form.submit()">
                                     <label class="form-check-label" for="texture{{ loop.index }}">
                                         {{ texture }}
                                     </label>
                                 </div>
                                 {% endfor %}
                             </div>
-                            <button type="submit" class="btn btn-sm btn-primary mt-2">Apply</button>
                         </form>
                     </div>
                     {% endif %}
@@ -619,15 +731,22 @@
                     <div class="mb-4">
                         <h6 class="mb-3 fw-bold">Price Range</h6>
                         <form method="GET" action="{{ url_for('shop') }}" id="priceForm">
-                            <input type="hidden" name="category" value="{{ category_id if category_id }}">
-                            <input type="hidden" name="search" value="{{ search_query }}">
+                            <input type="hidden" name="category" value="{{ category_id or '' }}">
+                            <input type="hidden" name="search" value="{{ search_query or '' }}">
+                            {% if selected_length %}
+                            <input type="hidden" name="length" value="{{ selected_length }}">
+                            {% endif %}
+                            {% if selected_texture %}
+                            <input type="hidden" name="texture" value="{{ selected_texture }}">
+                            {% endif %}
+                            
                             <div class="price-range">
                                 <div class="d-flex justify-content-between mb-2">
                                     <input type="number" class="form-control form-control-sm w-45" 
-                                           name="min_price" placeholder="Min" value="{{ min_price if min_price }}">
+                                           name="min_price" placeholder="Min" value="{{ min_price or '' }}" min="0" step="1000">
                                     <span class="px-2">to</span>
                                     <input type="number" class="form-control form-control-sm w-45" 
-                                           name="max_price" placeholder="Max" value="{{ max_price if max_price }}">
+                                           name="max_price" placeholder="Max" value="{{ max_price or '' }}" min="0" step="1000">
                                 </div>
                                 <button type="submit" class="btn btn-sm btn-primary w-100 mt-2">Apply Price</button>
                             </div>
@@ -654,25 +773,24 @@
                             {% if category_id %}
                                 {% for cat in categories if cat.id == category_id %}
                                     {{ cat.name }}
+                                {% else %}
+                                    Category
                                 {% endfor %}
                             {% else %}
                                 All Products
                             {% endif %}
                         </h4>
                         <p class="results-count mb-0">
-                            Showing {{ products|length }} of {{ total_products }} products
+                            Showing {{ total_products }} product{% if total_products != 1 %}s{% endif %}
                             {% if search_query %} for "{{ search_query }}"{% endif %}
                         </p>
                     </div>
                     <div class="col-md-6 text-md-end">
-                        <!-- Sort Options (can be extended) -->
-                        <div class="d-inline-block">
-                            <select class="form-select sort-select" id="sortSelect">
-                                <option value="newest">Newest First</option>
-                                <option value="price_low">Price: Low to High</option>
-                                <option value="price_high">Price: High to Low</option>
-                                <option value="name">Name A-Z</option>
-                            </select>
+                        <!-- Results counter -->
+                        <div class="d-inline-block me-3">
+                            <span class="text-muted">
+                                Page {{ current_page }} of {{ total_pages }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -693,16 +811,22 @@
                         <div class="product-card">
                             <a href="{{ url_for('product_detail', id=product.id) }}" class="text-decoration-none">
                                 <div class="product-img-container">
-                                    {% if product.images %}
-                                    <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) if product.images[0].image_url else url_for('static', filename='images/placeholder.jpg') }}" 
-                                         alt="{{ product.name }}" class="product-img">
+                                    {% if product.images and product.images[0] %}
+                                        <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) }}" 
+                                             alt="{{ product.name }}" 
+                                             class="product-img"
+                                             onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                                     {% else %}
-                                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" 
-                                         alt="{{ product.name }}" class="product-img">
+                                        <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" 
+                                             alt="{{ product.name }}" class="product-img">
                                     {% endif %}
                                     
                                     {% if product.featured %}
                                     <span class="product-badge">Featured</span>
+                                    {% endif %}
+                                    
+                                    {% if product.compare_price and product.compare_price > product.min_price %}
+                                    <span class="sale-badge">Sale</span>
                                     {% endif %}
                                     
                                     {% if product.category %}
@@ -710,11 +834,16 @@
                                     {% endif %}
                                     
                                     {% if product.stock <= 0 %}
-                                    <div class="position-absolute w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center">
-                                        <span class="text-white bg-danger p-2 rounded">Out of Stock</span>
+                                    <div class="stock-overlay">
+                                        <span class="stock-overlay-text">Out of Stock</span>
                                     </div>
                                     {% endif %}
                                 </div>
+                                
+                                <!-- Quick View Button -->
+                                <a href="{{ url_for('product_detail', id=product.id) }}" class="quick-view-btn">
+                                    <i class="fas fa-eye"></i> Quick View
+                                </a>
                                 
                                 <div class="product-info">
                                     <h6 class="product-title">{{ product.name }}</h6>
@@ -722,7 +851,7 @@
                                     <div class="product-price">
                                         {{ product.display_price }}
                                         {% if product.compare_price and product.compare_price > product.min_price %}
-                                        <span class="product-compare-price">₦{{ product.compare_price|int }}</span>
+                                        <span class="product-compare-price">{{ format_price(product.compare_price) }}</span>
                                         {% endif %}
                                     </div>
                                     
@@ -776,18 +905,17 @@
                             
                             <!-- Add to Cart Form -->
                             <div class="p-3 border-top">
+                                {% if product.variants %}
+                                <!-- If product has variants, link to detail page -->
+                                <a href="{{ url_for('product_detail', id=product.id) }}" 
+                                   class="btn add-to-cart-btn">
+                                    <i class="fas fa-shopping-cart me-2"></i> View Options
+                                </a>
+                                {% else %}
+                                <!-- Simple product without variants -->
                                 <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" 
                                       class="add-to-cart-form">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                    
-                                    {% if product.variants %}
-                                    <!-- If product has variants, link to detail page -->
-                                    <a href="{{ url_for('product_detail', id=product.id) }}" 
-                                       class="btn add-to-cart-btn">
-                                        <i class="fas fa-shopping-cart me-2"></i> View Options
-                                    </a>
-                                    {% else %}
-                                    <!-- Simple product without variants -->
                                     <input type="hidden" name="quantity" value="1">
                                     <button type="submit" class="btn add-to-cart-btn" 
                                             {% if product.stock <= 0 %}disabled{% endif %}>
@@ -797,8 +925,8 @@
                                         <i class="fas fa-shopping-cart me-2"></i> Add to Cart
                                         {% endif %}
                                     </button>
-                                    {% endif %}
                                 </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -807,23 +935,37 @@
                 
                 <!-- Pagination -->
                 {% if total_pages > 1 %}
-                <nav aria-label="Page navigation">
+                <nav aria-label="Page navigation" class="mt-5">
                     <ul class="pagination">
                         {% if current_page > 1 %}
                         <li class="page-item">
                             <a class="page-link" 
                                href="{{ url_for('shop', page=current_page-1, category=category_id, search=search_query, length=selected_length, texture=selected_texture, min_price=min_price, max_price=max_price) }}">
-                                Previous
+                                <i class="fas fa-chevron-left"></i> Previous
                             </a>
                         </li>
                         {% endif %}
                         
-                        {% for page_num in range(1, total_pages+1) %}
+                        {% set start_page = [1, current_page-2]|max %}
+                        {% set end_page = [total_pages, current_page+2]|min %}
+                        
+                        {% if start_page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('shop', page=1, category=category_id, search=search_query, length=selected_length, texture=selected_texture, min_price=min_price, max_price=max_price) }}">1</a>
+                        </li>
+                        {% if start_page > 2 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endif %}
+                        
+                        {% for page_num in range(start_page, end_page + 1) %}
                             {% if page_num == current_page %}
-                            <li class="page-item active">
+                            <li class="page-item active" aria-current="page">
                                 <span class="page-link">{{ page_num }}</span>
                             </li>
-                            {% elif page_num >= current_page-2 and page_num <= current_page+2 %}
+                            {% else %}
                             <li class="page-item">
                                 <a class="page-link" 
                                    href="{{ url_for('shop', page=page_num, category=category_id, search=search_query, length=selected_length, texture=selected_texture, min_price=min_price, max_price=max_price) }}">
@@ -833,11 +975,22 @@
                             {% endif %}
                         {% endfor %}
                         
+                        {% if end_page < total_pages %}
+                        {% if end_page < total_pages - 1 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('shop', page=total_pages, category=category_id, search=search_query, length=selected_length, texture=selected_texture, min_price=min_price, max_price=max_price) }}">{{ total_pages }}</a>
+                        </li>
+                        {% endif %}
+                        
                         {% if current_page < total_pages %}
                         <li class="page-item">
                             <a class="page-link" 
                                href="{{ url_for('shop', page=current_page+1, category=category_id, search=search_query, length=selected_length, texture=selected_texture, min_price=min_price, max_price=max_price) }}">
-                                Next
+                                Next <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
                         {% endif %}
@@ -864,30 +1017,40 @@
                         <i class="fas fa-times me-2"></i> Clear All Filters
                     </a>
                     {% endif %}
+                    <div class="mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i> Return to Home
+                        </a>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white mt-5 py-5">
+    <footer class="bg-dark text-white py-5 mt-auto">
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4">
-                    <img src="{{ url_for('static', filename='images/' + config.site_logo) }}" 
-                         alt="{{ config.brand_name }} Logo" height="40" class="mb-3">
-                    <p class="text-light">{{ config.description }}</p>
+                    <h5 class="mb-3">{{ config.brand_name }}</h5>
+                    <p class="text-light mb-3">{{ config.description }}</p>
                     <div class="social-links">
-                        <a href="{{ config.instagram_url }}" class="text-white me-3" target="_blank">
+                        {% if config.instagram_url %}
+                        <a href="{{ config.instagram_url }}" class="text-white me-3" target="_blank" title="Instagram">
                             <i class="fab fa-instagram fa-lg"></i>
                         </a>
-                        <a href="{{ config.whatsapp }}" class="text-white me-3" target="_blank">
+                        {% endif %}
+                        {% if config.whatsapp %}
+                        <a href="{{ config.whatsapp }}" class="text-white me-3" target="_blank" title="WhatsApp">
                             <i class="fab fa-whatsapp fa-lg"></i>
                         </a>
-                        <a href="mailto:{{ config.email }}" class="text-white">
+                        {% endif %}
+                        {% if config.email %}
+                        <a href="mailto:{{ config.email }}" class="text-white" title="Email">
                             <i class="fas fa-envelope fa-lg"></i>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 mb-4">
@@ -907,23 +1070,13 @@
                     <h5 class="mb-3">Customer Service</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <a href="{{ url_for('contact') }}" class="text-light text-decoration-none">
+                            <a href="{{ url_for('contact') if 'contact' in url_for else '#' }}" class="text-light text-decoration-none">
                                 Contact Us
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="{{ url_for('about') }}" class="text-light text-decoration-none">
+                            <a href="{{ url_for('about') if 'about' in url_for else '#' }}" class="text-light text-decoration-none">
                                 About Us
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="/shipping" class="text-light text-decoration-none">
-                                Shipping Policy
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="/returns" class="text-light text-decoration-none">
-                                Returns & Refunds
                             </a>
                         </li>
                     </ul>
@@ -931,18 +1084,24 @@
                 <div class="col-lg-3 col-md-4 mb-4">
                     <h5 class="mb-3">Contact Info</h5>
                     <ul class="list-unstyled">
+                        {% if config.address %}
                         <li class="mb-2">
                             <i class="fas fa-map-marker-alt me-2"></i>
                             {{ config.address }}
                         </li>
+                        {% endif %}
+                        {% if config.phone %}
                         <li class="mb-2">
                             <i class="fas fa-phone me-2"></i>
                             {{ config.phone }}
                         </li>
+                        {% endif %}
+                        {% if config.email %}
                         <li class="mb-2">
                             <i class="fas fa-envelope me-2"></i>
                             {{ config.email }}
                         </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -952,41 +1111,39 @@
                     <p class="mb-0">&copy; {{ current_year }} {{ config.brand_name }}. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">Designed with <i class="fas fa-heart text-danger"></i> for hair lovers</p>
+                    <p class="mb-0">Premium Human Hair Extensions</p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Flash Messages Script -->
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // Auto-dismiss flash messages after 5 seconds
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-        
-        // Mobile filter toggle
+        // Document ready function
         document.addEventListener('DOMContentLoaded', function() {
+            // Mobile filter functionality
             const filterBtn = document.getElementById('filterMobileBtn');
             const closeFilterBtn = document.getElementById('closeFilterBtn');
             const filterSection = document.getElementById('filterSection');
             const filterOverlay = document.getElementById('filterOverlay');
             
-            if (filterBtn) {
+            if (filterBtn && filterSection) {
                 filterBtn.addEventListener('click', function() {
                     filterSection.classList.add('show');
-                    filterOverlay.classList.add('show');
+                    if (filterOverlay) filterOverlay.classList.add('show');
+                    document.body.style.overflow = 'hidden';
                 });
             }
             
             if (closeFilterBtn) {
                 closeFilterBtn.addEventListener('click', function() {
                     filterSection.classList.remove('show');
-                    filterOverlay.classList.remove('show');
+                    if (filterOverlay) filterOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
                 });
             }
             
@@ -994,74 +1151,90 @@
                 filterOverlay.addEventListener('click', function() {
                     filterSection.classList.remove('show');
                     filterOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
                 });
             }
             
             // Close filter on escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    filterSection.classList.remove('show');
-                    filterOverlay.classList.remove('show');
+                    if (filterSection) filterSection.classList.remove('show');
+                    if (filterOverlay) filterOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
                 }
             });
             
-            // Sort functionality (client-side for demo)
-            const sortSelect = document.getElementById('sortSelect');
-            if (sortSelect) {
-                sortSelect.addEventListener('change', function() {
-                    // In a real implementation, this would redirect or make an AJAX call
-                    console.log('Sort by:', this.value);
-                    // For now, just reload with sort parameter
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('sort', this.value);
-                    window.location.href = url.toString();
-                });
-            }
-            
-            // Add to cart form submission
+            // Add to cart form submission with AJAX
             const addToCartForms = document.querySelectorAll('.add-to-cart-form');
             addToCartForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
                     const button = this.querySelector('button[type="submit"]');
                     if (button && button.disabled) {
-                        e.preventDefault();
                         return;
                     }
                     
+                    // Get CSRF token
+                    const csrfToken = this.querySelector('input[name="csrf_token"]')?.value;
+                    
                     // Show loading state
-                    if (button) {
-                        const originalText = button.innerHTML;
-                        button.disabled = true;
-                        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...';
+                    const originalText = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...';
+                    
+                    try {
+                        const formData = new FormData(this);
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: formData
+                        });
                         
-                        // Restore button after 2 seconds (in case of error)
-                        setTimeout(() => {
+                        if (response.ok) {
+                            // Update cart count
+                            const cartBadges = document.querySelectorAll('.cart-badge');
+                            cartBadges.forEach(badge => {
+                                let count = parseInt(badge.textContent) || 0;
+                                badge.textContent = count + 1;
+                                badge.style.display = 'flex';
+                            });
+                            
+                            // Show success message
+                            showToast('Product added to cart!', 'success');
+                            
+                            // Reset button
+                            setTimeout(() => {
+                                button.disabled = false;
+                                button.innerHTML = originalText;
+                            }, 1000);
+                        } else {
+                            const data = await response.json().catch(() => ({}));
+                            showToast(data.error || 'Failed to add to cart', 'danger');
+                            
+                            // Reset button
                             button.disabled = false;
                             button.innerHTML = originalText;
-                        }, 2000);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('Network error. Please try again.', 'danger');
+                        
+                        // Reset button
+                        button.disabled = false;
+                        button.innerHTML = originalText;
                     }
                 });
             });
             
-            // Filter form submissions
-            const filterForms = document.querySelectorAll('#lengthForm, #textureForm, #priceForm');
-            filterForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const loadingSpinner = document.getElementById('loadingSpinner');
-                    if (loadingSpinner) {
-                        loadingSpinner.style.display = 'block';
-                        document.getElementById('productsGrid').style.opacity = '0.5';
-                    }
-                });
-            });
-            
-            // Price range slider functionality
+            // Price input validation
             const minPriceInput = document.querySelector('input[name="min_price"]');
             const maxPriceInput = document.querySelector('input[name="max_price"]');
             
             if (minPriceInput && maxPriceInput) {
-                // Add input validation
-                minPriceInput.addEventListener('change', function() {
+                minPriceInput.addEventListener('blur', function() {
                     const min = parseFloat(this.value) || 0;
                     const max = parseFloat(maxPriceInput.value) || 0;
                     
@@ -1070,7 +1243,7 @@
                     }
                 });
                 
-                maxPriceInput.addEventListener('change', function() {
+                maxPriceInput.addEventListener('blur', function() {
                     const min = parseFloat(minPriceInput.value) || 0;
                     const max = parseFloat(this.value) || 0;
                     
@@ -1080,42 +1253,152 @@
                 });
             }
             
-            // Update variant display on product cards
-            function updateVariantDisplay() {
-                document.querySelectorAll('.product-card').forEach(card => {
-                    const variants = card.querySelectorAll('.variant-tag');
-                    if (variants.length > 3) {
-                        // Show only first 3 variants
-                        for (let i = 3; i < variants.length; i++) {
-                            variants[i].style.display = 'none';
-                        }
+            // Auto-submit filter forms on change (for radio buttons)
+            const filterRadios = document.querySelectorAll('input[type="radio"][onchange]');
+            filterRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // Show loading indicator
+                    const loadingSpinner = document.getElementById('loadingSpinner');
+                    const productsGrid = document.getElementById('productsGrid');
+                    
+                    if (loadingSpinner && productsGrid) {
+                        loadingSpinner.style.display = 'block';
+                        productsGrid.style.opacity = '0.5';
                     }
-                });
-            }
-            
-            updateVariantDisplay();
-            
-            // Quick view functionality (can be extended)
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.zIndex = '10';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.zIndex = '1';
+                    
+                    // Submit the form
+                    this.form.submit();
                 });
             });
-        });
-        
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
+        
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            
+            // Create toast element
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast custom-toast ${type}`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            
+            // Set border color based on type
+            let borderColor = 'var(--primary-color)';
+            if (type === 'success') borderColor = '#28a745';
+            if (type === 'danger') borderColor = '#dc3545';
+            if (type === 'warning') borderColor = '#ffc107';
+            
+            toastEl.style.borderLeftColor = borderColor;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            toastEl.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">${type === 'success' ? 'Success' : type === 'danger' ? 'Error' : type === 'warning' ? 'Warning' : 'Info'}</strong>
+                    <small>${timeString}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            `;
+            
+            toastContainer.appendChild(toastEl);
+            
+            // Initialize and show the toast
+            const toast = new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 3000
+            });
+            
+            toast.show();
+            
+            // Remove toast from DOM after hiding
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.remove();
+            });
+        }
+        
+        // Image error handling
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                this.src = '{{ url_for("static", filename="images/placeholder.jpg") }}';
+                this.onerror = null; // Prevent infinite loop
+            });
+        });
+        
+        // Product card hover effects
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+        
+        // Infinite scroll (optional enhancement)
+        let isLoading = false;
+        let currentPage = {{ current_page }};
+        const totalPages = {{ total_pages }};
+        
+        window.addEventListener('scroll', function() {
+            if (isLoading || currentPage >= totalPages) return;
+            
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                loadMoreProducts();
+            }
+        });
+        
+        async function loadMoreProducts() {
+            if (isLoading || currentPage >= totalPages) return;
+            
+            isLoading = true;
+            currentPage++;
+            
+            // Build query string
+            const params = new URLSearchParams({
+                page: currentPage,
+                {% if category_id %}category: {{ category_id }},{% endif %}
+                {% if search_query %}search: '{{ search_query }}',{% endif %}
+                {% if selected_length %}length: '{{ selected_length }}',{% endif %}
+                {% if selected_texture %}texture: '{{ selected_texture }}',{% endif %}
+                {% if min_price %}min_price: {{ min_price }},{% endif %}
+                {% if max_price %}max_price: {{ max_price }}{% endif %}
+            });
+            
+            try {
+                const response = await fetch(`{{ url_for('shop') }}?${params.toString()}`);
+                const html = await response.text();
+                
+                // Parse the response and extract products
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newProducts = doc.querySelector('#productsGrid');
+                
+                if (newProducts) {
+                    document.querySelector('#productsGrid').innerHTML += newProducts.innerHTML;
+                }
+            } catch (error) {
+                console.error('Error loading more products:', error);
+                currentPage--; // Decrement on error
+            } finally {
+                isLoading = false;
+            }
+        }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
