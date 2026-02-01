@@ -51,7 +51,7 @@
         
         .hero-section {
             background: linear-gradient(rgba(44, 24, 16, 0.8), rgba(44, 24, 16, 0.9)), 
-                        url('{{ url_for("static", filename="images/shop-hero.jpg") }}');
+                        url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
             background-position: center;
             color: white;
@@ -471,7 +471,7 @@
         }
         
         .stock-overlay-text {
-            background: var(--danger);
+            background: #dc3545;
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -572,16 +572,28 @@
                         <a class="nav-link" href="{{ url_for('shop') }}?category={{ category.id }}">{{ category.name }}</a>
                     </li>
                     {% endfor %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
+                    </li>
                 </ul>
                 
                 <div class="d-flex align-items-center">
-                    {% if 'customer_id' in session %}
+                    {% if session.customer_id %}
                     <a href="{{ url_for('account') }}" class="btn btn-outline-primary me-2">
                         <i class="fas fa-user"></i> <span class="d-none d-md-inline">Account</span>
+                    </a>
+                    <a href="{{ url_for('customer_logout') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-sign-out-alt"></i> <span class="d-none d-md-inline">Logout</span>
                     </a>
                     {% else %}
                     <a href="{{ url_for('customer_login') }}" class="btn btn-outline-primary me-2">
                         <i class="fas fa-sign-in-alt"></i> <span class="d-none d-md-inline">Login</span>
+                    </a>
+                    <a href="{{ url_for('customer_register') }}" class="btn btn-outline-secondary me-2 d-none d-md-inline">
+                        <i class="fas fa-user-plus"></i> Register
                     </a>
                     {% endif %}
                     
@@ -771,10 +783,10 @@
                     <div class="col-md-6">
                         <h4 class="fw-bold mb-2">
                             {% if category_id %}
-                                {% for cat in categories if cat.id == category_id %}
-                                    {{ cat.name }}
-                                {% else %}
-                                    Category
+                                {% for cat in categories %}
+                                    {% if cat.id == category_id %}
+                                        {{ cat.name }}
+                                    {% endif %}
                                 {% endfor %}
                             {% else %}
                                 All Products
@@ -811,14 +823,14 @@
                         <div class="product-card">
                             <a href="{{ url_for('product_detail', id=product.id) }}" class="text-decoration-none">
                                 <div class="product-img-container">
-                                    {% if product.images and product.images[0] %}
-                                        <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) }}" 
-                                             alt="{{ product.name }}" 
-                                             class="product-img"
-                                             onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                    {% if product.images and product.images|length > 0 %}
+                                    <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) if product.images[0].image_url.startswith('uploads/') else url_for('static', filename='uploads/' + product.images[0].image_url) }}" 
+                                         alt="{{ product.name }}" 
+                                         class="product-img"
+                                         onerror="this.src='https://via.placeholder.com/400x400/8B4513/FFFFFF?text=NORA+HAIR'">
                                     {% else %}
-                                        <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" 
-                                             alt="{{ product.name }}" class="product-img">
+                                    <img src="https://via.placeholder.com/400x400/8B4513/FFFFFF?text=NORA+HAIR" 
+                                         alt="{{ product.name }}" class="product-img">
                                     {% endif %}
                                     
                                     {% if product.featured %}
@@ -856,9 +868,9 @@
                                     </div>
                                     
                                     <!-- Variant Info -->
-                                    {% if product.variants %}
+                                    {% if product.variants and product.variants|length > 0 %}
                                     <div class="product-variants">
-                                        {% if product.available_lengths %}
+                                        {% if product.available_lengths and product.available_lengths|length > 0 %}
                                         <div class="mb-1">
                                             <strong>Lengths:</strong>
                                             {% for length in product.available_lengths[:3] %}
@@ -870,7 +882,7 @@
                                         </div>
                                         {% endif %}
                                         
-                                        {% if product.available_textures %}
+                                        {% if product.available_textures and product.available_textures|length > 0 %}
                                         <div>
                                             <strong>Textures:</strong>
                                             {% for texture in product.available_textures[:2] %}
@@ -905,7 +917,7 @@
                             
                             <!-- Add to Cart Form -->
                             <div class="p-3 border-top">
-                                {% if product.variants %}
+                                {% if product.variants and product.variants|length > 0 %}
                                 <!-- If product has variants, link to detail page -->
                                 <a href="{{ url_for('product_detail', id=product.id) }}" 
                                    class="btn add-to-cart-btn">
@@ -915,7 +927,8 @@
                                 <!-- Simple product without variants -->
                                 <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" 
                                       class="add-to-cart-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    {{ csrf_token()|safe }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="quantity" value="1">
                                     <button type="submit" class="btn add-to-cart-btn" 
                                             {% if product.stock <= 0 %}disabled{% endif %}>
@@ -1070,15 +1083,22 @@
                     <h5 class="mb-3">Customer Service</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <a href="{{ url_for('contact') if 'contact' in url_for else '#' }}" class="text-light text-decoration-none">
+                            <a href="{{ url_for('contact') }}" class="text-light text-decoration-none">
                                 Contact Us
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="{{ url_for('about') if 'about' in url_for else '#' }}" class="text-light text-decoration-none">
+                            <a href="{{ url_for('about') }}" class="text-light text-decoration-none">
                                 About Us
                             </a>
                         </li>
+                        {% if session.customer_id %}
+                        <li class="mb-2">
+                            <a href="{{ url_for('account') }}" class="text-light text-decoration-none">
+                                My Account
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-4 mb-4">
@@ -1176,7 +1196,8 @@
                     }
                     
                     // Get CSRF token
-                    const csrfToken = this.querySelector('input[name="csrf_token"]')?.value;
+                    const csrfInput = this.querySelector('input[name="csrf_token"]');
+                    const csrfToken = csrfInput ? csrfInput.value : '';
                     
                     // Show loading state
                     const originalText = button.innerHTML;
@@ -1192,6 +1213,12 @@
                             },
                             body: formData
                         });
+                        
+                        if (response.redirected) {
+                            // Handle redirect (e.g., to login or product detail)
+                            window.location.href = response.url;
+                            return;
+                        }
                         
                         if (response.ok) {
                             // Update cart count
@@ -1328,9 +1355,9 @@
         }
         
         // Image error handling
-        document.querySelectorAll('img').forEach(img => {
+        document.querySelectorAll('.product-img').forEach(img => {
             img.addEventListener('error', function() {
-                this.src = '{{ url_for("static", filename="images/placeholder.jpg") }}';
+                this.src = 'https://via.placeholder.com/400x400/8B4513/FFFFFF?text=NORA+HAIR';
                 this.onerror = null; // Prevent infinite loop
             });
         });
@@ -1345,60 +1372,6 @@
                 this.style.zIndex = '1';
             });
         });
-        
-        // Infinite scroll (optional enhancement)
-        let isLoading = false;
-        let currentPage = {{ current_page }};
-        const totalPages = {{ total_pages }};
-        
-        window.addEventListener('scroll', function() {
-            if (isLoading || currentPage >= totalPages) return;
-            
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight;
-            const clientHeight = document.documentElement.clientHeight;
-            
-            if (scrollTop + clientHeight >= scrollHeight - 100) {
-                loadMoreProducts();
-            }
-        });
-        
-        async function loadMoreProducts() {
-            if (isLoading || currentPage >= totalPages) return;
-            
-            isLoading = true;
-            currentPage++;
-            
-            // Build query string
-            const params = new URLSearchParams({
-                page: currentPage,
-                {% if category_id %}category: {{ category_id }},{% endif %}
-                {% if search_query %}search: '{{ search_query }}',{% endif %}
-                {% if selected_length %}length: '{{ selected_length }}',{% endif %}
-                {% if selected_texture %}texture: '{{ selected_texture }}',{% endif %}
-                {% if min_price %}min_price: {{ min_price }},{% endif %}
-                {% if max_price %}max_price: {{ max_price }}{% endif %}
-            });
-            
-            try {
-                const response = await fetch(`{{ url_for('shop') }}?${params.toString()}`);
-                const html = await response.text();
-                
-                // Parse the response and extract products
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newProducts = doc.querySelector('#productsGrid');
-                
-                if (newProducts) {
-                    document.querySelector('#productsGrid').innerHTML += newProducts.innerHTML;
-                }
-            } catch (error) {
-                console.error('Error loading more products:', error);
-                currentPage--; // Decrement on error
-            } finally {
-                isLoading = false;
-            }
-        }
     </script>
 </body>
 </html>
