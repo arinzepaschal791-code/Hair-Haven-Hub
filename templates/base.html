@@ -488,6 +488,82 @@
             color: var(--dark);
         }
         
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideInRight 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .flash-message::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 5px solid var(--success);
+        }
+        
+        .flash-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 5px solid var(--danger);
+        }
+        
+        .flash-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid var(--warning);
+        }
+        
+        .flash-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .flash-icon {
+            font-size: 1.25rem;
+        }
+        
+        .flash-close {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.7;
+            cursor: pointer;
+            padding: 5px;
+            transition: var(--transition);
+            margin-left: auto;
+        }
+        
+        .flash-close:hover {
+            opacity: 1;
+        }
+        
         /* Page Header */
         .page-header {
             background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
@@ -560,6 +636,12 @@
             
             .page-header h1 {
                 font-size: 2.5rem;
+            }
+            
+            .flash-messages {
+                left: 20px;
+                right: 20px;
+                max-width: none;
             }
         }
         
@@ -715,11 +797,11 @@
                 </ul>
                 
                 <div class="d-flex align-items-center gap-3">
-                    {% if session.customer_id %}
+                    {% if session.get('customer_id') %}
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i> 
-                            {% if session.customer_name %}
+                            {% if session.get('customer_name') %}
                                 {{ session.customer_name[:15] }}{% if session.customer_name|length > 15 %}...{% endif %}
                             {% else %}
                                 My Account
@@ -761,6 +843,33 @@
         </div>
     </nav>
 
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    <div class="flash-icon">
+                        {% if category == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif category == 'danger' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                        {% elif category == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flash-text">{{ message }}</div>
+                    <button class="flash-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
     <!-- Page Content -->
     <div class="content-wrapper">
         {% block content %}{% endblock %}
@@ -788,7 +897,7 @@
                         <li><a href="{{ url_for('shop') }}"><i class="fas fa-chevron-right me-2"></i> Shop All</a></li>
                         <li><a href="{{ url_for('about') }}"><i class="fas fa-chevron-right me-2"></i> About Us</a></li>
                         <li><a href="{{ url_for('contact') }}"><i class="fas fa-chevron-right me-2"></i> Contact</a></li>
-                        {% if session.customer_id %}
+                        {% if session.get('customer_id') %}
                         <li><a href="{{ url_for('account') }}"><i class="fas fa-chevron-right me-2"></i> My Account</a></li>
                         {% endif %}
                     </ul>
@@ -903,6 +1012,36 @@
             });
         });
 
+        // Flash Messages Handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            
+            flashMessages.forEach(message => {
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    message.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        if (message.parentElement) {
+                            message.remove();
+                        }
+                    }, 300);
+                }, 5000);
+                
+                // Close button functionality
+                const closeBtn = message.querySelector('.flash-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        message.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                        setTimeout(() => {
+                            if (message.parentElement) {
+                                message.remove();
+                            }
+                        }, 300);
+                    });
+                }
+            });
+        });
+
         // Toast Notification System
         function showToast(title, message, type = 'info') {
             const toast = document.createElement('div');
@@ -923,7 +1062,7 @@
                     <div class="toast-title">${title}</div>
                     <div class="toast-message">${message}</div>
                 </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">
+                <button class="toast-close">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -931,10 +1070,25 @@
             const container = document.querySelector('.toast-container') || createToastContainer();
             container.appendChild(toast);
             
+            // Close button functionality
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            });
+            
             // Auto-remove after 5 seconds
             setTimeout(() => {
                 if (toast.parentElement) {
-                    toast.remove();
+                    toast.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
                 }
             }, 5000);
         }
@@ -949,57 +1103,71 @@
         // Add to Cart Function
         async function addToCart(productId, quantity = 1, variantId = null) {
             try {
-                const formData = new FormData();
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                
+                const formData = new URLSearchParams();
                 formData.append('quantity', quantity);
-                formData.append('csrf_token', '{{ csrf_token }}');
+                formData.append('csrf_token', csrfToken);
                 if (variantId) {
                     formData.append('variant_id', variantId);
                 }
                 
                 const response = await fetch(`/add-to-cart/${productId}`, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: formData
                 });
                 
                 if (response.redirected) {
                     window.location.href = response.url;
-                    return;
+                    return true;
                 }
                 
-                const result = await response.json();
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    // If it's not JSON, it's probably HTML from a redirect
+                    window.location.reload();
+                    return true;
+                }
                 
-                if (result.success || response.ok) {
-                    // Update cart count
-                    updateCartCount(result.cart_count || {{ cart_count }} + 1);
-                    showToast('Success', 'Product added to cart!', 'success');
+                if (response.ok) {
+                    // Update cart count from response or context
+                    const newCartCount = result.cart_count || {{ cart_count }} + quantity;
+                    updateCartCount(newCartCount);
+                    showToast('Success!', 'Product added to cart', 'success');
                     return true;
                 } else {
                     showToast('Error', result.message || 'Failed to add to cart', 'error');
                     return false;
                 }
             } catch (error) {
-                console.error('Error:', error);
-                showToast('Error', 'Failed to add to cart', 'error');
+                console.error('Error adding to cart:', error);
+                showToast('Error', 'Failed to add to cart. Please try again.', 'error');
                 return false;
             }
         }
 
         function updateCartCount(count) {
-            const cartBadges = document.querySelectorAll('.cart-badge');
-            if (cartBadges.length > 0) {
-                cartBadges.forEach(badge => {
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'flex' : 'none';
-                });
-            } else if (count > 0) {
-                // Create cart badge if it doesn't exist
-                const cartIcons = document.querySelectorAll('.nav-cart i');
-                cartIcons.forEach(icon => {
-                    const badge = document.createElement('span');
-                    badge.className = 'cart-badge';
-                    badge.textContent = count;
-                    icon.parentElement.appendChild(badge);
-                });
+            // Update cart badge
+            let cartBadge = document.querySelector('.cart-badge');
+            const cartLink = document.querySelector('.nav-cart');
+            
+            if (count > 0) {
+                if (!cartBadge) {
+                    cartBadge = document.createElement('span');
+                    cartBadge.className = 'cart-badge';
+                    cartLink.appendChild(cartBadge);
+                }
+                cartBadge.textContent = count;
+                cartBadge.style.display = 'flex';
+            } else if (cartBadge) {
+                cartBadge.style.display = 'none';
             }
         }
 
@@ -1058,19 +1226,122 @@
             });
         });
 
-        // Auto-hide flash messages after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                const flashMessages = document.querySelectorAll('.flash-messages .alert');
-                flashMessages.forEach(message => {
-                    message.style.animation = 'slideOutRight 0.3s ease-out forwards';
-                    setTimeout(() => {
-                        if (message.parentElement) {
-                            message.parentElement.remove();
-                        }
-                    }, 300);
+        // Get CSRF Token for AJAX requests
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+
+        // Check if user is logged in
+        function isLoggedIn() {
+            return {{ 'true' if session.get('customer_id') else 'false' }};
+        }
+
+        // Quick view product function
+        async function quickView(productId) {
+            try {
+                const response = await fetch(`/product/${productId}`);
+                if (!response.ok) throw new Error('Product not found');
+                
+                // This would typically open a modal with product details
+                // For now, just redirect to product page
+                window.location.href = `/product/${productId}`;
+            } catch (error) {
+                showToast('Error', 'Failed to load product details', 'error');
+            }
+        }
+
+        // Format price function
+        function formatPrice(price) {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                minimumFractionDigits: 2
+            }).format(price);
+        }
+
+        // Update quantity in cart
+        async function updateCartQuantity(productId, variantId, quantity) {
+            try {
+                const csrfToken = getCSRFToken();
+                const formData = new URLSearchParams();
+                formData.append('quantity', quantity);
+                formData.append('csrf_token', csrfToken);
+                if (variantId) {
+                    formData.append('variant_id', variantId);
+                }
+                
+                const response = await fetch(`/update-cart/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: formData
                 });
-            }, 5000);
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    showToast('Error', 'Failed to update cart', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating cart:', error);
+                showToast('Error', 'Failed to update cart', 'error');
+            }
+        }
+
+        // Remove from cart
+        async function removeFromCart(productId, variantId) {
+            try {
+                const url = `/remove-from-cart/${productId}` + (variantId ? `?variant_id=${variantId}` : '');
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    showToast('Error', 'Failed to remove item', 'error');
+                }
+            } catch (error) {
+                console.error('Error removing from cart:', error);
+                showToast('Error', 'Failed to remove item', 'error');
+            }
+        }
+
+        // Get product variants
+        async function getProductVariants(productId) {
+            try {
+                const response = await fetch(`/product/${productId}/variants`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.variants;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error getting variants:', error);
+                return [];
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('{{ config.brand_name }} - E-commerce Platform Loaded');
+            
+            // Set current year in footer if needed
+            const yearElement = document.querySelector('.current-year');
+            if (yearElement) {
+                yearElement.textContent = new Date().getFullYear();
+            }
+            
+            // Check if cart needs update
+            if ({{ cart_count }} > 0) {
+                updateCartCount({{ cart_count }});
+            }
         });
     </script>
     
