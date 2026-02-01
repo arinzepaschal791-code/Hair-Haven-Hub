@@ -11,8 +11,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- ApexCharts -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
     <style>
         :root {
@@ -44,7 +42,7 @@
         
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8fafc;
             min-height: 100vh;
             color: #333;
         }
@@ -246,17 +244,13 @@
         }
         
         .quick-stats {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
         
         .stat-item {
-            flex: 1;
             padding: 20px;
             border-radius: 12px;
             color: white;
@@ -485,7 +479,7 @@
             }
             
             .quick-stats {
-                flex-direction: column;
+                grid-template-columns: 1fr;
                 gap: 15px;
             }
             
@@ -572,9 +566,6 @@
         <div class="spinner"></div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
     <div class="admin-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -591,7 +582,7 @@
                 
                 <div class="user-info">
                     <div class="user-avatar">
-                        {{ session.get('admin_name', 'A')[0]|upper }}
+                        {{ session.get('admin_name', 'A')[0]|upper if session.get('admin_name') else 'A' }}
                     </div>
                     <div class="user-details">
                         <h6>{{ session.get('admin_name', 'Administrator') }}</h6>
@@ -618,14 +609,6 @@
                 </div>
                 
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_categories') }}" class="nav-link">
-                        <i class="fas fa-tags"></i>
-                        <span>Categories</span>
-                        <span class="badge-nav">{{ (categories|length)|default(0) }}</span>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
                     <a href="{{ url_for('admin_orders') }}" class="nav-link">
                         <i class="fas fa-shopping-bag"></i>
                         <span>Orders</span>
@@ -634,7 +617,7 @@
                 </div>
                 
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_customers') }}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-users"></i>
                         <span>Customers</span>
                         <span class="badge-nav">{{ total_customers|default(0) }}</span>
@@ -642,23 +625,7 @@
                 </div>
                 
                 <div class="nav-item">
-                    <a href="{{ url_for('admin_reviews') }}" class="nav-link">
-                        <i class="fas fa-star"></i>
-                        <span>Reviews</span>
-                        <span class="badge-nav">{{ total_reviews|default(0) }}</span>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="{{ url_for('admin_products') }}?low_stock=true" class="nav-link">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Inventory</span>
-                        <span class="badge-nav bg-warning">{{ (low_stock_products|length)|default(0) }}</span>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="{{ url_for('admin_settings') }}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
@@ -669,16 +636,16 @@
                 <div class="store-stats mb-3">
                     <small class="text-muted d-block mb-2">Store Overview</small>
                     <div class="d-flex justify-content-between mb-1">
-                        <small>Today's Revenue:</small>
-                        <small class="text-success">{{ format_price(today_revenue|default(0)) }}</small>
+                        <small>Revenue:</small>
+                        <small class="text-success">{{ format_price(revenue|default(0)) }}</small>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
-                        <small>Today's Orders:</small>
-                        <small class="text-primary">{{ today_orders|default(0) }}</small>
+                        <small>Pending Orders:</small>
+                        <small class="text-warning">{{ pending_orders|default(0) }}</small>
                     </div>
                     <div class="d-flex justify-content-between">
                         <small>Low Stock:</small>
-                        <small class="text-danger">{{ (low_stock_products|length)|default(0) }}</small>
+                        <small class="text-danger">{{ (low_stock_products|length if low_stock_products else 0)|default(0) }}</small>
                     </div>
                 </div>
                 
@@ -687,7 +654,7 @@
                     <div class="d-flex align-items-center">
                         <div class="me-2" style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
                         <small>Online</small>
-                        <small class="ms-auto text-muted">{{ now.strftime('%H:%M') }}</small>
+                        <small class="ms-auto text-muted">{{ now.strftime('%H:%M') if now else '00:00' }}</small>
                     </div>
                 </div>
                 
@@ -723,7 +690,7 @@
                 {% if messages %}
                 <div class="container-fluid mb-4">
                     {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
@@ -769,7 +736,7 @@
                     <div class="stat-content">
                         <h3>{{ total_products|default(0) }}</h3>
                         <p>Total Products</p>
-                        <small>{{ (low_stock_products|length)|default(0) }} low stock</small>
+                        <small>{{ (low_stock_products|length if low_stock_products else 0)|default(0) }} low stock</small>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-box"></i>
@@ -813,7 +780,7 @@
                                 </thead>
                                 <tbody>
                                     {% if recent_orders and recent_orders|length > 0 %}
-                                        {% for order in recent_orders[:5] %}
+                                        {% for order in recent_orders %}
                                         <tr>
                                             <td><strong>{{ order.order_number }}</strong></td>
                                             <td>
@@ -828,7 +795,7 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <a href="{{ url_for('admin_order_detail', id=order.id) if order.id else '#' }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                             </td>
@@ -860,18 +827,21 @@
                                 <i class="fas fa-plus-circle"></i>
                                 <span>Add Product</span>
                             </a>
-                            <a href="{{ url_for('admin_add_category') }}" class="action-btn">
-                                <i class="fas fa-tag"></i>
-                                <span>Add Category</span>
+                            <a href="{{ url_for('admin_products') }}" class="action-btn">
+                                <i class="fas fa-box"></i>
+                                <span>View Products</span>
                             </a>
-                            <a href="{{ url_for('admin_orders') }}?status=pending" class="action-btn">
-                                <i class="fas fa-clock"></i>
-                                <span>Pending Orders</span>
+                            <a href="{{ url_for('admin_orders') }}" class="action-btn">
+                                <i class="fas fa-shopping-bag"></i>
+                                <span>View Orders</span>
                             </a>
+                            {% if low_stock_products and low_stock_products|length > 0 %}
                             <a href="{{ url_for('admin_products') }}?low_stock=true" class="action-btn">
-                                <i class="fas fa-bolt"></i>
+                                <i class="fas fa-exclamation-triangle"></i>
                                 <span>Low Stock</span>
+                                <span class="badge bg-danger">{{ low_stock_products|length }}</span>
                             </a>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -886,23 +856,25 @@
                             {% for product in low_stock_products[:3] %}
                             <div class="low-stock-item">
                                 <div class="stock-level">
-                                    {{ product.total_quantity|default(0) }}
+                                    {{ product.stock|default(0) }}
                                 </div>
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1">{{ product.name|truncate(25) }}</h6>
+                                    <h6 class="mb-1">{{ product.name[:25] }}{% if product.name|length > 25 %}...{% endif %}</h6>
                                     <small class="text-danger">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
-                                        Only {{ product.total_quantity|default(0) }} left in stock
+                                        Only {{ product.stock|default(0) }} left in stock
                                     </small>
                                 </div>
-                                <a href="{{ url_for('admin_edit_product', id=product.id) }}" class="btn btn-sm btn-outline-danger">
+                                <a href="{{ url_for('admin_edit_product', id=product.id) if product.id else '#' }}" class="btn btn-sm btn-outline-danger">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </div>
                             {% endfor %}
                             {% if low_stock_products|length > 3 %}
                             <div class="text-center mt-3">
-                                <small class="text-muted">And {{ low_stock_products|length - 3 }} more products...</small>
+                                <a href="{{ url_for('admin_products') }}?low_stock=true" class="btn btn-sm btn-outline-primary">
+                                    View All ({{ low_stock_products|length - 3 }} more)
+                                </a>
                             </div>
                             {% endif %}
                         </div>
@@ -913,7 +885,7 @@
                     <div class="dashboard-card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5>Recent Customers</h5>
-                            <a href="{{ url_for('admin_customers') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <button class="btn btn-sm btn-outline-primary" disabled>View All</button>
                         </div>
                         <div>
                             {% if recent_customers and recent_customers|length > 0 %}
@@ -923,9 +895,15 @@
                                         <i class="fas fa-user"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1">{{ customer.first_name }} {{ customer.last_name }}</h6>
-                                        <p class="mb-0 text-muted small">{{ customer.email|truncate(25) }}</p>
-                                        <small class="text-muted">{{ customer.created_at.strftime('%b %d') }} • {{ customer.orders|length }} orders</small>
+                                        <h6 class="mb-1">
+                                            {% if customer.first_name and customer.last_name %}
+                                                {{ customer.first_name }} {{ customer.last_name }}
+                                            {% else %}
+                                                {{ customer.email[:20] }}...
+                                            {% endif %}
+                                        </h6>
+                                        <p class="mb-0 text-muted small">{{ customer.email[:25] }}{% if customer.email|length > 25 %}...{% endif %}</p>
+                                        <small class="text-muted">{{ customer.created_at.strftime('%b %d') if customer.created_at else 'Recently' }}</small>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -945,17 +923,18 @@
                 <div class="col-lg-8">
                     <div class="dashboard-card">
                         <div class="card-header">
-                            <h5>Top Products</h5>
+                            <h5>Products Overview</h5>
                         </div>
                         <div class="row">
-                            {% if top_products and top_products|length > 0 %}
-                                {% for product in top_products[:4] %}
+                            {% if featured_products and featured_products|length > 0 %}
+                                {% for product in featured_products[:4] %}
                                 <div class="col-md-3 col-6 mb-3">
                                     <div class="card border-0 h-100">
                                         {% if product.images and product.images|length > 0 %}
-                                        <img src="{{ url_for('static', filename='uploads/' + product.images[0].image_url) }}" 
+                                        <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) }}" 
                                              class="card-img-top" alt="{{ product.name }}" 
-                                             style="height: 120px; object-fit: cover;">
+                                             style="height: 120px; object-fit: cover;"
+                                             onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                                         {% else %}
                                         <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
                                              style="height: 120px;">
@@ -963,10 +942,10 @@
                                         </div>
                                         {% endif %}
                                         <div class="card-body">
-                                            <h6 class="card-title mb-1">{{ product.name|truncate(30) }}</h6>
+                                            <h6 class="card-title mb-1">{{ product.name[:30] }}{% if product.name|length > 30 %}...{% endif %}</h6>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <strong class="text-primary">{{ product.display_price }}</strong>
-                                                <small class="text-muted">{{ product.sales_count|default(0) }} sales</small>
+                                                <small class="text-muted">{{ product.stock|default(0) }} in stock</small>
                                             </div>
                                         </div>
                                     </div>
@@ -975,7 +954,10 @@
                             {% else %}
                                 <div class="col-12 text-center py-4 text-muted">
                                     <i class="fas fa-box-open fa-2x mb-3 d-block"></i>
-                                    <p>No product sales yet</p>
+                                    <p>No products yet</p>
+                                    <a href="{{ url_for('admin_add_product') }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i> Add First Product
+                                    </a>
                                 </div>
                             {% endif %}
                         </div>
@@ -990,33 +972,40 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Order Conversion</span>
-                                <span class="text-primary">{{ conversion_rate|default(75) }}%</span>
+                                <span class="text-primary">{{ (total_orders / total_customers * 100)|round|default(75) if total_orders and total_customers and total_customers > 0 else 75 }}%</span>
                             </div>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-primary" style="width: {{ conversion_rate|default(75) }}%"></div>
+                                <div class="progress-bar bg-primary" style="width: {{ (total_orders / total_customers * 100)|round|default(75) if total_orders and total_customers and total_customers > 0 else 75 }}%"></div>
                             </div>
                         </div>
                         
                         <div class="mb-4">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Inventory Health</span>
-                                <span class="text-{{ 'success' if inventory_health|default(85) > 80 else 'warning' if inventory_health|default(85) > 50 else 'danger' }}">
-                                    {{ inventory_health|default(85) }}%
+                                <span class="text-success">
+                                    {% set total_stock = total_products * 100 %}
+                                    {% set low_stock_count = low_stock_products|length if low_stock_products else 0 %}
+                                    {% set health = 100 - (low_stock_count / total_products * 100) if total_products > 0 else 100 %}
+                                    {{ health|round }}%
                                 </span>
                             </div>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-{{ 'success' if inventory_health|default(85) > 80 else 'warning' if inventory_health|default(85) > 50 else 'danger' }}" 
-                                     style="width: {{ inventory_health|default(85) }}%"></div>
+                                <div class="progress-bar bg-success" style="width: {{ health|default(85) }}%"></div>
                             </div>
                         </div>
                         
                         <div class="mb-4">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Customer Satisfaction</span>
-                                <span class="text-warning">{{ avg_rating|default(4.5) }}/5</span>
+                                <span>Order Fulfillment</span>
+                                <span class="text-info">
+                                    {% set pending_count = pending_orders|default(0) %}
+                                    {% set completed_count = total_orders - pending_count %}
+                                    {% set rate = (completed_count / total_orders * 100) if total_orders > 0 else 100 %}
+                                    {{ rate|round }}%
+                                </span>
                             </div>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-warning" style="width: {{ (avg_rating|default(4.5) * 20) }}%"></div>
+                                <div class="progress-bar bg-info" style="width: {{ rate|default(85) }}%"></div>
                             </div>
                         </div>
                     </div>
@@ -1048,6 +1037,9 @@
             // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            
+            // Hide loading overlay
+            hideLoading();
         });
         
         // Initialize Revenue Chart
@@ -1059,7 +1051,7 @@
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [{
                     label: 'Revenue (₦)',
-                    data: [{{ today_revenue|default(0) }}, 190000, 300000, 500000, 200000, 300000, 450000],
+                    data: [150000, 190000, 300000, 500000, 200000, 300000, 450000],
                     borderColor: '#8B4513',
                     backgroundColor: 'rgba(139, 69, 19, 0.1)',
                     borderWidth: 3,
@@ -1094,7 +1086,7 @@
                 datasets: [{
                     label: 'Revenue (₦)',
                     data: [5000000, 8000000, 12000000, 15000000, 20000000, 25000000, 
-                           30000000, 35000000, 40000000, 45000000, 50000000, {{ revenue|default(60000000) }}],
+                           30000000, 35000000, 40000000, 45000000, 50000000, 60000000],
                     borderColor: '#8B4513',
                     backgroundColor: 'rgba(139, 69, 19, 0.1)',
                     borderWidth: 3,
@@ -1194,7 +1186,7 @@
                 revenueChart.update();
                 
                 // Update button states
-                const buttons = document.querySelectorAll('#revenueChart').closest('.card').querySelectorAll('.btn-group button');
+                const buttons = document.querySelector('#revenueChart').closest('.card').querySelectorAll('.btn-group button');
                 buttons.forEach(btn => {
                     btn.classList.remove('active');
                 });
@@ -1208,7 +1200,6 @@
             
             // Simulate API call
             setTimeout(() => {
-                // In production, this would fetch new data from the server
                 location.reload();
             }, 1000);
         }
@@ -1221,43 +1212,6 @@
         // Hide loading overlay
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.remove('active');
-        }
-        
-        // Show toast notification
-        function showToast(message, type = 'info') {
-            const toastContainer = document.getElementById('toastContainer');
-            const toastId = 'toast-' + Date.now();
-            
-            const icons = {
-                success: 'check-circle',
-                error: 'exclamation-circle',
-                warning: 'exclamation-triangle',
-                info: 'info-circle'
-            };
-            
-            const toastHtml = `
-                <div id="${toastId}" class="toast-custom show" role="alert" aria-live="assertive" aria-atomic="true" style="border-left-color: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--info)'}">
-                    <div class="toast-body p-3">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-${icons[type]} text-${type} me-3" style="font-size: 1.2rem;"></i>
-                            <div class="flex-grow-1">
-                                <div class="fw-medium">${message}</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                const toast = document.getElementById(toastId);
-                if (toast) {
-                    toast.remove();
-                }
-            }, 5000);
         }
         
         // Mobile sidebar toggle
@@ -1282,6 +1236,16 @@
                 document.querySelector('.main-content').style.marginLeft = '280px';
             }
         });
+        
+        // Handle image errors
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('img').forEach(img => {
+                img.addEventListener('error', function() {
+                    this.src = '{{ url_for("static", filename="images/placeholder.jpg") }}';
+                });
+            });
+        });
     </script>
 </body>
 </html>
+                                                                                           
