@@ -30,7 +30,7 @@
         background-size: cover;
         background-position: center;
         color: white;
-        padding: 120px 0 60px;
+        padding: 100px 0 60px;
         margin-top: 0;
     }
     
@@ -419,6 +419,8 @@
             grid-template-columns: 1fr;
             gap: 15px;
             padding: 20px;
+            position: relative;
+            padding-bottom: 60px;
         }
         
         .cart-product {
@@ -428,11 +430,23 @@
         
         .cart-quantity {
             justify-content: flex-start;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
         }
         
         .cart-price,
         .cart-total {
             text-align: left;
+            position: absolute;
+            bottom: 20px;
+            right: 60px;
+        }
+        
+        .cart-remove {
+            position: absolute;
+            top: 20px;
+            right: 20px;
         }
         
         .cart-summary {
@@ -481,11 +495,15 @@
         
         .cart-quantity {
             justify-content: center;
+            left: 50%;
+            transform: translateX(-50%);
         }
         
         .cart-price,
         .cart-total {
             text-align: center;
+            right: 50%;
+            transform: translateX(50%);
         }
         
         .payment-methods {
@@ -536,15 +554,23 @@
                     {% for item in cart_items %}
                     {% set product = item.product %}
                     {% set variant_info = item.variant_info %}
-                    <div class="cart-item" id="cartItem{{ item.id }}{{ item.variant_id if item.variant_id else '' }}" 
-                         data-item-id="{{ item.id }}" 
-                         data-variant-id="{{ item.variant_id if item.variant_id else '' }}">
+                    {% set variant_id = item.get('variant_id') %}
+                    {% set cart_item_id = item.get('id') %}
+                    
+                    <div class="cart-item" 
+                         id="cartItem{{ cart_item_id or product.id }}{{ variant_id if variant_id else '' }}" 
+                         data-item-id="{{ cart_item_id or product.id }}" 
+                         data-variant-id="{{ variant_id if variant_id else '' }}">
                         <!-- Product -->
                         <div class="cart-product">
                             <div class="cart-product-image">
-                                {% if item.image_url %}
-                                <img src="{{ item.image_url if item.image_url.startswith('http') else url_for('uploaded_file', filename=item.image_url) }}" 
+                                {% if item.get('image_url') %}
+                                <img src="{{ url_for('uploaded_file', filename=item.image_url) if not item.image_url.startswith('http') else item.image_url }}" 
                                      alt="{{ item.name }}" 
+                                     onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+                                {% elif product and product.images and product.images[0] %}
+                                <img src="{{ url_for('uploaded_file', filename=product.images[0].image_url) }}" 
+                                     alt="{{ product.name }}"
                                      onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
                                 {% else %}
                                 <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
@@ -553,7 +579,7 @@
                             </div>
                             <div class="cart-product-details">
                                 <h4>
-                                    <a href="{{ url_for('product_detail', id=item.id) if product else '#' }}">
+                                    <a href="{{ url_for('product_detail', id=cart_item_id or product.id) if product else '#' }}">
                                         {{ item.name }}
                                     </a>
                                 </h4>
@@ -570,9 +596,23 @@
                                 </div>
                                 {% endif %}
                                 
+                                {% if variant_info and variant_info.length %}
+                                <div class="cart-variant">
+                                    <i class="fas fa-ruler me-1"></i>Length: {{ variant_info.length }}
+                                </div>
+                                {% endif %}
+                                
+                                {% if variant_info and variant_info.texture %}
+                                <div class="cart-variant">
+                                    <i class="fas fa-wave-square me-1"></i>Texture: {{ variant_info.texture }}
+                                </div>
+                                {% endif %}
+                                
                                 <div class="d-lg-none mt-2">
                                     <span class="cart-price">{{ format_price(item.price) }}</span>
-                                    {% if product and product.compare_price and product.compare_price > product.min_price %}
+                                    {% if variant_info and variant_info.compare_price and variant_info.compare_price > item.price %}
+                                    <span class="cart-compare-price">{{ format_price(variant_info.compare_price) }}</span>
+                                    {% elif product and product.compare_price and product.compare_price > product.min_price %}
                                     <span class="cart-compare-price">{{ format_price(product.compare_price) }}</span>
                                     {% endif %}
                                 </div>
@@ -594,7 +634,10 @@
                         <!-- Price -->
                         <div class="cart-price d-none d-lg-block">
                             {{ format_price(item.price) }}
-                            {% if product and product.compare_price and product.compare_price > product.min_price %}
+                            {% if variant_info and variant_info.compare_price and variant_info.compare_price > item.price %}
+                            <br>
+                            <span class="cart-compare-price">{{ format_price(variant_info.compare_price) }}</span>
+                            {% elif product and product.compare_price and product.compare_price > product.min_price %}
                             <br>
                             <span class="cart-compare-price">{{ format_price(product.compare_price) }}</span>
                             {% endif %}
@@ -603,19 +646,19 @@
                         <!-- Quantity -->
                         <div class="cart-quantity">
                             <button class="quantity-btn" 
-                                    onclick="updateQuantity('{{ item.id }}', '{{ item.variant_id if item.variant_id else '' }}', 'decrease')" 
+                                    onclick="updateQuantity('{{ cart_item_id or product.id }}', '{{ variant_id if variant_id else '' }}', 'decrease')" 
                                     {% if item.quantity <= 1 %}disabled{% endif %}>
                                 -
                             </button>
                             <input type="number" 
                                    class="quantity-input" 
-                                   id="quantity_{{ item.id }}_{{ item.variant_id if item.variant_id else '' }}"
+                                   id="quantity_{{ cart_item_id or product.id }}_{{ variant_id if variant_id else '' }}"
                                    value="{{ item.quantity }}" 
                                    min="1" 
                                    max="{{ variant_info.stock if variant_info and variant_info.stock else (product.stock if product else 99) }}"
-                                   onchange="updateQuantityFromInput('{{ item.id }}', '{{ item.variant_id if item.variant_id else '' }}')">
+                                   onchange="updateQuantityFromInput('{{ cart_item_id or product.id }}', '{{ variant_id if variant_id else '' }}')">
                             <button class="quantity-btn" 
-                                    onclick="updateQuantity('{{ item.id }}', '{{ item.variant_id if item.variant_id else '' }}', 'increase')"
+                                    onclick="updateQuantity('{{ cart_item_id or product.id }}', '{{ variant_id if variant_id else '' }}', 'increase')"
                                     {% if variant_info and variant_info.stock and item.quantity >= variant_info.stock %}disabled{% elif product and item.quantity >= product.stock %}disabled{% endif %}>
                                 +
                             </button>
@@ -628,7 +671,7 @@
                         
                         <!-- Remove -->
                         <button class="cart-remove" 
-                                onclick="removeFromCart('{{ item.id }}', '{{ item.variant_id if item.variant_id else '' }}')"
+                                onclick="removeFromCart('{{ cart_item_id or product.id }}', '{{ variant_id if variant_id else '' }}')"
                                 title="Remove item">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -673,23 +716,26 @@
                         </span>
                     </div>
                     
-                    {% if subtotal < free_delivery_threshold %}
+                    {% if subtotal < config.free_delivery_threshold %}
                     <div class="delivery-info">
                         <div class="d-flex align-items-center mb-2">
                             <i class="fas fa-truck delivery-icon"></i>
                             <span class="fw-bold">Free Delivery Available!</span>
                         </div>
-                        <p class="small mb-0">Spend {{ format_price(free_delivery_threshold - subtotal) }} more to get FREE delivery!</p>
+                        <p class="small mb-0">
+                            Spend {{ format_price(config.free_delivery_threshold - subtotal) }} more 
+                            to get FREE delivery!
+                        </p>
                     </div>
                     
                     <div class="free-delivery-progress">
                         <div class="progress-text">
                             <span>Progress to Free Delivery:</span>
-                            <span>{{ format_price(free_delivery_threshold - subtotal) }} to go</span>
+                            <span>{{ format_price(config.free_delivery_threshold - subtotal) }} to go</span>
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" 
-                                 style="width: {{ min((subtotal / free_delivery_threshold) * 100, 100) }}%">
+                                 style="width: {{ min((subtotal / config.free_delivery_threshold) * 100, 100) }}%">
                             </div>
                         </div>
                     </div>
@@ -723,7 +769,8 @@
                     </div>
                     
                     <!-- Checkout Button -->
-                    <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 mt-4 btn-lg" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border: none;">
+                    <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 mt-4 btn-lg" 
+                       style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border: none;">
                         <i class="fas fa-lock me-2"></i> Secure Checkout
                     </a>
                     
@@ -747,13 +794,17 @@
                     <div class="mt-4 pt-3 border-top">
                         <p class="small text-muted mb-2">Need help with your order?</p>
                         <div class="d-flex flex-column flex-sm-row gap-2">
+                            {% if config.whatsapp %}
                             <a href="{{ config.whatsapp }}" target="_blank" 
                                class="btn btn-outline-success btn-sm flex-grow-1">
                                 <i class="fab fa-whatsapp me-1"></i> WhatsApp
                             </a>
+                            {% endif %}
+                            {% if config.phone %}
                             <a href="tel:{{ config.phone }}" class="btn btn-outline-primary btn-sm flex-grow-1">
                                 <i class="fas fa-phone me-1"></i> Call Us
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -795,6 +846,15 @@
         const csrfInput = document.querySelector('input[name="csrf_token"]');
         if (csrfInput) {
             return csrfInput.value;
+        }
+        
+        // Look for csrf_token in any form
+        const form = document.querySelector('form');
+        if (form) {
+            const csrfInput = form.querySelector('input[name="csrf_token"]');
+            if (csrfInput) {
+                return csrfInput.value;
+            }
         }
         
         return '';
@@ -841,7 +901,7 @@
             notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
             setTimeout(() => {
                 if (notification.parentNode) {
-                    notification.remove();
+                    notification.parentNode.removeChild(notification);
                 }
             }, 300);
         }, 5000);
@@ -851,6 +911,8 @@
     async function updateQuantity(productId, variantId, action) {
         const elementId = variantId ? `${productId}_${variantId}` : productId;
         const quantityInput = document.getElementById(`quantity_${elementId}`);
+        if (!quantityInput) return;
+        
         let newQuantity = parseInt(quantityInput.value);
         
         if (action === 'increase') {
@@ -875,6 +937,8 @@
     async function updateQuantityFromInput(productId, variantId) {
         const elementId = variantId ? `${productId}_${variantId}` : productId;
         const quantityInput = document.getElementById(`quantity_${elementId}`);
+        if (!quantityInput) return;
+        
         let newQuantity = parseInt(quantityInput.value);
         
         if (isNaN(newQuantity) || newQuantity < 1) {
@@ -901,11 +965,13 @@
                 formData.append('variant_id', variantId);
             }
             
+            const csrfToken = getCSRFToken();
+            
             const response = await fetch(`/update-cart/${productId}`, {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': csrfToken
                 }
             });
             
@@ -913,7 +979,8 @@
                 // Reload to update totals
                 window.location.reload();
             } else {
-                showNotification('Failed to update quantity. Please try again.', 'danger');
+                const error = await response.json().catch(() => ({}));
+                showNotification(error.error || 'Failed to update quantity. Please try again.', 'danger');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -923,7 +990,7 @@
 
     // Remove item from cart
     async function removeFromCart(productId, variantId) {
-        if (!confirm('Remove this item from your cart?')) {
+        if (!confirm('Are you sure you want to remove this item from your cart?')) {
             return;
         }
         
@@ -941,7 +1008,6 @@
             });
             
             if (response.ok) {
-                showNotification('Item removed from cart', 'success');
                 // Remove item from DOM immediately with animation
                 const elementId = variantId ? `${productId}_${variantId}` : productId;
                 const itemElement = document.getElementById(`cartItem${elementId}`);
@@ -968,10 +1034,12 @@
                         }
                     }, 300);
                 } else {
+                    // If element not found, just reload
                     window.location.reload();
                 }
             } else {
-                showNotification('Failed to remove item', 'danger');
+                const error = await response.json().catch(() => ({}));
+                showNotification(error.error || 'Failed to remove item', 'danger');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -981,7 +1049,7 @@
 
     // Clear entire cart
     async function clearCart() {
-        if (!confirm('Clear all items from your cart?')) {
+        if (!confirm('Are you sure you want to clear all items from your cart?')) {
             return;
         }
         
@@ -997,7 +1065,8 @@
                 showNotification('Cart cleared successfully', 'success');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                showNotification('Failed to clear cart', 'danger');
+                const error = await response.json().catch(() => ({}));
+                showNotification(error.error || 'Failed to clear cart', 'danger');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -1042,7 +1111,7 @@
         `;
         document.head.appendChild(style);
 
-        // Add input validation
+        // Add input validation for quantity inputs
         const quantityInputs = document.querySelectorAll('.quantity-input');
         quantityInputs.forEach(input => {
             input.addEventListener('blur', function() {
@@ -1060,7 +1129,7 @@
             
             // Prevent entering invalid values
             input.addEventListener('keydown', function(e) {
-                if (['e', 'E', '+', '-'].includes(e.key)) {
+                if (['e', 'E', '+', '-', '.'].includes(e.key)) {
                     e.preventDefault();
                 }
             });
@@ -1072,9 +1141,14 @@
                     e.preventDefault();
                 }
             });
+            
+            // Allow only numbers
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
         });
 
-        // Auto-hide alerts
+        // Auto-hide flash messages after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert:not(.cart-notification)');
             alerts.forEach(alert => {
@@ -1082,11 +1156,40 @@
                 alert.style.opacity = '0';
                 setTimeout(() => {
                     if (alert.parentNode) {
-                        alert.remove();
+                        alert.parentNode.removeChild(alert);
                     }
                 }, 300);
             });
         }, 5000);
+        
+        // Update cart count on page load from session
+        updateCartCount();
+    });
+
+    // Update cart count from session (compatibility function)
+    function updateCartCount() {
+        // This would normally be handled by the server-side template,
+        // but we can update the badge if needed
+        const cartCount = {{ cart_count|default(0) }};
+        const cartBadges = document.querySelectorAll('.cart-badge');
+        cartBadges.forEach(badge => {
+            if (cartCount > 0) {
+                badge.textContent = cartCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        });
+    }
+
+    // Product image error handling
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.cart-product-image img').forEach(img => {
+            img.addEventListener('error', function() {
+                this.src = '{{ url_for("static", filename="images/default-product.jpg") }}';
+                this.onerror = null; // Prevent infinite loop
+            });
+        });
     });
 </script>
 {% endblock %}
