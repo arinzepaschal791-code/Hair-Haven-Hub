@@ -1126,7 +1126,7 @@
                     
                     <div class="product-image">
                         {% if product.images %}
-                            {% set primary_image = product.images|selectattr('is_primary')|first or product.images[0] %}
+                            {% set primary_image = product.images|selectattr('is_primary')|first %}
                             {% if primary_image %}
                             <img src="{{ url_for('uploaded_file', filename=primary_image.image_url) }}" 
                                  alt="{{ product.name }}"
@@ -1321,7 +1321,7 @@
                     <p class="testimonial-text">{{ review.comment }}</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            {{ review.customer_name[0] }}
+                            {{ review.customer_name[0] if review.customer_name else 'C' }}
                         </div>
                         <div class="author-info">
                             <h4>{{ review.customer_name }}</h4>
@@ -1381,8 +1381,8 @@
                 <h2>Stay Updated</h2>
                 <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
-                <form class="newsletter-form" id="newsletterForm">
-                    <input type="email" class="newsletter-input" placeholder="Your email address" required>
+                <form class="newsletter-form" id="newsletterForm" action="#" method="POST">
+                    <input type="email" name="email" class="newsletter-input" placeholder="Your email address" required>
                     <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-paper-plane"></i> Subscribe
                     </button>
@@ -1516,8 +1516,8 @@
             button.disabled = true;
             
             try {
-                // In a real app, you would send this to your backend
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+                // Simulate API call (in production, you'd send to your backend)
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
                 showNotification('Thank you for subscribing to our newsletter!', 'success');
                 this.reset();
