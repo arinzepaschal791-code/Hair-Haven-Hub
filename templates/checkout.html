@@ -25,8 +25,7 @@
     }
     
     .checkout-header {
-        background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95)), 
-                    url('{{ url_for("static", filename="images/checkout-bg.jpg") }}');
+        background: linear-gradient(rgba(26, 26, 26, 0.9), rgba(26, 26, 26, 0.95));
         background-size: cover;
         background-position: center;
         color: white;
@@ -581,9 +580,10 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                            <div class="alert alert-{{ category if category != 'message' else 'info' }} mb-4">
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4">
                                 <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }} me-2"></i>
                                 {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                             {% endfor %}
                         {% endif %}
@@ -597,13 +597,13 @@
                             <div class="form-group">
                                 <label class="form-label">Full Name *</label>
                                 <input type="text" class="form-control" name="name" 
-                                       value="{{ customer.first_name + ' ' + customer.last_name if customer else '' }}"
+                                       value="{{ customer.first_name + ' ' + customer.last_name if customer else (session.get('customer_name') or '') }}"
                                        required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Email Address *</label>
                                 <input type="email" class="form-control" name="email"
-                                       value="{{ customer.email if customer else '' }}"
+                                       value="{{ customer.email if customer else (session.get('customer_email') or '') }}"
                                        required>
                             </div>
                         </div>
@@ -638,8 +638,7 @@
                         
                         <div class="form-group full-width">
                             <label class="form-label">Address *</label>
-                            <input type="text" class="form-control" name="address" placeholder="Street address, Apartment, Suite, etc." required
-                                   value="{{ customer.address if customer else '' }}">
+                            <textarea class="form-control" name="address" rows="2" required>{{ customer.address if customer else '' }}</textarea>
                         </div>
                         
                         <div class="form-row">
@@ -749,19 +748,29 @@
                 <div class="order-summary">
                     <h3 class="section-title">Order Summary</h3>
                     
+                    {% if cart_items %}
                     <div class="order-items">
                         {% for item in cart_items %}
                         {% set product = item.product %}
                         {% set variant_info = item.variant_info %}
                         <div class="order-item">
                             <div class="order-item-image">
-                                {% if item.image_url %}
-                                <img src="{{ item.image_url if item.image_url.startswith('http') else url_for('uploaded_file', filename=item.image_url) }}" 
-                                     alt="{{ item.name }}"
-                                     onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+                                {% if item.get('image_url') %}
+                                    {% if item.image_url.startswith('http') %}
+                                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                                    {% else %}
+                                    <img src="{{ url_for('uploaded_file', filename=item.image_url) }}" 
+                                         alt="{{ item.name }}"
+                                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                    {% endif %}
+                                {% elif product and product.images and product.images|length > 0 %}
+                                    {% set image = product.images[0] %}
+                                    <img src="{{ url_for('uploaded_file', filename=image.image_url) }}" 
+                                         alt="{{ item.name }}"
+                                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                                 {% else %}
-                                <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
-                                     alt="{{ item.name }}">
+                                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" 
+                                         alt="{{ item.name }}">
                                 {% endif %}
                             </div>
                             <div class="order-item-details">
@@ -805,6 +814,15 @@
                             <span id="totalAmount">{{ format_price(total) }}</span>
                         </div>
                     </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Your cart is empty</p>
+                        <a href="{{ url_for('shop') }}" class="btn btn-primary btn-sm">
+                            Continue Shopping
+                        </a>
+                    </div>
+                    {% endif %}
                     
                     <!-- Security Badge -->
                     <div class="security-badge">
@@ -819,8 +837,8 @@
                         </div>
                     </div>
                     
-                    <!-- Payment Instructions (Hidden by default) -->
-                    <div id="bankInstructions" style="display: none;" class="mt-4">
+                    <!-- Payment Instructions -->
+                    <div id="bankInstructions" class="mt-4">
                         <h6 class="fw-bold mb-2">Bank Transfer Instructions:</h6>
                         <div class="small">
                             <p><strong>Account Name:</strong> {{ config.payment_name }}</p>
@@ -863,14 +881,6 @@
         document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
             radio.checked = (radio.value === method);
         });
-        
-        // Show/hide payment instructions
-        const bankInstructions = document.getElementById('bankInstructions');
-        if (method === 'bank_transfer') {
-            bankInstructions.style.display = 'block';
-        } else {
-            bankInstructions.style.display = 'none';
-        }
     }
     
     // Update delivery fee based on location
@@ -885,7 +895,7 @@
         }
         
         try {
-            const response = await fetch('/calculate-delivery', {
+            const response = await fetch('{{ url_for("calculate_delivery") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -921,6 +931,9 @@
                 }
                 
                 totalAmount.textContent = data.formatted_total;
+                
+                // Update total amount in the backend variable
+                window.totalAmountValue = data.total;
             }
         } catch (error) {
             console.error('Error calculating delivery:', error);
@@ -929,10 +942,10 @@
     
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-        // Set default payment method and show instructions
+        // Set default payment method
         selectPaymentMethod(document.querySelector('.payment-method'), 'bank_transfer');
         
-        // Show area selection for Lagos
+        // Show/hide area selection for Lagos
         const stateSelect = document.getElementById('stateSelect');
         const areaGroup = document.getElementById('areaSelect').closest('.form-group');
         
@@ -947,6 +960,8 @@
         // Trigger initial check
         if (stateSelect.value === 'Lagos') {
             areaGroup.style.display = 'block';
+        } else {
+            areaGroup.style.display = 'none';
         }
         
         // Calculate delivery fee if state is already selected
@@ -968,6 +983,32 @@
                 return;
             }
             
+            // Validate required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            let hasError = false;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    hasError = true;
+                    
+                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'This field is required';
+                        field.parentNode.appendChild(errorDiv);
+                    }
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (hasError) {
+                e.preventDefault();
+                showNotification('Please fill in all required fields', 'warning');
+                return;
+            }
+            
             // Show loading state
             const originalText = placeOrderBtn.innerHTML;
             placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing Order...';
@@ -975,8 +1016,10 @@
             
             // Reset button after 10 seconds (in case of error)
             setTimeout(() => {
-                placeOrderBtn.innerHTML = originalText;
-                placeOrderBtn.disabled = false;
+                if (placeOrderBtn.disabled) {
+                    placeOrderBtn.innerHTML = originalText;
+                    placeOrderBtn.disabled = false;
+                }
             }, 10000);
         });
         
@@ -987,10 +1030,34 @@
             if (value.length > 0 && value[0] !== '0') {
                 value = '0' + value;
             }
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
             e.target.value = value;
         });
         
-        // Add notification function
+        // Auto-fill city based on state
+        const stateSelect = document.getElementById('stateSelect');
+        const cityInput = document.querySelector('input[name="city"]');
+        
+        stateSelect.addEventListener('change', function() {
+            const state = this.value;
+            if (state && !cityInput.value) {
+                if (state === 'Lagos') {
+                    cityInput.value = 'Lagos';
+                } else if (state === 'Abuja') {
+                    cityInput.value = 'Abuja';
+                } else if (state === 'Rivers') {
+                    cityInput.value = 'Port Harcourt';
+                } else if (state === 'Kano') {
+                    cityInput.value = 'Kano';
+                } else if (state === 'Oyo') {
+                    cityInput.value = 'Ibadan';
+                }
+            }
+        });
+        
+        // Show notification function
         window.showNotification = function(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `alert alert-${type} alert-dismissible fade show`;
@@ -1032,8 +1099,71 @@
                     opacity: 1;
                 }
             }
+            
+            .is-invalid {
+                border-color: #dc3545 !important;
+            }
+            
+            .invalid-feedback {
+                display: block;
+                width: 100%;
+                margin-top: 0.25rem;
+                font-size: 0.875em;
+                color: #dc3545;
+            }
         `;
         document.head.appendChild(style);
+        
+        // Prevent form submission on Enter key
+        form.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.type !== 'textarea') {
+                e.preventDefault();
+            }
+        });
+        
+        // Auto-save form data
+        const formDataKey = 'checkoutFormData';
+        const savedFormData = localStorage.getItem(formDataKey);
+        
+        if (savedFormData) {
+            try {
+                const data = JSON.parse(savedFormData);
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input && !input.value) {
+                        input.value = data[key];
+                    }
+                });
+            } catch (e) {
+                localStorage.removeItem(formDataKey);
+            }
+        }
+        
+        // Save form data on input
+        form.addEventListener('input', function() {
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            localStorage.setItem(formDataKey, JSON.stringify(data));
+        });
+        
+        // Clear saved data on form submit
+        form.addEventListener('submit', function() {
+            localStorage.removeItem(formDataKey);
+        });
     });
+    
+    // Price formatting helper
+    function formatPrice(price) {
+        if (typeof price !== 'number') {
+            price = parseFloat(price) || 0;
+        }
+        return '₦' + price.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
 </script>
 {% endblock %}
