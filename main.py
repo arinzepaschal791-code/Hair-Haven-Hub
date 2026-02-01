@@ -1238,6 +1238,26 @@ def account():
         flash('Error loading account information.', 'danger')
         return redirect(url_for('index'))
 
+# ========== ABOUT AND CONTACT ROUTES ==========
+
+@app.route('/about')
+def about():
+    """About Us page"""
+    try:
+        return render_template('about.html')
+    except Exception as e:
+        print(f"❌ About page error: {str(e)}", file=sys.stderr)
+        return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    """Contact Us page"""
+    try:
+        return render_template('contact.html')
+    except Exception as e:
+        print(f"❌ Contact page error: {str(e)}", file=sys.stderr)
+        return render_template('contact.html')
+
 # ========== CHECKOUT ROUTES ==========
 
 @app.route('/checkout', methods=['GET', 'POST'])
@@ -1919,6 +1939,44 @@ def health_check():
             'timestamp': datetime.utcnow().isoformat()
         }), 500
 
+# ========== NEW ROUTES FOR ADDITIONAL TEMPLATES ==========
+
+@app.route('/order/<int:id>')
+def order_detail(id):
+    """Order detail page for customers"""
+    try:
+        order = Order.query.get_or_404(id)
+        
+        # Check if customer owns this order
+        if 'customer_id' in session and order.customer_id == session['customer_id']:
+            order_items = OrderItem.query\
+                .options(joinedload(OrderItem.product), joinedload(OrderItem.variant))\
+                .filter_by(order_id=order.id)\
+                .all()
+            
+            return render_template('order.html',
+                                   order=order,
+                                   order_items=order_items,
+                                   bank_details=BUSINESS_CONFIG)
+        else:
+            flash('You are not authorized to view this order.', 'danger')
+            return redirect(url_for('account'))
+    except Exception as e:
+        print(f"❌ Order detail error: {str(e)}", file=sys.stderr)
+        flash('Error loading order details.', 'danger')
+        return redirect(url_for('account'))
+
+# ========== DEFAULT IMAGE ROUTE ==========
+@app.route('/static/images/<filename>')
+def serve_image(filename):
+    """Serve images from static/images folder"""
+    try:
+        return send_from_directory('static/images', filename)
+    except Exception as e:
+        print(f"❌ Error serving image {filename}: {str(e)}", file=sys.stderr)
+        # Return a placeholder if image not found
+        return redirect('https://via.placeholder.com/800x800/8B4513/FFFFFF?text=NORA+HAIR+LINE')
+
 # ========== MAIN ENTRY POINT ==========
 if __name__ == '__main__':
     # Create necessary directories
@@ -1943,8 +2001,17 @@ if __name__ == '__main__':
     print(f"✅ File Upload: READY", file=sys.stderr)
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
     print(f"✅ Variant System: ENABLED", file=sys.stderr)
-    print(f"✅ NO BROKEN IMAGES: YES", file=sys.stderr)
-    print(f"✅ All Templates Updated: YES", file=sys.stderr)
+    print(f"✅ All Routes Added: /about, /contact, /order/<id>", file=sys.stderr)
+    print(f"✅ Static File Serving: READY", file=sys.stderr)
+    print(f"🌐 Available Routes:", file=sys.stderr)
+    print(f"   • Home: /", file=sys.stderr)
+    print(f"   • Shop: /shop", file=sys.stderr)
+    print(f"   • About: /about", file=sys.stderr)
+    print(f"   • Contact: /contact", file=sys.stderr)
+    print(f"   • Cart: /cart", file=sys.stderr)
+    print(f"   • Checkout: /checkout", file=sys.stderr)
+    print(f"   • Account: /account", file=sys.stderr)
+    print(f"   • Admin: /admin", file=sys.stderr)
     print(f"🌐 Server: http://localhost:{port}", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
 
