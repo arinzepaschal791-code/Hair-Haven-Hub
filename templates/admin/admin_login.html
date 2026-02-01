@@ -505,7 +505,7 @@
         
         <!-- Login Form -->
         <form id="loginForm" method="POST" action="{{ url_for('admin_login') }}">
-            <!-- FIXED: Use csrf_token without parentheses -->
+            <!-- CSRF Token -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             
             <div class="form-group floating-label">
@@ -663,7 +663,8 @@
             
             // Form submission handler
             loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+                // Don't prevent default - let the form submit normally
+                // e.preventDefault(); // REMOVED THIS LINE
                 
                 const username = usernameInput.value.trim();
                 const password = passwordInput.value.trim();
@@ -682,6 +683,7 @@
                     loginForm.classList.add('shake');
                     usernameInput.focus();
                     announceToScreenReader('Please enter username and password');
+                    e.preventDefault(); // Prevent submission
                     return;
                 }
                 
@@ -691,6 +693,7 @@
                     loginForm.classList.add('shake');
                     usernameInput.focus();
                     announceToScreenReader('Please enter username');
+                    e.preventDefault(); // Prevent submission
                     return;
                 }
                 
@@ -700,6 +703,7 @@
                     loginForm.classList.add('shake');
                     passwordInput.focus();
                     announceToScreenReader('Please enter password');
+                    e.preventDefault(); // Prevent submission
                     return;
                 }
                 
@@ -710,20 +714,20 @@
                     loginForm.classList.add('shake');
                     passwordInput.focus();
                     announceToScreenReader('Password must be at least 6 characters');
+                    e.preventDefault(); // Prevent submission
                     return;
                 }
                 
-                // Show loading state
+                // Show loading state only if validation passes
                 btnText.style.display = 'none';
                 btnDots.style.display = 'inline-block';
                 loginBtn.disabled = true;
                 announceToScreenReader('Logging in, please wait...');
                 
-                // Store login attempt in session storage (for redirect prevention)
+                // Store login attempt in session storage
                 sessionStorage.setItem('login_attempt', 'true');
                 
-                // Submit the form
-                this.submit();
+                // Form will submit normally after validation passes
             });
             
             // Helper functions
@@ -801,7 +805,7 @@
                 // Submit form on Ctrl+Enter
                 if (e.ctrlKey && e.key === 'Enter') {
                     e.preventDefault();
-                    loginForm.dispatchEvent(new Event('submit'));
+                    loginBtn.click();
                 }
             });
             
