@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- CSRF Token for Forms -->
-    <meta name="csrf-token" content="{{ csrf_token if csrf_token else '' }}">
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
     
     <title>{% block title %}Admin Panel - {{ config.brand_name }}{% endblock %}</title>
     
@@ -444,6 +444,131 @@
             color: var(--gray-600);
             font-size: 0.9rem;
         }
+        
+        /* Table Styles */
+        .table-responsive {
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table tbody tr:hover {
+            background-color: var(--gray-100);
+        }
+        
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+        
+        /* Form Styles */
+        .form-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: var(--border-radius-sm);
+            padding: 10px 15px;
+            border: 1px solid var(--gray-300);
+            transition: var(--transition);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(26, 26, 46, 0.1);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .badge-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+        
+        .badge-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .badge-info {
+            background-color: var(--info);
+            color: white;
+        }
+        
+        .badge-secondary {
+            background-color: var(--gray-600);
+            color: white;
+        }
+        
+        /* Product Image */
+        .product-image-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid var(--gray-200);
+        }
+        
+        /* Action Buttons */
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btns .btn {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-400);
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h4 {
+            color: var(--gray-600);
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: 20px;
+        }
     </style>
     
     {% block styles %}{% endblock %}
@@ -625,20 +750,23 @@
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
             alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
-            // Insert at the beginning of content container
-            const contentContainer = document.querySelector('.content-container');
-            if (contentContainer) {
-                contentContainer.insertBefore(alertDiv, contentContainer.firstChild);
+            // Insert after main header
+            const mainHeader = document.querySelector('.main-header');
+            if (mainHeader) {
+                mainHeader.parentNode.insertBefore(alertDiv, mainHeader.nextSibling);
             }
             
             // Auto dismiss after 5 seconds
             setTimeout(() => {
-                const bsAlert = new bootstrap.Alert(alertDiv);
-                bsAlert.close();
+                if (alertDiv.parentNode) {
+                    const bsAlert = new bootstrap.Alert(alertDiv);
+                    bsAlert.close();
+                }
             }, 5000);
         }
 
@@ -664,6 +792,11 @@
                     }
                 } else {
                     field.classList.remove('is-invalid');
+                    // Remove error message if exists
+                    const errorDiv = field.nextElementSibling;
+                    if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                        errorDiv.remove();
+                    }
                 }
             });
             
@@ -701,7 +834,9 @@
                 if (window.innerWidth <= 768 && adminSidebar && adminSidebar.classList.contains('active')) {
                     if (!adminSidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
                         adminSidebar.classList.remove('active');
-                        sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                        if (sidebarToggle) {
+                            sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                        }
                     }
                 }
             });
@@ -715,20 +850,44 @@
                 });
             }, 5000);
             
-            // Add active class to parent of active nav link
-            const activeNavLink = document.querySelector('.nav-link.active');
-            if (activeNavLink) {
-                activeNavLink.closest('.nav-item').classList.add('active');
-            }
-            
             // Handle form submissions with loading
-            const forms = document.querySelectorAll('form');
+            const forms = document.querySelectorAll('form[method="POST"]');
             forms.forEach(form => {
                 form.addEventListener('submit', function(e) {
-                    // Show loading for forms with POST method
-                    if (this.method.toUpperCase() === 'POST') {
-                        showLoading();
+                    // Validate required fields
+                    const requiredFields = this.querySelectorAll('[required]');
+                    let hasError = false;
+                    
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.classList.add('is-invalid');
+                            hasError = true;
+                            
+                            if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'invalid-feedback';
+                                errorDiv.textContent = 'This field is required';
+                                field.parentNode.appendChild(errorDiv);
+                            }
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    });
+                    
+                    if (hasError) {
+                        e.preventDefault();
+                        showAlert('Please fill in all required fields.', 'warning');
+                        return false;
                     }
+                    
+                    // Show loading overlay
+                    showLoading();
+                    
+                    // Hide loading if form submission fails
+                    this.addEventListener('error', () => hideLoading());
+                    window.addEventListener('unload', () => hideLoading());
+                    
+                    return true;
                 });
             });
             
@@ -761,6 +920,83 @@
             // Update clock every minute
             setInterval(updateClock, 60000);
             updateClock(); // Initial call
+            
+            // Handle image preview for file inputs
+            document.querySelectorAll('input[type="file"]').forEach(input => {
+                if (input.accept.includes('image')) {
+                    input.addEventListener('change', function(e) {
+                        const files = Array.from(e.target.files);
+                        const previewContainer = this.closest('.form-group')?.querySelector('.image-preview-container') ||
+                                               this.closest('.mb-3')?.querySelector('.image-preview-container') ||
+                                               this.parentNode.nextElementSibling;
+                        
+                        if (previewContainer && previewContainer.classList.contains('image-preview-container')) {
+                            previewContainer.innerHTML = '';
+                            
+                            files.forEach(file => {
+                                if (!file.type.startsWith('image/')) return;
+                                
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const imgWrapper = document.createElement('div');
+                                    imgWrapper.className = 'image-preview-wrapper';
+                                    imgWrapper.innerHTML = `
+                                        <img src="${e.target.result}" class="image-preview" alt="Preview">
+                                        <button type="button" class="remove-image" onclick="this.parentElement.remove()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    `;
+                                    previewContainer.appendChild(imgWrapper);
+                                };
+                                reader.readAsDataURL(file);
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Handle variant form sections (for product management)
+            const addVariantBtn = document.getElementById('addVariantBtn');
+            if (addVariantBtn) {
+                addVariantBtn.addEventListener('click', function() {
+                    const variantsContainer = document.getElementById('variantsContainer');
+                    if (variantsContainer) {
+                        const variantTemplate = document.getElementById('variantTemplate');
+                        if (variantTemplate) {
+                            const newVariant = variantTemplate.content.cloneNode(true);
+                            variantsContainer.appendChild(newVariant);
+                            
+                            // Update indices
+                            updateVariantIndices();
+                        }
+                    }
+                });
+            }
+            
+            // Remove variant function
+            window.removeVariant = function(button) {
+                const variantItem = button.closest('.variant-item');
+                if (variantItem) {
+                    if (confirm('Are you sure you want to remove this variant?')) {
+                        variantItem.remove();
+                        updateVariantIndices();
+                    }
+                }
+            };
+            
+            // Update variant indices
+            function updateVariantIndices() {
+                const variantItems = document.querySelectorAll('.variant-item');
+                variantItems.forEach((item, index) => {
+                    item.querySelectorAll('[name]').forEach(input => {
+                        const name = input.getAttribute('name');
+                        if (name.includes('[]')) {
+                            const baseName = name.replace('[]', '');
+                            input.setAttribute('name', `${baseName}[${index}]`);
+                        }
+                    });
+                });
+            }
         });
 
         // Format price
@@ -768,7 +1004,10 @@
             if (typeof price !== 'number') {
                 price = parseFloat(price) || 0;
             }
-            return '₦' + price.toLocaleString('en-NG');
+            return '₦' + price.toLocaleString('en-NG', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
 
         // Copy to clipboard
@@ -776,7 +1015,7 @@
             navigator.clipboard.writeText(text).then(() => {
                 showAlert('Copied to clipboard!', 'success');
             }).catch(err => {
-                showAlert('Failed to copy', 'danger');
+                showAlert('Failed to copy: ' + err.message, 'danger');
             });
         }
 
@@ -800,23 +1039,268 @@
 
         // Make AJAX request with CSRF token
         function makeRequest(url, method = 'GET', data = null) {
+            const headers = {
+                'X-CSRFToken': getCSRFToken()
+            };
+            
+            if (data && !(data instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+                data = JSON.stringify(data);
+            }
+            
             return fetch(url, {
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: data ? JSON.stringify(data) : null
+                headers: headers,
+                body: data
             });
         }
 
-        // Check if user is authenticated
-        function checkAuth() {
-            if (!{{ 'true' if session.get('admin_id') else 'false' }}) {
-                window.location.href = "{{ url_for('admin_login') }}";
-                return false;
+        // Check stock availability
+        async function checkStock(productId, variantId = null, quantity = 1) {
+            try {
+                const response = await makeRequest(`/api/check-stock/${productId}?variant_id=${variantId || ''}&quantity=${quantity}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data;
+                }
+                return { available: false, message: 'Error checking stock' };
+            } catch (error) {
+                return { available: false, message: 'Network error' };
             }
-            return true;
+        }
+
+        // Handle image upload preview
+        function handleImageUpload(input, previewId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById(previewId);
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Calculate total price
+        function calculateTotal(unitPrice, quantity) {
+            return parseFloat(unitPrice) * parseInt(quantity);
+        }
+
+        // Update form totals
+        function updateFormTotal(form) {
+            const quantity = form.querySelector('[name="quantity"]')?.value || 1;
+            const unitPrice = form.querySelector('[name="unit_price"]')?.value || 0;
+            const totalElement = form.querySelector('.total-price');
+            
+            if (totalElement) {
+                const total = calculateTotal(unitPrice, quantity);
+                totalElement.textContent = formatPrice(total);
+            }
+        }
+
+        // Handle order status updates
+        function updateOrderStatus(orderId, status) {
+            confirmAction('Are you sure you want to update the order status?', async () => {
+                showLoading();
+                try {
+                    const response = await makeRequest(`/admin/orders/${orderId}/update`, 'POST', { status: status });
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        showAlert('Failed to update order status', 'danger');
+                    }
+                } catch (error) {
+                    showAlert('Error updating order status: ' + error.message, 'danger');
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
+        // Delete confirmation with CSRF
+        function confirmDelete(url, itemName) {
+            return confirmAction(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`, () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                form.innerHTML = `<input type="hidden" name="csrf_token" value="${getCSRFToken()}">`;
+                document.body.appendChild(form);
+                showLoading();
+                form.submit();
+            });
+        }
+
+        // Search functionality
+        function searchTable(tableId, searchInputId) {
+            const searchInput = document.getElementById(searchInputId);
+            const table = document.getElementById(tableId);
+            
+            if (searchInput && table) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const rows = table.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+            }
+        }
+
+        // Sort table
+        function sortTable(tableId, columnIndex, ascending = true) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim();
+                const bText = b.cells[columnIndex].textContent.trim();
+                
+                // Try to parse as numbers
+                const aNum = parseFloat(aText.replace(/[^0-9.-]+/g, ''));
+                const bNum = parseFloat(bText.replace(/[^0-9.-]+/g, ''));
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return ascending ? aNum - bNum : bNum - aNum;
+                }
+                
+                // Fallback to string comparison
+                return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+            
+            // Reorder rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Initialize tooltips
+        function initTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Initialize popovers
+        function initPopovers() {
+            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        }
+
+        // Export data as CSV
+        function exportToCSV(tableId, filename = 'data.csv') {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tr');
+            const csv = [];
+            
+            rows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll('th, td').forEach(cell => {
+                    // Exclude action buttons
+                    if (!cell.querySelector('.btn')) {
+                        rowData.push(`"${cell.textContent.trim().replace(/"/g, '""')}"`);
+                    }
+                });
+                if (rowData.length > 0) {
+                    csv.push(rowData.join(','));
+                }
+            });
+            
+            const csvString = csv.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Print table
+        function printTable(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Print</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    ${table.outerHTML}
+                    <script>
+                        window.onload = function() { window.print(); window.close(); }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initTooltips();
+            initPopovers();
+            
+            // Add search functionality to all tables with data-search attribute
+            document.querySelectorAll('table[data-search]').forEach(table => {
+                const tableId = table.id || 'table-' + Math.random().toString(36).substr(2, 9);
+                table.id = tableId;
+                searchTable(tableId, table.dataset.search);
+            });
+        });
+
+        // Auto-save form data
+        function autoSaveForm(formId, interval = 30000) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            let timeout;
+            
+            form.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const formData = new FormData(form);
+                    localStorage.setItem(`autosave_${formId}`, JSON.stringify(Object.fromEntries(formData)));
+                    console.log('Form data saved');
+                }, 1000);
+            });
+            
+            // Load saved data on page load
+            const savedData = localStorage.getItem(`autosave_${formId}`);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        input.value = data[key];
+                    }
+                });
+            }
+            
+            // Clear saved data on form submit
+            form.addEventListener('submit', function() {
+                localStorage.removeItem(`autosave_${formId}`);
+            });
         }
     </script>
     
