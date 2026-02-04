@@ -431,19 +431,23 @@
             </div>
         </div>
 
-        <!-- SKU Information -->
+        <!-- Bundle Options -->
         <div class="form-row">
             <div class="form-group">
-                <label for="sku">SKU (Stock Keeping Unit)</label>
-                <input type="text" id="sku" name="sku" class="form-control" 
-                       placeholder="e.g., HAIR-001">
-                <small>Leave blank to auto-generate SKU</small>
+                <label>Bundle Product</label>
+                <div style="margin-top: 10px;">
+                    <label class="switch">
+                        <input type="checkbox" id="is_bundle" name="is_bundle" value="1">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; color: var(--gray);">This is a bundle product</span>
+                </div>
             </div>
             <div class="form-group">
-                <label for="total_quantity">Total Quantity</label>
-                <input type="number" id="total_quantity" name="total_quantity" class="form-control" 
-                       placeholder="0" min="0" value="0">
-                <small>Leave 0 if using variants with individual stock</small>
+                <label for="bundle_discount">Bundle Discount (%)</label>
+                <input type="number" id="bundle_discount" name="bundle_discount" class="form-control" 
+                       placeholder="0" min="0" max="100" step="0.1" value="0">
+                <small>Discount percentage for bundle purchases</small>
             </div>
         </div>
 
@@ -471,26 +475,6 @@
             </div>
         </div>
 
-        <!-- Bundle Options -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>Bundle Product</label>
-                <div style="margin-top: 10px;">
-                    <label class="switch">
-                        <input type="checkbox" id="is_bundle" name="is_bundle" value="1">
-                        <span class="slider round"></span>
-                    </label>
-                    <span style="margin-left: 10px; color: var(--gray);">This is a bundle product</span>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="bundle_discount">Bundle Discount (%)</label>
-                <input type="number" id="bundle_discount" name="bundle_discount" class="form-control" 
-                       placeholder="0" min="0" max="100" step="0.1" value="0">
-                <small>Discount percentage for bundle purchases</small>
-            </div>
-        </div>
-
         <!-- Variant Section -->
         <div class="variant-section">
             <div class="variant-header">
@@ -503,6 +487,7 @@
             <p class="text-muted mb-4">
                 Add different variants of this product (different lengths, textures, colors).
                 If no variants are added, the product will be sold as a single item.
+                <strong>Note:</strong> The SKU field is required for each variant.
             </p>
 
             <div id="variantsContainer">
@@ -578,66 +563,47 @@
             </div>
             <div>
                 <label>Length</label>
-                <select name="variant_length[]" class="form-control">
-                    <option value="">Select Length</option>
-                    <option value="8">8 inches</option>
-                    <option value="10">10 inches</option>
-                    <option value="12">12 inches</option>
-                    <option value="14">14 inches</option>
-                    <option value="16">16 inches</option>
-                    <option value="18">18 inches</option>
-                    <option value="20">20 inches</option>
-                    <option value="22">22 inches</option>
-                    <option value="24">24 inches</option>
-                    <option value="26">26 inches</option>
-                    <option value="28">28 inches</option>
-                    <option value="30">30 inches</option>
-                    <option value="32">32 inches</option>
-                    <option value="Custom">Custom</option>
-                </select>
+                <input type="text" name="variant_length[]" class="form-control" 
+                       placeholder="e.g., 24, 26, 28 inches">
+                <small style="font-size: 0.8rem;">Enter length (e.g., "24", "26", "28 inches")</small>
             </div>
             <div>
                 <label>Texture</label>
-                <select name="variant_texture[]" class="form-control">
-                    <option value="">Select Texture</option>
-                    <option value="Straight">Straight</option>
-                    <option value="Body Wave">Body Wave</option>
-                    <option value="Deep Wave">Deep Wave</option>
-                    <option value="Loose Wave">Loose Wave</option>
-                    <option value="Curly">Curly</option>
-                    <option value="Kinky Curly">Kinky Curly</option>
-                    <option value="Coily">Coily</option>
-                    <option value="Bundles">Bundles</option>
-                </select>
+                <input type="text" name="variant_texture[]" class="form-control" 
+                       placeholder="e.g., Body Wave, Straight, Curly">
+                <small style="font-size: 0.8rem;">Enter texture name</small>
             </div>
             <div>
                 <label>Color</label>
-                <select name="variant_color[]" class="form-control">
-                    <option value="">Select Color</option>
-                    <option value="Natural Black">Natural Black</option>
-                    <option value="Off Black">Off Black</option>
-                    <option value="Dark Brown">Dark Brown</option>
-                    <option value="Medium Brown">Medium Brown</option>
-                    <option value="Light Brown">Light Brown</option>
-                    <option value="Blonde">Blonde</option>
-                    <option value="Platinum">Platinum</option>
-                    <option value="Mixed">Mixed</option>
-                </select>
+                <input type="text" name="variant_color[]" class="form-control" 
+                       placeholder="e.g., Natural Black, Dark Brown">
+                <small style="font-size: 0.8rem;">Enter color name</small>
             </div>
             <div>
-                <label>Price (₦)</label>
-                <input type="number" name="variant_price[]" class="form-control" 
-                       placeholder="0.00" min="0" step="0.01" value="{{ product.base_price if product else '' }}">
+                <label>Price (₦) *</label>
+                <input type="number" name="variant_price[]" class="form-control variant-price" 
+                       placeholder="0.00" min="0" step="0.01" required>
             </div>
             <div>
-                <label>Stock</label>
+                <label>Stock *</label>
                 <input type="number" name="variant_stock[]" class="form-control" 
-                       placeholder="0" min="0" value="10">
+                       placeholder="0" min="0" value="0" required>
             </div>
             <div>
-                <label>SKU</label>
-                <input type="text" name="variant_sku[]" class="form-control" 
-                       placeholder="Auto-generated">
+                <label>SKU *</label>
+                <input type="text" name="variant_sku[]" class="form-control variant-sku" 
+                       placeholder="e.g., HAIR-001-V01" required>
+                <small style="font-size: 0.8rem;">Unique SKU for this variant</small>
+            </div>
+            <div>
+                <label>Default</label>
+                <div style="margin-top: 5px;">
+                    <input type="checkbox" name="variant_default[]" value="${variantCounter}" 
+                           ${variantCounter === 0 ? 'checked' : ''} 
+                           class="default-checkbox" 
+                           onchange="updateDefaultCheckbox(this)">
+                </div>
+                <small style="font-size: 0.8rem;">Default variant</small>
             </div>
             <div>
                 <label>Actions</label>
@@ -648,57 +614,60 @@
         `;
         
         variantsContainer.appendChild(variantRow);
-        variantCounter++;
         
-        // Auto-fill variant name based on selections
-        const nameInput = variantRow.querySelector('input[name="variant_name[]"]');
-        const lengthSelect = variantRow.querySelector('select[name="variant_length[]"]');
-        const textureSelect = variantRow.querySelector('select[name="variant_texture[]"]');
-        const colorSelect = variantRow.querySelector('select[name="variant_color[]"]');
-        
-        function updateVariantName() {
-            const length = lengthSelect.value;
-            const texture = textureSelect.value;
-            const color = colorSelect.value;
-            const productName = document.getElementById('name').value;
-            
-            let variantName = '';
-            if (texture && length) {
-                variantName = `${texture} ${length}`;
-                if (color && color !== 'Natural Black') {
-                    variantName += ` ${color}`;
-                }
-            } else if (texture) {
-                variantName = texture;
-            } else if (length) {
-                variantName = `${length}`;
-            }
-            
-            if (variantName) {
-                nameInput.value = variantName;
+        // Auto-generate SKU for this variant
+        const baseSKU = document.getElementById('sku').value;
+        const variantSKUInput = variantRow.querySelector('.variant-sku');
+        if (!variantSKUInput.value) {
+            if (baseSKU) {
+                variantSKUInput.value = `${baseSKU}-V${(variantCounter + 1).toString().padStart(2, '0')}`;
+            } else {
+                variantSKUInput.value = `HAIR-${Date.now().toString().slice(-6)}-V${(variantCounter + 1).toString().padStart(2, '0')}`;
             }
         }
         
-        lengthSelect.addEventListener('change', updateVariantName);
-        textureSelect.addEventListener('change', updateVariantName);
-        colorSelect.addEventListener('change', updateVariantName);
+        // Set price to base price if not set
+        const basePrice = parseFloat(document.getElementById('base_price').value) || 0;
+        const variantPriceInput = variantRow.querySelector('.variant-price');
+        if (!variantPriceInput.value || variantPriceInput.value === '0') {
+            variantPriceInput.value = basePrice.toFixed(2);
+        }
+        
+        variantCounter++;
     }
 
     // Remove variant row
     function removeVariant(variantId) {
         const variantRow = document.getElementById(variantId);
         if (variantRow) {
-            variantRow.remove();
-            variantCounter--;
-            
-            // Update variant numbers
-            const variantRows = variantsContainer.querySelectorAll('.variant-row');
-            variantRows.forEach((row, index) => {
-                const heading = row.querySelector('h5');
-                if (heading) {
-                    heading.textContent = `Variant ${index + 1}`;
+            if (confirm('Are you sure you want to remove this variant?')) {
+                variantRow.remove();
+                variantCounter--;
+                
+                // Update variant numbers
+                const variantRows = variantsContainer.querySelectorAll('.variant-row');
+                variantRows.forEach((row, index) => {
+                    const heading = row.querySelector('h5');
+                    if (heading) {
+                        heading.textContent = `Variant ${index + 1}`;
+                    }
+                    
+                    // Update default checkbox values
+                    const defaultCheckbox = row.querySelector('.default-checkbox');
+                    if (defaultCheckbox) {
+                        defaultCheckbox.value = index;
+                    }
+                });
+                
+                // If no default checkbox is checked, check the first one
+                const anyDefaultChecked = document.querySelector('.default-checkbox:checked');
+                if (!anyDefaultChecked && variantRows.length > 0) {
+                    const firstCheckbox = variantRows[0].querySelector('.default-checkbox');
+                    if (firstCheckbox) {
+                        firstCheckbox.checked = true;
+                    }
                 }
-            });
+            }
         }
     }
 
@@ -707,6 +676,27 @@
         if (confirm('Are you sure you want to remove all variants?')) {
             variantsContainer.innerHTML = '';
             variantCounter = 0;
+            // Add one default variant back
+            addVariant();
+        }
+    }
+
+    // Update default checkbox - ensure only one is checked
+    function updateDefaultCheckbox(clickedCheckbox) {
+        if (clickedCheckbox.checked) {
+            // Uncheck all other checkboxes
+            document.querySelectorAll('.default-checkbox').forEach(checkbox => {
+                if (checkbox !== clickedCheckbox) {
+                    checkbox.checked = false;
+                }
+            });
+        } else {
+            // If unchecking, ensure at least one is checked
+            const anyChecked = document.querySelector('.default-checkbox:checked');
+            if (!anyChecked) {
+                clickedCheckbox.checked = true;
+                alert('At least one variant must be set as default.');
+            }
         }
     }
 
@@ -751,8 +741,10 @@
                     removeBtn.innerHTML = '×';
                     removeBtn.onclick = function(e) {
                         e.stopPropagation();
-                        imagePreview.removeChild(previewItem);
-                        updateFileInput(previewItem.dataset.index);
+                        if (confirm('Remove this image?')) {
+                            imagePreview.removeChild(previewItem);
+                            updateFileInput(previewItem.dataset.index);
+                        }
                     };
                     
                     previewItem.appendChild(img);
@@ -861,16 +853,35 @@
             }
         });
 
+        // Validate variants
+        const variantRows = variantsContainer.querySelectorAll('.variant-row');
+        variantRows.forEach((row, index) => {
+            const variantName = row.querySelector('input[name="variant_name[]"]').value.trim();
+            const variantPrice = row.querySelector('input[name="variant_price[]"]').value.trim();
+            const variantStock = row.querySelector('input[name="variant_stock[]"]').value.trim();
+            const variantSKU = row.querySelector('input[name="variant_sku[]"]').value.trim();
+            
+            if (!variantSKU) {
+                isValid = false;
+                showNotification(`Variant ${index + 1}: SKU is required`, 'danger');
+            }
+            if (!variantPrice || parseFloat(variantPrice) <= 0) {
+                isValid = false;
+                showNotification(`Variant ${index + 1}: Price must be greater than 0`, 'danger');
+            }
+            if (!variantStock || parseInt(variantStock) < 0) {
+                isValid = false;
+                showNotification(`Variant ${index + 1}: Stock must be 0 or greater`, 'danger');
+            }
+        });
+
         // Validate at least one image
         const imagesInput = document.getElementById('images');
         if (imagesInput.files.length === 0) {
             isValid = false;
-            imagesInput.setCustomValidity('Please upload at least one product image');
             document.getElementById('imagesError').textContent = 'Please upload at least one product image';
             document.getElementById('imagesError').style.display = 'block';
-            showNotification('Please upload at least one product image', 'danger');
         } else {
-            imagesInput.setCustomValidity('');
             document.getElementById('imagesError').style.display = 'none';
         }
 
@@ -885,27 +896,30 @@
             return;
         }
         
+        // Check if there are any variants
+        const variantRows = variantsContainer.querySelectorAll('.variant-row');
+        if (variantRows.length === 0) {
+            if (!confirm('No variants added. Product will be added without variants. Continue?')) {
+                return;
+            }
+        }
+        
         // Show loading
         showLoading();
         
         // Submit form
-        setTimeout(() => {
-            this.submit();
-        }, 500);
+        this.submit();
     });
 
-    // Auto-generate SKU from product name
-    document.getElementById('name').addEventListener('blur', function() {
-        const productName = this.value.trim();
-        if (productName && !document.getElementById('sku').value) {
-            // Generate a simple SKU from product name
-            const sku = productName
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '')
-                .substring(0, 8)
-                + '-' + Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('sku').value = sku;
-        }
+    // Auto-generate variant SKUs when base price changes
+    document.getElementById('base_price').addEventListener('change', function() {
+        const basePrice = parseFloat(this.value) || 0;
+        const variantPriceInputs = document.querySelectorAll('input[name="variant_price[]"]');
+        variantPriceInputs.forEach(input => {
+            if (!input.value || input.value === '0') {
+                input.value = basePrice.toFixed(2);
+            }
+        });
     });
 
     // Show notification
@@ -989,35 +1003,6 @@
     if (window.history.replaceState) {
         window.history.replaceState(null, null, window.location.href);
     }
-
-    // Variant price sync with base price
-    document.getElementById('base_price').addEventListener('change', function() {
-        const basePrice = parseFloat(this.value) || 0;
-        const variantPriceInputs = document.querySelectorAll('input[name="variant_price[]"]');
-        variantPriceInputs.forEach(input => {
-            if (!input.value || input.value === '0') {
-                input.value = basePrice.toFixed(2);
-            }
-        });
-    });
-
-    // Auto-generate variant SKUs
-    function generateVariantSKU(baseSKU, variantNumber) {
-        return baseSKU + '-V' + variantNumber.toString().padStart(2, '0');
-    }
-
-    // Auto-generate variant SKUs on base SKU change
-    document.getElementById('sku').addEventListener('change', function() {
-        const baseSKU = this.value;
-        if (baseSKU) {
-            const variantSKUInputs = document.querySelectorAll('input[name="variant_sku[]"]');
-            variantSKUInputs.forEach((input, index) => {
-                if (!input.value) {
-                    input.value = generateVariantSKU(baseSKU, index + 1);
-                }
-            });
-        }
-    });
 
     // Add CSS for animations
     const style = document.createElement('style');
