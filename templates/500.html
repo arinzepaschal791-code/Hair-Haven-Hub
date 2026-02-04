@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>500 - Internal Server Error | {{ config.brand_name }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -25,6 +26,7 @@
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 20px;
+            margin: 0;
         }
         
         .error-container {
@@ -193,56 +195,49 @@
             min-width: 160px;
             justify-content: center;
             text-decoration: none;
+            border: none;
         }
         
         .btn-back {
             background-color: #6c757d;
-            border-color: #6c757d;
             color: white;
         }
         
         .btn-back:hover {
             background-color: #5a6268;
-            border-color: #545b62;
             transform: translateY(-2px);
             color: white;
         }
         
         .btn-home {
             background-color: var(--primary-color);
-            border-color: var(--primary-color);
             color: white;
         }
         
         .btn-home:hover {
             background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
             transform: translateY(-2px);
             color: white;
         }
         
         .btn-help {
             background-color: #28a745;
-            border-color: #28a745;
             color: white;
         }
         
         .btn-help:hover {
             background-color: #218838;
-            border-color: #1e7e34;
             transform: translateY(-2px);
             color: white;
         }
         
         .btn-contact {
             background-color: #17a2b8;
-            border-color: #17a2b8;
             color: white;
         }
         
         .btn-contact:hover {
             background-color: #138496;
-            border-color: #117a8b;
             transform: translateY(-2px);
             color: white;
         }
@@ -343,6 +338,36 @@
         .spinner-border {
             color: var(--primary-color);
         }
+        
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            min-width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #8B4513;
+            margin-bottom: 10px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -350,12 +375,19 @@
         <div class="error-card">
             <!-- Header with brand logo -->
             <div class="error-header">
-                {% set logo_url = url_for('static', filename='images/' + config.site_logo) %}
-                {% set fallback_logo = url_for('static', filename='images/logo.png') %}
-                <img src="{{ logo_url }}" 
-                     alt="{{ config.brand_name }} Logo" 
-                     class="brand-logo"
-                     onerror="this.onerror=null; this.src='{{ fallback_logo }}';">
+                <!-- Fix: Use the correct logo URL from config -->
+                {% if config.site_logo %}
+                    {% set logo_url = url_for('static', filename='images/' + config.site_logo) %}
+                    {% set fallback_logo = 'https://via.placeholder.com/200x60/8B4513/FFFFFF?text=' + config.brand_name.replace(' ', '+') %}
+                    <img src="{{ logo_url }}" 
+                         alt="{{ config.brand_name }} Logo" 
+                         class="brand-logo"
+                         onerror="this.onerror=null; this.src='{{ fallback_logo }}';">
+                {% else %}
+                    <div class="brand-text" style="color: white; font-size: 1.5rem; font-weight: bold; margin-bottom: 20px;">
+                        {{ config.brand_name }}
+                    </div>
+                {% endif %}
                 
                 <div class="error-icon">
                     <i class="fas fa-server"></i>
@@ -397,7 +429,7 @@
                 
                 <!-- Action buttons -->
                 <div class="error-actions">
-                    <button type="button" class="btn btn-back" onclick="window.history.back()">
+                    <button type="button" class="btn btn-back" onclick="goBack()">
                         <i class="fas fa-arrow-left"></i> Go Back
                     </button>
                     
@@ -442,11 +474,11 @@
             <div class="error-footer">
                 <div>
                     <i class="fas fa-exclamation-circle me-1"></i>
-                    Error Reference: <span id="errorTimestamp">{{ now.strftime('%Y%m%d-%H%M%S') }}</span>
+                    Error Reference: <span id="errorTimestamp">{{ now.strftime('%Y%m%d-%H%M%S') if now else '' }}</span>
                 </div>
                 <div class="error-details">
                     Server: {{ config.brand_name }} | 
-                    Time: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}
+                    Time: {{ now.strftime('%Y-%m-%d %H:%M:%S') if now else '' }}
                 </div>
             </div>
         </div>
@@ -459,197 +491,87 @@
             return document.querySelector('meta[name="csrf-token"]')?.content || '';
         }
         
-        // Show toast notification (compatible with your base.html)
+        // Show toast notification
         function showToast(title, message, type = 'info') {
-            // This function is from your base.html
-            if (typeof window.showToast === 'function') {
-                window.showToast(title, message, type);
-                return;
-            }
+            const toastContainer = document.querySelector('.toast-container') || createToastContainer();
             
-            // Fallback implementation
+            const toastId = 'toast-' + Date.now();
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 30px;
-                z-index: 9999;
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                padding: 15px 20px;
-                animation: slideInRight 0.3s ease-out;
-                border-left: 4px solid #8B4513;
-                min-width: 300px;
-            `;
+            toast.id = toastId;
+            toast.className = 'toast';
+            toast.style.borderLeftColor = getToastColor(type);
             
             toast.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div class="toast-icon" style="font-size: 1.5rem;">
-                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <div style="padding: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="toast-icon" style="font-size: 1.5rem;">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 5px;">${title}</div>
+                            <div style="color: #666; font-size: 0.9rem;">${message}</div>
+                        </div>
+                        <button onclick="document.getElementById('${toastId}').remove()" style="background: none; border: none; color: #666; cursor: pointer; padding: 5px;">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; margin-bottom: 5px;">${title}</div>
-                        <div style="color: #666; font-size: 0.9rem;">${message}</div>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #666; cursor: pointer; padding: 5px;">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
             `;
             
-            document.body.appendChild(toast);
+            toastContainer.appendChild(toast);
             
             setTimeout(() => {
-                if (toast.parentElement) {
+                if (document.getElementById(toastId)) {
                     toast.remove();
                 }
             }, 5000);
         }
         
+        function getToastColor(type) {
+            const colors = {
+                'success': '#28a745',
+                'error': '#dc3545',
+                'warning': '#ffc107',
+                'info': '#17a2b8'
+            };
+            return colors[type] || '#8B4513';
+        }
+        
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+            return container;
+        }
+        
+        // Go back with fallback
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "{{ url_for('index') }}";
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-refresh after 30 seconds (optional)
-            const autoRefreshTimer = setTimeout(() => {
-                console.log('Attempting auto-refresh due to 500 error...');
-                showToast('Reconnecting', 'Attempting to refresh the page...', 'info');
-                window.location.reload();
-            }, 30000);
-            
-            // Clear timer if user interacts
-            document.addEventListener('click', function() {
-                clearTimeout(autoRefreshTimer);
-            });
-            
-            // Add click handler for retry functionality
-            const refreshButtons = document.querySelectorAll('.btn-home, .btn-back');
-            refreshButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    // If it's a regular link or has onclick, let it proceed
-                    if (this.getAttribute('href') || this.getAttribute('onclick')) {
-                        return;
-                    }
-                    
-                    // Otherwise show loading and refresh
-                    const loadingIndicator = document.getElementById('loadingIndicator');
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'block';
-                    }
-                    
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                });
-            });
-            
-            // Generate a unique error ID for reporting
+            // Generate unique error ID
             const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
             const timestampElement = document.getElementById('errorTimestamp');
             if (timestampElement) {
                 timestampElement.textContent += '-' + errorId;
             }
             
-            // Log error details (in production, this would send to error tracking service)
-            try {
-                const errorDetails = {
-                    errorId: errorId,
-                    timestamp: new Date().toISOString(),
-                    url: window.location.href,
-                    referrer: document.referrer || 'none',
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    errorType: '500_internal_server_error'
-                };
-                
-                console.error('500 Error Details:', errorDetails);
-                
-                // Send error report (only if user consents)
-                if (localStorage.getItem('allowErrorReporting') === 'true') {
-                    fetch('/api/error-report', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCSRFToken()
-                        },
-                        body: JSON.stringify(errorDetails)
-                    }).catch(() => {
-                        // Silently fail if error reporting fails
-                    });
-                }
-            } catch (e) {
-                // Silently fail if error logging fails
-            }
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                // F5 or Ctrl+R to refresh
-                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                    e.preventDefault();
-                    showToast('Refreshing', 'Reloading page...', 'info');
-                    window.location.reload();
-                }
-                
-                // Escape to go home
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    window.location.href = "{{ url_for('index') }}";
-                }
-                
-                // B to go back
-                if (e.key === 'b' || e.key === 'B') {
-                    e.preventDefault();
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
-                        window.location.href = "{{ url_for('index') }}";
-                    }
-                }
-                
-                // R to retry (refresh)
-                if (e.key === 'r' || e.key === 'R') {
-                    if (e.ctrlKey || e.metaKey) {
-                        return; // Let Ctrl+R handle it
-                    }
-                    e.preventDefault();
-                    window.location.reload();
-                }
-            });
-            
-            // Show helpful tooltip about keyboard shortcuts
-            setTimeout(() => {
-                console.log('Keyboard shortcuts: F5=Refresh, Esc=Home, B=Back, R=Retry');
-            }, 2000);
-            
-            // Check if page is still loading
-            if (document.readyState === 'complete') {
-                // Page loaded successfully, hide any loading indicators
-                const loadingIndicator = document.getElementById('loadingIndicator');
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-            }
-            
-            // Add animation to buttons on hover
+            // Add event listeners to buttons
             const buttons = document.querySelectorAll('.btn');
             buttons.forEach(button => {
-                button.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-2px)';
-                    this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
-                });
-                
-                button.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = 'none';
-                });
-                
                 // Add ripple effect
                 button.addEventListener('click', function(e) {
-                    const ripple = document.createElement('span');
                     const rect = this.getBoundingClientRect();
                     const size = Math.max(rect.width, rect.height);
                     const x = e.clientX - rect.left - size / 2;
                     const y = e.clientY - rect.top - size / 2;
                     
+                    const ripple = document.createElement('span');
                     ripple.style.cssText = `
                         position: absolute;
                         border-radius: 50%;
@@ -673,24 +595,85 @@
                         }
                     }, 600);
                 });
+                
+                // Hover effects
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
             });
             
-            // Add CSS for ripple animation
-            const rippleStyle = document.createElement('style');
-            rippleStyle.textContent = `
-                @keyframes ripple {
-                    to {
-                        transform: scale(4);
-                        opacity: 0;
+            // Auto-refresh after 30 seconds
+            const autoRefreshTimer = setTimeout(() => {
+                console.log('Attempting auto-refresh due to 500 error...');
+                showToast('Reconnecting', 'Attempting to refresh the page...', 'info');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }, 30000);
+            
+            // Clear timer on user interaction
+            document.addEventListener('click', function() {
+                clearTimeout(autoRefreshTimer);
+            });
+            
+            // Check server health periodically
+            function checkServerStatus() {
+                return fetch('{{ url_for("health_check") }}', {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache'
                     }
+                })
+                .then(response => response.ok)
+                .catch(() => false);
+            }
+            
+            // Periodically check if server is back online (only in production)
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                const healthCheckInterval = setInterval(() => {
+                    checkServerStatus().then(isOnline => {
+                        if (isOnline) {
+                            clearInterval(healthCheckInterval);
+                            showToast('Server Online', 'The server is back online. Refreshing...', 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        }
+                    });
+                }, 10000); // Check every 10 seconds
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // F5 or Ctrl+R to refresh
+                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                    e.preventDefault();
+                    showToast('Refreshing', 'Reloading page...', 'info');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100);
                 }
                 
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
+                // Escape to go home
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    window.location.href = "{{ url_for('index') }}";
                 }
-            `;
-            document.head.appendChild(rippleStyle);
+                
+                // B to go back
+                if (e.key === 'b' || e.key === 'B') {
+                    if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+                        e.preventDefault();
+                        goBack();
+                    }
+                }
+            });
             
             // Auto-focus on first button for accessibility
             const firstButton = document.querySelector('.btn');
@@ -699,76 +682,67 @@
             }
             
             // Handle image errors
-            document.addEventListener('error', function(e) {
-                if (e.target.tagName.toLowerCase() === 'img') {
-                    const fallbackSrc = e.target.getAttribute('data-fallback');
-                    if (fallbackSrc && e.target.src !== fallbackSrc) {
-                        e.target.src = fallbackSrc;
-                    } else {
-                        e.target.style.display = 'none';
-                        const parent = e.target.parentElement;
-                        if (parent) {
-                            const fallbackDiv = document.createElement('div');
-                            fallbackDiv.className = 'brand-logo-fallback';
-                            fallbackDiv.innerHTML = `
-                                <div style="text-align: center;">
-                                    <i class="fas fa-store fa-2x text-muted"></i>
-                                    <p style="margin-top: 5px; font-size: 0.9rem; color: #666;">{{ config.brand_name }}</p>
-                                </div>
-                            `;
-                            parent.insertBefore(fallbackDiv, e.target.nextSibling);
-                        }
-                    }
-                }
-            }, true);
-        });
-        
-        // Handle browser back/forward buttons
-        window.onpopstate = function() {
-            console.log('Navigating back/forward, reloading page');
-            window.location.reload();
-        };
-        
-        // Check if page is working by trying to fetch a simple endpoint
-        function checkServerStatus() {
-            return fetch('/health', {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache'
-                }
-            }).then(response => {
-                return response.ok;
-            }).catch(() => {
-                return false;
-            });
-        }
-        
-        // Periodically check if server is back online
-        if (window.location.hostname !== 'localhost') {
-            setInterval(() => {
-                checkServerStatus().then(isOnline => {
-                    if (isOnline) {
-                        console.log('Server is back online');
-                        showToast('Server Online', 'The server is back online. Refreshing...', 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2000);
+            const logo = document.querySelector('.brand-logo');
+            if (logo) {
+                logo.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    const parent = this.parentElement;
+                    if (parent) {
+                        const fallbackDiv = document.createElement('div');
+                        fallbackDiv.className = 'brand-text-fallback';
+                        fallbackDiv.innerHTML = `
+                            <div style="color: white; font-size: 1.5rem; font-weight: bold; margin: 10px 0;">
+                                {{ config.brand_name }}
+                            </div>
+                        `;
+                        parent.appendChild(fallbackDiv);
                     }
                 });
-            }, 10000); // Check every 10 seconds
-        }
+            }
+            
+            // Log error to console (for debugging)
+            console.error('500 Error - Internal Server Error');
+            console.log('Error Reference:', document.getElementById('errorTimestamp')?.textContent);
+            console.log('Page URL:', window.location.href);
+            console.log('User Agent:', navigator.userAgent);
+            
+            // Try to send error report (non-blocking)
+            try {
+                const errorData = {
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    referrer: document.referrer || 'direct',
+                    userAgent: navigator.userAgent,
+                    errorCode: '500',
+                    errorId: errorId
+                };
+                
+                // Send to backend if possible
+                fetch('/api/log-error', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(errorData),
+                    mode: 'no-cors' // Don't wait for response
+                }).catch(() => {
+                    // Ignore errors
+                });
+            } catch (e) {
+                // Ignore error reporting errors
+            }
+        });
         
-        // Add error reporting consent
-        if (!localStorage.getItem('allowErrorReporting')) {
-            console.log('Error reporting not configured. To help improve the service, enable error reporting in settings.');
-        }
-        
-        // Add dark mode support (optional)
-        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDarkMode) {
-            document.documentElement.style.setProperty('--light-color', '#2d2d2d');
-            document.documentElement.style.setProperty('--dark-color', '#f8f9fa');
-        }
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Page became visible again, check if we should refresh
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        });
     </script>
     
     <!-- Bootstrap JS Bundle with Popper -->
