@@ -256,6 +256,11 @@
             background: #7b2cbf;
         }
 
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         /* Flash Messages */
         .flash-messages {
             margin-bottom: 20px;
@@ -337,6 +342,43 @@
             background: #7b2cbf;
         }
 
+        /* Business Hours */
+        .business-hours {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .business-hours h4 {
+            color: #9d4edd;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .hours-list {
+            list-style: none;
+        }
+
+        .hours-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .hours-list li:last-child {
+            border-bottom: none;
+        }
+
+        .hours-list .day {
+            font-weight: 500;
+        }
+
+        .hours-list .time {
+            color: #666;
+        }
+
         /* Footer */
         footer {
             background: #333;
@@ -379,6 +421,22 @@
             border-top: 1px solid #444;
             color: #999;
             font-size: 14px;
+        }
+
+        /* Form Error States */
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .has-error .form-control {
+            border-color: #dc3545;
+        }
+
+        .has-error .error-message {
+            display: block;
         }
 
         /* Responsive */
@@ -531,6 +589,25 @@
                         </div>
                     </div>
                     
+                    <!-- Business Hours -->
+                    <div class="business-hours">
+                        <h4>Business Hours</h4>
+                        <ul class="hours-list">
+                            <li>
+                                <span class="day">Monday - Friday</span>
+                                <span class="time">9:00 AM - 6:00 PM</span>
+                            </li>
+                            <li>
+                                <span class="day">Saturday</span>
+                                <span class="time">10:00 AM - 4:00 PM</span>
+                            </li>
+                            <li>
+                                <span class="day">Sunday</span>
+                                <span class="time">Closed</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <!-- Social Links -->
                     <div class="social-links">
                         <a href="{{ config.whatsapp }}" target="_blank" class="social-link">
@@ -539,29 +616,38 @@
                         <a href="{{ config.instagram_url }}" target="_blank" class="social-link">
                             <i class="fab fa-instagram"></i>
                         </a>
+                        <a href="mailto:{{ config.email }}" class="social-link">
+                            <i class="fas fa-envelope"></i>
+                        </a>
                     </div>
                 </div>
                 
                 <!-- Contact Form -->
                 <div class="contact-form">
                     <h2>Send Us a Message</h2>
-                    <form method="POST" action="{{ url_for('contact') }}">
-                        <!-- Add CSRF protection -->
+                    <form id="contactForm" method="POST" action="{{ url_for('contact') }}">
+                        <!-- CSRF Token - REQUIRED for form submission -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="form-group">
                             <label for="name">Full Name *</label>
-                            <input type="text" id="name" name="name" required value="{{ request.form.name if request.form.name }}">
+                            <input type="text" id="name" name="name" class="form-control" 
+                                   required 
+                                   value="{{ request.form.name if request.form.name else '' }}">
+                            <div class="error-message" id="nameError"></div>
                         </div>
                         
                         <div class="form-group">
                             <label for="email">Email Address *</label>
-                            <input type="email" id="email" name="email" required value="{{ request.form.email if request.form.email }}">
+                            <input type="email" id="email" name="email" class="form-control" 
+                                   required 
+                                   value="{{ request.form.email if request.form.email else '' }}">
+                            <div class="error-message" id="emailError"></div>
                         </div>
                         
                         <div class="form-group">
                             <label for="subject">Subject *</label>
-                            <select id="subject" name="subject" required>
+                            <select id="subject" name="subject" class="form-control" required>
                                 <option value="">Select a subject</option>
                                 <option value="wholesale" {% if request.form.subject == 'wholesale' %}selected{% endif %}>Wholesale Inquiry</option>
                                 <option value="product" {% if request.form.subject == 'product' %}selected{% endif %}>Product Information</option>
@@ -569,17 +655,27 @@
                                 <option value="partnership" {% if request.form.subject == 'partnership' %}selected{% endif %}>Business Partnership</option>
                                 <option value="other" {% if request.form.subject == 'other' %}selected{% endif %}>Other Inquiry</option>
                             </select>
+                            <div class="error-message" id="subjectError"></div>
                         </div>
                         
                         <div class="form-group">
                             <label for="message">Message *</label>
-                            <textarea id="message" name="message" required>{{ request.form.message if request.form.message }}</textarea>
+                            <textarea id="message" name="message" class="form-control" required>{{ request.form.message if request.form.message else '' }}</textarea>
+                            <div class="error-message" id="messageError"></div>
                         </div>
                         
-                        <button type="submit" class="submit-btn">
+                        <button type="submit" class="submit-btn" id="submitBtn">
                             <i class="fas fa-paper-plane"></i> Send Message
                         </button>
                     </form>
+                    
+                    <div class="troubleshoot-section" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <p style="color: #666; font-size: 14px; margin: 0;">
+                            <i class="fas fa-info-circle" style="color: #9d4edd;"></i>
+                            Having issues with the form? Email us directly at 
+                            <a href="mailto:{{ config.email }}" style="color: #9d4edd;">{{ config.email }}</a>
+                        </p>
+                    </div>
                 </div>
             </div>
             
@@ -587,14 +683,22 @@
             <div class="slogan-notice">
                 <h3>{{ config.slogan }}</h3>
                 <p>We specialize in wholesale distribution of premium hair products. Contact us for bulk orders and wholesale pricing.</p>
+                <p style="margin-top: 10px; font-size: 16px;">
+                    <i class="fas fa-shipping-fast"></i>
+                    Delivery Available Nationwide | 
+                    <i class="fas fa-box"></i>
+                    Bulk Discounts Available
+                </p>
             </div>
             
             <!-- Map -->
             <div class="map-container">
+                <!-- Updated Google Maps URL for Nigeria/Lagos location -->
                 <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.1215553172823!2d3.3406834152317894!3d6.516830324027853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8e7c3c8b7d0f%3A0x9c9e9c9e9c9e9c9e!2sTradefair%20Shopping%20Complex%2C%20Badagry%20Express%20Way%2C%20Lagos!5e0!3m2!1sen!2sng!4v1641234567890!5m2!1sen!2sng"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.1215553172823!2d3.3406834152317894!3d6.516830324027853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8e7c3c8b7d0f%3A0x9c9e9c9e9c9e9c9e!2sTradefair%20Shopping%20Complex%2C%20Badagry%20Express%20Way%2C%20Lagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1641234567890!5m2!1sen!2sng"
                     allowfullscreen="" 
-                    loading="lazy">
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
             </div>
         </div>
@@ -608,6 +712,7 @@
                     <h3>{{ config.brand_name }}</h3>
                     <p>{{ config.tagline }}</p>
                     <p>{{ config.slogan }}</p>
+                    <p>{{ config.description[:100] }}...</p>
                 </div>
                 
                 <div class="footer-section">
@@ -616,6 +721,12 @@
                     <p><a href="{{ url_for('shop') }}">Shop</a></p>
                     <p><a href="{{ url_for('about') }}">About Us</a></p>
                     <p><a href="{{ url_for('contact') }}">Contact</a></p>
+                    {% if session.get('customer_id') %}
+                    <p><a href="{{ url_for('account') }}">My Account</a></p>
+                    {% else %}
+                    <p><a href="{{ url_for('customer_login') }}">Login</a></p>
+                    <p><a href="{{ url_for('customer_register') }}">Register</a></p>
+                    {% endif %}
                 </div>
                 
                 <div class="footer-section">
@@ -623,50 +734,307 @@
                     <p><i class="fas fa-map-marker-alt"></i> {{ config.address }}</p>
                     <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
                     <p><i class="fab fa-instagram"></i> @{{ config.instagram }}</p>
+                    <p><i class="fab fa-whatsapp"></i> {{ config.phone }}</p>
                     <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
                 </div>
             </div>
             
             <div class="copyright">
-                <p>&copy; {{ now.year }} {{ config.brand_name }}. All rights reserved.</p>
+                <p>&copy; {{ current_year }} {{ config.brand_name }}. All rights reserved.</p>
+                <p style="margin-top: 10px; font-size: 12px;">
+                    Powered by Nora Hair Line E-commerce System v2.0
+                </p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Form validation and enhancement
+        // Enhanced JavaScript for contact form
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    // Basic validation is handled by HTML5 required attribute
-                    // You can add more JavaScript validation here if needed
+            const contactForm = document.getElementById('contactForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Form validation
+            function validateForm() {
+                let isValid = true;
+                
+                // Clear previous errors
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.textContent = '';
+                    el.style.display = 'none';
+                });
+                
+                document.querySelectorAll('.form-group').forEach(el => {
+                    el.classList.remove('has-error');
+                });
+                
+                // Validate name
+                const name = document.getElementById('name').value.trim();
+                if (!name) {
+                    document.getElementById('nameError').textContent = 'Name is required';
+                    document.getElementById('nameError').style.display = 'block';
+                    document.getElementById('name').parentElement.classList.add('has-error');
+                    isValid = false;
+                }
+                
+                // Validate email
+                const email = document.getElementById('email').value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!email) {
+                    document.getElementById('emailError').textContent = 'Email is required';
+                    document.getElementById('emailError').style.display = 'block';
+                    document.getElementById('email').parentElement.classList.add('has-error');
+                    isValid = false;
+                } else if (!emailRegex.test(email)) {
+                    document.getElementById('emailError').textContent = 'Please enter a valid email address';
+                    document.getElementById('emailError').style.display = 'block';
+                    document.getElementById('email').parentElement.classList.add('has-error');
+                    isValid = false;
+                }
+                
+                // Validate subject
+                const subject = document.getElementById('subject').value;
+                if (!subject) {
+                    document.getElementById('subjectError').textContent = 'Please select a subject';
+                    document.getElementById('subjectError').style.display = 'block';
+                    document.getElementById('subject').parentElement.classList.add('has-error');
+                    isValid = false;
+                }
+                
+                // Validate message
+                const message = document.getElementById('message').value.trim();
+                if (!message) {
+                    document.getElementById('messageError').textContent = 'Message is required';
+                    document.getElementById('messageError').style.display = 'block';
+                    document.getElementById('message').parentElement.classList.add('has-error');
+                    isValid = false;
+                } else if (message.length < 10) {
+                    document.getElementById('messageError').textContent = 'Message should be at least 10 characters';
+                    document.getElementById('messageError').style.display = 'block';
+                    document.getElementById('message').parentElement.classList.add('has-error');
+                    isValid = false;
+                }
+                
+                return isValid;
+            }
+            
+            // Form submission handler
+            if (contactForm) {
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    const submitBtn = this.querySelector('.submit-btn');
+                    if (!validateForm()) {
+                        return false;
+                    }
+                    
                     const originalText = submitBtn.innerHTML;
+                    const originalDisabled = submitBtn.disabled;
                     
                     // Show loading state
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
                     submitBtn.disabled = true;
                     
-                    // Re-enable button after 5 seconds (in case of network issues)
-                    setTimeout(() => {
+                    // Submit form via AJAX
+                    const formData = new FormData(contactForm);
+                    
+                    fetch(contactForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            showFlashMessage('Message sent successfully! We\'ll get back to you soon.', 'success');
+                            contactForm.reset();
+                        } else {
+                            // Show error message
+                            showFlashMessage(data.message || 'Failed to send message. Please try again.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showFlashMessage('Network error. Please try again or contact us directly.', 'danger');
+                        // Fallback: submit form normally
+                        contactForm.submit();
+                    })
+                    .finally(() => {
+                        // Restore button state
                         submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }, 5000);
+                        submitBtn.disabled = originalDisabled;
+                    });
                 });
-                
-                // Auto-populate form if user is logged in
-                {% if session.get('customer_id') %}
-                    // You could fetch customer data via AJAX here
-                    // For now, we'll rely on the user to fill the form
-                {% endif %}
             }
             
-            // Smooth scroll to form errors
+            // Real-time validation
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim()) {
+                        const errorElement = this.parentElement.querySelector('.error-message');
+                        if (errorElement) {
+                            errorElement.style.display = 'none';
+                            this.parentElement.classList.remove('has-error');
+                        }
+                    }
+                });
+                
+                input.addEventListener('input', function() {
+                    const errorElement = this.parentElement.querySelector('.error-message');
+                    if (errorElement && errorElement.style.display === 'block') {
+                        errorElement.style.display = 'none';
+                        this.parentElement.classList.remove('has-error');
+                    }
+                });
+            });
+            
+            // Auto-populate form if user is logged in
+            {% if session.get('customer_id') %}
+            // Try to fetch customer info via AJAX
+            fetch('{{ url_for("account") }}')
+                .then(response => response.text())
+                .then(html => {
+                    // Parse HTML to extract customer info
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const customerName = doc.querySelector('.customer-name');
+                    const customerEmail = doc.querySelector('.customer-email');
+                    
+                    if (customerName && !document.getElementById('name').value) {
+                        document.getElementById('name').value = customerName.textContent.trim();
+                    }
+                    if (customerEmail && !document.getElementById('email').value) {
+                        document.getElementById('email').value = customerEmail.textContent.trim();
+                    }
+                })
+                .catch(() => {
+                    // Silently fail if can't fetch customer info
+                });
+            {% endif %}
+            
+            // Smooth scroll to flash messages
             const alerts = document.querySelectorAll('.alert');
             if (alerts.length > 0) {
-                alerts[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    alerts[0].scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }, 300);
+            }
+            
+            // Cart count update (if cart changes on this page)
+            function updateCartCount() {
+                fetch('{{ url_for("cart") }}')
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const cartCountElement = doc.querySelector('.cart-count');
+                        
+                        const currentCartCount = document.querySelector('.cart-count');
+                        if (cartCountElement && currentCartCount) {
+                            currentCartCount.textContent = cartCountElement.textContent;
+                        }
+                    })
+                    .catch(() => {
+                        // Ignore errors
+                    });
+            }
+            
+            // Update cart count every 30 seconds
+            setInterval(updateCartCount, 30000);
+        });
+        
+        // Flash message helper
+        function showFlashMessage(message, type = 'info') {
+            const flashContainer = document.querySelector('.flash-messages') || createFlashContainer();
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            // Add close button
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.style.cssText = `
+                background: none;
+                border: none;
+                font-size: 20px;
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: inherit;
+            `;
+            closeBtn.onclick = function() {
+                alert.remove();
+            };
+            
+            alert.style.position = 'relative';
+            alert.appendChild(closeBtn);
+            flashContainer.prepend(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 5000);
+            
+            // Scroll to message
+            setTimeout(() => {
+                alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        function createFlashContainer() {
+            const container = document.createElement('div');
+            container.className = 'container flash-messages';
+            document.querySelector('main')?.prepend(container) || 
+            document.body.insertBefore(container, document.body.firstChild);
+            return container;
+        }
+        
+        // WhatsApp direct message function
+        function sendWhatsApp() {
+            const name = document.getElementById('name')?.value || '';
+            const subject = document.getElementById('subject')?.value || '';
+            const message = document.getElementById('message')?.value || '';
+            
+            const whatsappMessage = `Hello ${config.brand_name}!%0A%0A` +
+                                   `Name: ${name}%0A` +
+                                   `Subject: ${subject}%0A` +
+                                   `Message: ${message}%0A%0A` +
+                                   `I sent this from your website contact form.`;
+            
+            window.open(`{{ config.whatsapp }}&text=${whatsappMessage}`, '_blank');
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter to submit form
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.click();
+                }
+            }
+            
+            // Escape to clear form
+            if (e.key === 'Escape') {
+                const nameField = document.getElementById('name');
+                const messageField = document.getElementById('message');
+                if (nameField && messageField && 
+                    (document.activeElement === nameField || 
+                     document.activeElement === messageField)) {
+                    nameField.value = '';
+                    messageField.value = '';
+                }
             }
         });
     </script>
