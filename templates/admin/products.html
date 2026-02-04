@@ -582,13 +582,14 @@
                                 <td><strong>#{{ product.id }}</strong></td>
                                 <td>
                                     {% if product.images and product.images|length > 0 %}
-                                        {% set image_url = product.images[0].image_url %}
-                                        {% if image_url.startswith('uploads/') %}
-                                            {% set image_src = url_for('uploaded_file', filename=image_url) %}
-                                        {% elif image_url.startswith('http') %}
+                                        {% set first_image = product.images|first %}
+                                        {% set image_url = first_image.image_url %}
+                                        
+                                        {# Fix for image URL handling - matches main.py logic #}
+                                        {% if image_url.startswith('http') %}
                                             {% set image_src = image_url %}
                                         {% else %}
-                                            {% set image_src = url_for('static', filename='uploads/' + image_url) %}
+                                            {% set image_src = url_for('uploaded_file', filename=image_url) %}
                                         {% endif %}
                                         
                                         <img src="{{ image_src }}" 
@@ -616,12 +617,12 @@
                                                 <small>
                                                     {% if product.available_lengths %}
                                                         <span class="variant-badge">
-                                                            {{ product.available_lengths|length }} lengths
+                                                            {{ product.available_lengths|length }} length{% if product.available_lengths|length > 1 %}s{% endif %}
                                                         </span>
                                                     {% endif %}
                                                     {% if product.available_textures %}
                                                         <span class="variant-badge">
-                                                            {{ product.available_textures|length }} textures
+                                                            {{ product.available_textures|length }} texture{% if product.available_textures|length > 1 %}s{% endif %}
                                                         </span>
                                                     {% endif %}
                                                 </small>
@@ -633,6 +634,12 @@
                                     <small class="text-muted">SKU: {{ product.sku or 'N/A' }}</small>
                                     <br>
                                     <small class="text-muted">Slug: {{ product.slug }}</small>
+                                    {% if product.is_bundle %}
+                                    <br>
+                                    <span class="badge bg-warning mt-1">
+                                        <i class="fas fa-boxes"></i> Bundle
+                                    </span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if product.category %}
@@ -661,7 +668,7 @@
                                     {% endif %}
                                     {% if product.variants %}
                                     <br>
-                                    <small class="text-muted">{{ product.variants|length }} variants</small>
+                                    <small class="text-muted">{{ product.variants|length }} variant{% if product.variants|length > 1 %}s{% endif %}</small>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -695,7 +702,7 @@
                                         <form action="{{ url_for('admin_delete_product', id=product.id) }}" 
                                               method="POST" 
                                               class="d-inline"
-                                              onsubmit="return confirmDelete(event, '{{ product.name|escapejs }}')">
+                                              onsubmit="return confirmDelete(event, '{{ product.name|replace(\"'\", \"\\'\")|replace('\"', '&quot;') }}')">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
                                                 <i class="fas fa-trash"></i>
@@ -731,13 +738,35 @@
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Confirm delete
-        function confirmDelete(event, productName) {
-            if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
-                event.preventDefault();
+        // Confirm delete - using async function to check for orders first
+        async function confirmDelete(event, productName) {
+            event.preventDefault();
+            const form = event.target;
+            const productId = form.action.split('/').pop();
+            
+            // First check if product has orders
+            const response = await fetch(`/admin/products/${productId}/check-orders`);
+            const data = await response.json();
+            
+            if (data.has_orders) {
+                alert(`Cannot delete "${productName}" because it has existing orders. You can deactivate it instead.`);
                 return false;
             }
-            return true;
+            
+            if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+                // Show loading
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.display = 'block';
+                    const productsTable = document.getElementById('productsTable');
+                    if (productsTable) productsTable.style.opacity = '0.5';
+                }
+                
+                // Submit the form
+                form.submit();
+                return true;
+            }
+            return false;
         }
 
         // Remove filter
@@ -805,66 +834,6 @@
             }
         });
 
-        // Toast notification function
-        function showToast(message, type = 'success') {
-            // Check if toast container exists
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            
-            const toastId = 'toast-' + Date.now();
-            const toastHTML = `
-                <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            ${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>
-            `;
-            
-            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-            const toastElement = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastElement, {
-                autohide: true,
-                delay: 3000
-            });
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', function () {
-                toastElement.remove();
-            });
-        }
-
-        // Check for flash messages
-        document.addEventListener('DOMContentLoaded', function() {
-            const alert = document.querySelector('.alert');
-            if (alert) {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            }
-            
-            // Add click event to all product images
-            const productImages = document.querySelectorAll('.img-clickable');
-            productImages.forEach(img => {
-                img.style.cursor = 'pointer';
-            });
-        });
-
-        // Format price helper (for JavaScript)
-        function formatPrice(price) {
-            return '₦' + parseFloat(price).toLocaleString('en-NG', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-
         // Add keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Ctrl + N for new product
@@ -881,6 +850,89 @@
                 }
             }
         });
+
+        // Toggle product status (quick toggle)
+        function toggleProductStatus(productId, currentStatus) {
+            if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this product?`)) {
+                const formData = new FormData();
+                formData.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('active', !currentStatus);
+                
+                fetch(`/admin/products/${productId}/toggle-status`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error updating product status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating product status');
+                });
+            }
+        }
+
+        // Quick stock update
+        function updateStock(productId, variantId = null) {
+            const newStock = prompt('Enter new stock quantity:');
+            if (newStock !== null && !isNaN(newStock) && parseInt(newStock) >= 0) {
+                const formData = new FormData();
+                formData.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('stock', newStock);
+                if (variantId) {
+                    formData.append('variant_id', variantId);
+                }
+                
+                fetch(`/admin/products/${productId}/update-stock`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error updating stock: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating stock');
+                });
+            }
+        }
+
+        // Auto-refresh product list every 30 seconds to show latest changes
+        setInterval(() => {
+            if (!document.hidden) {
+                const loader = document.getElementById('loader');
+                const productsTable = document.getElementById('productsTable');
+                if (loader && productsTable) {
+                    loader.style.display = 'block';
+                    productsTable.style.opacity = '0.5';
+                    
+                    fetch(window.location.href)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newTable = doc.querySelector('#productsTable');
+                            if (newTable) {
+                                productsTable.innerHTML = newTable.innerHTML;
+                            }
+                        })
+                        .finally(() => {
+                            loader.style.display = 'none';
+                            productsTable.style.opacity = '1';
+                        });
+                }
+            }
+        }, 30000); // 30 seconds
     </script>
 </body>
 </html>
