@@ -16,6 +16,8 @@
             --text-dark: #333333;
             --text-light: #6c757d;
             --white: #ffffff;
+            --error-red: #dc3545;
+            --success-green: #28a745;
         }
         
         body {
@@ -25,6 +27,7 @@
             display: flex;
             align-items: center;
             padding: 20px;
+            margin: 0;
         }
         
         .register-container {
@@ -35,6 +38,13 @@
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(26, 26, 46, 0.1);
             border: 1px solid rgba(157, 78, 221, 0.1);
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .brand-header {
@@ -109,12 +119,21 @@
             transition: all 0.3s;
             width: 100%;
             font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
         }
         
         .btn-register:hover {
             background: linear-gradient(135deg, #7b2cbf, var(--accent-purple));
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(157, 78, 221, 0.3);
+        }
+        
+        .btn-register:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .login-link {
@@ -143,6 +162,7 @@
             color: var(--text-light);
             cursor: pointer;
             z-index: 10;
+            padding: 5px;
         }
         
         .password-strength {
@@ -208,29 +228,10 @@
         .alert {
             border-radius: 8px;
             border: none;
+            animation: slideInDown 0.3s ease;
         }
         
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        @keyframes slideIn {
+        @keyframes slideInDown {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
@@ -241,14 +242,35 @@
             }
         }
         
-        .alert {
-            animation: slideIn 0.3s ease;
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
         }
         
         /* Responsive adjustments */
         @media (max-width: 576px) {
             .register-container {
                 padding: 30px 25px;
+                margin: 20px auto;
             }
             
             body {
@@ -272,6 +294,8 @@
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
+            display: inline-block;
+            vertical-align: middle;
             margin-right: 10px;
         }
         
@@ -283,6 +307,55 @@
         .address-input textarea {
             resize: vertical;
             min-height: 80px;
+        }
+        
+        /* Error states */
+        .is-invalid {
+            border-color: var(--error-red) !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .is-invalid:focus {
+            border-color: var(--error-red);
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: var(--error-red);
+        }
+        
+        /* Success animation */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .success-animation {
+            animation: successPulse 0.5s ease;
+        }
+        
+        /* Ripple effect */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -325,7 +398,7 @@
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     {% endfor %}
                 {% endif %}
@@ -360,7 +433,7 @@
                 </div>
             {% else %}
                 <!-- Registration Form -->
-                <form method="POST" action="{{ url_for('customer_register') }}" id="registerForm">
+                <form method="POST" action="{{ url_for('customer_register') }}" id="registerForm" novalidate>
                     <!-- CSRF Token - Required for Flask-WTF -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
@@ -377,7 +450,11 @@
                                        name="first_name" 
                                        placeholder="Enter your first name" 
                                        required
-                                       value="{{ request.form.first_name if request.form else '' }}">
+                                       value="{{ request.form.first_name if request.form else '' }}"
+                                       autocomplete="given-name">
+                            </div>
+                            <div class="invalid-feedback" id="first_name_error">
+                                Please enter your first name.
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -392,7 +469,11 @@
                                        name="last_name" 
                                        placeholder="Enter your last name" 
                                        required
-                                       value="{{ request.form.last_name if request.form else '' }}">
+                                       value="{{ request.form.last_name if request.form else '' }}"
+                                       autocomplete="family-name">
+                            </div>
+                            <div class="invalid-feedback" id="last_name_error">
+                                Please enter your last name.
                             </div>
                         </div>
                     </div>
@@ -409,10 +490,14 @@
                                    name="email" 
                                    placeholder="Enter your email address" 
                                    required
-                                   value="{{ request.form.email if request.form else '' }}">
+                                   value="{{ request.form.email if request.form else '' }}"
+                                   autocomplete="email">
                         </div>
                         <div class="form-text">
                             We'll use this email to send order confirmations and updates
+                        </div>
+                        <div class="invalid-feedback" id="email_error">
+                            Please enter a valid email address.
                         </div>
                     </div>
                     
@@ -430,10 +515,14 @@
                                    required
                                    pattern="[0-9]{11}"
                                    title="Please enter a valid 11-digit Nigerian phone number"
-                                   value="{{ request.form.phone if request.form else '' }}">
+                                   value="{{ request.form.phone if request.form else '' }}"
+                                   autocomplete="tel">
                         </div>
                         <div class="form-text">
                             Enter 11-digit Nigerian number (e.g., 08012345678)
+                        </div>
+                        <div class="invalid-feedback" id="phone_error">
+                            Please enter a valid 11-digit Nigerian phone number.
                         </div>
                     </div>
                     
@@ -447,7 +536,8 @@
                                       id="address" 
                                       name="address" 
                                       placeholder="Enter your delivery address (you can add it later)"
-                                      rows="3">{{ request.form.address if request.form else '' }}</textarea>
+                                      rows="3"
+                                      autocomplete="street-address">{{ request.form.address if request.form else '' }}</textarea>
                         </div>
                         <div class="form-text">
                             Add your address now for faster checkout
@@ -468,10 +558,14 @@
                                            name="password" 
                                            placeholder="Create a secure password" 
                                            required
-                                           minlength="6">
-                                    <button type="button" class="btn password-toggle" onclick="togglePassword('password')">
+                                           minlength="6"
+                                           autocomplete="new-password">
+                                    <button type="button" class="btn password-toggle" onclick="togglePassword('password')" aria-label="Show password">
                                         <i class="fas fa-eye"></i>
                                     </button>
+                                </div>
+                                <div class="invalid-feedback" id="password_error">
+                                    Password must be at least 6 characters.
                                 </div>
                             </div>
                             <div class="password-strength">
@@ -495,10 +589,14 @@
                                            name="confirm_password" 
                                            placeholder="Confirm your password" 
                                            required
-                                           minlength="6">
-                                    <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')">
+                                           minlength="6"
+                                           autocomplete="new-password">
+                                    <button type="button" class="btn password-toggle" onclick="togglePassword('confirm_password')" aria-label="Show password">
                                         <i class="fas fa-eye"></i>
                                     </button>
+                                </div>
+                                <div class="invalid-feedback" id="confirm_password_error">
+                                    Passwords do not match.
                                 </div>
                             </div>
                             <div class="form-text">
@@ -512,9 +610,12 @@
                             <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
                             <label class="form-check-label" for="terms">
                                 I agree to the 
-                                <a href="#" class="terms-link" target="_blank">Terms of Service</a> and 
-                                <a href="#" class="terms-link" target="_blank">Privacy Policy</a> *
+                                <a href="#" class="terms-link" target="_blank" onclick="showTermsModal(event)">Terms of Service</a> and 
+                                <a href="#" class="terms-link" target="_blank" onclick="showPrivacyModal(event)">Privacy Policy</a> *
                             </label>
+                            <div class="invalid-feedback" id="terms_error">
+                                You must agree to the Terms of Service and Privacy Policy.
+                            </div>
                         </div>
                     </div>
                     
@@ -527,6 +628,9 @@
                         </div>
                     </div>
                     
+                    <!-- Hidden field for redirect -->
+                    <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+                    
                     <div class="d-grid gap-2 mb-4">
                         <button type="submit" class="btn btn-register" id="registerBtn">
                             <i class="fas fa-user-plus me-2"></i> Create Account
@@ -536,7 +640,7 @@
                     <div class="text-center">
                         <p class="mb-3">
                             Already have an account? 
-                            <a href="{{ url_for('customer_login') }}" class="login-link">
+                            <a href="{{ url_for('customer_login') }}?next={{ request.args.get('next', '') }}" class="login-link">
                                 <i class="fas fa-sign-in-alt me-1"></i> Login here
                             </a>
                         </p>
@@ -554,9 +658,99 @@
         </div>
     </div>
     
+    <!-- Terms and Privacy Modals -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms of Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Acceptance of Terms</h6>
+                    <p>By accessing and using {{ config.brand_name }}, you accept and agree to be bound by the terms and provision of this agreement.</p>
+                    
+                    <h6>2. User Account, Password, and Security</h6>
+                    <p>You are responsible for maintaining the confidentiality of your password and account, and are fully responsible for all activities that occur under your password or account.</p>
+                    
+                    <h6>3. Products and Services</h6>
+                    <p>All products are subject to availability. We reserve the right to discontinue any product at any time.</p>
+                    
+                    <h6>4. Privacy Policy</h6>
+                    <p>Registration data and certain other information about you are subject to our Privacy Policy.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Information We Collect</h6>
+                    <p>We collect information that you provide directly to us, such as when you create an account, place an order, or contact us.</p>
+                    
+                    <h6>2. Use of Information</h6>
+                    <p>We use the information we collect to provide, maintain, and improve our services, to process transactions, and to communicate with you.</p>
+                    
+                    <h6>3. Information Sharing</h6>
+                    <p>We do not sell your personal information. We may share your information with service providers who assist us in operating our website and conducting our business.</p>
+                    
+                    <h6>4. Data Security</h6>
+                    <p>We implement appropriate technical and organizational security measures to protect your personal information.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Initialize modals
+        let termsModal = null;
+        let privacyModal = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('termsModal')) {
+                termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
+            }
+            if (document.getElementById('privacyModal')) {
+                privacyModal = new bootstrap.Modal(document.getElementById('privacyModal'));
+            }
+            
+            // Auto-focus first_name field
+            const firstNameInput = document.getElementById('first_name');
+            if (firstNameInput) {
+                firstNameInput.focus();
+            }
+        });
+        
+        // Show terms modal
+        function showTermsModal(e) {
+            e.preventDefault();
+            if (termsModal) {
+                termsModal.show();
+            }
+        }
+        
+        // Show privacy modal
+        function showPrivacyModal(e) {
+            e.preventDefault();
+            if (privacyModal) {
+                privacyModal.show();
+            }
+        }
+        
         // Toggle password visibility
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
@@ -566,10 +760,12 @@
                 passwordInput.type = 'text';
                 toggleButton.classList.remove('fa-eye');
                 toggleButton.classList.add('fa-eye-slash');
+                passwordInput.setAttribute('aria-label', 'Hide password');
             } else {
                 passwordInput.type = 'password';
                 toggleButton.classList.remove('fa-eye-slash');
                 toggleButton.classList.add('fa-eye');
+                passwordInput.setAttribute('aria-label', 'Show password');
             }
         }
         
@@ -621,174 +817,266 @@
         }
         
         // Form validation and submission
-        document.addEventListener('DOMContentLoaded', function() {
-            const registerForm = document.getElementById('registerForm');
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        
+        if (registerForm) {
+            // Real-time validation
+            registerForm.addEventListener('input', function(e) {
+                validateField(e.target);
+            });
             
-            if (registerForm) {
-                registerForm.addEventListener('submit', function(e) {
-                    // Prevent default form submission to validate first
-                    e.preventDefault();
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate all fields
+                const isValid = validateForm();
+                
+                if (isValid) {
+                    // Show loading state
+                    const originalText = registerBtn.innerHTML;
+                    registerBtn.innerHTML = '<span class="loader"></span> Creating Account...';
+                    registerBtn.disabled = true;
                     
-                    // Reset validation
-                    clearValidationErrors();
-                    
-                    // Validate form
-                    if (validateForm()) {
-                        // Show loading state
-                        const submitBtn = document.getElementById('registerBtn');
-                        if (submitBtn) {
-                            const originalText = submitBtn.innerHTML;
-                            submitBtn.innerHTML = '<span class="loader"></span> Creating Account...';
-                            submitBtn.disabled = true;
-                        }
+                    try {
+                        // Submit the form
+                        const response = await fetch(registerForm.action, {
+                            method: 'POST',
+                            body: new FormData(registerForm),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         
-                        // Submit the form (after validation)
-                        this.submit();
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Success - redirect or show message
+                            showSuccessMessage('Account created successfully! Redirecting...');
+                            
+                            // Add success animation
+                            registerForm.classList.add('success-animation');
+                            
+                            // Redirect after 2 seconds
+                            setTimeout(() => {
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                } else {
+                                    window.location.href = "{{ url_for('account') }}";
+                                }
+                            }, 2000);
+                        } else {
+                            // Error - show message
+                            showErrorMessage(data.message || 'Registration failed. Please try again.');
+                            registerBtn.innerHTML = originalText;
+                            registerBtn.disabled = false;
+                            
+                            // Highlight specific field errors
+                            if (data.errors) {
+                                Object.keys(data.errors).forEach(field => {
+                                    const input = document.getElementById(field);
+                                    if (input) {
+                                        showFieldError(input, data.errors[field]);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        // Network error - fallback to regular form submission
+                        console.error('Network error:', error);
+                        showErrorMessage('Network error. Please check your connection.');
+                        registerBtn.innerHTML = originalText;
+                        registerBtn.disabled = false;
+                        
+                        // Fallback: submit form normally after 2 seconds
+                        setTimeout(() => {
+                            registerForm.submit();
+                        }, 2000);
                     }
-                });
+                }
+            });
+        }
+        
+        function validateField(field) {
+            clearFieldError(field);
+            
+            switch (field.id) {
+                case 'first_name':
+                case 'last_name':
+                    if (!field.value.trim()) {
+                        showFieldError(field, 'This field is required');
+                        return false;
+                    }
+                    break;
+                    
+                case 'email':
+                    if (!field.value.trim()) {
+                        showFieldError(field, 'Email is required');
+                        return false;
+                    } else if (!isValidEmail(field.value)) {
+                        showFieldError(field, 'Please enter a valid email address');
+                        return false;
+                    }
+                    break;
+                    
+                case 'phone':
+                    const phoneDigits = field.value.replace(/\D/g, '');
+                    if (!phoneDigits) {
+                        showFieldError(field, 'Phone number is required');
+                        return false;
+                    } else if (phoneDigits.length !== 11) {
+                        showFieldError(field, 'Phone number must be exactly 11 digits');
+                        return false;
+                    }
+                    break;
+                    
+                case 'password':
+                    if (!field.value) {
+                        showFieldError(field, 'Password is required');
+                        return false;
+                    } else if (field.value.length < 6) {
+                        showFieldError(field, 'Password must be at least 6 characters');
+                        return false;
+                    }
+                    break;
+                    
+                case 'confirm_password':
+                    const password = document.getElementById('password').value;
+                    if (!field.value) {
+                        showFieldError(field, 'Please confirm your password');
+                        return false;
+                    } else if (field.value !== password) {
+                        showFieldError(field, 'Passwords do not match');
+                        return false;
+                    }
+                    break;
+                    
+                case 'terms':
+                    if (!field.checked) {
+                        showFieldError(field, 'You must agree to the terms');
+                        return false;
+                    }
+                    break;
             }
             
-            function clearValidationErrors() {
-                document.querySelectorAll('.is-invalid').forEach(el => {
-                    el.classList.remove('is-invalid');
-                });
-                document.querySelectorAll('.invalid-feedback').forEach(el => {
-                    el.remove();
-                });
+            return true;
+        }
+        
+        function validateForm() {
+            let isValid = true;
+            
+            // Validate required fields
+            const requiredFields = ['first_name', 'last_name', 'email', 'phone', 'password', 'confirm_password', 'terms'];
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    if (!validateField(field)) {
+                        isValid = false;
+                    }
+                }
+            });
+            
+            return isValid;
+        }
+        
+        function showFieldError(field, message) {
+            field.classList.add('is-invalid');
+            
+            // Find or create error message element
+            let errorElement = document.getElementById(`${field.id}_error`);
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.className = 'invalid-feedback';
+                errorElement.id = `${field.id}_error`;
+                field.parentNode.appendChild(errorElement);
             }
             
-            function validateForm() {
-                let isValid = true;
-                
-                // Validate first_name
-                const firstName = document.getElementById('first_name');
-                if (!firstName.value.trim()) {
-                    showError(firstName, 'First name is required');
-                    isValid = false;
-                }
-                
-                // Validate last_name
-                const lastName = document.getElementById('last_name');
-                if (!lastName.value.trim()) {
-                    showError(lastName, 'Last name is required');
-                    isValid = false;
-                }
-                
-                // Validate email
-                const email = document.getElementById('email');
-                if (!email.value.trim()) {
-                    showError(email, 'Email is required');
-                    isValid = false;
-                } else if (!isValidEmail(email.value)) {
-                    showError(email, 'Please enter a valid email address');
-                    isValid = false;
-                }
-                
-                // Validate phone
-                const phone = document.getElementById('phone');
-                if (!phone.value.trim()) {
-                    showError(phone, 'Phone number is required');
-                    isValid = false;
-                } else if (!/^[0-9]{11}$/.test(phone.value.replace(/\D/g, ''))) {
-                    showError(phone, 'Please enter a valid 11-digit Nigerian phone number');
-                    isValid = false;
-                }
-                
-                // Validate password
-                const password = document.getElementById('password');
-                const confirmPassword = document.getElementById('confirm_password');
-                
-                if (!password.value) {
-                    showError(password, 'Password is required');
-                    isValid = false;
-                } else if (password.value.length < 6) {
-                    showError(password, 'Password must be at least 6 characters');
-                    isValid = false;
-                }
-                
-                if (!confirmPassword.value) {
-                    showError(confirmPassword, 'Please confirm your password');
-                    isValid = false;
-                } else if (password.value !== confirmPassword.value) {
-                    showError(confirmPassword, 'Passwords do not match');
-                    isValid = false;
-                }
-                
-                // Validate terms
-                const terms = document.getElementById('terms');
-                if (!terms.checked) {
-                    const termsLabel = terms.closest('.form-check');
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback d-block';
-                    errorDiv.textContent = 'You must agree to the Terms of Service and Privacy Policy';
-                    termsLabel.appendChild(errorDiv);
-                    terms.classList.add('is-invalid');
-                    isValid = false;
-                }
-                
-                return isValid;
-            }
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function clearFieldError(field) {
+            field.classList.remove('is-invalid');
             
-            function showError(input, message) {
-                input.classList.add('is-invalid');
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'invalid-feedback';
-                errorDiv.textContent = message;
-                input.parentNode.appendChild(errorDiv);
-                input.focus();
+            const errorElement = document.getElementById(`${field.id}_error`);
+            if (errorElement) {
+                errorElement.style.display = 'none';
             }
+        }
+        
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function showSuccessMessage(message) {
+            // Create success message element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
             
-            function isValidEmail(email) {
-                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return re.test(email);
-            }
-        });
+            // Insert after form
+            registerForm.parentNode.insertBefore(alertDiv, registerForm.nextSibling);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        function showErrorMessage(message) {
+            // Create error message element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert after form
+            registerForm.parentNode.insertBefore(alertDiv, registerForm.nextSibling);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
         
         // Auto-dismiss alerts after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 document.querySelectorAll('.alert').forEach(alert => {
                     if (alert.classList.contains('show')) {
-                        const bsAlert = new bootstrap.Alert(alert);
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
                         bsAlert.close();
                     }
                 });
             }, 5000);
         });
         
-        // Auto-focus first_name field when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            const firstNameInput = document.getElementById('first_name');
-            if (firstNameInput) {
-                firstNameInput.focus();
-            }
-        });
-        
         // Format phone number as user types
-        document.getElementById('phone').addEventListener('input', function(e) {
-            let value = this.value.replace(/\D/g, '');
-            
-            // Keep only digits
-            this.value = value;
-            
-            // Display warning if not exactly 11 digits
-            if (value.length > 0 && value.length !== 11) {
-                this.classList.add('is-invalid');
-                const existingError = this.parentNode.querySelector('.invalid-feedback');
-                if (!existingError) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = 'Phone number must be exactly 11 digits';
-                    this.parentNode.appendChild(errorDiv);
-                }
-            } else {
-                this.classList.remove('is-invalid');
-                const errorDiv = this.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) {
-                    errorDiv.remove();
-                }
-            }
-        });
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                
+                // Keep only digits
+                this.value = value;
+                
+                // Validate
+                validateField(this);
+            });
+        }
         
         // Prevent form submission on Enter key in textarea
         const addressField = document.getElementById('address');
@@ -798,6 +1086,64 @@
                     e.preventDefault();
                 }
             });
+        }
+        
+        // Add ripple effect to register button
+        if (registerBtn) {
+            registerBtn.addEventListener('click', function(e) {
+                // Get click position relative to button
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Create ripple element
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                
+                // Add ripple to button
+                this.appendChild(ripple);
+                
+                // Remove ripple after animation
+                setTimeout(() => {
+                    if (ripple.parentNode === this) {
+                        this.removeChild(ripple);
+                    }
+                }, 600);
+            });
+        }
+        
+        // Check if email already exists
+        const emailInput = document.getElementById('email');
+        let emailCheckTimeout;
+        
+        if (emailInput) {
+            emailInput.addEventListener('blur', function() {
+                const email = this.value.trim();
+                
+                if (email && isValidEmail(email)) {
+                    clearTimeout(emailCheckTimeout);
+                    
+                    emailCheckTimeout = setTimeout(() => {
+                        checkEmailAvailability(email);
+                    }, 500);
+                }
+            });
+        }
+        
+        async function checkEmailAvailability(email) {
+            try {
+                const response = await fetch(`/api/check-email?email=${encodeURIComponent(email)}`);
+                const data = await response.json();
+                
+                if (data.exists) {
+                    showFieldError(emailInput, 'This email is already registered. Please login instead.');
+                }
+            } catch (error) {
+                // Silently fail if email check fails
+                console.error('Email check failed:', error);
+            }
         }
     </script>
 </body>
