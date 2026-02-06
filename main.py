@@ -561,10 +561,10 @@ def inject_global_vars():
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
         format_price=format_price,
-        csrf_token=csrf_token_value,
+        csrf_token=csrf_token_value,  # Already a string value, not a callable
         min=min,
         max=max,
-        random=random,  # <-- ADDED THIS CRITICAL LINE FOR INDEX.HTML COMPATIBILITY
+        random=random,
         check_stock=check_stock_availability
     )
 
