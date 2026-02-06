@@ -29,7 +29,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     
     <style>
         :root {
@@ -1404,7 +1404,7 @@
                 <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
                 <form class="newsletter-form" id="newsletterForm" action="#" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="email" name="email" class="newsletter-input" placeholder="Your email address" required>
                     <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-paper-plane"></i> Subscribe
