@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from datetime import datetime, timedelta
-import random
+import random  # Import random module
 import string
 from functools import wraps
 import json
@@ -564,7 +564,7 @@ def inject_global_vars():
         csrf_token=csrf_token_value,
         min=min,
         max=max,
-        random=random,
+        random=random,  # <-- ADDED THIS CRITICAL LINE FOR INDEX.HTML COMPATIBILITY
         check_stock=check_stock_availability
     )
 
