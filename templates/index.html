@@ -29,7 +29,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <style>
         :root {
@@ -1411,7 +1411,8 @@
                 <h2>Stay Updated</h2>
                 <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
-                <form class="newsletter-form" id="newsletterForm" action="{{ url_for('subscribe_newsletter') }}" method="POST">
+                <form class="newsletter-form" id="newsletterForm" action="#" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="email" name="email" class="newsletter-input" placeholder="Your email address" required>
                     <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-paper-plane"></i> Subscribe
@@ -1530,7 +1531,7 @@
             localStorage.setItem('wishlist', JSON.stringify(wishlist));
         }
         
-        // Newsletter Form
+        // Newsletter Form - Client-side only for now
         document.getElementById('newsletterForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = this.querySelector('.newsletter-input').value;
@@ -1547,26 +1548,24 @@
             button.disabled = true;
             
             try {
-                const formData = new FormData(this);
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                });
+                // For now, just simulate subscription
+                // In production, you would send this to your backend
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    showNotification(data.message || 'Thank you for subscribing!', 'success');
-                    this.reset();
-                } else {
-                    const data = await response.json();
-                    showNotification(data.error || 'Error subscribing. Please try again.', 'danger');
-                }
+                showNotification('Thank you for subscribing to our newsletter!', 'success');
+                this.reset();
+                
+                // Save to localStorage for demo purposes
+                let subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+                subscribers.push({
+                    email: email,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+                
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Network error. Please try again.', 'danger');
+                showNotification('Error subscribing. Please try again.', 'danger');
             } finally {
                 button.innerHTML = originalText;
                 button.disabled = false;
