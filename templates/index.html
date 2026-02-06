@@ -1086,9 +1086,10 @@
                 </div>
                 
                 <div class="hero-image" data-aos="fade-left" data-aos-duration="1000">
-                    <img src="{{ url_for('static', filename='images/hero-product.png') }}" 
-                         alt="Premium Hair Product"
-                         onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <!-- Bone Straight Hair Image -->
+                    <img src="{{ url_for('static', filename='images/bone-straight-hair.jpg') }}" 
+                         alt="Premium Bone Straight Hair Extensions"
+                         onerror="this.src='https://images.unsplash.com/photo-1607734834518-86c5e0e35f2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
                 </div>
             </div>
         </div>
@@ -1105,107 +1106,134 @@
             <!-- Collection Navigation -->
             <div class="collection-nav" data-aos="fade-up" data-aos-delay="100">
                 <button class="active" data-category="all">All Products</button>
-                {% for category in categories[:5] %}
-                <button data-category="{{ category.id }}">{{ category.name }}</button>
-                {% endfor %}
+                {% if categories %}
+                    {% for category in categories[:5] %}
+                    <button data-category="{{ category.id }}">{{ category.name }}</button>
+                    {% endfor %}
+                {% else %}
+                    <button data-category="straight">Bone Straight</button>
+                    <button data-category="curly">Curly</button>
+                    <button data-category="wavy">Wavy</button>
+                    <button data-category="brazilian">Brazilian</button>
+                    <button data-category="peruvian">Peruvian</button>
+                {% endif %}
             </div>
             
             <!-- Product Grid -->
             <div class="product-grid">
-                {% for product in featured_products %}
-                <div class="product-card" data-category="{{ product.category_id }}" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
-                    {% if product.featured %}
-                    <span class="product-badge featured">Featured</span>
-                    {% endif %}
-                    
-                    {% if product.compare_price and product.compare_price > product.min_price %}
-                    <span class="product-badge sale">Sale</span>
-                    {% elif loop.index <= 2 %}
-                    <span class="product-badge new">New</span>
-                    {% endif %}
-                    
-                    <div class="product-image">
-                        {% if product.images %}
-                            {% set primary_image = product.images|selectattr('is_primary')|first %}
-                            {% if primary_image %}
-                            <img src="{{ url_for('uploaded_file', filename=primary_image.image_url) }}" 
-                                 alt="{{ product.name }}"
-                                 onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
-                                 alt="{{ product.name }}">
-                            {% endif %}
-                        {% else %}
-                            <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
-                                 alt="{{ product.name }}">
+                {% if featured_products %}
+                    {% for product in featured_products %}
+                    <div class="product-card" data-category="{{ product.category_id if product.category_id else 'all' }}" 
+                         data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                        {% if product.featured %}
+                        <span class="product-badge featured">Featured</span>
                         {% endif %}
                         
-                        <div class="product-overlay">
-                            <div class="quick-actions">
-                                <button class="quick-btn" onclick="addToCart({{ product.id }})" 
-                                        title="Add to Cart">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
-                                <button class="quick-btn" onclick="window.location.href='{{ url_for('product_detail', id=product.id) }}'"
-                                        title="Quick View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="quick-btn" onclick="toggleWishlist({{ product.id }})"
-                                        title="Add to Wishlist">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="product-info">
-                        <div class="product-category">
-                            <i class="fas fa-tag"></i>
-                            {% if product.category %}
-                            {{ product.category.name }}
+                        {% if product.compare_price and product.compare_price > product.min_price %}
+                        <span class="product-badge sale">Sale</span>
+                        {% elif loop.index <= 2 %}
+                        <span class="product-badge new">New</span>
+                        {% endif %}
+                        
+                        <div class="product-image">
+                            {% if product.images and product.images|length > 0 %}
+                                {% set primary_image = product.images[0] if product.images else None %}
+                                {% if primary_image %}
+                                <img src="{{ url_for('uploaded_file', filename=primary_image) if primary_image.startswith('uploads/') else url_for('static', filename='uploads/' + primary_image) }}" 
+                                     alt="{{ product.name }}"
+                                     onerror="this.src='{{ url_for('static', filename='images/default-product.jpg') }}'">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                                     alt="{{ product.name }}">
+                                {% endif %}
                             {% else %}
-                            Hair Collection
+                                <img src="{{ url_for('static', filename='images/default-product.jpg') }}" 
+                                     alt="{{ product.name }}">
                             {% endif %}
-                        </div>
-                        <h3 class="product-name">
-                            <a href="{{ url_for('product_detail', id=product.id) }}">
-                                {{ product.name }}
-                            </a>
-                        </h3>
-                        
-                        <div class="product-price">
-                            <span class="current-price">{{ product.display_price }}</span>
-                            {% if product.compare_price and product.compare_price > product.min_price %}
-                            <span class="old-price">{{ format_price(product.compare_price) }}</span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="product-meta">
-                            <div class="rating">
-                                {% set avg_rating = random.randint(4,5) %}
-                                {% for i in range(5) %}
-                                {% if i < avg_rating %}
-                                <i class="fas fa-star"></i>
-                                {% else %}
-                                <i class="far fa-star"></i>
-                                {% endif %}
-                                {% endfor %}
-                                <span style="color: var(--gray); font-size: 0.8rem; margin-left: 5px;">
-                                    ({{ random.randint(15, 50) }})
-                                </span>
+                            
+                            <div class="product-overlay">
+                                <div class="quick-actions">
+                                    <button class="quick-btn" onclick="addToCart({{ product.id }})" 
+                                            title="Add to Cart">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                    <button class="quick-btn" onclick="window.location.href='{{ url_for('product_detail', id=product.id) }}'"
+                                            title="Quick View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="quick-btn" onclick="toggleWishlist({{ product.id }})"
+                                            title="Add to Wishlist">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="stock-status {{ 'in-stock' if product.stock > 10 else 'low-stock' if product.stock > 0 else 'out-stock' }}">
-                                {% if product.stock > 10 %}
-                                <i class="fas fa-check-circle"></i> In Stock
-                                {% elif product.stock > 0 %}
-                                <i class="fas fa-exclamation-circle"></i> Low Stock
+                        </div>
+                        
+                        <div class="product-info">
+                            <div class="product-category">
+                                <i class="fas fa-tag"></i>
+                                {% if product.category %}
+                                    {{ product.category.name }}
+                                {% elif product.category_id and categories %}
+                                    {% for cat in categories %}
+                                        {% if cat.id == product.category_id %}
+                                            {{ cat.name }}
+                                        {% endif %}
+                                    {% endfor %}
                                 {% else %}
-                                <i class="fas fa-times-circle"></i> Out of Stock
+                                    Hair Collection
                                 {% endif %}
+                            </div>
+                            <h3 class="product-name">
+                                <a href="{{ url_for('product_detail', id=product.id) }}">
+                                    {{ product.name }}
+                                </a>
+                            </h3>
+                            
+                            <div class="product-price">
+                                <span class="current-price">
+                                    {% if product.min_price %}
+                                        {{ "₦{:,.0f}".format(product.min_price) if product.min_price else "₦0" }}
+                                    {% elif product.price %}
+                                        {{ "₦{:,.0f}".format(product.price) }}
+                                    {% else %}
+                                        ₦0
+                                    {% endif %}
+                                </span>
+                                {% if product.compare_price and product.compare_price > (product.min_price or product.price) %}
+                                <span class="old-price">
+                                    {{ "₦{:,.0f}".format(product.compare_price) }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="product-meta">
+                                <div class="rating">
+                                    {% set avg_rating = product.avg_rating or 4 %}
+                                    {% for i in range(5) %}
+                                        {% if i < avg_rating %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span style="color: var(--gray); font-size: 0.8rem; margin-left: 5px;">
+                                        ({{ product.review_count or random.randint(15, 50) }})
+                                    </span>
+                                </div>
+                                <div class="stock-status {{ 'in-stock' if (product.stock or 0) > 10 else 'low-stock' if (product.stock or 0) > 0 else 'out-stock' }}">
+                                    {% if product.stock and product.stock > 10 %}
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                    {% elif product.stock and product.stock > 0 %}
+                                    <i class="fas fa-exclamation-circle"></i> Low Stock
+                                    {% else %}
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                    {% endfor %}
                 {% else %}
                 <!-- Empty State -->
                 <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
@@ -1220,7 +1248,7 @@
                         <i class="fas fa-store"></i> Browse All Products
                     </a>
                 </div>
-                {% endfor %}
+                {% endif %}
             </div>
             
             <div class="view-all" data-aos="fade-up" data-aos-delay="200">
@@ -1311,35 +1339,37 @@
             </div>
             
             <div class="testimonial-slider" id="testimonialSlider">
-                {% for review in reviews %}
-                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
-                    <div class="stars">
-                        {% for i in range(review.rating) %}
-                        <i class="fas fa-star"></i>
-                        {% endfor %}
-                    </div>
-                    <p class="testimonial-text">{{ review.comment }}</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">
-                            {{ review.customer_name[0] if review.customer_name else 'C' }}
+                {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                        <div class="stars">
+                            {% for i in range(review.rating) %}
+                            <i class="fas fa-star"></i>
+                            {% endfor %}
                         </div>
-                        <div class="author-info">
-                            <h4>{{ review.customer_name }}</h4>
-                            <div class="author-location">
-                                <i class="fas fa-map-marker-alt"></i> {{ review.location or 'Lagos, Nigeria' }}
+                        <p class="testimonial-text">{{ review.comment }}</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                {{ review.customer_name[0] if review.customer_name else 'C' }}
                             </div>
-                            {% if review.verified_purchase %}
-                            <div style="font-size: 0.8rem; color: var(--success); margin-top: 5px;">
-                                <i class="fas fa-check-circle"></i> Verified Purchase
+                            <div class="author-info">
+                                <h4>{{ review.customer_name or 'Customer' }}</h4>
+                                <div class="author-location">
+                                    <i class="fas fa-map-marker-alt"></i> {{ review.location or 'Lagos, Nigeria' }}
+                                </div>
+                                {% if review.verified_purchase %}
+                                <div style="font-size: 0.8rem; color: var(--success); margin-top: 5px;">
+                                    <i class="fas fa-check-circle"></i> Verified Purchase
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
                     </div>
-                </div>
+                    {% endfor %}
                 {% else %}
                 <!-- Default testimonials if none exist -->
                 {% for testimonial in [
-                    {'name': 'Chioma Okeke', 'rating': 5, 'comment': 'The Brazilian hair I purchased is absolutely stunning! Best quality I\'ve ever had. Lasted over a year with proper care.', 'location': 'Lagos', 'verified': true},
+                    {'name': 'Chioma Okeke', 'rating': 5, 'comment': 'The Brazilian bone straight hair I purchased is absolutely stunning! Best quality I\'ve ever had. Lasted over a year with proper care.', 'location': 'Lagos', 'verified': true},
                     {'name': 'Bisi Adeyemi', 'rating': 5, 'comment': 'The lace frontal wig is so natural looking! I\'ve received countless compliments. Customer service was excellent.', 'location': 'Abuja', 'verified': true},
                     {'name': 'Fatima Bello', 'rating': 4, 'comment': 'Fast delivery and premium quality hair. The Peruvian straight is my new favorite! Will definitely order again.', 'location': 'Port Harcourt', 'verified': true},
                     {'name': 'Amina Yusuf', 'rating': 5, 'comment': 'Excellent customer service and top-notch products. My go-to for all my hair needs. Highly recommended!', 'location': 'Kano', 'verified': false}
@@ -1369,7 +1399,7 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% endfor %}
+                {% endif %}
             </div>
         </div>
     </section>
@@ -1381,7 +1411,7 @@
                 <h2>Stay Updated</h2>
                 <p>Subscribe to our newsletter for exclusive offers, new arrivals, and hair care tips.</p>
                 
-                <form class="newsletter-form" id="newsletterForm" action="#" method="POST">
+                <form class="newsletter-form" id="newsletterForm" action="{{ url_for('subscribe_newsletter') }}" method="POST">
                     <input type="email" name="email" class="newsletter-input" placeholder="Your email address" required>
                     <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-paper-plane"></i> Subscribe
@@ -1463,7 +1493,8 @@
                 });
                 
                 if (response.ok) {
-                    showNotification('Product added to cart successfully!', 'success');
+                    const data = await response.json();
+                    showNotification(data.message || 'Product added to cart successfully!', 'success');
                     updateCartCount();
                 } else {
                     const data = await response.json();
@@ -1516,22 +1547,26 @@
             button.disabled = true;
             
             try {
-                // Simulate API call (in production, you'd send to your backend)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                showNotification('Thank you for subscribing to our newsletter!', 'success');
-                this.reset();
-                
-                // Save to localStorage
-                let subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
-                subscribers.push({
-                    email: email,
-                    date: new Date().toISOString()
+                const formData = new FormData(this);
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
                 });
-                localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
                 
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification(data.message || 'Thank you for subscribing!', 'success');
+                    this.reset();
+                } else {
+                    const data = await response.json();
+                    showNotification(data.error || 'Error subscribing. Please try again.', 'danger');
+                }
             } catch (error) {
-                showNotification('Error subscribing. Please try again.', 'danger');
+                console.error('Error:', error);
+                showNotification('Network error. Please try again.', 'danger');
             } finally {
                 button.innerHTML = originalText;
                 button.disabled = false;
@@ -1682,7 +1717,7 @@
         // Initialize cart count from session
         window.addEventListener('DOMContentLoaded', () => {
             const cartCountEls = document.querySelectorAll('.cart-count');
-            const cartCount = {{ cart_count }};
+            const cartCount = {{ cart_count|default(0) }};
             
             cartCountEls.forEach(el => {
                 el.textContent = cartCount;
