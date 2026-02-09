@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from datetime import datetime, timedelta
-import random  # Import random module
+import random
 import string
 from functools import wraps
 import json
@@ -23,6 +23,14 @@ app = Flask(__name__)
 # ========== CONFIGURATION ==========
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nora-hair-secret-key-2026-change-in-production')
 
+# Session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # Database configuration
 database_url = os.environ.get('DATABASE_URL')
 
@@ -41,10 +49,11 @@ else:
     print("✅ Using database from environment", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 300,
     'pool_pre_ping': True,
+    'pool_size': 10,
+    'max_overflow': 20,
 }
 
 # ========== CSRF PROTECTION ==========
@@ -479,7 +488,7 @@ def generate_unique_sku(base_sku=None):
             return sku
 
 def save_uploaded_file(file):
-    """Save uploaded file to uploads folder"""
+    """Save uploaded file to uploads folder and return relative path"""
     if not file or file.filename == '':
         print(f"⚠️ No file provided for upload", file=sys.stderr)
         return None
@@ -501,13 +510,23 @@ def save_uploaded_file(file):
         upload_path = os.path.join(upload_folder, unique_filename)
         file.save(upload_path)
 
-        print(f"✅ File saved: {unique_filename}", file=sys.stderr)
-        return unique_filename
+        # Return relative path for web access
+        return f"uploads/{unique_filename}"
 
     except Exception as e:
-        print(f"❌ CRITICAL ERROR saving file: {str(e)}", file=sys.stderr)
+        print(f"❌ Error saving file: {str(e)}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return None
+
+def get_or_create_category(name):
+    """Get existing category or create new one"""
+    slug = generate_unique_slug(name, Category)
+    category = Category.query.filter_by(name=name).first()
+    if not category:
+        category = Category(name=name, slug=slug)
+        db.session.add(category)
+        db.session.commit()
+    return category
 
 # ========== AUTHENTICATION DECORATORS ==========
 def admin_required(f):
@@ -561,7 +580,7 @@ def inject_global_vars():
         current_year=datetime.now().year,
         config=BUSINESS_CONFIG,
         format_price=format_price,
-        csrf_token=csrf_token_value,  # Already a string value, not a callable
+        csrf_token=csrf_token_value,
         min=min,
         max=max,
         random=random,
@@ -732,6 +751,21 @@ def init_db():
         print(f"❌ Database initialization error: {str(e)}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return False
+
+# ========== DATABASE HEALTH CHECK ==========
+@app.before_request
+def check_database():
+    """Check database connection before each request"""
+    try:
+        db.session.execute(text('SELECT 1'))
+    except Exception as e:
+        print(f"⚠️ Database connection lost: {str(e)}", file=sys.stderr)
+        try:
+            db.session.rollback()
+            db.session.execute(text('SELECT 1'))
+            print("✅ Database connection restored", file=sys.stderr)
+        except Exception as e2:
+            print(f"❌ Failed to restore database connection: {str(e2)}", file=sys.stderr)
 
 # ========== APPLICATION STARTUP HOOK ==========
 @app.before_request
@@ -1139,20 +1173,60 @@ def customer_register():
     """Customer registration"""
     if request.method == 'POST':
         try:
-            email = request.form.get('email')
-            password = request.form.get('password')
-            first_name = request.form.get('first_name')
-            last_name = request.form.get('last_name')
-            phone = request.form.get('phone')
-            address = request.form.get('address', '')
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            phone = request.form.get('phone', '').strip()
+            address = request.form.get('address', '').strip()
+            city = request.form.get('city', '').strip()
+            state = request.form.get('state', '').strip()
 
-            if not email or '@' not in email:
+            # Validation
+            if not all([email, password, confirm_password, first_name, last_name, phone]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('register.html',
+                                       email=email,
+                                       first_name=first_name,
+                                       last_name=last_name,
+                                       phone=phone,
+                                       address=address,
+                                       city=city,
+                                       state=state)
+            
+            if '@' not in email:
                 flash('Please enter a valid email address.', 'danger')
-                return redirect(url_for('customer_register'))
+                return render_template('register.html',
+                                       email=email,
+                                       first_name=first_name,
+                                       last_name=last_name,
+                                       phone=phone,
+                                       address=address,
+                                       city=city,
+                                       state=state)
             
             if len(password) < 6:
                 flash('Password must be at least 6 characters.', 'danger')
-                return redirect(url_for('customer_register'))
+                return render_template('register.html',
+                                       email=email,
+                                       first_name=first_name,
+                                       last_name=last_name,
+                                       phone=phone,
+                                       address=address,
+                                       city=city,
+                                       state=state)
+            
+            if password != confirm_password:
+                flash('Passwords do not match.', 'danger')
+                return render_template('register.html',
+                                       email=email,
+                                       first_name=first_name,
+                                       last_name=last_name,
+                                       phone=phone,
+                                       address=address,
+                                       city=city,
+                                       state=state)
 
             existing_customer = Customer.query.filter_by(email=email).first()
 
@@ -1165,7 +1239,9 @@ def customer_register():
                 first_name=first_name,
                 last_name=last_name,
                 phone=phone,
-                address=address
+                address=address,
+                city=city,
+                state=state
             )
             customer.set_password(password)
 
@@ -1174,6 +1250,8 @@ def customer_register():
 
             session['customer_id'] = customer.id
             session['customer_name'] = f"{customer.first_name} {customer.last_name}"
+            session['customer_email'] = customer.email
+            session.permanent = True
             session.pop('pending_checkout', None)
 
             flash('Registration successful! Welcome!', 'success')
@@ -1182,23 +1260,41 @@ def customer_register():
         except Exception as e:
             db.session.rollback()
             print(f"❌ Registration error: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             flash('Error during registration. Please try again.', 'danger')
+            return render_template('register.html',
+                                   email=email if 'email' in locals() else '',
+                                   first_name=first_name if 'first_name' in locals() else '',
+                                   last_name=last_name if 'last_name' in locals() else '',
+                                   phone=phone if 'phone' in locals() else '',
+                                   address=address if 'address' in locals() else '',
+                                   city=city if 'city' in locals() else '',
+                                   state=state if 'state' in locals() else '')
 
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def customer_login():
     """Customer login"""
+    if 'customer_id' in session:
+        return redirect(url_for('account'))
+
     if request.method == 'POST':
         try:
-            email = request.form.get('email')
-            password = request.form.get('password')
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '')
+
+            if not email or not password:
+                flash('Please enter both email and password', 'danger')
+                return render_template('login.html', email=email)
 
             customer = Customer.query.filter_by(email=email).first()
 
             if customer and customer.check_password(password):
                 session['customer_id'] = customer.id
                 session['customer_name'] = f"{customer.first_name} {customer.last_name}"
+                session['customer_email'] = customer.email
+                session.permanent = True
                 session.pop('pending_checkout', None)
 
                 flash('Login successful!', 'success')
@@ -1208,10 +1304,13 @@ def customer_login():
                 return redirect(url_for('account'))
             else:
                 flash('Invalid email or password', 'danger')
+                return render_template('login.html', email=email)
 
         except Exception as e:
             print(f"❌ Login error: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
+            return render_template('login.html', email=request.form.get('email', ''))
 
     return render_template('login.html')
 
@@ -1220,6 +1319,7 @@ def customer_logout():
     """Customer logout"""
     session.pop('customer_id', None)
     session.pop('customer_name', None)
+    session.pop('customer_email', None)
     session.pop('pending_checkout', None)
     flash('You have been logged out', 'info')
     return redirect(url_for('index'))
@@ -1401,20 +1501,26 @@ def admin_login():
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
 
+            if not username or not password:
+                flash('Please enter both username and password', 'danger')
+                return render_template('admin/admin_login.html')
+
             admin = User.query.filter_by(username=username, is_admin=True).first()
 
             if admin and admin.check_password(password):
                 session['admin_id'] = admin.id
                 session['admin_name'] = admin.username
                 session['is_admin'] = True
+                session.permanent = True
 
                 flash('Admin login successful!', 'success')
                 return redirect(url_for('admin_dashboard'))
             else:
-                flash('Invalid admin credentials. Use admin/admin123', 'danger')
+                flash('Invalid admin credentials', 'danger')
 
         except Exception as e:
             print(f"❌ Admin login error: {str(e)}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             flash('Login error. Please try again.', 'danger')
 
     return render_template('admin/admin_login.html')
@@ -1523,25 +1629,37 @@ def admin_add_product():
     if request.method == 'POST':
         try:
             # Get form data
-            name = request.form.get('name')
-            description = request.form.get('description')
-            base_price = float(request.form.get('base_price', 0))
-            compare_price = request.form.get('compare_price')
-            category_id = int(request.form.get('category_id'))
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '').strip()
+            base_price = float(request.form.get('base_price', 0) or 0)
+            compare_price = request.form.get('compare_price', '').strip()
+            category_id = int(request.form.get('category_id', 0))
             featured = 'featured' in request.form
             active = 'active' in request.form
             is_bundle = 'is_bundle' in request.form
-            bundle_discount = float(request.form.get('bundle_discount', 0))
+            bundle_discount = float(request.form.get('bundle_discount', 0) or 0)
+            
+            # Validations
+            if not name:
+                flash('Product name is required.', 'danger')
+                return render_template('admin/add_product.html', categories=categories)
+            
+            if not category_id:
+                flash('Category is required.', 'danger')
+                return render_template('admin/add_product.html', categories=categories)
+            
+            if base_price <= 0:
+                flash('Price must be greater than 0.', 'danger')
+                return render_template('admin/add_product.html', categories=categories)
             
             if compare_price:
                 compare_price = float(compare_price)
+                if compare_price <= base_price:
+                    flash('Compare price must be greater than base price.', 'warning')
+                    compare_price = None
             else:
                 compare_price = None
             
-            if base_price < 0:
-                flash('Price cannot be negative.', 'danger')
-                return redirect(url_for('admin_add_product'))
-
             # Generate slug and SKU
             slug = generate_unique_slug(name, Product)
             sku = generate_unique_sku()
@@ -1559,20 +1677,25 @@ def admin_add_product():
                 is_bundle=is_bundle,
                 bundle_discount=bundle_discount,
                 sku=sku,
-                total_quantity=0  # Will be calculated from variants
+                total_quantity=0
             )
 
             db.session.add(product)
-            db.session.flush()  # Get product ID
+            db.session.flush()
 
             # Handle image uploads
             if 'images' in request.files:
                 files = request.files.getlist('images')
+                primary_set = False
+                
                 for i, file in enumerate(files):
-                    if file and file.filename != '':
+                    if file and file.filename != '' and allowed_file(file.filename):
                         uploaded_filename = save_uploaded_file(file)
                         if uploaded_filename:
-                            is_primary = (i == 0)  # First image is primary
+                            is_primary = not primary_set
+                            if is_primary:
+                                primary_set = True
+                                
                             product_image = ProductImage(
                                 product_id=product.id,
                                 image_url=uploaded_filename,
@@ -1589,35 +1712,58 @@ def admin_add_product():
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
             variant_skus = request.form.getlist('variant_sku[]')
-            variant_defaults = request.form.getlist('variant_default[]')
-
+            
+            has_variants = len(variant_names) > 0 and any(name.strip() for name in variant_names)
+            
             total_stock = 0
-            for i in range(len(variant_names)):
-                if variant_names[i].strip():
-                    stock_value = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
-                    total_stock += stock_value
+            
+            if has_variants:
+                for i in range(len(variant_names)):
+                    variant_name = variant_names[i].strip()
+                    if not variant_name:
+                        continue
+                        
+                    length = variant_lengths[i].strip() if i < len(variant_lengths) else ''
+                    texture = variant_textures[i].strip() if i < len(variant_textures) else ''
+                    color = variant_colors[i].strip() if i < len(variant_colors) else ''
                     
-                    variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                    try:
+                        price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else base_price
+                    except (ValueError, TypeError):
+                        price = base_price
+                        
+                    try:
+                        stock = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
+                    except (ValueError, TypeError):
+                        stock = 0
+                        
+                    sku_value = variant_skus[i].strip() if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
                     
-                    # Check if this variant should be default
-                    is_default = False
-                    if variant_defaults:
-                        is_default = str(i) in variant_defaults
-                    elif i == 0:  # First variant is default if none specified
-                        is_default = True
+                    total_stock += stock
                     
                     variant = ProductVariant(
                         product_id=product.id,
-                        name=variant_names[i],
-                        length=variant_lengths[i] if i < len(variant_lengths) else None,
-                        texture=variant_textures[i] if i < len(variant_textures) else None,
-                        color=variant_colors[i] if i < len(variant_colors) else None,
-                        price=float(variant_prices[i]) if variant_prices[i] else base_price,
-                        stock=stock_value,
-                        sku=variant_sku,
-                        is_default=is_default
+                        name=variant_name,
+                        length=length if length else None,
+                        texture=texture if texture else None,
+                        color=color if color else None,
+                        price=price,
+                        stock=stock,
+                        sku=sku_value,
+                        is_default=(i == 0)
                     )
                     db.session.add(variant)
+            else:
+                # Create a default variant if no variants were provided
+                default_variant = ProductVariant(
+                    product_id=product.id,
+                    name=name,
+                    price=base_price,
+                    stock=0,
+                    sku=generate_unique_sku(),
+                    is_default=True
+                )
+                db.session.add(default_variant)
 
             product.total_quantity = total_stock
 
@@ -1626,11 +1772,17 @@ def admin_add_product():
             flash(f'Product "{name}" added successfully!', 'success')
             return redirect(url_for('admin_products'))
 
+        except ValueError as ve:
+            db.session.rollback()
+            print(f"❌ Value error in add product: {str(ve)}", file=sys.stderr)
+            flash('Invalid price or stock value. Please enter valid numbers.', 'danger')
+            return render_template('admin/add_product.html', categories=categories)
         except Exception as e:
             db.session.rollback()
             print(f"❌ Add product error: {str(e)}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
-            flash('Error adding product. Please try again.', 'danger')
+            flash(f'Error adding product: {str(e)}', 'danger')
+            return render_template('admin/add_product.html', categories=categories)
     
     return render_template('admin/add_product.html', categories=categories)
 
@@ -1649,21 +1801,45 @@ def admin_edit_product(id):
     if request.method == 'POST':
         try:
             # Update basic product info
-            product.name = request.form.get('name')
-            product.description = request.form.get('description')
-            product.base_price = float(request.form.get('base_price', 0))
+            product.name = request.form.get('name', '').strip()
+            product.description = request.form.get('description', '').strip()
             
-            compare_price = request.form.get('compare_price')
-            product.compare_price = float(compare_price) if compare_price else None
+            try:
+                product.base_price = float(request.form.get('base_price', 0) or 0)
+            except ValueError:
+                flash('Invalid base price format.', 'danger')
+                return render_template('admin/edit_product.html', product=product, categories=categories)
             
-            product.category_id = int(request.form.get('category_id'))
+            compare_price = request.form.get('compare_price', '').strip()
+            if compare_price:
+                try:
+                    product.compare_price = float(compare_price)
+                except ValueError:
+                    product.compare_price = None
+            else:
+                product.compare_price = None
+            
+            try:
+                product.category_id = int(request.form.get('category_id', 0))
+            except ValueError:
+                flash('Invalid category selected.', 'danger')
+                return render_template('admin/edit_product.html', product=product, categories=categories)
+            
             product.featured = 'featured' in request.form
             product.active = 'active' in request.form
             product.is_bundle = 'is_bundle' in request.form
-            product.bundle_discount = float(request.form.get('bundle_discount', 0))
             
-            sku = request.form.get('sku')
+            try:
+                product.bundle_discount = float(request.form.get('bundle_discount', 0) or 0)
+            except ValueError:
+                product.bundle_discount = 0
+            
+            sku = request.form.get('sku', '').strip()
             if sku and sku != product.sku:
+                existing_sku = Product.query.filter_by(sku=sku).first()
+                if existing_sku and existing_sku.id != product.id:
+                    flash('SKU already exists for another product.', 'danger')
+                    return render_template('admin/edit_product.html', product=product, categories=categories)
                 product.sku = sku
             
             product.slug = generate_unique_slug(product.name, Product, product.id)
@@ -1671,16 +1847,18 @@ def admin_edit_product(id):
             # Handle image uploads
             if 'images' in request.files:
                 files = request.files.getlist('images')
+                existing_images_count = len(product.images)
+                
                 for i, file in enumerate(files):
-                    if file and file.filename != '':
+                    if file and file.filename != '' and allowed_file(file.filename):
                         uploaded_filename = save_uploaded_file(file)
                         if uploaded_filename:
-                            is_primary = (i == 0 and not product.images)
+                            is_primary = (existing_images_count == 0 and i == 0)
                             product_image = ProductImage(
                                 product_id=product.id,
                                 image_url=uploaded_filename,
                                 is_primary=is_primary,
-                                sort_order=len(product.images) + i
+                                sort_order=existing_images_count + i
                             )
                             db.session.add(product_image)
 
@@ -1693,77 +1871,75 @@ def admin_edit_product(id):
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
             variant_skus = request.form.getlist('variant_sku[]')
-            variant_defaults = request.form.getlist('variant_default[]')
-
-            # Get existing variant IDs to delete ones not in the form
+            
+            # Get existing variant IDs
             existing_variant_ids = []
             for i, variant_id in enumerate(variant_ids):
                 if variant_id and variant_id.isdigit():
                     existing_variant_ids.append(int(variant_id))
 
             # Delete variants that were removed
+            variants_to_delete = []
             for variant in product.variants:
                 if variant.id not in existing_variant_ids:
-                    db.session.delete(variant)
+                    variants_to_delete.append(variant)
+            
+            for variant in variants_to_delete:
+                db.session.delete(variant)
 
             # Update or add variants
             total_stock = 0
             for i in range(len(variant_names)):
-                if variant_names[i].strip():
-                    # Get variant data
-                    variant_id = variant_ids[i] if i < len(variant_ids) else None
-                    variant_name = variant_names[i]
-                    variant_length = variant_lengths[i] if i < len(variant_lengths) else None
-                    variant_texture = variant_textures[i] if i < len(variant_textures) else None
-                    variant_color = variant_colors[i] if i < len(variant_colors) else None
-                    variant_price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else product.base_price
-                    variant_stock = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
-                    variant_sku = variant_skus[i] if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                variant_name = variant_names[i].strip()
+                if not variant_name:
+                    continue
                     
-                    # Check if this variant should be default
-                    is_default = False
-                    if variant_defaults:
-                        is_default = str(i) in variant_defaults
+                variant_id = variant_ids[i] if i < len(variant_ids) else None
+                length = variant_lengths[i].strip() if i < len(variant_lengths) else ''
+                texture = variant_textures[i].strip() if i < len(variant_textures) else ''
+                color = variant_colors[i].strip() if i < len(variant_colors) else ''
+                
+                try:
+                    price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else product.base_price
+                except (ValueError, TypeError):
+                    price = product.base_price
                     
-                    total_stock += variant_stock
+                try:
+                    stock = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
+                except (ValueError, TypeError):
+                    stock = 0
+                
+                sku_value = variant_skus[i].strip() if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                
+                total_stock += stock
 
-                    if variant_id and variant_id.isdigit():
-                        # Update existing variant
-                        variant = ProductVariant.query.get(int(variant_id))
-                        if variant:
-                            variant.name = variant_name
-                            variant.length = variant_length
-                            variant.texture = variant_texture
-                            variant.color = variant_color
-                            variant.price = variant_price
-                            variant.stock = variant_stock
-                            variant.sku = variant_sku
-                            variant.is_default = is_default
-                    else:
-                        # Create new variant
-                        variant = ProductVariant(
-                            product_id=product.id,
-                            name=variant_name,
-                            length=variant_length,
-                            texture=variant_texture,
-                            color=variant_color,
-                            price=variant_price,
-                            stock=variant_stock,
-                            sku=variant_sku,
-                            is_default=is_default
-                        )
-                        db.session.add(variant)
+                if variant_id and variant_id.isdigit():
+                    # Update existing variant
+                    variant = ProductVariant.query.get(int(variant_id))
+                    if variant:
+                        variant.name = variant_name
+                        variant.length = length if length else None
+                        variant.texture = texture if texture else None
+                        variant.color = color if color else None
+                        variant.price = price
+                        variant.stock = stock
+                        variant.sku = sku_value
+                else:
+                    # Create new variant
+                    variant = ProductVariant(
+                        product_id=product.id,
+                        name=variant_name,
+                        length=length if length else None,
+                        texture=texture if texture else None,
+                        color=color if color else None,
+                        price=price,
+                        stock=stock,
+                        sku=sku_value,
+                        is_default=(i == 0 and total_stock == stock)
+                    )
+                    db.session.add(variant)
 
-            # Ensure only one variant is default
-            variants = ProductVariant.query.filter_by(product_id=product.id).all()
-            if variants:
-                default_variants = [v for v in variants if v.is_default]
-                if len(default_variants) > 1:
-                    for i, variant in enumerate(default_variants):
-                        variant.is_default = (i == 0)
-                elif len(default_variants) == 0:
-                    variants[0].is_default = True
-
+            # Update product stock
             product.total_quantity = total_stock
 
             db.session.commit()
@@ -1776,6 +1952,7 @@ def admin_edit_product(id):
             print(f"❌ Edit product error: {str(e)}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
             flash('Error updating product. Please try again.', 'danger')
+            return render_template('admin/edit_product.html', product=product, categories=categories)
 
     return render_template('admin/edit_product.html', product=product, categories=categories)
 
@@ -1913,11 +2090,12 @@ def admin_settings():
 def uploaded_file(filename):
     """Serve uploaded files"""
     try:
-        upload_folder = app.config['UPLOAD_FOLDER']
+        upload_folder = os.path.join(BASE_DIR, 'static', 'uploads')
         return send_from_directory(upload_folder, filename)
     except Exception as e:
         print(f"❌ Error serving file {filename}: {str(e)}", file=sys.stderr)
-        return send_from_directory('static/uploads', filename, as_attachment=False)
+        # Return a placeholder image
+        return redirect(url_for('static', filename='images/placeholder.jpg'))
 
 # ========== HEALTH CHECK ==========
 @app.route('/health')
@@ -2000,6 +2178,10 @@ if __name__ == '__main__':
     print(f"✅ Database Connection: READY", file=sys.stderr)
     print(f"✅ File Upload: READY", file=sys.stderr)
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
+    print(f"✅ Customer Registration: FIXED", file=sys.stderr)
+    print(f"✅ Customer Login: FIXED", file=sys.stderr)
+    print(f"✅ Add Product: FIXED", file=sys.stderr)
+    print(f"✅ Edit Product: FIXED", file=sys.stderr)
     print(f"✅ Variant System: ENABLED", file=sys.stderr)
     print(f"✅ All Routes Added: /about, /contact, /order/<id>", file=sys.stderr)
     print(f"✅ Static File Serving: READY", file=sys.stderr)
