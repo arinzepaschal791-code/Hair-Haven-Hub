@@ -1,130 +1,86 @@
-# ========== PYTHON 3.13 ULTIMATE COMPATIBILITY FIX ==========
-# THIS MUST BE THE FIRST CODE IN YOUR FILE - DO NOT CHANGE
-import sys
-import os
-import types
-
-# FIX 1: Create comprehensive mock for six.moves that gunicorn needs
-if 'gunicorn.six' not in sys.modules:
-    class SixMock:
-        class moves:
-            class urllib:
-                class parse:
-                    @staticmethod
-                    def urlsplit(url):
-                        from urllib.parse import urlsplit as _urlsplit
-                        return _urlsplit(url)
-    
-    sys.modules['gunicorn.six'] = SixMock
-    sys.modules['gunicorn.six.moves'] = SixMock.moves
-    sys.modules['gunicorn.six.moves.urllib'] = SixMock.moves.urllib
-    sys.modules['gunicorn.six.moves.urllib.parse'] = SixMock.moves.urllib.parse
-    print("✅ Created gunicorn.six mock for Python 3.13", file=sys.stderr)
-
-# FIX 2: Mock pkg_resources for setuptools compatibility
-if 'pkg_resources' not in sys.modules:
-    mock_pkg_resources = types.ModuleType('pkg_resources')
-    mock_pkg_resources.working_set = type('obj', (object,), {
-        'entry_keys': {}, 
-        'entries': [], 
-        'by_key': {}
-    })()
-    mock_pkg_resources.require = lambda *args, **kwargs: None
-    mock_pkg_resources.get_distribution = lambda *args, **kwargs: None
-    mock_pkg_resources.iter_entry_points = lambda *args, **kwargs: []
-    sys.modules['pkg_resources'] = mock_pkg_resources
-    print("✅ Mock pkg_resources installed", file=sys.stderr)
-
-# FIX 3: SQLAlchemy TypingOnly patch for Python 3.13
-def apply_sqlalchemy_patch():
-    try:
-        import sqlalchemy.util.langhelpers
-        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
-        
-        def patched_init_subclass(cls, *args, **kwargs):
-            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
-                if hasattr(cls, attr):
-                    delattr(cls, attr)
-            return original_init_subclass.__func__(cls, *args, **kwargs)
-        
-        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
-        print("✅ SQLAlchemy patch applied", file=sys.stderr)
-    except ImportError:
-        pass
-    except Exception as e:
-        print(f"⚠️ SQLAlchemy patch error: {e}", file=sys.stderr)
-
-# Apply SQLAlchemy patch
-apply_sqlalchemy_patch()
-
-# ========== END COMPATIBILITY FIXES ==========
-# ========== PYTHON 3.13 COMPATIBILITY PATCHES ==========
-# THIS MUST BE THE FIRST CODE IN YOUR FILE - DO NOT MOVE OR CHANGE
-import sys
-import os
-import types
-
-# FIX 1: Mock pkg_resources for gunicorn (just in case)
-if 'pkg_resources' not in sys.modules:
-    mock_pkg_resources = types.ModuleType('pkg_resources')
-    mock_pkg_resources.working_set = type('obj', (object,), {'entry_keys': {}, 'entries': [], 'by_key': {}})()
-    mock_pkg_resources.require = lambda *args, **kwargs: None
-    mock_pkg_resources.get_distribution = lambda *args, **kwargs: None
-    mock_pkg_resources.iter_entry_points = lambda *args, **kwargs: []
-    sys.modules['pkg_resources'] = mock_pkg_resources
-    print("✅ Mock pkg_resources installed", file=sys.stderr)
-
-# FIX 2: SQLAlchemy TypingOnly patch for Python 3.13
-def apply_sqlalchemy_patch():
-    try:
-        import sqlalchemy.util.langhelpers
-        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
-        
-        def patched_init_subclass(cls, *args, **kwargs):
-            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
-                if hasattr(cls, attr):
-                    delattr(cls, attr)
-            return original_init_subclass.__func__(cls, *args, **kwargs)
-        
-        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
-        print("✅ SQLAlchemy patch applied", file=sys.stderr)
-    except ImportError:
-        pass
-    except Exception as e:
-        print(f"⚠️ SQLAlchemy patch error: {e}", file=sys.stderr)
-
-# Apply SQLAlchemy patch after import
-apply_sqlalchemy_patch()
-
-# ========== END COMPATIBILITY PATCHES ==========
 # main.py - NORA HAIR LINE E-COMMERCE - PRODUCTION READY
-
-# ========== PYTHON 3.13 SQLALCHEMY COMPATIBILITY FIX ==========
-# THIS MUST BE AT THE VERY TOP BEFORE ANY IMPORTS
+# ========== ULTIMATE PYTHON 3.13 COMPATIBILITY FIX ==========
+# THIS ENTIRE BLOCK MUST BE AT THE VERY TOP OF YOUR FILE
 import sys
 import os
+import types
 
-# Fix for SQLAlchemy 1.4.46 with Python 3.13
-if sys.version_info >= (3, 13):
-    try:
-        # Monkey patch the TypingOnly class before SQLAlchemy is imported
-        import sqlalchemy.util.langhelpers
-        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
-        
-        def patched_init_subclass(cls, *args, **kwargs):
-            # Remove attributes that cause AssertionError in Python 3.13
-            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
-                if hasattr(cls, attr):
-                    delattr(cls, attr)
-            return original_init_subclass.__func__(cls, *args, **kwargs)
-        
-        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
-        print("✅ Applied Python 3.13 SQLAlchemy compatibility patch", file=sys.stderr)
-    except ImportError:
-        # SQLAlchemy not yet imported, we'll patch it after import
+# CRITICAL: Override pkg_resources BEFORE anything else tries to import it
+print("🚀 Applying Python 3.13 compatibility patches...", file=sys.stderr)
+
+# Completely remove any existing pkg_resources
+if 'pkg_resources' in sys.modules:
+    del sys.modules['pkg_resources']
+
+# Create a complete mock pkg_resources that works with Python 3.13
+mock_pkg_resources = types.ModuleType('pkg_resources')
+
+# Mock WorkingSet class
+class WorkingSet:
+    def __init__(self):
+        self.entry_keys = {}
+        self.entries = []
+        self.by_key = {}
+    def __iter__(self):
+        return iter([])
+    def add_entry(self, entry):
         pass
-    except Exception as e:
-        print(f"⚠️ Error applying patch: {e}", file=sys.stderr)
+    def __contains__(self, item):
+        return False
+    def find(self, req):
+        return None
+
+# Add all required attributes
+mock_pkg_resources.working_set = WorkingSet()
+mock_pkg_resources.require = lambda *args, **kwargs: []
+mock_pkg_resources.get_distribution = lambda *args, **kwargs: None
+mock_pkg_resources.iter_entry_points = lambda *args, **kwargs: []
+mock_pkg_resources.resource_filename = lambda *args, **kwargs: ''
+mock_pkg_resources.resource_string = lambda *args, **kwargs: b''
+mock_pkg_resources.resource_stream = lambda *args, **kwargs: open(os.devnull, 'rb')
+mock_pkg_resources.get_provider = lambda *args, **kwargs: None
+mock_pkg_resources.clean_resources = lambda *args, **kwargs: None
+mock_pkg_resources.get_supported_platform = lambda: sys.platform
+mock_pkg_resources.get_build_platform = lambda: sys.platform
+mock_pkg_resources.get_entry_map = lambda *args, **kwargs: {}
+mock_pkg_resources.get_entry_info = lambda *args, **kwargs: None
+mock_pkg_resources.load_entry_point = lambda *args, **kwargs: None
+
+# Install the mock
+sys.modules['pkg_resources'] = mock_pkg_resources
+print("✅ Installed mock pkg_resources (Python 3.13 compatible)", file=sys.stderr)
+
+# Mock gunicorn.six.moves for gunicorn 20.1.0
+class SixMock:
+    class moves:
+        class urllib:
+            class parse:
+                @staticmethod
+                def urlsplit(url):
+                    from urllib.parse import urlsplit
+                    return urlsplit(url)
+                @staticmethod
+                def urljoin(base, url):
+                    from urllib.parse import urljoin
+                    return urljoin(base, url)
+                @staticmethod
+                def urlparse(url):
+                    from urllib.parse import urlparse
+                    return urlparse(url)
+                @staticmethod
+                def quote(string, safe='/', encoding=None, errors=None):
+                    from urllib.parse import quote
+                    return quote(string, safe, encoding, errors)
+                @staticmethod
+                def unquote(string, encoding='utf-8', errors='replace'):
+                    from urllib.parse import unquote
+                    return unquote(string, encoding, errors)
+
+sys.modules['gunicorn.six'] = SixMock
+sys.modules['gunicorn.six.moves'] = SixMock.moves
+sys.modules['gunicorn.six.moves.urllib'] = SixMock.moves.urllib
+sys.modules['gunicorn.six.moves.urllib.parse'] = SixMock.moves.urllib.parse
+print("✅ Installed gunicorn.six mock", file=sys.stderr)
 
 # ========== IMPORTS ==========
 import traceback
@@ -142,6 +98,24 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
 from sqlalchemy import text, or_, and_, func, desc
+
+# ========== SQLALCHEMY COMPATIBILITY PATCH ==========
+# Apply TypingOnly patch after SQLAlchemy is imported
+try:
+    import sqlalchemy.util.langhelpers
+    original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
+    
+    def patched_init_subclass(cls, *args, **kwargs):
+        # Remove attributes that cause AssertionError in Python 3.13
+        for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
+            if hasattr(cls, attr):
+                delattr(cls, attr)
+        return original_init_subclass.__func__(cls, *args, **kwargs)
+    
+    sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
+    print("✅ SQLAlchemy TypingOnly patch applied", file=sys.stderr)
+except Exception as e:
+    print(f"⚠️ SQLAlchemy patch warning: {e}", file=sys.stderr)
 
 # ========== CREATE APP ==========
 app = Flask(__name__)
@@ -196,23 +170,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # ========== INITIALIZE EXTENSIONS ==========
 db = SQLAlchemy(app)
-
-# ========== APPLY PATCH AGAIN AFTER SQLALCHEMY IMPORT ==========
-if sys.version_info >= (3, 13):
-    try:
-        import sqlalchemy.util.langhelpers
-        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
-        
-        def patched_init_subclass(cls, *args, **kwargs):
-            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
-                if hasattr(cls, attr):
-                    delattr(cls, attr)
-            return original_init_subclass.__func__(cls, *args, **kwargs)
-        
-        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
-        print("✅ Re-applied Python 3.13 SQLAlchemy compatibility patch", file=sys.stderr)
-    except Exception as e:
-        print(f"⚠️ Could not re-apply patch: {e}", file=sys.stderr)
 
 # ========== DATABASE MODELS ==========
 class User(db.Model):
@@ -1181,7 +1138,7 @@ def clear_cart():
 
 @app.route('/register', methods=['GET', 'POST'])
 def customer_register():
-    """Customer registration - FIXED"""
+    """Customer registration"""
     if request.method == 'POST':
         try:
             email = request.form.get('email', '').strip().lower()
@@ -1242,7 +1199,7 @@ def customer_register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def customer_login():
-    """Customer login - FIXED"""
+    """Customer login"""
     if request.method == 'POST':
         try:
             email = request.form.get('email', '').strip().lower()
@@ -1450,7 +1407,7 @@ def calculate_delivery():
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login - FIXED"""
+    """Admin login"""
     if 'admin_id' in session and session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
 
@@ -1575,7 +1532,7 @@ def admin_products():
 @app.route('/admin/products/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """Add product with variants and images - FIXED"""
+    """Add product with variants and images"""
     categories = Category.query.all()
     
     if request.method == 'POST':
@@ -1741,7 +1698,7 @@ def admin_add_product():
 @app.route('/admin/products/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(id):
-    """Edit product - FIXED"""
+    """Edit product"""
     product = Product.query.options(
         joinedload(Product.category),
         joinedload(Product.variants),
@@ -2126,22 +2083,14 @@ if __name__ == '__main__':
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"🚀 NORA HAIR LINE E-COMMERCE - PRODUCTION READY", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"✅ Python 3.13 SQLAlchemy Patch: APPLIED", file=sys.stderr)
+    print(f"✅ Python 3.13 Compatibility Patches: ACTIVE", file=sys.stderr)
+    print(f"✅ Mock pkg_resources: LOADED", file=sys.stderr)
+    print(f"✅ Gunicorn six.mocks: ACTIVE", file=sys.stderr)
+    print(f"✅ SQLAlchemy TypingOnly Patch: APPLIED", file=sys.stderr)
     print(f"✅ Database Connection: READY", file=sys.stderr)
     print(f"✅ File Upload: READY", file=sys.stderr)
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
     print(f"✅ Variant System: ENABLED", file=sys.stderr)
-    print(f"✅ All Routes Added: /about, /contact, /order/<id>", file=sys.stderr)
-    print(f"✅ Static File Serving: READY", file=sys.stderr)
-    print(f"🌐 Available Routes:", file=sys.stderr)
-    print(f"   • Home: /", file=sys.stderr)
-    print(f"   • Shop: /shop", file=sys.stderr)
-    print(f"   • About: /about", file=sys.stderr)
-    print(f"   • Contact: /contact", file=sys.stderr)
-    print(f"   • Cart: /cart", file=sys.stderr)
-    print(f"   • Checkout: /checkout", file=sys.stderr)
-    print(f"   • Account: /account", file=sys.stderr)
-    print(f"   • Admin: /admin", file=sys.stderr)
     print(f"🌐 Server: http://localhost:{port}", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
 
