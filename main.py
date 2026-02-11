@@ -1,6 +1,33 @@
 # main.py - NORA HAIR LINE E-COMMERCE - PRODUCTION READY
-import os
+
+# ========== PYTHON 3.13 SQLALCHEMY COMPATIBILITY FIX ==========
+# THIS MUST BE AT THE VERY TOP BEFORE ANY IMPORTS
 import sys
+import os
+
+# Fix for SQLAlchemy 1.4.46 with Python 3.13
+if sys.version_info >= (3, 13):
+    try:
+        # Monkey patch the TypingOnly class before SQLAlchemy is imported
+        import sqlalchemy.util.langhelpers
+        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
+        
+        def patched_init_subclass(cls, *args, **kwargs):
+            # Remove attributes that cause AssertionError in Python 3.13
+            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
+                if hasattr(cls, attr):
+                    delattr(cls, attr)
+            return original_init_subclass.__func__(cls, *args, **kwargs)
+        
+        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
+        print("✅ Applied Python 3.13 SQLAlchemy compatibility patch", file=sys.stderr)
+    except ImportError:
+        # SQLAlchemy not yet imported, we'll patch it after import
+        pass
+    except Exception as e:
+        print(f"⚠️ Error applying patch: {e}", file=sys.stderr)
+
+# ========== IMPORTS ==========
 import traceback
 from datetime import datetime, timedelta
 import random
@@ -70,6 +97,23 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # ========== INITIALIZE EXTENSIONS ==========
 db = SQLAlchemy(app)
+
+# ========== APPLY PATCH AGAIN AFTER SQLALCHEMY IMPORT ==========
+if sys.version_info >= (3, 13):
+    try:
+        import sqlalchemy.util.langhelpers
+        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
+        
+        def patched_init_subclass(cls, *args, **kwargs):
+            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
+                if hasattr(cls, attr):
+                    delattr(cls, attr)
+            return original_init_subclass.__func__(cls, *args, **kwargs)
+        
+        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
+        print("✅ Re-applied Python 3.13 SQLAlchemy compatibility patch", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️ Could not re-apply patch: {e}", file=sys.stderr)
 
 # ========== DATABASE MODELS ==========
 class User(db.Model):
@@ -502,7 +546,7 @@ def save_uploaded_file(file):
         file.save(upload_path)
 
         print(f"✅ File saved: {unique_filename}", file=sys.stderr)
-        return f"/static/uploads/{unique_filename}"  # FIXED: Return full path
+        return f"/static/uploads/{unique_filename}"
 
     except Exception as e:
         print(f"❌ CRITICAL ERROR saving file: {str(e)}", file=sys.stderr)
@@ -608,6 +652,23 @@ def init_db():
                 admin.set_password('admin123')
                 db.session.add(admin)
                 print("✅ Admin user created: admin/admin123", file=sys.stderr)
+
+            # Create sample categories if none exist
+            if Category.query.count() == 0:
+                categories = [
+                    ('Lace Wigs', 'lace-wigs', 'Natural looking lace front wigs with HD lace'),
+                    ('Hair Bundles', 'hair-bundles', 'Premium 100% human hair bundles in various textures'),
+                    ('Closures', 'closures', 'Hair closures for protective styling'),
+                    ('Frontals', 'frontals', '13x4 and 13x6 lace frontals'),
+                    ('360 Wigs', '360-wigs', '360 lace wigs for full perimeter styling'),
+                    ('Hair Care', 'hair-care', 'Products for hair maintenance and growth'),
+                ]
+
+                for name, slug, desc in categories:
+                    category = Category(name=name, slug=slug, description=desc)
+                    db.session.add(category)
+
+                print("✅ Sample categories added", file=sys.stderr)
 
             db.session.commit()
             print("✅ Database initialization complete", file=sys.stderr)
@@ -1424,9 +1485,12 @@ def admin_add_product():
             name = request.form.get('name', '').strip()
             description = request.form.get('description', '').strip()
             base_price = float(request.form.get('base_price', 0) or 0)
+            compare_price = request.form.get('compare_price', '').strip()
             category_id = int(request.form.get('category_id', 0))
             featured = 'featured' in request.form
             active = 'active' in request.form
+            is_bundle = 'is_bundle' in request.form
+            bundle_discount = float(request.form.get('bundle_discount', 0) or 0)
             
             # Validations
             if not name:
@@ -1441,6 +1505,14 @@ def admin_add_product():
                 flash('Price must be greater than 0.', 'danger')
                 return render_template('admin/add_product.html', categories=categories)
             
+            if compare_price:
+                compare_price = float(compare_price)
+                if compare_price <= base_price:
+                    flash('Compare price must be greater than base price.', 'warning')
+                    compare_price = None
+            else:
+                compare_price = None
+            
             # Generate slug and SKU
             slug = generate_unique_slug(name, Product)
             sku = generate_unique_sku()
@@ -1451,9 +1523,12 @@ def admin_add_product():
                 slug=slug,
                 description=description,
                 base_price=base_price,
+                compare_price=compare_price,
                 category_id=category_id,
                 featured=featured,
                 active=active,
+                is_bundle=is_bundle,
+                bundle_discount=bundle_discount,
                 sku=sku,
                 total_quantity=0
             )
@@ -1464,11 +1539,16 @@ def admin_add_product():
             # Handle image uploads
             if 'images' in request.files:
                 files = request.files.getlist('images')
+                primary_set = False
+                
                 for i, file in enumerate(files):
                     if file and file.filename != '' and allowed_file(file.filename):
                         uploaded_filename = save_uploaded_file(file)
                         if uploaded_filename:
-                            is_primary = (i == 0)
+                            is_primary = not primary_set
+                            if is_primary:
+                                primary_set = True
+                                
                             product_image = ProductImage(
                                 product_id=product.id,
                                 image_url=uploaded_filename,
@@ -1479,38 +1559,53 @@ def admin_add_product():
 
             # Handle variants
             variant_names = request.form.getlist('variant_name[]')
+            variant_lengths = request.form.getlist('variant_length[]')
+            variant_textures = request.form.getlist('variant_texture[]')
+            variant_colors = request.form.getlist('variant_color[]')
+            variant_prices = request.form.getlist('variant_price[]')
+            variant_stocks = request.form.getlist('variant_stock[]')
+            variant_skus = request.form.getlist('variant_sku[]')
+            
+            has_variants = len(variant_names) > 0 and any(name.strip() for name in variant_names)
+            
             total_stock = 0
             
-            if variant_names and variant_names[0].strip():
-                for i, variant_name in enumerate(variant_names):
-                    variant_name = variant_name.strip()
-                    if variant_name:
-                        length = request.form.getlist('variant_length[]')[i].strip() if i < len(request.form.getlist('variant_length[]')) else ''
-                        texture = request.form.getlist('variant_texture[]')[i].strip() if i < len(request.form.getlist('variant_texture[]')) else ''
+            if has_variants:
+                for i in range(len(variant_names)):
+                    variant_name = variant_names[i].strip()
+                    if not variant_name:
+                        continue
                         
-                        try:
-                            price = float(request.form.getlist('variant_price[]')[i]) if i < len(request.form.getlist('variant_price[]')) and request.form.getlist('variant_price[]')[i] else base_price
-                        except (ValueError, TypeError):
-                            price = base_price
-                            
-                        try:
-                            stock = int(request.form.getlist('variant_stock[]')[i]) if i < len(request.form.getlist('variant_stock[]')) and request.form.getlist('variant_stock[]')[i] else 0
-                        except (ValueError, TypeError):
-                            stock = 0
+                    length = variant_lengths[i].strip() if i < len(variant_lengths) else ''
+                    texture = variant_textures[i].strip() if i < len(variant_textures) else ''
+                    color = variant_colors[i].strip() if i < len(variant_colors) else ''
+                    
+                    try:
+                        price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else base_price
+                    except (ValueError, TypeError):
+                        price = base_price
                         
-                        total_stock += stock
+                    try:
+                        stock = int(variant_stocks[i]) if i < len(variant_stocks) and variant_stocks[i] else 0
+                    except (ValueError, TypeError):
+                        stock = 0
                         
-                        variant = ProductVariant(
-                            product_id=product.id,
-                            name=variant_name,
-                            length=length if length else None,
-                            texture=texture if texture else None,
-                            price=price,
-                            stock=stock,
-                            sku=generate_unique_sku(),
-                            is_default=(i == 0)
-                        )
-                        db.session.add(variant)
+                    sku_value = variant_skus[i].strip() if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                    
+                    total_stock += stock
+                    
+                    variant = ProductVariant(
+                        product_id=product.id,
+                        name=variant_name,
+                        length=length if length else None,
+                        texture=texture if texture else None,
+                        color=color if color else None,
+                        price=price,
+                        stock=stock,
+                        sku=sku_value,
+                        is_default=(i == 0)
+                    )
+                    db.session.add(variant)
             else:
                 # Create a default variant if no variants were provided
                 default_variant = ProductVariant(
@@ -1568,6 +1663,15 @@ def admin_edit_product(id):
                 flash('Invalid base price format.', 'danger')
                 return render_template('admin/edit_product.html', product=product, categories=categories)
             
+            compare_price = request.form.get('compare_price', '').strip()
+            if compare_price:
+                try:
+                    product.compare_price = float(compare_price)
+                except ValueError:
+                    product.compare_price = None
+            else:
+                product.compare_price = None
+            
             try:
                 product.category_id = int(request.form.get('category_id', 0))
             except ValueError:
@@ -1576,6 +1680,20 @@ def admin_edit_product(id):
             
             product.featured = 'featured' in request.form
             product.active = 'active' in request.form
+            product.is_bundle = 'is_bundle' in request.form
+            
+            try:
+                product.bundle_discount = float(request.form.get('bundle_discount', 0) or 0)
+            except ValueError:
+                product.bundle_discount = 0
+            
+            sku = request.form.get('sku', '').strip()
+            if sku and sku != product.sku:
+                existing_sku = Product.query.filter_by(sku=sku).first()
+                if existing_sku and existing_sku.id != product.id:
+                    flash('SKU already exists for another product.', 'danger')
+                    return render_template('admin/edit_product.html', product=product, categories=categories)
+                product.sku = sku
             
             product.slug = generate_unique_slug(product.name, Product, product.id)
 
@@ -1602,9 +1720,26 @@ def admin_edit_product(id):
             variant_names = request.form.getlist('variant_name[]')
             variant_lengths = request.form.getlist('variant_length[]')
             variant_textures = request.form.getlist('variant_texture[]')
+            variant_colors = request.form.getlist('variant_color[]')
             variant_prices = request.form.getlist('variant_price[]')
             variant_stocks = request.form.getlist('variant_stock[]')
+            variant_skus = request.form.getlist('variant_sku[]')
             
+            # Get existing variant IDs
+            existing_variant_ids = []
+            for i, variant_id in enumerate(variant_ids):
+                if variant_id and variant_id.isdigit():
+                    existing_variant_ids.append(int(variant_id))
+
+            # Delete variants that were removed
+            variants_to_delete = []
+            for variant in product.variants:
+                if variant.id not in existing_variant_ids:
+                    variants_to_delete.append(variant)
+            
+            for variant in variants_to_delete:
+                db.session.delete(variant)
+
             # Update or add variants
             total_stock = 0
             for i in range(len(variant_names)):
@@ -1615,6 +1750,7 @@ def admin_edit_product(id):
                 variant_id = variant_ids[i] if i < len(variant_ids) else None
                 length = variant_lengths[i].strip() if i < len(variant_lengths) else ''
                 texture = variant_textures[i].strip() if i < len(variant_textures) else ''
+                color = variant_colors[i].strip() if i < len(variant_colors) else ''
                 
                 try:
                     price = float(variant_prices[i]) if i < len(variant_prices) and variant_prices[i] else product.base_price
@@ -1626,6 +1762,8 @@ def admin_edit_product(id):
                 except (ValueError, TypeError):
                     stock = 0
                 
+                sku_value = variant_skus[i].strip() if i < len(variant_skus) and variant_skus[i] else generate_unique_sku()
+                
                 total_stock += stock
 
                 if variant_id and variant_id.isdigit():
@@ -1635,8 +1773,10 @@ def admin_edit_product(id):
                         variant.name = variant_name
                         variant.length = length if length else None
                         variant.texture = texture if texture else None
+                        variant.color = color if color else None
                         variant.price = price
                         variant.stock = stock
+                        variant.sku = sku_value
                 else:
                     # Create new variant
                     variant = ProductVariant(
@@ -1644,9 +1784,10 @@ def admin_edit_product(id):
                         name=variant_name,
                         length=length if length else None,
                         texture=texture if texture else None,
+                        color=color if color else None,
                         price=price,
                         stock=stock,
-                        sku=generate_unique_sku(),
+                        sku=sku_value,
                         is_default=(i == 0 and total_stock == stock)
                     )
                     db.session.add(variant)
@@ -1886,6 +2027,7 @@ if __name__ == '__main__':
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"🚀 NORA HAIR LINE E-COMMERCE - PRODUCTION READY", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
+    print(f"✅ Python 3.13 SQLAlchemy Patch: APPLIED", file=sys.stderr)
     print(f"✅ Database Connection: READY", file=sys.stderr)
     print(f"✅ File Upload: READY", file=sys.stderr)
     print(f"✅ Admin Panel: /admin (admin/admin123)", file=sys.stderr)
