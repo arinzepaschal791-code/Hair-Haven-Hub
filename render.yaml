@@ -7,146 +7,23 @@ services:
     branch: main
     buildCommand: |
       echo "🚀 Starting build process..."
-      echo "✅ Step 1: Upgrading pip"
+      echo "✅ Installing dependencies"
       pip install --upgrade pip
-      
-      echo "✅ Step 2: Installing critical dependencies first"
       pip install setuptools==65.5.0 wheel==0.38.4 six==1.16.0
-      
-      echo "✅ Step 3: Installing remaining requirements"
       pip install -r requirements.txt
-      
-      echo "✅ Step 4: Creating wsgi.py with compatibility patches"
-      cat > wsgi.py << 'EOF'
-import sys
-import os
-import types
-
-# ========== ULTIMATE PYTHON 3.13 COMPATIBILITY PATCHES ==========
-print("🚀 Applying Python 3.13 compatibility patches...", file=sys.stderr)
-
-# FIX 1: Completely remove the problematic pkg_resources and use our mock
-if 'pkg_resources' in sys.modules:
-    del sys.modules['pkg_resources']
-
-# Create a complete mock pkg_resources that doesn't use ImpImporter
-mock_pkg_resources = types.ModuleType('pkg_resources')
-
-# Mock the working_set
-class WorkingSet:
-    def __init__(self):
-        self.entry_keys = {}
-        self.entries = []
-        self.by_key = {}
-    def __iter__(self):
-        return iter([])
-    def add_entry(self, entry):
-        pass
-
-mock_pkg_resources.working_set = WorkingSet()
-mock_pkg_resources.require = lambda *a, **kw: []
-mock_pkg_resources.get_distribution = lambda *a, **kw: None
-mock_pkg_resources.iter_entry_points = lambda *a, **kw: []
-mock_pkg_resources.resource_filename = lambda *a, **kw: ''
-mock_pkg_resources.resource_string = lambda *a, **kw: b''
-mock_pkg_resources.resource_stream = lambda *a, **kw: open(os.devnull, 'rb')
-mock_pkg_resources.get_provider = lambda *a, **kw: None
-mock_pkg_resources.clean_resources = lambda *a, **kw: None
-
-sys.modules['pkg_resources'] = mock_pkg_resources
-print("✅ Installed mock pkg_resources (ImpImporter fix)", file=sys.stderr)
-
-# FIX 2: Mock gunicorn.six.moves
-class SixMock:
-    class moves:
-        class urllib:
-            class parse:
-                @staticmethod
-                def urlsplit(url):
-                    from urllib.parse import urlsplit
-                    return urlsplit(url)
-                @staticmethod
-                def urljoin(base, url):
-                    from urllib.parse import urljoin
-                    return urljoin(base, url)
-                @staticmethod
-                def urlparse(url):
-                    from urllib.parse import urlparse
-                    return urlparse(url)
-
-sys.modules['gunicorn.six'] = SixMock
-sys.modules['gunicorn.six.moves'] = SixMock.moves
-sys.modules['gunicorn.six.moves.urllib'] = SixMock.moves.urllib
-sys.modules['gunicorn.six.moves.urllib.parse'] = SixMock.moves.urllib.parse
-print("✅ Installed gunicorn.six mock", file=sys.stderr)
-
-# FIX 3: SQLAlchemy TypingOnly patch
-try:
-    import sqlalchemy
-    import sqlalchemy.util.langhelpers
-    original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
-    
-    def patched_init_subclass(cls, *args, **kwargs):
-        for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
-            if hasattr(cls, attr):
-                delattr(cls, attr)
-        return original_init_subclass.__func__(cls, *args, **kwargs)
-    
-    sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
-    print(f"✅ SQLAlchemy {sqlalchemy.__version__} patched", file=sys.stderr)
-except:
-    print("⚠️ SQLAlchemy patch skipped", file=sys.stderr)
-
-# Import the app
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from main import app
-print("✅ Flask app imported successfully", file=sys.stderr)
-
-# Export for gunicorn
-if __name__ == "__main__":
-    app.run()
-EOF
-      
-      echo "✅ Step 5: Verifying installation"
-      python -c "
-import sys
-print(f'🐍 Python version: {sys.version}')
-print('✅ Build completed successfully!')
-      "
-      
       echo "✅ Build completed successfully!"
-      
-    startCommand: |
-      echo "🚀 Starting application with wsgi.py..."
-      echo "🐍 Python version: $(python --version)"
-      echo "✅ Using gunicorn with wsgi:app"
-      exec gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -
-      
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -
     healthCheckPath: /health
     autoDeploy: true
-    
     envVars:
-      # ========== APPLICATION CONFIGURATION ==========
       - key: SECRET_KEY
         generateValue: true
-      - key: FLASK_APP
-        value: main.py
       - key: FLASK_ENV
         value: production
       - key: FLASK_DEBUG
         value: false
       - key: DEBUG
         value: false
-      
-      # ========== ADMIN CREDENTIALS ==========
-      - key: ADMIN_EMAIL
-        value: admin@norahairline.com
-      - key: ADMIN_PASSWORD
-        value: admin123
-      - key: ADMIN_USERNAME
-        value: admin
-      
-      # ========== SECURITY CONFIGURATION ==========
       - key: WTF_CSRF_ENABLED
         value: true
       - key: SESSION_COOKIE_SECURE
@@ -157,34 +34,14 @@ print('✅ Build completed successfully!')
         value: Lax
       - key: PERMANENT_SESSION_LIFETIME
         value: 86400
-      
-      # ========== DATABASE CONFIGURATION ==========
       - key: SQLALCHEMY_TRACK_MODIFICATIONS
         value: false
-      
-      # ========== FILE UPLOAD CONFIGURATION ==========
       - key: MAX_CONTENT_LENGTH
         value: 16777216
-      
-      # ========== BUSINESS CONFIGURATION ==========
-      - key: CURRENCY_SYMBOL
-        value: ₦
-      
-      # ========== PERFORMANCE CONFIGURATION ==========
-      - key: WEB_CONCURRENCY
-        value: 2
-      - key: PYTHONUNBUFFERED
-        value: true
-      - key: PYTHONPATH
-        value: /opt/render/project/src
-
-    # ========== DISK STORAGE FOR UPLOADS ==========
     disk:
       name: uploads
       mountPath: /opt/render/project/src/static/uploads
       sizeGB: 1
-
-    # ========== DATABASE ==========
     databases:
       - name: norahairline-db
         databaseName: norahairline
