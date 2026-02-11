@@ -7,17 +7,11 @@ services:
     branch: main
     buildCommand: |
       pip install --upgrade pip
-      apt-get update && apt-get install -y python3-pil 2>/dev/null || echo "System Pillow installed"
       pip install -r requirements.txt
       python -c "
       print('✅ Dependencies installed')
       import sys
       print(f'Python version: {sys.version}')
-      try:
-          import PIL
-          print(f'✅ Pillow version: {PIL.__version__}')
-      except ImportError as e:
-          print(f'⚠️ Pillow error: {e}')
       "
     startCommand: gunicorn main:app
     healthCheckPath: /health
