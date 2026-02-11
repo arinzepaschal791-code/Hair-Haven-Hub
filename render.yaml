@@ -7,12 +7,8 @@ services:
     branch: main
     buildCommand: |
       pip install --upgrade pip
+      pip install setuptools==59.6.0 wheel==0.37.1
       pip install -r requirements.txt
-      python -c "
-      print('✅ Dependencies installed')
-      import sys
-      print(f'Python version: {sys.version}')
-      "
     startCommand: gunicorn main:app
     healthCheckPath: /health
     autoDeploy: true
