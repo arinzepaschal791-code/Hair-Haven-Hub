@@ -1,3 +1,63 @@
+# ========== PYTHON 3.13 ULTIMATE COMPATIBILITY FIX ==========
+# THIS MUST BE THE FIRST CODE IN YOUR FILE - DO NOT CHANGE
+import sys
+import os
+import types
+
+# FIX 1: Create comprehensive mock for six.moves that gunicorn needs
+if 'gunicorn.six' not in sys.modules:
+    class SixMock:
+        class moves:
+            class urllib:
+                class parse:
+                    @staticmethod
+                    def urlsplit(url):
+                        from urllib.parse import urlsplit as _urlsplit
+                        return _urlsplit(url)
+    
+    sys.modules['gunicorn.six'] = SixMock
+    sys.modules['gunicorn.six.moves'] = SixMock.moves
+    sys.modules['gunicorn.six.moves.urllib'] = SixMock.moves.urllib
+    sys.modules['gunicorn.six.moves.urllib.parse'] = SixMock.moves.urllib.parse
+    print("✅ Created gunicorn.six mock for Python 3.13", file=sys.stderr)
+
+# FIX 2: Mock pkg_resources for setuptools compatibility
+if 'pkg_resources' not in sys.modules:
+    mock_pkg_resources = types.ModuleType('pkg_resources')
+    mock_pkg_resources.working_set = type('obj', (object,), {
+        'entry_keys': {}, 
+        'entries': [], 
+        'by_key': {}
+    })()
+    mock_pkg_resources.require = lambda *args, **kwargs: None
+    mock_pkg_resources.get_distribution = lambda *args, **kwargs: None
+    mock_pkg_resources.iter_entry_points = lambda *args, **kwargs: []
+    sys.modules['pkg_resources'] = mock_pkg_resources
+    print("✅ Mock pkg_resources installed", file=sys.stderr)
+
+# FIX 3: SQLAlchemy TypingOnly patch for Python 3.13
+def apply_sqlalchemy_patch():
+    try:
+        import sqlalchemy.util.langhelpers
+        original_init_subclass = sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__
+        
+        def patched_init_subclass(cls, *args, **kwargs):
+            for attr in ['__static_attributes__', '__firstlineno__', '__classcell__']:
+                if hasattr(cls, attr):
+                    delattr(cls, attr)
+            return original_init_subclass.__func__(cls, *args, **kwargs)
+        
+        sqlalchemy.util.langhelpers.TypingOnly.__init_subclass__ = classmethod(patched_init_subclass)
+        print("✅ SQLAlchemy patch applied", file=sys.stderr)
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"⚠️ SQLAlchemy patch error: {e}", file=sys.stderr)
+
+# Apply SQLAlchemy patch
+apply_sqlalchemy_patch()
+
+# ========== END COMPATIBILITY FIXES ==========
 # ========== PYTHON 3.13 COMPATIBILITY PATCHES ==========
 # THIS MUST BE THE FIRST CODE IN YOUR FILE - DO NOT MOVE OR CHANGE
 import sys
